@@ -126,7 +126,6 @@ class Interface:
     def SafeGenerateText(
         self,
         _Logger,
-        _Logger,
         _Messages,
         _Model: str,
         _SeedOverride: int = -1,
