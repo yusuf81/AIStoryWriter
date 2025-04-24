@@ -302,7 +302,7 @@ Start your suggestions with 'Important things to keep in mind as you write: \n'.
 
 It's okay if the summary isn't a complete perfect match, but it should have roughly the same plot, and pacing.
 
-Again, remember to make your response JSON formatted with no extra words. It will be fed directly to a JSON parser.
+Again, remember to make your response *only* the JSON object with no extra words or formatting. It will be fed directly to a JSON parser.
 """
 
 CRITIC_OUTLINE_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
