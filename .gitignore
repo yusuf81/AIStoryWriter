@@ -167,3 +167,4 @@ EvalLogs/*
 
 .env
 .aider*
+.vscode/
