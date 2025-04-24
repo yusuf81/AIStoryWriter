@@ -12,6 +12,39 @@ import Writer.Config
 import Writer.PrintUtils
 
 
+# Definisikan Skema Pydantic
+class OutlineEvalSchema(BaseModel):
+    Thoughts: str
+    Reasoning: str
+    Plot: Literal["A", "B", "Tie"]
+    PlotExplanation: str
+    Style: Literal["A", "B", "Tie"]
+    StyleExplanation: str
+    Chapters: Literal["A", "B", "Tie"]
+    ChaptersExplanation: str
+    Tropes: Literal["A", "B", "Tie"]
+    TropesExplanation: str
+    Genre: Literal["A", "B", "Tie"]
+    GenreExplanation: str
+    Narrative: Literal["A", "B", "Tie"]
+    NarrativeExplanation: str
+    OverallWinner: Literal["A", "B", "Tie"]
+
+class ChapterEvalSchema(BaseModel):
+    Plot: Literal["A", "B", "Tie"]
+    PlotExplanation: str
+    Style: Literal["A", "B", "Tie"]
+    StyleExplanation: str
+    Dialogue: Literal["A", "B", "Tie"]
+    DialogueExplanation: str
+    Tropes: Literal["A", "B", "Tie"]
+    TropesExplanation: str
+    Genre: Literal["A", "B", "Tie"]
+    GenreExplanation: str
+    Narrative: Literal["A", "B", "Tie"]
+    NarrativeExplanation: str
+    OverallWinner: Literal["A", "B", "Tie"]
+
 
 def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
     
