@@ -22,7 +22,7 @@ class Logger:
         # Setup Log Path
         self.LogDirPrefix = LogDirPath
         self.LogPath = LogDirPath + "/Main.log"
-        self.File = open(self.LogPath, "a")
+        self.File = open(self.LogPath, "a", encoding="utf-8") # Tambahkan encoding utf-8
         self.LangchainID = 0
 
         self.LogItems = []
@@ -38,11 +38,11 @@ class Logger:
         self.LangchainID += 1
 
         # Generate and Save JSON Version
-        with open(ThisLogPathJSON, "w") as f:
+        with open(ThisLogPathJSON, "w", encoding="utf-8") as f: # Tambahkan encoding utf-8
             f.write(json.dumps(_LangChain, indent=4, sort_keys=True))
-        
+
         # Now, Save Markdown Version
-        with open(ThisLogPathMD, "w") as f:
+        with open(ThisLogPathMD, "w", encoding="utf-8") as f: # Tambahkan encoding utf-8
             MarkdownVersion:str = f"# Debug LangChain {LangChainDebugTitle}\n**Note: '```' tags have been removed in this version.**\n"
             for Message in _LangChain:
                 MarkdownVersion += f"\n\n\n# Role: {Message['role']}\n"
@@ -55,7 +55,7 @@ class Logger:
     # Saves the given story to disk
     def SaveStory(self, _StoryContent:str):
 
-        with open(f"{self.LogDirPrefix}/Story.md", "w") as f:
+        with open(f"{self.LogDirPrefix}/Story.md", "w", encoding="utf-8") as f: # Tambahkan encoding utf-8
             f.write(_StoryContent)
 
         self.Log(f"Wrote Story To Disk At {self.LogDirPrefix}/Story.md", 5)
