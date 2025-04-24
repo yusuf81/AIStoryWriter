@@ -91,7 +91,7 @@ Please give your response in JSON format, indicating the ratings for each story:
     "NarrativeExplanation": "Explain your reasoning.",
     "OverallWinner": "<A, B, or Tie>"
 }}
-    
+
 Do not respond with anything except JSON. Do not include any other fields except those shown above. Your entire response must be only the JSON object.
     """))
     # Menggunakan SafeGenerateJSON dengan skema
@@ -162,7 +162,7 @@ Please give your response in JSON format, indicating the ratings for each story:
     "NarrativeExplanation": "Explain your reasoning.",
     "OverallWinner": "<A, B, or Tie>"
 }}
-    
+
 Do not respond with anything except JSON.
 
 Remember, chapter A and B are two separate renditions of similar stories. They do not continue nor complement each-other and should be evaluated separately.

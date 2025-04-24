@@ -6,7 +6,7 @@ CHAPTER_COUNT_PROMPT = """
 Please provide a JSON formatted response containing the total number of chapters in the above outline.
 
 Respond with the following JSON object format:
-{"TotalChapters": <total chapter count>}
+{{"TotalChapters": <total chapter count>}}
 
 Please do not include any other text, just the JSON object as your response will be parsed by a computer. Your entire response must be only the JSON object.
 """
@@ -286,12 +286,11 @@ Note that a computer is parsing this JSON so it must be correct.
 <OUTLINE>
 {OutlineSummary}
 </OUTLINE>
-
 Please respond with the following JSON fields:
 
 {{
-"Suggestions": str
-"DidFollowOutline": true/false
+    "Suggestions": str,
+    "DidFollowOutline": true/false
 }}
 
 Suggestions should include a string containing detailed markdown formatted feedback that will be used to prompt the writer on the next iteration of generation.
@@ -336,7 +335,7 @@ This outline meets all of the following criteria (true or false):
     - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
 
 Give a JSON formatted response with the following structure:
-{"IsComplete": true/false}
+{{"IsComplete": true/false}}
 
 Please do not include any other text, just the JSON object as your response will be parsed by a computer. Your entire response must be only the JSON object.
 """
@@ -375,7 +374,7 @@ This chapter meets all of the following criteria (true or false):
     - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
 
 Give a JSON formatted response with the following structure:
-{"IsComplete": true/false}
+{{"IsComplete": true/false}}
 
 Please do not include any other text, just the JSON object as your response will be parsed by a computer. Your entire response must be only the JSON object.
 """
@@ -519,12 +518,12 @@ Base your answers on the story written in previous messages.
 "OverallRating": (your overall score for the story from 0-100, as an integer)
 
 Please respond with the following JSON object format:
-{
+{{
     "Title": "...",
     "Summary": "...",
     "Tags": "...",
     "OverallRating": ...
-}
+}}
 
 Again, remember to make your response *only* the JSON object with no extra words or formatting. It will be fed directly to a JSON parser.
 """
@@ -596,13 +595,13 @@ I need to convert the following scene-by-scene outline into a JSON formatted lis
 # OBJECTIVE #
 Create a JSON list of each of scene from the provided outline where each element in the list contains the content for that scene.
 Ex:
-{
+{{
     "scenes": [
         "scene 1 content...",
         "scene 2 content...",
         "etc."
     ]
-}
+}}
 
 + Respond with a valid JSON object containing a single key named "scenes". The value associated with this key must be a JSON array (list) of strings, where each string is the content of a scene.
 + Do not include any text, comments, or markdown formatting outside of the JSON object itself. Your entire response must be only the JSON object.
