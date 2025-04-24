@@ -166,3 +166,4 @@ Logs/*
 EvalLogs/*
 
 .env
+.aider*
