@@ -5,8 +5,10 @@ CHAPTER_COUNT_PROMPT = """
 
 Please provide a JSON formatted response containing the total number of chapters in the above outline.
 
-Respond with {{"TotalChapters": <total chapter count>}}
-Please do not include any other text, just the JSON as your response will be parsed by a computer.
+Respond with the following JSON object format:
+{"TotalChapters": <total chapter count>}
+
+Please do not include any other text, just the JSON object as your response will be parsed by a computer. Your entire response must be only the JSON object.
 """
 
 CHAPTER_GENERATION_INTRO = """
@@ -333,8 +335,10 @@ This outline meets all of the following criteria (true or false):
     - Flow: Does each chapter flow into the next? Does the plot make logical sense to the reader? Does it have a specific narrative structure at play? Is the narrative structure consistent throughout the story?
     - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
 
-Give a JSON formatted response, containing the string \"IsComplete\", followed by an boolean True/False.
-Please do not include any other text, just the JSON as your response will be parsed by a computer.
+Give a JSON formatted response with the following structure:
+{"IsComplete": true/false}
+
+Please do not include any other text, just the JSON object as your response will be parsed by a computer. Your entire response must be only the JSON object.
 """
 
 JSON_PARSE_ERROR = "Please revise your JSON. It encountered the following error during parsing: {_Error}. Remember that your entire response is plugged directly into a JSON parser, so don't write **anything** except pure json."
@@ -370,8 +374,10 @@ This chapter meets all of the following criteria (true or false):
     - Flow: Does each chapter flow into the next? Does the plot make logical sense to the reader? Does it have a specific narrative structure at play? Is the narrative structure consistent throughout the story?
     - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
 
-Give a JSON formatted response, containing the string \"IsComplete\", followed by an boolean True/False.
-Please do not include any other text, just the JSON as your response will be parsed by a computer.
+Give a JSON formatted response with the following structure:
+{"IsComplete": true/false}
+
+Please do not include any other text, just the JSON object as your response will be parsed by a computer. Your entire response must be only the JSON object.
 """
 
 CHAPTER_EDIT_PROMPT = """
@@ -510,9 +516,17 @@ Base your answers on the story written in previous messages.
 "Title": (a short title that's three to eight words)
 "Summary": (a paragraph or two that summarizes the story from start to finish)
 "Tags": (a string of tags separated by commas that describe the story)
-"OverallRating": (your overall score for the story from 0-100)
+"OverallRating": (your overall score for the story from 0-100, as an integer)
 
-Again, remember to make your response JSON formatted with no extra words. It will be fed directly to a JSON parser.
+Please respond with the following JSON object format:
+{
+    "Title": "...",
+    "Summary": "...",
+    "Tags": "...",
+    "OverallRating": ...
+}
+
+Again, remember to make your response *only* the JSON object with no extra words or formatting. It will be fed directly to a JSON parser.
 """
 
 TRANSLATE_PROMPT = """
@@ -582,13 +596,16 @@ I need to convert the following scene-by-scene outline into a JSON formatted lis
 # OBJECTIVE #
 Create a JSON list of each of scene from the provided outline where each element in the list contains the content for that scene.
 Ex:
-[
-    "scene 1 content...",
-    "scene 2 content...",
-    "etc."
-]
+{
+    "scenes": [
+        "scene 1 content...",
+        "scene 2 content...",
+        "etc."
+    ]
+}
 
-Don't include any other json fields, just make it a simple list of strings.
++ Respond with a valid JSON object containing a single key named "scenes". The value associated with this key must be a JSON array (list) of strings, where each string is the content of a scene.
++ Do not include any text, comments, or markdown formatting outside of the JSON object itself. Your entire response must be only the JSON object.
 ###############
 
 # STYLE #
@@ -601,6 +618,7 @@ Please tailor your response such that it is purely JSON formatted.
 
 # RESPONSE #
 Don't lose any information from the original outline, just format it to fit in a list.
++ Ensure the output is a single, valid JSON object as described in the objective.
 ###############
 """
 

@@ -1,7 +1,15 @@
+from pydantic import BaseModel # Ditambahkan
 import Writer.PrintUtils
 import Writer.Prompts
 
 import json
+
+# Definisikan Skema Pydantic
+class OutlineCompleteSchema(BaseModel):
+    IsComplete: bool
+
+class ChapterCompleteSchema(BaseModel):
+    IsComplete: bool
 
 
 def GetFeedbackOnOutline(Interface, _Logger, _Outline: str):
@@ -39,35 +47,13 @@ def GetOutlineRating(
     _Logger.Log("Prompting LLM To Get Review JSON", 5)
 
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    History = Interface.SafeGenerateText(
-        _Logger, History, Writer.Config.EVAL_MODEL, _Format="json"
+    # Menggunakan SafeGenerateJSON dengan skema
+    History, JSONResponse = Interface.SafeGenerateJSON(
+        _Logger, History, Writer.Config.EVAL_MODEL, _FormatSchema=OutlineCompleteSchema.model_json_schema()
     )
-    _Logger.Log("Finished Getting Review JSON", 5)
-
-    Iters: int = 0
-    while True:
-
-        RawResponse = Interface.GetLastMessageText(History)
-        RawResponse = RawResponse.replace("`", "")
-        RawResponse = RawResponse.replace("json", "")
-
-        try:
-            Iters += 1
-            Rating = json.loads(RawResponse)["IsComplete"]
-            _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)
-            return Rating
-        except Exception as E:
-            if Iters > 4:
-                _Logger.Log("Critical Error Parsing JSON", 7)
-                return False
-            _Logger.Log("Error Parsing JSON Written By LLM, Asking For Edits", 7)
-            EditPrompt: str = Writer.Prompts.JSON_PARSE_ERROR.format(_Error=E)
-            History.append(Interface.BuildUserQuery(EditPrompt))
-            _Logger.Log("Asking LLM TO Revise", 7)
-            History = Interface.SafeGenerateText(
-                _Logger, History, Writer.Config.EVAL_MODEL, _Format="json"
-            )
-            _Logger.Log("Done Asking LLM TO Revise JSON", 6)
+    Rating = JSONResponse["IsComplete"]
+    _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)
+    return Rating
 
 
 def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
@@ -108,33 +94,10 @@ def GetChapterRating(Interface, _Logger, _Chapter: str):
 
     _Logger.Log("Prompting LLM To Get Review JSON", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    History = Interface.SafeGenerateText(
-        _Logger, History, Writer.Config.EVAL_MODEL
+    # Menggunakan SafeGenerateJSON dengan skema
+    History, JSONResponse = Interface.SafeGenerateJSON(
+        _Logger, History, Writer.Config.EVAL_MODEL, _FormatSchema=ChapterCompleteSchema.model_json_schema()
     )
-    _Logger.Log("Finished Getting Review JSON", 5)
-
-    Iters: int = 0
-    while True:
-
-        RawResponse = Interface.GetLastMessageText(History)
-        RawResponse = RawResponse.replace("`", "")
-        RawResponse = RawResponse.replace("json", "")
-
-        try:
-            Iters += 1
-            Rating = json.loads(RawResponse)["IsComplete"]
-            _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)
-            return Rating
-        except Exception as E:
-            if Iters > 4:
-                _Logger.Log("Critical Error Parsing JSON", 7)
-                return False
-
-            _Logger.Log("Error Parsing JSON Written By LLM, Asking For Edits", 7)
-            EditPrompt: str = Writer.Prompts.JSON_PARSE_ERROR.format(_Error=E)
-            History.append(Interface.BuildUserQuery(EditPrompt))
-            _Logger.Log("Asking LLM TO Revise", 7)
-            History = Interface.SafeGenerateText(
-                _Logger, History, Writer.Config.EVAL_MODEL
-            )
-            _Logger.Log("Done Asking LLM TO Revise JSON", 6)
+    Rating = JSONResponse["IsComplete"]
+    _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)
+    return Rating

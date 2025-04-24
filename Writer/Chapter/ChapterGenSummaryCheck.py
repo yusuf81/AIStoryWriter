@@ -1,9 +1,15 @@
+from pydantic import BaseModel # Ditambahkan
 import json
 
 import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Prompts
+
+# Definisikan Skema Pydantic
+class SummaryComparisonSchema(BaseModel):
+    Suggestions: str
+    DidFollowOutline: bool
 
 
 def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
@@ -61,39 +67,11 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
             )
         )
     )
-    ComparisonLangchain = Interface.SafeGenerateText(
-        _Logger, ComparisonLangchain, Writer.Config.REVISION_MODEL, _Format="json"
-    )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
-
-    Iters: int = 0
-    while True:
-
-        RawResponse = Interface.GetLastMessageText(ComparisonLangchain)
-        RawResponse = RawResponse.replace("`", "")
-        RawResponse = RawResponse.replace("json", "")
-
-        try:
-            Iters += 1
-            Dict = json.loads(RawResponse)
-            return (
-                Dict["DidFollowOutline"],
-                "### Extra Suggestions:\n" + Dict["Suggestions"],
-            )
-        except Exception as E:
-            if Iters > 4:
-                _Logger.Log("Critical Error Parsing JSON", 7)
-                return False, ""
-
-            _Logger.Log("Error Parsing JSON Written By LLM, Asking For Edits", 7)
-            EditPrompt: str = (
-                f"Please revise your JSON. It encountered the following error during parsing: {E}. Remember that your entire response is plugged directly into a JSON parser, so don't write **anything** except pure json."
-            )
-            ComparisonLangchain.append(Interface.BuildUserQuery(EditPrompt))
-            _Logger.Log("Asking LLM TO Revise", 7)
-            ComparisonLangchain = Interface.SafeGenerateText(
-                _Logger,
-                ComparisonLangchain,
-                Writer.Config.REVISION_MODEL,
-                _Format="json",
-            )
-            _Logger.Log("Done Asking LLM TO Revise JSON", 6)
+    # Menggunakan SafeGenerateJSON dengan skema
+    ComparisonLangchain, JSONResponse = Interface.SafeGenerateJSON(
+        _Logger, ComparisonLangchain, Writer.Config.REVISION_MODEL, _FormatSchema=SummaryComparisonSchema.model_json_schema()
+    )
+    return (
+        JSONResponse["DidFollowOutline"],
+        "### Extra Suggestions:\n" + JSONResponse["Suggestions"],
+    )

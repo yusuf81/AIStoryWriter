@@ -1,8 +1,14 @@
+from pydantic import BaseModel # Ditambahkan
+from typing import List # Ditambahkan
 import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
 import Writer.Prompts
+
+# Definisikan Skema Pydantic
+class SceneListSchema(BaseModel):
+    scenes: List[str]
 
 
 def ScenesToJSON(Interface, _Logger, _Scenes:str):
@@ -14,7 +20,11 @@ def ScenesToJSON(Interface, _Logger, _Scenes:str):
     MesssageHistory.append(Interface.BuildSystemQuery(Writer.Prompts.DEFAULT_SYSTEM_PROMPT))
     MesssageHistory.append(Interface.BuildUserQuery(Writer.Prompts.SCENES_TO_JSON.format(_Scenes=_Scenes)))
 
-    _, SceneList = Interface.SafeGenerateJSON(_Logger, MesssageHistory, Writer.Config.CHECKER_MODEL)
+    # Menggunakan SafeGenerateJSON dengan skema
+    Response, SceneJSONResponse = Interface.SafeGenerateJSON(
+        _Logger, MesssageHistory, Writer.Config.CHECKER_MODEL, _FormatSchema=SceneListSchema.model_json_schema()
+    )
+    SceneList = SceneJSONResponse["scenes"] # Ekstrak list dari dictionary
     _Logger.Log(f"Finished ChapterScenes->JSON ({len(SceneList)} Scenes Found)", 5)
 
     return SceneList

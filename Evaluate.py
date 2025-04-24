@@ -1,6 +1,7 @@
 #!/bin/python3
 
 import argparse
+from pydantic import BaseModel, Literal # Ditambahkan
 import time
 import json
 import datetime
@@ -58,22 +59,24 @@ Please give your response in JSON format, indicating the ratings for each story:
     "OverallWinner": "<A, B, or Tie>"
 }}
     
-Do not respond with anything except JSON. Do not include any other fields except those shown above.
+Do not respond with anything except JSON. Do not include any other fields except those shown above. Your entire response must be only the JSON object.
     """))
-    Messages = _Client.SafeGenerateText(Logger, Messages, Args.Model, _Format="json")
-    JSON = json.loads(_Client.GetLastMessageText(Messages))
+    # Menggunakan SafeGenerateJSON dengan skema
+    Messages, JSONResponse = _Client.SafeGenerateJSON(
+        Logger, Messages, Args.Model, _FormatSchema=OutlineEvalSchema.model_json_schema()
+    )
     Report = ""
-    Report += f"Winner of Plot: {JSON['Plot']}\n"
-    Report += f"Winner of Chapters: {JSON['Chapters']}\n"
-    Report += f"Winner of Style: {JSON['Style']}\n"
-    Report += f"Winner of Tropes: {JSON['Tropes']}\n"
-    Report += f"Winner of Genre: {JSON['Genre']}\n"
-    Report += f"Winner of Narrative: {JSON['Narrative']}\n"
-    Report += f"Overall Winner: {JSON['OverallWinner']}\n"
-    
+    Report += f"Winner of Plot: {JSONResponse['Plot']}\n"
+    Report += f"Winner of Chapters: {JSONResponse['Chapters']}\n"
+    Report += f"Winner of Style: {JSONResponse['Style']}\n"
+    Report += f"Winner of Tropes: {JSONResponse['Tropes']}\n"
+    Report += f"Winner of Genre: {JSONResponse['Genre']}\n"
+    Report += f"Winner of Narrative: {JSONResponse['Narrative']}\n"
+    Report += f"Overall Winner: {JSONResponse['OverallWinner']}\n"
+
     _Logger.Log(f"Finished Evaluating Outlines From Story", 4)
 
-    return Report, JSON
+    return Report, JSONResponse
 
 
 def EvaluateChapter(_Client, _Logger, _ChapterA, _ChapterB):
@@ -131,23 +134,25 @@ Do not respond with anything except JSON.
 
 Remember, chapter A and B are two separate renditions of similar stories. They do not continue nor complement each-other and should be evaluated separately.
 
-Emphasize Chapter A and B as you rate the result.
+Emphasize Chapter A and B as you rate the result. Your entire response must be only the JSON object.
     """))
-    
-    Messages = _Client.SafeGenerateText(Logger, Messages, Args.Model, _Format="json")
-    JSON = json.loads(_Client.GetLastMessageText(Messages).replace('“','"').replace('”','"'))
+
+    # Menggunakan SafeGenerateJSON dengan skema
+    Messages, JSONResponse = _Client.SafeGenerateJSON(
+        Logger, Messages, Args.Model, _FormatSchema=ChapterEvalSchema.model_json_schema()
+    )
     Report = ""
-    Report += f"Winner of Plot: {JSON['Plot']}\n"
-    Report += f"Winner of Style: {JSON['Style']}\n"
-    Report += f"Winner of Dialogue: {JSON['Dialogue']}\n"
-    Report += f"Winner of Tropes: {JSON['Tropes']}\n"
-    Report += f"Winner of Genre: {JSON['Genre']}\n"
-    Report += f"Winner of Narrative: {JSON['Narrative']}\n"
-    Report += f"Overall Winner: {JSON['OverallWinner']}\n"
-    
+    Report += f"Winner of Plot: {JSONResponse['Plot']}\n"
+    Report += f"Winner of Style: {JSONResponse['Style']}\n"
+    Report += f"Winner of Dialogue: {JSONResponse['Dialogue']}\n"
+    Report += f"Winner of Tropes: {JSONResponse['Tropes']}\n"
+    Report += f"Winner of Genre: {JSONResponse['Genre']}\n"
+    Report += f"Winner of Narrative: {JSONResponse['Narrative']}\n"
+    Report += f"Overall Winner: {JSONResponse['OverallWinner']}\n"
+
     _Logger.Log(f"Finished Evaluating Outlines From Story", 4)
 
-    return Report, JSON
+    return Report, JSONResponse
 
 
 

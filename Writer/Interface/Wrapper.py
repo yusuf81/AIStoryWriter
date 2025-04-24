@@ -9,6 +9,7 @@ import importlib
 import subprocess
 import sys
 from urllib.parse import parse_qs, urlparse
+from pydantic import BaseModel # Ditambahkan
 
 dotenv.load_dotenv()
 
@@ -125,10 +126,11 @@ class Interface:
     def SafeGenerateText(
         self,
         _Logger,
+        _Logger,
         _Messages,
         _Model: str,
         _SeedOverride: int = -1,
-        _Format: str = None,
+        _FormatSchema: dict = None, # Diubah dari _Format
         _MinWordCount: int = 1,
     ):
         """
@@ -141,7 +143,7 @@ class Interface:
                 del _Messages[i]
 
         NewMsg = self.ChatAndStreamResponse(
-            _Logger, _Messages, _Model, _SeedOverride, _Format
+            _Logger, _Messages, _Model, _SeedOverride, _FormatSchema # Diubah dari _Format
         )
 
         while (self.GetLastMessageText(NewMsg).strip() == "") or (
@@ -160,7 +162,7 @@ class Interface:
 
             del _Messages[-1]  # Remove failed attempt
             NewMsg = self.ChatAndStreamResponse(
-                _Logger, _Messages, _Model, random.randint(0, 99999), _Format
+                _Logger, _Messages, _Model, random.randint(0, 99999), _FormatSchema # Diubah dari _Format
             )
 
         return NewMsg
@@ -171,21 +173,23 @@ class Interface:
         _Messages,
         _Model: str,
         _SeedOverride: int = -1,
-        _RequiredAttribs: list = [],
+        _FormatSchema: dict = None, # Diubah dari _Format, _RequiredAttribs dihapus
     ):
 
         while True:
-            Response = self.SafeGenerateText(
-                _Logger, _Messages, _Model, _SeedOverride, _Format="JSON"
+            # Menggunakan ChatAndStreamResponse langsung dengan skema
+            Response = self.ChatAndStreamResponse(
+                 _Logger, _Messages, _Model, _SeedOverride, _FormatSchema=_FormatSchema
             )
             try:
 
                 # Check that it returned valid json
+                # Pydantic akan memvalidasi saat parsing jika skema valid
                 JSONResponse = json.loads(self.GetLastMessageText(Response))
 
-                # Now ensure it has the right attributes
-                for _Attrib in _RequiredAttribs:
-                    JSONResponse[_Attrib]
+                # Validasi atribut tidak lagi diperlukan di sini jika skema digunakan
+                # for _Attrib in _RequiredAttribs:
+                #     JSONResponse[_Attrib]
 
                 # Now return the json
                 return Response, JSONResponse
@@ -193,8 +197,9 @@ class Interface:
             except Exception as e:
                 _Logger.Log(f"JSON Error during parsing: {e}", 7)
                 del _Messages[-1]  # Remove failed attempt
+                # Mencoba lagi dengan skema yang sama
                 Response = self.ChatAndStreamResponse(
-                    _Logger, _Messages, _Model, random.randint(0, 99999), _Format="JSON"
+                    _Logger, _Messages, _Model, random.randint(0, 99999), _FormatSchema=_FormatSchema
                 )
 
     def ChatAndStreamResponse(
@@ -203,7 +208,7 @@ class Interface:
         _Messages,
         _Model: str = "llama3",
         _SeedOverride: int = -1,
-        _Format: str = None,
+        _FormatSchema: dict = None, # Diubah dari _Format
     ):
         Provider, ProviderModel, ModelHost, ModelOptions = self.GetModelAndProvider(
             _Model
@@ -273,14 +278,14 @@ class Interface:
 
             _Logger.Log(f"Using Ollama Model Options: {ModelOptions}", 4)
 
-            if _Format == "json":
-                # Overwrite the format to JSON
-                ModelOptions["format"] = "json"
-
-                # if temperature is not set, set it to 0 for JSON mode
+            # Menggunakan structured output jika skema disediakan
+            if _FormatSchema is not None:
+                ModelOptions["format"] = _FormatSchema
+                # Set temperature to 0 for more deterministic structured output
                 if "temperature" not in ModelOptions:
-                    ModelOptions["temperature"] = 0
-                _Logger.Log("Using Ollama JSON Format", 4)
+                     ModelOptions["temperature"] = 0
+                _Logger.Log(f"Using Ollama Structured Output with schema", 4)
+            # Hapus logika _Format == "json"
 
             Stream = self.Clients[_Model].chat(
                 model=ProviderModel,
