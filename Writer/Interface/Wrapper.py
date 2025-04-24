@@ -180,11 +180,31 @@ class Interface:
             Response = self.ChatAndStreamResponse(
                  _Logger, _Messages, _Model, _SeedOverride, _FormatSchema=_FormatSchema
             )
-            try:
 
-                # Check that it returned valid json
-                # Pydantic akan memvalidasi saat parsing jika skema valid
-                JSONResponse = json.loads(self.GetLastMessageText(Response))
+            # Tambahkan blok ini untuk membersihkan markdown
+            # --------------------------------------------------
+            RawResponseText = self.GetLastMessageText(Response)
+            CleanedResponseText = RawResponseText.strip()
+            if CleanedResponseText.startswith("```json"):
+                CleanedResponseText = CleanedResponseText[7:] # Hapus ```json
+            if CleanedResponseText.startswith("```"):
+                 CleanedResponseText = CleanedResponseText[3:] # Hapus ```
+            if CleanedResponseText.endswith("```"):
+                CleanedResponseText = CleanedResponseText[:-3] # Hapus ```
+            CleanedResponseText = CleanedResponseText.strip() # Hapus whitespace ekstra
+            # --------------------------------------------------
+
+            try:
+                # Gunakan CleanedResponseText untuk parsing
+                JSONResponse = json.loads(CleanedResponseText) # Modifikasi baris ini
+
+                # Validasi skema Pydantic jika perlu (opsional, karena Ollama seharusnya sudah melakukannya)
+                # Jika Anda menggunakan Pydantic untuk validasi *setelah* menerima respons:
+                # if _FormatSchema:
+                #    # Anda perlu mengimpor BaseModel dari Pydantic di file ini
+                #    # dan mungkin membuat instance model dari JSONResponse
+                #    # Contoh: PydanticModel = YourSchemaModel(**JSONResponse)
+                #    pass # Tambahkan validasi Pydantic di sini jika diinginkan
 
                 # Validasi atribut tidak lagi diperlukan di sini jika skema digunakan
                 # for _Attrib in _RequiredAttribs:
@@ -194,12 +214,15 @@ class Interface:
                 return Response, JSONResponse
 
             except Exception as e:
-                _Logger.Log(f"JSON Error during parsing: {e}", 7)
-                del _Messages[-1]  # Remove failed attempt
-                # Mencoba lagi dengan skema yang sama
-                Response = self.ChatAndStreamResponse(
-                    _Logger, _Messages, _Model, random.randint(0, 99999), _FormatSchema=_FormatSchema
-                )
+                _Logger.Log(f"JSON Error during parsing: {e}. Raw Response: '{RawResponseText}'", 7)
+                # Hapus pesan terakhir (permintaan) dan respons gagal dari riwayat
+                # Asumsi: ChatAndStreamResponse menambahkan respons ke _Messages. Jika tidak, baris ini mungkin perlu dihapus.
+                if len(_Messages) > 0 and _Messages[-1]["role"] == "assistant":
+                     del _Messages[-1] # Hapus respons gagal dari LLM
+
+                # Mencoba lagi dengan seed baru dan skema yang sama pada iterasi berikutnya
+                _SeedOverride = random.randint(0, 99999) # Gunakan seed baru untuk percobaan ulang
+                # Tidak perlu memanggil ChatAndStreamResponse lagi di sini, loop akan melakukannya
 
     def ChatAndStreamResponse(
         self,
