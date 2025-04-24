@@ -1,0 +1,20 @@
+{
+    "terminal.integrated.shell.windows": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "python.terminal.activateEnvironment": false,
+    "python.defaultInterpreterPath": "",
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python-envs.pythonProjects": [],
+    "terminal.integrated.automationProfile.windows": {},
+    "terminal.integrated.enableImages": true,
+    "python.terminal.launchArgs": [],
+    "terminal.integrated.profiles.windows": {
+      "PowerShell-aistorywriter": {
+        "source": "PowerShell",
+        "icon": "terminal-powershell",
+        "args": ["-NoExit", "-Command", "conda activate aistorywriter"]
+      }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell-aistorywriter"
+  }
+  
