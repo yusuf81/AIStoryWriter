@@ -40,7 +40,9 @@ class Interface:
                 Provider, ProviderModel, ModelHost, ModelOptions = (
                     self.GetModelAndProvider(Model)
                 )
-                print(f"DEBUG: Loading Model {ProviderModel} from {Provider}@{ModelHost}")
+                print(
+                    f"DEBUG: Loading Model {ProviderModel} from {Provider}@{ModelHost}"
+                )
 
                 if Provider == "ollama":
                     # Get ollama models (only once)
@@ -127,8 +129,8 @@ class Interface:
         _Model: str,
         _SeedOverride: int = -1,
         _Format: str = None,
-        _MinWordCount: int = 1
-        ):
+        _MinWordCount: int = 1,
+    ):
         """
         This function guarantees that the output will not be whitespace.
         """
@@ -138,25 +140,44 @@ class Interface:
             if _Messages[i]["content"].strip() == "":
                 del _Messages[i]
 
-        NewMsg = self.ChatAndStreamResponse(_Logger, _Messages, _Model, _SeedOverride, _Format)
+        NewMsg = self.ChatAndStreamResponse(
+            _Logger, _Messages, _Model, _SeedOverride, _Format
+        )
 
-        while (self.GetLastMessageText(NewMsg).strip() == "") or (len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount):
+        while (self.GetLastMessageText(NewMsg).strip() == "") or (
+            len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount
+        ):
             if self.GetLastMessageText(NewMsg).strip() == "":
-                _Logger.Log("SafeGenerateText: Generation Failed Due To Empty (Whitespace) Response, Reattempting Output", 7)
-            elif (len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount):
-                _Logger.Log(f"SafeGenerateText: Generation Failed Due To Short Response ({len(self.GetLastMessageText(NewMsg).split(' '))}, min is {_MinWordCount}), Reattempting Output", 7)
+                _Logger.Log(
+                    "SafeGenerateText: Generation Failed Due To Empty (Whitespace) Response, Reattempting Output",
+                    7,
+                )
+            elif len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount:
+                _Logger.Log(
+                    f"SafeGenerateText: Generation Failed Due To Short Response ({len(self.GetLastMessageText(NewMsg).split(' '))}, min is {_MinWordCount}), Reattempting Output",
+                    7,
+                )
 
-            del _Messages[-1] # Remove failed attempt
-            NewMsg = self.ChatAndStreamResponse(_Logger, _Messages, _Model, random.randint(0, 99999), _Format)
+            del _Messages[-1]  # Remove failed attempt
+            NewMsg = self.ChatAndStreamResponse(
+                _Logger, _Messages, _Model, random.randint(0, 99999), _Format
+            )
 
         return NewMsg
 
-
-
-    def SafeGenerateJSON(self, _Logger, _Messages, _Model:str, _SeedOverride:int = -1, _RequiredAttribs:list = []):
+    def SafeGenerateJSON(
+        self,
+        _Logger,
+        _Messages,
+        _Model: str,
+        _SeedOverride: int = -1,
+        _RequiredAttribs: list = [],
+    ):
 
         while True:
-            Response = self.SafeGenerateText(_Logger, _Messages, _Model, _SeedOverride, _Format = "JSON")
+            Response = self.SafeGenerateText(
+                _Logger, _Messages, _Model, _SeedOverride, _Format="JSON"
+            )
             try:
 
                 # Check that it returned valid json
@@ -171,10 +192,10 @@ class Interface:
 
             except Exception as e:
                 _Logger.Log(f"JSON Error during parsing: {e}", 7)
-                del _Messages[-1] # Remove failed attempt
-                Response = self.ChatAndStreamResponse(_Logger, _Messages, _Model, random.randint(0, 99999), _Format = "JSON")
-
-
+                del _Messages[-1]  # Remove failed attempt
+                Response = self.ChatAndStreamResponse(
+                    _Logger, _Messages, _Model, random.randint(0, 99999), _Format="JSON"
+                )
 
     def ChatAndStreamResponse(
         self,
