@@ -263,21 +263,26 @@ def GenerateChapter(
             5,
         )
 
+        # --- AWAL PERUBAHAN DIAGNOSTIK ---
+        _Logger.Log("DIAGNOSTIC: Forcing break after first Stage 3 iteration.", 6)
+        break # Selalu keluar setelah iterasi pertama untuk pengujian
+        # --- AKHIR PERUBAHAN DIAGNOSTIK ---
+
         # Check if LLM did the work
-        if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
-            _Logger.Log(
-                "Chapter Summary-Based Revision Seems Stuck - Forcefully Exiting", 7
-            )
-            break
-        Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
-            Interface, _Logger, DetailedChapterOutline, Stage3Chapter
-        )
-        if Result:
-            _Logger.Log(
-                f"Done Generating Initial Chapter (Stage 3: Dialogue)  {_ChapterNum}/{_TotalChapters}",
-                5,
-            )
-            break
+        # if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
+        #     _Logger.Log(
+        #         "Chapter Summary-Based Revision Seems Stuck - Forcefully Exiting", 7
+        #     )
+        #     break
+        # Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
+        #     Interface, _Logger, DetailedChapterOutline, Stage3Chapter
+        # )
+        # if Result:
+        #     _Logger.Log(
+        #         f"Done Generating Initial Chapter (Stage 3: Dialogue)  {_ChapterNum}/{_TotalChapters}",
+        #         5,
+        #     )
+        #     break
 
         #     #### STAGE 4: Final-Pre-Revision Edit Pass
         # Prompt = Writer.Prompts.CHAPTER_GENERATION_STAGE4.format(
