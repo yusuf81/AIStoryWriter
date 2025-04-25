@@ -134,7 +134,7 @@ class Interface:
         _MinWordCount: int = 1,
     ):
         """
-        This function guarantees that the output will not be whitespace.
+        This function guarantees that the output will not be whitespace and meets minimum word count.
         """
 
         # Strip Empty Messages
@@ -142,6 +142,7 @@ class Interface:
             if _Messages[i]["content"].strip() == "":
                 del _Messages[i]
 
+        Retries = 0 # Tambahkan penghitung retry
         # Panggil ChatAndStreamResponse *sebelum* loop untuk percobaan pertama
         NewMsg = self.ChatAndStreamResponse(
             _Logger, _Messages, _Model, _SeedOverride, _FormatSchema
@@ -151,28 +152,31 @@ class Interface:
         while (self.GetLastMessageText(NewMsg).strip() == "") or (
             len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount
         ):
+            Retries += 1 # Tingkatkan penghitung retry
+
+            # Log alasan retry
             if self.GetLastMessageText(NewMsg).strip() == "":
                 _Logger.Log(
-                    "SafeGenerateText: Generation Failed Due To Empty (Whitespace) Response, Reattempting Output",
+                    f"SafeGenerateText: Generation Failed Due To Empty (Whitespace) Response. Retry {Retries}/{Writer.Config.MAX_TEXT_RETRIES}",
                     7,
                 )
             elif len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount:
+                CurrentWordCount = len(self.GetLastMessageText(NewMsg).split(' '))
                 _Logger.Log(
-                    f"SafeGenerateText: Generation Failed Due To Short Response ({len(self.GetLastMessageText(NewMsg).split(' '))}, min is {_MinWordCount}), Reattempting Output",
+                    f"SafeGenerateText: Generation Failed Due To Short Response ({CurrentWordCount}, min is {_MinWordCount}). Retry {Retries}/{Writer.Config.MAX_TEXT_RETRIES}",
                     7,
                 )
 
+            # Periksa apakah batas retry tercapai
+            if Retries >= Writer.Config.MAX_TEXT_RETRIES:
+                _Logger.Log(f"Max text retries ({Writer.Config.MAX_TEXT_RETRIES}) exceeded for whitespace/short response. Aborting text generation.", 7)
+                raise Exception(f"Failed to generate valid text after {Writer.Config.MAX_TEXT_RETRIES} retries (whitespace/short response).") # Naikkan exception
+
             # Hapus respons asisten yang gagal dari riwayat pesan (NewMsg adalah _Messages)
-            # Kita asumsikan ChatAndStreamResponse selalu menambahkan pesan asisten di akhir jika berhasil
             if len(_Messages) > 0 and _Messages[-1]["role"] == "assistant":
                 del _Messages[-1]
-            # else:
-                # Logika tambahan mungkin diperlukan jika error terjadi sebelum respons ditambahkan
-                # _Logger.Log("SafeGenerateText: Last message was not assistant, cannot remove failed attempt.", 6)
-
 
             # Coba lagi dengan seed acak baru, menggunakan riwayat pesan yang sama
-            # (yang sekarang pesan terakhirnya adalah user prompt asli)
             NewMsg = self.ChatAndStreamResponse(
                 _Logger, _Messages, _Model, random.randint(0, 99999), _FormatSchema
             )
