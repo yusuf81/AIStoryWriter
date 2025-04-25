@@ -471,15 +471,6 @@ class Interface:
             f"Generated Response in {round(EndGeneration - StartGeneration, 2)}s (~{round(EstimatedTokens / (EndGeneration - StartGeneration), 2)}tok/s)",
             4,
         )
-        # Check if the response is empty and attempt regeneration if necessary
-        if _Messages[-1]["content"].strip() == "":
-            _Logger.Log("Model Returned Only Whitespace, Attempting Regeneration", 6)
-            _Messages.append(
-                self.BuildUserQuery(
-                    "Sorry, but you returned an empty string, please try again!"
-                )
-            )
-            return self.ChatAndStreamResponse(_Logger, _Messages, _Model, _SeedOverride)
 
         CallStack: str = ""
         for Frame in inspect.stack()[1:]:
