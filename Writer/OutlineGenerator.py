@@ -97,13 +97,14 @@ def ReviseOutline(Interface, _Logger, _Outline, _Feedback, _History: list = []):
     return SummaryText, Messages
 
 
-def GeneratePerChapterOutline(Interface, _Logger, _Chapter, _Outline:str, _History: list = []):
+def GeneratePerChapterOutline(Interface, _Logger, _Chapter, _TotalChapters: int, _Outline:str, _History: list = []): # Tambahkan _TotalChapters
 
     RevisionPrompt: str = Writer.Prompts.CHAPTER_OUTLINE_PROMPT.format(
         _Chapter=_Chapter,
         _Outline=_Outline
     )
-    _Logger.Log("Generating Outline For Chapter " + str(_Chapter), 5)
+    # Modifikasi pesan log ini
+    _Logger.Log(f"Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5)
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages = Interface.SafeGenerateText(
@@ -111,6 +112,7 @@ def GeneratePerChapterOutline(Interface, _Logger, _Chapter, _Outline:str, _Histo
         _MinWordCount=Writer.Config.MIN_WORDS_PER_CHAPTER_OUTLINE # Menggunakan Config
     )
     SummaryText: str = Interface.GetLastMessageText(Messages)
-    _Logger.Log("Done Generating Outline For Chapter " + str(_Chapter), 5)
+    # Modifikasi pesan log ini
+    _Logger.Log(f"Done Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5)
 
     return SummaryText, Messages

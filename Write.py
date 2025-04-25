@@ -287,8 +287,9 @@ Messages = [Interface.BuildUserQuery(Prompt)]
 ChapterOutlines: list = []
 if Writer.Config.EXPAND_OUTLINE:
     for Chapter in range(1, NumChapters + 1):
+        # Modifikasi panggilan fungsi ini untuk menyertakan NumChapters
         ChapterOutline, Messages = Writer.OutlineGenerator.GeneratePerChapterOutline(
-            Interface, SysLogger, Chapter, Outline, Messages
+            Interface, SysLogger, Chapter, NumChapters, Outline, Messages # Tambahkan NumChapters di sini
         )
         ChapterOutlines.append(ChapterOutline)
 
