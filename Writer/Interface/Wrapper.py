@@ -350,26 +350,19 @@ class Interface:
                 stream=True,
                 options=ModelOptions,
             )
-            MaxRetries = 3
 
-            while True:
-                try:
-                    _Messages.append(self.StreamResponse(Stream, Provider))
-                    break
-                except Exception as e:
-                    if MaxRetries > 0:
-                        _Logger.Log(
-                            f"Exception During Generation '{e}', {MaxRetries} Retries Remaining",
-                            7,
-                        )
-                        MaxRetries -= 1
-                    else:
-                        _Logger.Log(
-                            f"Max Retries Exceeded During Generation, Aborting!", 7
-                        )
-                        raise Exception(
-                            "Generation Failed, Max Retires Exceeded, Aborting"
-                        )
+            # Langsung panggil StreamResponse tanpa loop retry untuk respons kosong/spasi
+            # Penanganan respons kosong/pendek sudah dilakukan oleh SafeGenerateText
+            try:
+                _Messages.append(self.StreamResponse(Stream, Provider))
+            except Exception as e:
+                # Tangani exception lain yang mungkin terjadi selama streaming (misal: koneksi)
+                _Logger.Log(f"Exception During Ollama StreamResponse: '{e}'", 7)
+                # Anda mungkin ingin menambahkan logika retry di sini untuk error spesifik
+                # atau biarkan exception ini naik ke pemanggil (SafeGenerateText/SafeGenerateJSON)
+                # Untuk saat ini, kita akan menaikkan exception
+                raise Exception(f"Ollama StreamResponse failed: {e}")
+
 
         elif Provider == "google":
 
@@ -417,12 +410,28 @@ class Interface:
                             f"Max Retries Exceeded During Generation, Aborting!", 7
                         )
                         raise Exception(
-                            "Generation Failed, Max Retires Exceeded, Aborting"
+                            "Generation Failed, Max Retries Exceeded, Aborting"
                         )
 
             # Replace "parts" back to "content" for generalization
             # and replace "model" with "assistant"
-            for m in _Messages:
+            # Pastikan _Messages tidak kosong sebelum mengakses elemen terakhir
+            if _Messages and "parts" in _Messages[-1]:
+                 _Messages[-1]["content"] = _Messages[-1]["parts"]
+                 del _Messages[-1]["parts"]
+            if _Messages and "role" in _Messages[-1] and _Messages[-1]["role"] == "model":
+                 _Messages[-1]["role"] = "assistant"
+
+            # Lakukan penggantian untuk semua pesan dalam riwayat jika diperlukan
+            # (Mungkin tidak perlu jika hanya pesan terakhir yang relevan)
+            # for m in _Messages:
+            #     if "parts" in m:
+            #         m["content"] = m["parts"]
+            #         del m["parts"]
+            #     if "role" in m and m["role"] == "model":
+            #         m["role"] = "assistant"
+
+        elif Provider == "openai":
                 if "parts" in m:
                     m["content"] = m["parts"]
                     del m["parts"]
