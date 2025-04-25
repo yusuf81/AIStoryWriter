@@ -109,38 +109,38 @@ Parser.add_argument(
 )
 Parser.add_argument(
     "-Translate",
-    default="",
+    default=Writer.Config.TRANSLATE_LANGUAGE,
     type=str,
     help="Specify a language to translate the story to - will not translate by default. Ex: 'French'",
 )
 Parser.add_argument(
     "-TranslatePrompt",
-    default="",
+    default=Writer.Config.TRANSLATE_PROMPT_LANGUAGE,
     type=str,
     help="Specify a language to translate your input prompt to. Ex: 'French'",
 )
 Parser.add_argument("-Seed", default=12, type=int, help="Used to seed models.")
 Parser.add_argument(
     "-OutlineMinRevisions",
-    default=0,
+    default=Writer.Config.MIN_OUTLINE_REVISIONS,
     type=int,
     help="Number of minimum revisions that the outline must be given prior to proceeding",
 )
 Parser.add_argument(
     "-OutlineMaxRevisions",
-    default=3,
+    default=Writer.Config.MAX_OUTLINE_REVISIONS,
     type=int,
     help="Max number of revisions that the outline may have",
 )
 Parser.add_argument(
     "-ChapterMinRevisions",
-    default=0,
+    default=Writer.Config.MIN_CHAPTER_REVISIONS,
     type=int,
     help="Number of minimum revisions that the chapter must be given prior to proceeding",
 )
 Parser.add_argument(
     "-ChapterMaxRevisions",
-    default=3,
+    default=Writer.Config.MAX_CHAPTER_REVISIONS,
     type=int,
     help="Max number of revisions that the chapter may have",
 )
@@ -257,8 +257,10 @@ if Writer.Config.TRANSLATE_PROMPT_LANGUAGE != "":
 
 
 # Generate the Outline
-Outline, Elements, RoughChapterOutline, BaseContext = Writer.OutlineGenerator.GenerateOutline(
-    Interface, SysLogger, Prompt, Writer.Config.OUTLINE_QUALITY
+Outline, Elements, RoughChapterOutline, BaseContext = (
+    Writer.OutlineGenerator.GenerateOutline(
+        Interface, SysLogger, Prompt, Writer.Config.OUTLINE_QUALITY
+    )
 )
 BasePrompt = Prompt
 
@@ -335,7 +337,7 @@ for i in range(1, NumChapters + 1):
 
 # Now edit the whole thing together
 StoryBodyText: str = ""
-StoryInfoJSON:dict = {"Outline": Outline}
+StoryInfoJSON: dict = {"Outline": Outline}
 StoryInfoJSON.update({"StoryElements": Elements})
 StoryInfoJSON.update({"RoughChapterOutline": RoughChapterOutline})
 StoryInfoJSON.update({"BaseContext": BaseContext})
