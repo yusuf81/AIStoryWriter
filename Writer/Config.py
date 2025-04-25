@@ -57,6 +57,9 @@ OPTIONAL_OUTPUT_NAME = ""
 
 DEBUG = False
 
+# Maximum retries for SafeGenerateJSON
+MAX_JSON_RETRIES = 5 # Jumlah percobaan ulang maksimum untuk SafeGenerateJSON
+
 # Tested models:
 "llama3:70b"  # works as editor model, DO NOT use as writer model, it sucks
 "vanilj/midnight-miqu-70b-v1.5"  # works rather well as the writer, not well as anything else

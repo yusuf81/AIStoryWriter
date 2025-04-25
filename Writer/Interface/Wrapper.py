@@ -10,6 +10,7 @@ import subprocess
 import sys
 from urllib.parse import parse_qs, urlparse
 from pydantic import BaseModel # Ditambahkan
+import Writer.Config # Pastikan ini diimpor
 
 dotenv.load_dotenv()
 
@@ -186,7 +187,7 @@ class Interface:
         _SeedOverride: int = -1,
         _FormatSchema: dict = None, # Diubah dari _Format, _RequiredAttribs dihapus
     ):
-
+        Retries = 0 # Tambahkan penghitung retry
         while True:
             # Menggunakan ChatAndStreamResponse langsung dengan skema
             Response = self.ChatAndStreamResponse(
@@ -226,7 +227,14 @@ class Interface:
                 return Response, JSONResponse
 
             except Exception as e:
-                _Logger.Log(f"JSON Error during parsing: {e}. Raw Response: '{RawResponseText}'", 7)
+                Retries += 1 # Tingkatkan penghitung retry
+                _Logger.Log(f"JSON Error during parsing: {e}. Raw Response: '{RawResponseText}'. Retry {Retries}/{Writer.Config.MAX_JSON_RETRIES}", 7) # Log percobaan ulang
+
+                # Periksa apakah batas retry tercapai
+                if Retries >= Writer.Config.MAX_JSON_RETRIES:
+                    _Logger.Log(f"Max JSON retries ({Writer.Config.MAX_JSON_RETRIES}) exceeded. Aborting JSON generation.", 7)
+                    raise Exception(f"Failed to generate valid JSON after {Writer.Config.MAX_JSON_RETRIES} retries.") # Naikkan exception
+
                 # Hapus pesan terakhir (permintaan) dan respons gagal dari riwayat
                 # Asumsi: ChatAndStreamResponse menambahkan respons ke _Messages. Jika tidak, baris ini mungkin perlu dihapus.
                 if len(_Messages) > 0 and _Messages[-1]["role"] == "assistant":
