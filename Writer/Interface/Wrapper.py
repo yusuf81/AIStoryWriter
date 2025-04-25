@@ -503,7 +503,7 @@ class Interface:
                     Host = parsed.path.split("@")[1]
                 else:
                     Model = parsed.netloc
-                    Host = "localhost:11434"
+                    Host = Writer.Config.OLLAMA_HOST # Gunakan nilai dari Config
 
             else:
                 Model = parsed.netloc
@@ -517,4 +517,4 @@ class Interface:
             return Provider, Model, Host, QueryParams
         else:
             # legacy support for `Model` format
-            return "ollama", _Model, "localhost:11434", None
+            return "ollama", _Model, Writer.Config.OLLAMA_HOST, None # Gunakan nilai dari Config
