@@ -141,10 +141,12 @@ class Interface:
             if _Messages[i]["content"].strip() == "":
                 del _Messages[i]
 
+        # Panggil ChatAndStreamResponse *sebelum* loop untuk percobaan pertama
         NewMsg = self.ChatAndStreamResponse(
-            _Logger, _Messages, _Model, _SeedOverride, _FormatSchema # Diubah dari _Format
+            _Logger, _Messages, _Model, _SeedOverride, _FormatSchema
         )
 
+        # Loop untuk memeriksa dan mencoba lagi jika perlu
         while (self.GetLastMessageText(NewMsg).strip() == "") or (
             len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount
         ):
@@ -159,12 +161,22 @@ class Interface:
                     7,
                 )
 
-            del _Messages[-1]  # Remove failed attempt
+            # Hapus respons asisten yang gagal dari riwayat pesan (NewMsg adalah _Messages)
+            # Kita asumsikan ChatAndStreamResponse selalu menambahkan pesan asisten di akhir jika berhasil
+            if len(_Messages) > 0 and _Messages[-1]["role"] == "assistant":
+                del _Messages[-1]
+            # else:
+                # Logika tambahan mungkin diperlukan jika error terjadi sebelum respons ditambahkan
+                # _Logger.Log("SafeGenerateText: Last message was not assistant, cannot remove failed attempt.", 6)
+
+
+            # Coba lagi dengan seed acak baru, menggunakan riwayat pesan yang sama
+            # (yang sekarang pesan terakhirnya adalah user prompt asli)
             NewMsg = self.ChatAndStreamResponse(
-                _Logger, _Messages, _Model, random.randint(0, 99999), _FormatSchema # Diubah dari _Format
+                _Logger, _Messages, _Model, random.randint(0, 99999), _FormatSchema
             )
 
-        return NewMsg
+        return NewMsg # Kembalikan NewMsg (yang merupakan _Messages yang berhasil)
 
     def SafeGenerateJSON(
         self,
