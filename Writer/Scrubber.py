@@ -15,7 +15,8 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
         Messages = Interface.SafeGenerateText(
-            _Logger, Messages, Writer.Config.SCRUB_MODEL
+            _Logger, Messages, Writer.Config.SCRUB_MODEL,
+            _MinWordCount=Writer.Config.MIN_WORDS_SCRUB_CHAPTER # Menggunakan Config
         )
         _Logger.Log(f"Finished Chapter {i+1} Scrubbing Edit", 5)
 

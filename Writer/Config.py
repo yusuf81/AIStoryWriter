@@ -42,6 +42,8 @@ MIN_WORDS_REVISE_CHAPTER = 100      # Minimum words for chapter revision
 MIN_WORDS_OUTLINE_FEEDBACK = 70     # Minimum words for outline feedback/critique
 MIN_WORDS_SCENE_OUTLINE = 100       # Minimum words for scene-by-scene outline generation
 MIN_WORDS_SCENE_WRITE = 100         # Minimum words for writing a scene from its outline
+MIN_WORDS_SCRUB_CHAPTER = 100       # Minimum words for scrubbing a chapter
+MIN_WORDS_EDIT_NOVEL = 150          # Minimum words for final novel edit pass per chapter
 
 SCRUB_NO_SCRUB = False  # Note this value is overridden by the argparser
 EXPAND_OUTLINE = False  # Note this value is overridden by the argparser
