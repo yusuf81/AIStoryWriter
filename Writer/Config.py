@@ -29,6 +29,20 @@ CHAPTER_QUALITY = 85  # Note this value is overridden by the argparser
 CHAPTER_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
 CHAPTER_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
 
+# Minimum Word Counts for SafeGenerateText calls
+MIN_WORDS_TRANSLATE_PROMPT = 1      # Minimum words for prompt translation
+MIN_WORDS_INITIAL_OUTLINE = 250     # Minimum words for initial outline generation
+MIN_WORDS_REVISE_OUTLINE = 250      # Minimum words for outline revision
+MIN_WORDS_PER_CHAPTER_OUTLINE = 50  # Minimum words for per-chapter outline generation
+MIN_WORDS_STORY_ELEMENTS = 150      # Minimum words for story elements generation
+MIN_WORDS_CHAPTER_SEGMENT_EXTRACT = 120 # Minimum words for extracting chapter outline segment
+MIN_WORDS_CHAPTER_SUMMARY = 100     # Minimum words for summarizing previous chapter
+MIN_WORDS_CHAPTER_DRAFT = 100       # Minimum words for chapter draft stages (1, 2, 3)
+MIN_WORDS_REVISE_CHAPTER = 100      # Minimum words for chapter revision
+MIN_WORDS_OUTLINE_FEEDBACK = 70     # Minimum words for outline feedback/critique
+MIN_WORDS_SCENE_OUTLINE = 100       # Minimum words for scene-by-scene outline generation
+MIN_WORDS_SCENE_WRITE = 100         # Minimum words for writing a scene from its outline
+
 SCRUB_NO_SCRUB = False  # Note this value is overridden by the argparser
 EXPAND_OUTLINE = False  # Note this value is overridden by the argparser
 ENABLE_FINAL_EDIT_PASS = False  # Note this value is overridden by the argparser

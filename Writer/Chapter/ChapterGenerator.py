@@ -69,7 +69,8 @@ def GenerateChapter(
     ChapterSegmentMessages = Interface.SafeGenerateText(
         _Logger,
         ChapterSegmentMessages,
-        Writer.Config.CHAPTER_STAGE1_WRITER_MODEL, _MinWordCount=120
+        Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
+        _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_SEGMENT_EXTRACT # Menggunakan Config
     )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
     ThisChapterOutline: str = Interface.GetLastMessageText(ChapterSegmentMessages)
     _Logger.Log(f"Created Chapter Specific Outline", 4)
@@ -95,7 +96,8 @@ def GenerateChapter(
         ChapterSummaryMessages = Interface.SafeGenerateText(
             _Logger,
             ChapterSummaryMessages,
-            Writer.Config.CHAPTER_STAGE1_WRITER_MODEL, _MinWordCount=100
+            Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
+            _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_SUMMARY # Menggunakan Config
         )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
         FormattedLastChapterSummary: str = Interface.GetLastMessageText(
             ChapterSummaryMessages
@@ -140,7 +142,7 @@ def GenerateChapter(
                 Messages,
                 Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
                 _SeedOverride=IterCounter + Writer.Config.SEED,
-                _MinWordCount=100
+                _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_DRAFT # Menggunakan Config
             )
             IterCounter += 1
             Stage1Chapter: str = Interface.GetLastMessageText(Messages)
@@ -199,7 +201,7 @@ def GenerateChapter(
             Messages,
             Writer.Config.CHAPTER_STAGE2_WRITER_MODEL,
             _SeedOverride=IterCounter + Writer.Config.SEED,
-            _MinWordCount=100
+            _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_DRAFT # Menggunakan Config
         )
         IterCounter += 1
         Stage2Chapter: str = Interface.GetLastMessageText(Messages)
@@ -252,7 +254,7 @@ def GenerateChapter(
             Messages,
             Writer.Config.CHAPTER_STAGE3_WRITER_MODEL,
             _SeedOverride=IterCounter + Writer.Config.SEED,
-            _MinWordCount=100
+            _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_DRAFT # Menggunakan Config
         )
         IterCounter += 1
         Stage3Chapter: str = Interface.GetLastMessageText(Messages)
@@ -343,7 +345,7 @@ def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = []):
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages = Interface.SafeGenerateText(
         _Logger, Messages, Writer.Config.CHAPTER_REVISION_WRITER_MODEL,
-        _MinWordCount=100
+        _MinWordCount=Writer.Config.MIN_WORDS_REVISE_CHAPTER # Menggunakan Config
     )
     SummaryText: str = Interface.GetLastMessageText(Messages)
     _Logger.Log("Done Revising Chapter", 5)
