@@ -172,11 +172,22 @@ class Interface:
                 _Logger.Log(f"Max text retries ({Writer.Config.MAX_TEXT_RETRIES}) exceeded for whitespace/short response. Aborting text generation.", 7)
                 raise Exception(f"Failed to generate valid text after {Writer.Config.MAX_TEXT_RETRIES} retries (whitespace/short response).") # Naikkan exception
 
-            # Hapus respons asisten yang gagal dari riwayat pesan (NewMsg adalah _Messages)
+            # Hapus respons asisten yang gagal
             if len(_Messages) > 0 and _Messages[-1]["role"] == "assistant":
                 del _Messages[-1]
 
-            # Coba lagi dengan seed acak baru, menggunakan riwayat pesan yang sama
+            # --- AWAL LOGGING DIAGNOSTIK ---
+            _Logger.Log(f"SafeGenerateText Retry {Retries}: Resending history. Last 2 messages:", 6)
+            if len(_Messages) >= 2:
+                _Logger.Log(f"  - Role: {_Messages[-2]['role']}, Content: '{_Messages[-2]['content'][:100]}...'", 6) # Log 100 karakter pertama
+                _Logger.Log(f"  - Role: {_Messages[-1]['role']}, Content: '{_Messages[-1]['content'][:100]}...'", 6) # Log 100 karakter pertama
+            elif len(_Messages) == 1:
+                _Logger.Log(f"  - Role: {_Messages[-1]['role']}, Content: '{_Messages[-1]['content'][:100]}...'", 6) # Log 100 karakter pertama
+            else:
+                 _Logger.Log("  - History is empty?", 6)
+            # --- AKHIR LOGGING DIAGNOSTIK ---
+
+            # Coba lagi dengan seed acak baru
             NewMsg = self.ChatAndStreamResponse(
                 _Logger, _Messages, _Model, random.randint(0, 99999), _FormatSchema
             )
