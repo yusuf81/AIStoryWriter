@@ -122,25 +122,25 @@ Parser.add_argument(
 Parser.add_argument("-Seed", default=12, type=int, help="Used to seed models.")
 Parser.add_argument(
     "-OutlineMinRevisions",
-    default=Writer.Config.MIN_OUTLINE_REVISIONS,
+    default=Writer.Config.OUTLINE_MIN_REVISIONS,
     type=int,
     help="Number of minimum revisions that the outline must be given prior to proceeding",
 )
 Parser.add_argument(
     "-OutlineMaxRevisions",
-    default=Writer.Config.MAX_OUTLINE_REVISIONS,
+    default=Writer.Config.OUTLINE_MAX_REVISIONS,
     type=int,
     help="Max number of revisions that the outline may have",
 )
 Parser.add_argument(
     "-ChapterMinRevisions",
-    default=Writer.Config.MIN_CHAPTER_REVISIONS,
+    default=Writer.Config.CHAPTER_MIN_REVISIONS,
     type=int,
     help="Number of minimum revisions that the chapter must be given prior to proceeding",
 )
 Parser.add_argument(
     "-ChapterMaxRevisions",
-    default=Writer.Config.MAX_CHAPTER_REVISIONS,
+    default=Writer.Config.CHAPTER_MAX_REVISIONS,
     type=int,
     help="Max number of revisions that the chapter may have",
 )
