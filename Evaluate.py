@@ -59,47 +59,7 @@ def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
     )
     # Menggunakan SafeGenerateJSON dengan skema
     Messages, JSONResponse = _Client.SafeGenerateJSON(
-
-Here's the first outline:
-<OutlineA>
-{_Outline1}
-</OutlineA>
-
-And here is the second outline:
-<OutlineB>
-{_Outline2}
-</OutlineB>
-
-Use the following criteria to evaluate (NOTE: You'll be picking outline A or outline B later on for these criteria):
-- Plot: Does the story have a coherent plot? Is It creative?
-- Chapters: Do the chapters flow into each-other (be very careful when checking this)? Do they feel connected? Do they feel homogenized or are they unique and fresh?
-- Style: Does the writing style help move the plot or is it distracting from the rest of the story? Is it excessively flowery?
-- Dialogue: Is the dialog specific to each character? Does it feel in-character? Is there enough or too little?
-- Tropes: Do the tropes make sense for the genre? Are they interesting and well integrated?
-- Genre: Is the genre clear?
-- Narrative Structure: Is it clear what the structure is? Does it fit with the genre/tropes/content?
-
-Please give your response in JSON format, indicating the ratings for each story:
-
-{{
-    "Thoughts": "Your notes and reasoning on which of the two is better and why.",
-    "Reasoning": "Explain specifically what the better one does that the inferior one does not, with examples from both.",
-    "Plot": "<A, B, or Tie>",
-    "PlotExplanation": "Explain your reasoning.",
-    "Style": "<A, B, or Tie>",
-    "StyleExplanation": "Explain your reasoning.",
-    "Chapters": "<A, B, or Tie>",
-    "ChaptersExplanation": "Explain your reasoning.",
-    "Tropes": "<A, B, or Tie>",
-    "TropesExplanation": "Explain your reasoning.",
-    "Genre": "<A, B, or Tie>",
-    "GenreExplanation": "Explain your reasoning.",
-    "Narrative": "<A, B, or Tie>",
-    "NarrativeExplanation": "Explain your reasoning.",
-    "OverallWinner": "<A, B, or Tie>"
-}}
-
-        Logger,
+        _Logger,  # Menggunakan _Logger, bukan Logger global
         Messages,
         Args.Model,
         _FormatSchema=OutlineEvalSchema.model_json_schema(),
@@ -130,56 +90,7 @@ def EvaluateChapter(_Client, _Logger, _ChapterA, _ChapterB):
 
     # Menggunakan SafeGenerateJSON dengan skema
     Messages, JSONResponse = _Client.SafeGenerateJSON(
-
-                                           
-Use the following criteria to evaluate (NOTE: You'll be picking chapter A or chapter B later on for these criteria):
-- Plot: Does the story have a coherent plot? Is It creative?
-- Chapters: Do the chapters flow into each-other (be very careful when checking this)? Do they feel connected? Do they feel homogenized or are they unique and fresh?
-- Style: Does the writing style help move the plot or is it distracting from the rest of the story? Is it excessively flowery?
-- Dialogue: Is the dialog specific to each character? Does it feel in-character? Is there enough or too little?
-- Tropes: Do the tropes make sense for the genre? Are they interesting and well integrated?
-- Genre: Is the genre clear?
-- Narrative Structure: Is it clear what the structure is? Does it fit with the genre/tropes/content?
-                                           
-
-Here's chapter A:
-<CHAPTER_A>
-{_ChapterA}
-
-!END OF CHAPTER!
-</CHAPTER_A>
-
-And here is chapter B:
-<CHAPTER_B>
-{_ChapterB}
-!END OF CHAPTER!
-</CHAPTER_B>
-
-
-
-Please give your response in JSON format, indicating the ratings for each story:
-
-{{
-    "Plot": "<A, B, or Tie>",
-    "PlotExplanation": "Explain your reasoning.",
-    "Style": "<A, B, or Tie>",
-    "StyleExplanation": "Explain your reasoning.",
-    "Dialogue": "<A, B, or Tie>",
-    "DialogueExplanation": "Explain your reasoning.",
-    "Tropes": "<A, B, or Tie>",
-    "TropesExplanation": "Explain your reasoning.",
-    "Genre": "<A, B, or Tie>",
-    "GenreExplanation": "Explain your reasoning.",
-    "Narrative": "<A, B, or Tie>",
-    "NarrativeExplanation": "Explain your reasoning.",
-    "OverallWinner": "<A, B, or Tie>"
-}}
-
-Do not respond with anything except JSON.
-
-Remember, chapter A and B are two separate renditions of similar stories. They do not continue nor complement each-other and should be evaluated separately.
-
-        Logger,
+        _Logger,  # Menggunakan _Logger, bukan Logger global
         Messages,
         Args.Model,
         _FormatSchema=ChapterEvalSchema.model_json_schema(),
