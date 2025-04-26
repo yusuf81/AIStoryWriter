@@ -344,24 +344,46 @@ class Interface:
                 _Logger.Log(f"Using Ollama Structured Output with schema", 4)
             # Hapus logika _Format == "json"
 
-            Stream = self.Clients[_Model].chat(
-                model=ProviderModel,
-                messages=_Messages,
-                stream=True,
-                options=ModelOptions,
-            )
+            # Tambahkan loop retry untuk Ollama
+            import ollama # Pastikan ollama diimpor
+            # Gunakan konstanta dari Config jika ada, jika tidak gunakan default 3
+            MaxRetries = getattr(Writer.Config, 'MAX_OLLAMA_RETRIES', 3)
+            while MaxRetries > 0:
+                try:
+                    Stream = self.Clients[_Model].chat(
+                        model=ProviderModel,
+                        messages=_Messages,
+                        stream=True,
+                        options=ModelOptions,
+                    )
 
-            # Langsung panggil StreamResponse tanpa loop retry untuk respons kosong/spasi
-            # Penanganan respons kosong/pendek sudah dilakukan oleh SafeGenerateText
-            try:
-                _Messages.append(self.StreamResponse(Stream, Provider))
-            except Exception as e:
-                # Tangani exception lain yang mungkin terjadi selama streaming (misal: koneksi)
-                _Logger.Log(f"Exception During Ollama StreamResponse: '{e}'", 7)
-                # Anda mungkin ingin menambahkan logika retry di sini untuk error spesifik
-                # atau biarkan exception ini naik ke pemanggil (SafeGenerateText/SafeGenerateJSON)
-                # Untuk saat ini, kita akan menaikkan exception
-                raise Exception(f"Ollama StreamResponse failed: {e}")
+                    # Langsung panggil StreamResponse tanpa loop retry untuk respons kosong/spasi
+                    # Penanganan respons kosong/pendek sudah dilakukan oleh SafeGenerateText
+                    _Messages.append(self.StreamResponse(Stream, Provider))
+                    break # Keluar dari loop jika berhasil
+
+                except ollama.ResponseError as e: # Tangkap error spesifik Ollama
+                    MaxRetries -= 1
+                    _Logger.Log(
+                        f"Exception During Ollama Generation/Stream: '{e}', {MaxRetries} Retries Remaining",
+                        7,
+                    )
+                    if MaxRetries <= 0:
+                        _Logger.Log(
+                            f"Max Retries Exceeded During Ollama Generation, Aborting!", 7
+                        )
+                        # Naikkan exception jika retry habis
+                        raise Exception(f"Ollama StreamResponse failed after retries: {e}")
+                    else:
+                        # import time # Pastikan 'import time' ada di awal file
+                        time.sleep(2) # Jeda singkat sebelum mencoba lagi
+                        continue # Lanjutkan ke iterasi retry berikutnya
+                except Exception as e:
+                    # Tangani exception lain yang mungkin terjadi selama streaming (misal: koneksi)
+                    # dan tidak terkait langsung dengan respons Ollama
+                    _Logger.Log(f"Unexpected Exception During Ollama Stream Handling: '{e}'", 7)
+                    # Langsung naikkan exception non-ResponseError
+                    raise Exception(f"Ollama Stream Handling failed: {e}")
 
 
         elif Provider == "google":
