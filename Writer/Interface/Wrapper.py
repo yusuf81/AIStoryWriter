@@ -223,7 +223,47 @@ class Interface:
             # --------------------------------------------------
 
             try:
-                # Gunakan CleanedResponseText untuk parsing
+                # --- AWAL BLOK EKSTRAKSI JSON ---
+                # Coba cari blok JSON utama ({...} atau [...])
+                # Ini membantu jika ada teks tambahan sebelum/sesudah JSON
+                first_brace = CleanedResponseText.find('{')
+                first_bracket = CleanedResponseText.find('[')
+                last_brace = CleanedResponseText.rfind('}')
+                last_bracket = CleanedResponseText.rfind(']')
+
+                start_index = -1
+                end_index = -1
+
+                # Tentukan awal (brace atau bracket yang muncul pertama)
+                if first_brace != -1 and first_bracket != -1:
+                    start_index = min(first_brace, first_bracket)
+                elif first_brace != -1:
+                    start_index = first_brace
+                elif first_bracket != -1:
+                    start_index = first_bracket
+
+                # Tentukan akhir (brace atau bracket yang cocok dengan awal)
+                if start_index == first_brace and last_brace != -1:
+                    end_index = last_brace
+                elif start_index == first_bracket and last_bracket != -1:
+                    end_index = last_bracket
+                # Fallback jika hanya salah satu jenis penutup yang ditemukan
+                elif last_brace != -1 and last_bracket != -1:
+                     end_index = max(last_brace, last_bracket)
+                elif last_brace != -1:
+                     end_index = last_brace
+                elif last_bracket != -1:
+                     end_index = last_bracket
+
+
+                if start_index != -1 and end_index != -1 and end_index > start_index:
+                    CleanedResponseText = CleanedResponseText[start_index : end_index + 1]
+                    _Logger.Log(f"Extracted potential JSON block: '{CleanedResponseText[:100]}...'", 6) # Log potongan
+                else:
+                     _Logger.Log(f"Could not reliably extract JSON block, using cleaned text as is.", 6)
+                # --- AKHIR BLOK EKSTRAKSI JSON ---
+
+                # Gunakan CleanedResponseText untuk parsing (yang mungkin sudah dipotong)
                 JSONResponse = json.loads(CleanedResponseText) # Modifikasi baris ini
 
                 # Validasi skema Pydantic jika perlu (opsional, karena Ollama seharusnya sudah melakukannya)
