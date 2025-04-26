@@ -18,6 +18,7 @@ import Writer.Chapter.ChapterGenerator
 import Writer.StoryInfo
 import Writer.NovelEditor
 import Writer.Translator
+import Writer.Prompts
 
 
 # Setup Argparser
@@ -275,14 +276,7 @@ SysLogger.Log(f"Found {NumChapters} Chapter(s)", 5)
 
 
 ## Write Per-Chapter Outline
-Prompt = f"""
-Please help me expand upon the following outline, chapter by chapter.
-
-```
-{Outline}
-```
-    
-"""
+Prompt = Writer.Prompts.EXPAND_OUTLINE_CHAPTER_BY_CHAPTER.format(_Outline=Outline) # Menggunakan prompt terpusat
 Messages = [Interface.BuildUserQuery(Prompt)]
 ChapterOutlines: list = []
 if Writer.Config.EXPAND_OUTLINE:

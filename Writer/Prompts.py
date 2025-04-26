@@ -584,6 +584,249 @@ Be detailed and well-formatted in your response, yet ensure you have a well-thou
 """
 
 
+# Prompts moved from Write.py
+EXPAND_OUTLINE_CHAPTER_BY_CHAPTER = """
+Please help me expand upon the following outline, chapter by chapter.
+
+```
+{_Outline}
+```
+
+"""
+
+# Prompts moved from Writer/Outline/StoryElements.py
+GENERATE_STORY_ELEMENTS = """
+I'm working on writing a fictional story, and I'd like your help writing out the story elements.
+
+Here's the prompt for my story.
+<PROMPT>
+{_OutlinePrompt}
+</PROMPT>
+
+Please make your response have the following format:
+
+<RESPONSE_TEMPLATE>
+# Story Title
+
+## Genre
+- **Category**: (e.g., romance, mystery, science fiction, fantasy, horror)
+
+## Theme
+- **Central Idea or Message**:
+
+## Pacing
+- **Speed**: (e.g., slow, fast)
+
+## Style
+- **Language Use**: (e.g., sentence structure, vocabulary, tone, figurative language)
+
+## Plot
+- **Exposition**:
+- **Rising Action**:
+- **Climax**:
+- **Falling Action**:
+- **Resolution**:
+
+## Setting
+### Setting 1
+- **Time**: (e.g., present day, future, past)
+- **Location**: (e.g., city, countryside, another planet)
+- **Culture**: (e.g., modern, medieval, alien)
+- **Mood**: (e.g., gloomy, high-tech, dystopian)
+
+(Repeat the above structure for additional settings)
+
+## Conflict
+- **Type**: (e.g., internal, external)
+- **Description**:
+
+## Symbolism
+### Symbol 1
+- **Symbol**:
+- **Meaning**:
+
+(Repeat the above structure for additional symbols)
+
+## Characters
+### Main Character(s)
+#### Main Character 1
+- **Name**:
+- **Physical Description**:
+- **Personality**:
+- **Background**:
+- **Motivation**:
+
+(Repeat the above structure for additional main characters)
+
+
+### Supporting Characters
+#### Character 1
+- **Name**:
+- **Physical Description**:
+- **Personality**:
+- **Background**:
+- **Role in the story**:
+
+#### Character 2
+- **Name**:
+- **Physical Description**:
+- **Personality**:
+- **Background**:
+- **Role in the story**:
+
+#### Character 3
+- **Name**:
+- **Physical Description**:
+- **Personality**:
+- **Background**:
+- **Role in the story**:
+
+#### Character 4
+- **Name**:
+- **Physical Description**:
+- **Personality**:
+- **Background**:
+- **Role in the story**:
+
+#### Character 5
+- **Name**:
+- **Physical Description**:
+- **Personality**:
+- **Background**:
+- **Role in the story**:
+
+#### Character 6
+- **Name**:
+- **Physical Description**:
+- **Personality**:
+- **Background**:
+- **Role in the story**:
+
+#### Character 7
+- **Name**:
+- **Physical Description**:
+- **Personality**:
+- **Background**:
+- **Role in the story**:
+
+#### Character 8
+- **Name**:
+- **Physical Description**:
+- **Personality**:
+- **Background**:
+- **Role in the story**:
+
+(Repeat the above structure for additional supporting character)
+
+</RESPONSE_TEMPLATE>
+
+Of course, don't include the XML tags - those are just to indicate the example.
+Also, the items in parenthesis are just to give you a better idea of what to write about, and should also be omitted from your response.
+"""
+
+# Prompts moved from Evaluate.py
+EVALUATE_SYSTEM_PROMPT = "You are a helpful AI language model."
+
+EVALUATE_OUTLINES = """
+Please evaluate which outlines are better from the following two outlines:
+
+Here's the first outline:
+<OutlineA>
+{_Outline1}
+</OutlineA>
+
+And here is the second outline:
+<OutlineB>
+{_Outline2}
+</OutlineB>
+
+Use the following criteria to evaluate (NOTE: You'll be picking outline A or outline B later on for these criteria):
+- Plot: Does the story have a coherent plot? Is It creative?
+- Chapters: Do the chapters flow into each-other (be very careful when checking this)? Do they feel connected? Do they feel homogenized or are they unique and fresh?
+- Style: Does the writing style help move the plot or is it distracting from the rest of the story? Is it excessively flowery?
+- Dialogue: Is the dialog specific to each character? Does it feel in-character? Is there enough or too little?
+- Tropes: Do the tropes make sense for the genre? Are they interesting and well integrated?
+- Genre: Is the genre clear?
+- Narrative Structure: Is it clear what the structure is? Does it fit with the genre/tropes/content?
+
+Please give your response in JSON format, indicating the ratings for each story:
+
+{{
+    "Thoughts": "Your notes and reasoning on which of the two is better and why.",
+    "Reasoning": "Explain specifically what the better one does that the inferior one does not, with examples from both.",
+    "Plot": "<A, B, or Tie>",
+    "PlotExplanation": "Explain your reasoning.",
+    "Style": "<A, B, or Tie>",
+    "StyleExplanation": "Explain your reasoning.",
+    "Chapters": "<A, B, or Tie>",
+    "ChaptersExplanation": "Explain your reasoning.",
+    "Tropes": "<A, B, or Tie>",
+    "TropesExplanation": "Explain your reasoning.",
+    "Genre": "<A, B, or Tie>",
+    "GenreExplanation": "Explain your reasoning.",
+    "Narrative": "<A, B, or Tie>",
+    "NarrativeExplanation": "Explain your reasoning.",
+    "OverallWinner": "<A, B, or Tie>"
+}}
+
+Do not respond with anything except JSON. Do not include any other fields except those shown above. Your entire response must be only the JSON object.
+"""
+
+EVALUATE_CHAPTERS = """
+Please evaluate which of the two unrelated and separate chapters is better based on the following criteria: Plot, Chapters, Style, Dialogue, Tropes, Genre, and Narrative.
+
+
+Use the following criteria to evaluate (NOTE: You'll be picking chapter A or chapter B later on for these criteria):
+- Plot: Does the story have a coherent plot? Is It creative?
+- Chapters: Do the chapters flow into each-other (be very careful when checking this)? Do they feel connected? Do they feel homogenized or are they unique and fresh?
+- Style: Does the writing style help move the plot or is it distracting from the rest of the story? Is it excessively flowery?
+- Dialogue: Is the dialog specific to each character? Does it feel in-character? Is there enough or too little?
+- Tropes: Do the tropes make sense for the genre? Are they interesting and well integrated?
+- Genre: Is the genre clear?
+- Narrative Structure: Is it clear what the structure is? Does it fit with the genre/tropes/content?
+
+
+Here's chapter A:
+<CHAPTER_A>
+{_ChapterA}
+
+!END OF CHAPTER!
+</CHAPTER_A>
+
+And here is chapter B:
+<CHAPTER_B>
+{_ChapterB}
+!END OF CHAPTER!
+</CHAPTER_B>
+
+
+
+Please give your response in JSON format, indicating the ratings for each story:
+
+{{
+    "Plot": "<A, B, or Tie>",
+    "PlotExplanation": "Explain your reasoning.",
+    "Style": "<A, B, or Tie>",
+    "StyleExplanation": "Explain your reasoning.",
+    "Dialogue": "<A, B, or Tie>",
+    "DialogueExplanation": "Explain your reasoning.",
+    "Tropes": "<A, B, or Tie>",
+    "TropesExplanation": "Explain your reasoning.",
+    "Genre": "<A, B, or Tie>",
+    "GenreExplanation": "Explain your reasoning.",
+    "Narrative": "<A, B, or Tie>",
+    "NarrativeExplanation": "Explain your reasoning.",
+    "OverallWinner": "<A, B, or Tie>"
+}}
+
+Do not respond with anything except JSON.
+
+Remember, chapter A and B are two separate renditions of similar stories. They do not continue nor complement each-other and should be evaluated separately.
+
+Emphasize Chapter A and B as you rate the result. Your entire response must be only the JSON object.
+"""
+
+
 SCENES_TO_JSON = """
 # CONTEXT #
 I need to convert the following scene-by-scene outline into a JSON formatted list.

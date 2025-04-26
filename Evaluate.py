@@ -10,6 +10,7 @@ import os
 import Writer.Interface.Wrapper
 import Writer.Config
 import Writer.PrintUtils
+import Writer.Prompts
 
 
 # Definisikan Skema Pydantic
@@ -50,11 +51,14 @@ class ChapterEvalSchema(BaseModel):
 def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
 
     _Logger.Log(f"Evaluating Outlines From Story", 4)
-    Messages = [_Client.BuildSystemQuery("You are a helpful AI language model.")]
+    Messages = [_Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)] # Menggunakan prompt terpusat
     Messages.append(
         _Client.BuildUserQuery(
-            f"""
-Please evaluate which outlines are better from the following two outlines:
+            Writer.Prompts.EVALUATE_OUTLINES.format(_Outline1=_Outline1, _Outline2=_Outline2) # Menggunakan prompt terpusat
+        )
+    )
+    # Menggunakan SafeGenerateJSON dengan skema
+    Messages, JSONResponse = _Client.SafeGenerateJSON(
 
 Here's the first outline:
 <OutlineA>
@@ -95,12 +99,6 @@ Please give your response in JSON format, indicating the ratings for each story:
     "OverallWinner": "<A, B, or Tie>"
 }}
 
-Do not respond with anything except JSON. Do not include any other fields except those shown above. Your entire response must be only the JSON object.
-    """
-        )
-    )
-    # Menggunakan SafeGenerateJSON dengan skema
-    Messages, JSONResponse = _Client.SafeGenerateJSON(
         Logger,
         Messages,
         Args.Model,
@@ -123,11 +121,15 @@ Do not respond with anything except JSON. Do not include any other fields except
 def EvaluateChapter(_Client, _Logger, _ChapterA, _ChapterB):
 
     _Logger.Log(f"Evaluating Outlines From Story", 4)
-    Messages = [_Client.BuildSystemQuery("You are a helpful AI language model.")]
+    Messages = [_Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)] # Menggunakan prompt terpusat
     Messages.append(
         _Client.BuildUserQuery(
-            f"""
-Please evaluate which of the two unrelated and separate chapters is better based on the following criteria: Plot, Chapters, Style, Dialogue, Tropes, Genre, and Narrative.
+            Writer.Prompts.EVALUATE_CHAPTERS.format(_ChapterA=_ChapterA, _ChapterB=_ChapterB) # Menggunakan prompt terpusat
+        )
+    )
+
+    # Menggunakan SafeGenerateJSON dengan skema
+    Messages, JSONResponse = _Client.SafeGenerateJSON(
 
                                            
 Use the following criteria to evaluate (NOTE: You'll be picking chapter A or chapter B later on for these criteria):
@@ -177,13 +179,6 @@ Do not respond with anything except JSON.
 
 Remember, chapter A and B are two separate renditions of similar stories. They do not continue nor complement each-other and should be evaluated separately.
 
-Emphasize Chapter A and B as you rate the result. Your entire response must be only the JSON object.
-    """
-        )
-    )
-
-    # Menggunakan SafeGenerateJSON dengan skema
-    Messages, JSONResponse = _Client.SafeGenerateJSON(
         Logger,
         Messages,
         Args.Model,
