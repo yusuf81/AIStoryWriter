@@ -1,9 +1,10 @@
-from pydantic import BaseModel # Ditambahkan
+from pydantic import BaseModel  # Ditambahkan
 import Writer.Config
 import Writer.Prompts
 
 import re
 import json
+
 
 # Definisikan Skema Pydantic
 class ChapterCountSchema(BaseModel):
@@ -20,8 +21,13 @@ def LLMCountChapters(Interface, _Logger, _Summary):
 
     # Menggunakan SafeGenerateJSON dengan skema
     Messages, JSONResponse = Interface.SafeGenerateJSON(
-         _Logger, Messages, Writer.Config.EVAL_MODEL, _FormatSchema=ChapterCountSchema.model_json_schema()
+        _Logger,
+        Messages,
+        Writer.Config.EVAL_MODEL,
+        _FormatSchema=ChapterCountSchema.model_json_schema(),
     )
     TotalChapters = JSONResponse["TotalChapters"]
-    _Logger.Log(f"Finished Getting ChapterCount JSON. Found {TotalChapters} chapters.", 5)
+    _Logger.Log(
+        f"Finished Getting ChapterCount JSON. Found {TotalChapters} chapters.", 5
+    )
     return TotalChapters

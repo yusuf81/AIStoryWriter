@@ -1,12 +1,14 @@
-from pydantic import BaseModel # Ditambahkan
+from pydantic import BaseModel  # Ditambahkan
 import Writer.PrintUtils
 import Writer.Prompts
 
 import json
 
+
 # Definisikan Skema Pydantic
 class OutlineCompleteSchema(BaseModel):
     IsComplete: bool
+
 
 class ChapterCompleteSchema(BaseModel):
     IsComplete: bool
@@ -23,8 +25,10 @@ def GetFeedbackOnOutline(Interface, _Logger, _Outline: str):
     _Logger.Log("Prompting LLM To Critique Outline", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
     History = Interface.SafeGenerateText(
-        _Logger, History, Writer.Config.REVISION_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_OUTLINE_FEEDBACK # Menggunakan Config
+        _Logger,
+        History,
+        Writer.Config.REVISION_MODEL,
+        _MinWordCount=Writer.Config.MIN_WORDS_OUTLINE_FEEDBACK,  # Menggunakan Config
     )
     _Logger.Log("Finished Getting Outline Feedback", 5)
 
@@ -50,7 +54,10 @@ def GetOutlineRating(
     History.append(Interface.BuildUserQuery(StartingPrompt))
     # Menggunakan SafeGenerateJSON dengan skema
     History, JSONResponse = Interface.SafeGenerateJSON(
-        _Logger, History, Writer.Config.EVAL_MODEL, _FormatSchema=OutlineCompleteSchema.model_json_schema()
+        _Logger,
+        History,
+        Writer.Config.EVAL_MODEL,
+        _FormatSchema=OutlineCompleteSchema.model_json_schema(),
     )
     Rating = JSONResponse["IsComplete"]
     _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)
@@ -97,7 +104,10 @@ def GetChapterRating(Interface, _Logger, _Chapter: str):
     History.append(Interface.BuildUserQuery(StartingPrompt))
     # Menggunakan SafeGenerateJSON dengan skema
     History, JSONResponse = Interface.SafeGenerateJSON(
-        _Logger, History, Writer.Config.EVAL_MODEL, _FormatSchema=ChapterCompleteSchema.model_json_schema()
+        _Logger,
+        History,
+        Writer.Config.EVAL_MODEL,
+        _FormatSchema=ChapterCompleteSchema.model_json_schema(),
     )
     Rating = JSONResponse["IsComplete"]
     _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)

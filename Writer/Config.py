@@ -58,10 +58,10 @@ OPTIONAL_OUTPUT_NAME = ""
 DEBUG = False
 
 # Maximum retries for SafeGenerateJSON
-MAX_JSON_RETRIES = 5 # Jumlah percobaan ulang maksimum untuk SafeGenerateJSON
+MAX_JSON_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateJSON
 
 # Maximum retries for SafeGenerateText (whitespace/short response)
-MAX_TEXT_RETRIES = 5 # Jumlah percobaan ulang maksimum untuk SafeGenerateText
+MAX_TEXT_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateText
 
 # Tested models:
 "llama3:70b"  # works as editor model, DO NOT use as writer model, it sucks

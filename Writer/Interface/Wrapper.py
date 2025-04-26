@@ -9,8 +9,8 @@ import importlib
 import subprocess
 import sys
 from urllib.parse import parse_qs, urlparse
-from pydantic import BaseModel # Ditambahkan
-import Writer.Config # Pastikan ini diimpor
+from pydantic import BaseModel  # Ditambahkan
+import Writer.Config  # Pastikan ini diimpor
 
 dotenv.load_dotenv()
 
@@ -130,7 +130,7 @@ class Interface:
         _Messages,
         _Model: str,
         _SeedOverride: int = -1,
-        _FormatSchema: dict = None, # Diubah dari _Format
+        _FormatSchema: dict = None,  # Diubah dari _Format
         _MinWordCount: int = 1,
     ):
         """
@@ -142,7 +142,7 @@ class Interface:
             if _Messages[i]["content"].strip() == "":
                 del _Messages[i]
 
-        Retries = 0 # Tambahkan penghitung retry
+        Retries = 0  # Tambahkan penghitung retry
         # Panggil ChatAndStreamResponse *sebelum* loop untuk percobaan pertama
         NewMsg = self.ChatAndStreamResponse(
             _Logger, _Messages, _Model, _SeedOverride, _FormatSchema
@@ -152,7 +152,7 @@ class Interface:
         while (self.GetLastMessageText(NewMsg).strip() == "") or (
             len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount
         ):
-            Retries += 1 # Tingkatkan penghitung retry
+            Retries += 1  # Tingkatkan penghitung retry
 
             # Log alasan retry
             if self.GetLastMessageText(NewMsg).strip() == "":
@@ -161,7 +161,7 @@ class Interface:
                     7,
                 )
             elif len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount:
-                CurrentWordCount = len(self.GetLastMessageText(NewMsg).split(' '))
+                CurrentWordCount = len(self.GetLastMessageText(NewMsg).split(" "))
                 _Logger.Log(
                     f"SafeGenerateText: Generation Failed Due To Short Response ({CurrentWordCount}, min is {_MinWordCount}). Retry {Retries}/{Writer.Config.MAX_TEXT_RETRIES}",
                     7,
@@ -169,22 +169,39 @@ class Interface:
 
             # Periksa apakah batas retry tercapai
             if Retries >= Writer.Config.MAX_TEXT_RETRIES:
-                _Logger.Log(f"Max text retries ({Writer.Config.MAX_TEXT_RETRIES}) exceeded for whitespace/short response. Aborting text generation.", 7)
-                raise Exception(f"Failed to generate valid text after {Writer.Config.MAX_TEXT_RETRIES} retries (whitespace/short response).") # Naikkan exception
+                _Logger.Log(
+                    f"Max text retries ({Writer.Config.MAX_TEXT_RETRIES}) exceeded for whitespace/short response. Aborting text generation.",
+                    7,
+                )
+                raise Exception(
+                    f"Failed to generate valid text after {Writer.Config.MAX_TEXT_RETRIES} retries (whitespace/short response)."
+                )  # Naikkan exception
 
             # Hapus respons asisten yang gagal
             if len(_Messages) > 0 and _Messages[-1]["role"] == "assistant":
                 del _Messages[-1]
 
             # --- AWAL LOGGING DIAGNOSTIK ---
-            _Logger.Log(f"SafeGenerateText Retry {Retries}: Resending history. Last 2 messages:", 6)
+            _Logger.Log(
+                f"SafeGenerateText Retry {Retries}: Resending history. Last 2 messages:",
+                6,
+            )
             if len(_Messages) >= 2:
-                _Logger.Log(f"  - Role: {_Messages[-2]['role']}, Content: '{_Messages[-2]['content'][:100]}...'", 6) # Log 100 karakter pertama
-                _Logger.Log(f"  - Role: {_Messages[-1]['role']}, Content: '{_Messages[-1]['content'][:100]}...'", 6) # Log 100 karakter pertama
+                _Logger.Log(
+                    f"  - Role: {_Messages[-2]['role']}, Content: '{_Messages[-2]['content'][:100]}...'",
+                    6,
+                )  # Log 100 karakter pertama
+                _Logger.Log(
+                    f"  - Role: {_Messages[-1]['role']}, Content: '{_Messages[-1]['content'][:100]}...'",
+                    6,
+                )  # Log 100 karakter pertama
             elif len(_Messages) == 1:
-                _Logger.Log(f"  - Role: {_Messages[-1]['role']}, Content: '{_Messages[-1]['content'][:100]}...'", 6) # Log 100 karakter pertama
+                _Logger.Log(
+                    f"  - Role: {_Messages[-1]['role']}, Content: '{_Messages[-1]['content'][:100]}...'",
+                    6,
+                )  # Log 100 karakter pertama
             else:
-                 _Logger.Log("  - History is empty?", 6)
+                _Logger.Log("  - History is empty?", 6)
             # --- AKHIR LOGGING DIAGNOSTIK ---
 
             # Coba lagi dengan seed acak baru
@@ -192,7 +209,7 @@ class Interface:
                 _Logger, _Messages, _Model, random.randint(0, 99999), _FormatSchema
             )
 
-        return NewMsg # Kembalikan NewMsg (yang merupakan _Messages yang berhasil)
+        return NewMsg  # Kembalikan NewMsg (yang merupakan _Messages yang berhasil)
 
     def SafeGenerateJSON(
         self,
@@ -200,13 +217,13 @@ class Interface:
         _Messages,
         _Model: str,
         _SeedOverride: int = -1,
-        _FormatSchema: dict = None, # Diubah dari _Format, _RequiredAttribs dihapus
+        _FormatSchema: dict = None,  # Diubah dari _Format, _RequiredAttribs dihapus
     ):
-        Retries = 0 # Tambahkan penghitung retry
+        Retries = 0  # Tambahkan penghitung retry
         while True:
             # Menggunakan ChatAndStreamResponse langsung dengan skema
             Response = self.ChatAndStreamResponse(
-                 _Logger, _Messages, _Model, _SeedOverride, _FormatSchema=_FormatSchema
+                _Logger, _Messages, _Model, _SeedOverride, _FormatSchema=_FormatSchema
             )
 
             # Tambahkan blok ini untuk membersihkan markdown
@@ -214,22 +231,22 @@ class Interface:
             RawResponseText = self.GetLastMessageText(Response)
             CleanedResponseText = RawResponseText.strip()
             if CleanedResponseText.startswith("```json"):
-                CleanedResponseText = CleanedResponseText[7:] # Hapus ```json
+                CleanedResponseText = CleanedResponseText[7:]  # Hapus ```json
             if CleanedResponseText.startswith("```"):
-                 CleanedResponseText = CleanedResponseText[3:] # Hapus ```
+                CleanedResponseText = CleanedResponseText[3:]  # Hapus ```
             if CleanedResponseText.endswith("```"):
-                CleanedResponseText = CleanedResponseText[:-3] # Hapus ```
-            CleanedResponseText = CleanedResponseText.strip() # Hapus whitespace ekstra
+                CleanedResponseText = CleanedResponseText[:-3]  # Hapus ```
+            CleanedResponseText = CleanedResponseText.strip()  # Hapus whitespace ekstra
             # --------------------------------------------------
 
             try:
                 # --- AWAL BLOK EKSTRAKSI JSON ---
                 # Coba cari blok JSON utama ({...} atau [...])
                 # Ini membantu jika ada teks tambahan sebelum/sesudah JSON
-                first_brace = CleanedResponseText.find('{')
-                first_bracket = CleanedResponseText.find('[')
-                last_brace = CleanedResponseText.rfind('}')
-                last_bracket = CleanedResponseText.rfind(']')
+                first_brace = CleanedResponseText.find("{")
+                first_bracket = CleanedResponseText.find("[")
+                last_brace = CleanedResponseText.rfind("}")
+                last_bracket = CleanedResponseText.rfind("]")
 
                 start_index = -1
                 end_index = -1
@@ -249,22 +266,29 @@ class Interface:
                     end_index = last_bracket
                 # Fallback jika hanya salah satu jenis penutup yang ditemukan
                 elif last_brace != -1 and last_bracket != -1:
-                     end_index = max(last_brace, last_bracket)
+                    end_index = max(last_brace, last_bracket)
                 elif last_brace != -1:
-                     end_index = last_brace
+                    end_index = last_brace
                 elif last_bracket != -1:
-                     end_index = last_bracket
-
+                    end_index = last_bracket
 
                 if start_index != -1 and end_index != -1 and end_index > start_index:
-                    CleanedResponseText = CleanedResponseText[start_index : end_index + 1]
-                    _Logger.Log(f"Extracted potential JSON block: '{CleanedResponseText[:100]}...'", 6) # Log potongan
+                    CleanedResponseText = CleanedResponseText[
+                        start_index : end_index + 1
+                    ]
+                    _Logger.Log(
+                        f"Extracted potential JSON block: '{CleanedResponseText[:100]}...'",
+                        6,
+                    )  # Log potongan
                 else:
-                     _Logger.Log(f"Could not reliably extract JSON block, using cleaned text as is.", 6)
+                    _Logger.Log(
+                        f"Could not reliably extract JSON block, using cleaned text as is.",
+                        6,
+                    )
                 # --- AKHIR BLOK EKSTRAKSI JSON ---
 
                 # Gunakan CleanedResponseText untuk parsing (yang mungkin sudah dipotong)
-                JSONResponse = json.loads(CleanedResponseText) # Modifikasi baris ini
+                JSONResponse = json.loads(CleanedResponseText)  # Modifikasi baris ini
 
                 # Validasi skema Pydantic jika perlu (opsional, karena Ollama seharusnya sudah melakukannya)
                 # Jika Anda menggunakan Pydantic untuk validasi *setelah* menerima respons:
@@ -282,21 +306,31 @@ class Interface:
                 return Response, JSONResponse
 
             except Exception as e:
-                Retries += 1 # Tingkatkan penghitung retry
-                _Logger.Log(f"JSON Error during parsing: {e}. Raw Response: '{RawResponseText}'. Retry {Retries}/{Writer.Config.MAX_JSON_RETRIES}", 7) # Log percobaan ulang
+                Retries += 1  # Tingkatkan penghitung retry
+                _Logger.Log(
+                    f"JSON Error during parsing: {e}. Raw Response: '{RawResponseText}'. Retry {Retries}/{Writer.Config.MAX_JSON_RETRIES}",
+                    7,
+                )  # Log percobaan ulang
 
                 # Periksa apakah batas retry tercapai
                 if Retries >= Writer.Config.MAX_JSON_RETRIES:
-                    _Logger.Log(f"Max JSON retries ({Writer.Config.MAX_JSON_RETRIES}) exceeded. Aborting JSON generation.", 7)
-                    raise Exception(f"Failed to generate valid JSON after {Writer.Config.MAX_JSON_RETRIES} retries.") # Naikkan exception
+                    _Logger.Log(
+                        f"Max JSON retries ({Writer.Config.MAX_JSON_RETRIES}) exceeded. Aborting JSON generation.",
+                        7,
+                    )
+                    raise Exception(
+                        f"Failed to generate valid JSON after {Writer.Config.MAX_JSON_RETRIES} retries."
+                    )  # Naikkan exception
 
                 # Hapus pesan terakhir (permintaan) dan respons gagal dari riwayat
                 # Asumsi: ChatAndStreamResponse menambahkan respons ke _Messages. Jika tidak, baris ini mungkin perlu dihapus.
                 if len(_Messages) > 0 and _Messages[-1]["role"] == "assistant":
-                     del _Messages[-1] # Hapus respons gagal dari LLM
+                    del _Messages[-1]  # Hapus respons gagal dari LLM
 
                 # Mencoba lagi dengan seed baru dan skema yang sama pada iterasi berikutnya
-                _SeedOverride = random.randint(0, 99999) # Gunakan seed baru untuk percobaan ulang
+                _SeedOverride = random.randint(
+                    0, 99999
+                )  # Gunakan seed baru untuk percobaan ulang
                 # Tidak perlu memanggil ChatAndStreamResponse lagi di sini, loop akan melakukannya
 
     def ChatAndStreamResponse(
@@ -305,7 +339,7 @@ class Interface:
         _Messages,
         _Model: str = "llama3",
         _SeedOverride: int = -1,
-        _FormatSchema: dict = None, # Diubah dari _Format
+        _FormatSchema: dict = None,  # Diubah dari _Format
     ):
         Provider, ProviderModel, ModelHost, ModelOptions = self.GetModelAndProvider(
             _Model
@@ -380,14 +414,15 @@ class Interface:
                 ModelOptions["format"] = _FormatSchema
                 # Set temperature to 0 for more deterministic structured output
                 if "temperature" not in ModelOptions:
-                     ModelOptions["temperature"] = 0
+                    ModelOptions["temperature"] = 0
                 _Logger.Log(f"Using Ollama Structured Output with schema", 4)
             # Hapus logika _Format == "json"
 
             # Tambahkan loop retry untuk Ollama
-            import ollama # Pastikan ollama diimpor
+            import ollama  # Pastikan ollama diimpor
+
             # Gunakan konstanta dari Config jika ada, jika tidak gunakan default 3
-            MaxRetries = getattr(Writer.Config, 'MAX_OLLAMA_RETRIES', 3)
+            MaxRetries = getattr(Writer.Config, "MAX_OLLAMA_RETRIES", 3)
             while MaxRetries > 0:
                 try:
                     Stream = self.Clients[_Model].chat(
@@ -400,9 +435,9 @@ class Interface:
                     # Langsung panggil StreamResponse tanpa loop retry untuk respons kosong/spasi
                     # Penanganan respons kosong/pendek sudah dilakukan oleh SafeGenerateText
                     _Messages.append(self.StreamResponse(Stream, Provider))
-                    break # Keluar dari loop jika berhasil
+                    break  # Keluar dari loop jika berhasil
 
-                except ollama.ResponseError as e: # Tangkap error spesifik Ollama
+                except ollama.ResponseError as e:  # Tangkap error spesifik Ollama
                     MaxRetries -= 1
                     _Logger.Log(
                         f"Exception During Ollama Generation/Stream: '{e}', {MaxRetries} Retries Remaining",
@@ -410,21 +445,25 @@ class Interface:
                     )
                     if MaxRetries <= 0:
                         _Logger.Log(
-                            f"Max Retries Exceeded During Ollama Generation, Aborting!", 7
+                            f"Max Retries Exceeded During Ollama Generation, Aborting!",
+                            7,
                         )
                         # Naikkan exception jika retry habis
-                        raise Exception(f"Ollama StreamResponse failed after retries: {e}")
+                        raise Exception(
+                            f"Ollama StreamResponse failed after retries: {e}"
+                        )
                     else:
                         # import time # Pastikan 'import time' ada di awal file
-                        time.sleep(2) # Jeda singkat sebelum mencoba lagi
-                        continue # Lanjutkan ke iterasi retry berikutnya
+                        time.sleep(2)  # Jeda singkat sebelum mencoba lagi
+                        continue  # Lanjutkan ke iterasi retry berikutnya
                 except Exception as e:
                     # Tangani exception lain yang mungkin terjadi selama streaming (misal: koneksi)
                     # dan tidak terkait langsung dengan respons Ollama
-                    _Logger.Log(f"Unexpected Exception During Ollama Stream Handling: '{e}'", 7)
+                    _Logger.Log(
+                        f"Unexpected Exception During Ollama Stream Handling: '{e}'", 7
+                    )
                     # Langsung naikkan exception non-ResponseError
                     raise Exception(f"Ollama Stream Handling failed: {e}")
-
 
         elif Provider == "google":
 
@@ -479,10 +518,14 @@ class Interface:
             # and replace "model" with "assistant"
             # Pastikan _Messages tidak kosong sebelum mengakses elemen terakhir
             if _Messages and "parts" in _Messages[-1]:
-                 _Messages[-1]["content"] = _Messages[-1]["parts"]
-                 del _Messages[-1]["parts"]
-            if _Messages and "role" in _Messages[-1] and _Messages[-1]["role"] == "model":
-                 _Messages[-1]["role"] = "assistant"
+                _Messages[-1]["content"] = _Messages[-1]["parts"]
+                del _Messages[-1]["parts"]
+            if (
+                _Messages
+                and "role" in _Messages[-1]
+                and _Messages[-1]["role"] == "model"
+            ):
+                _Messages[-1]["role"] = "assistant"
 
             # Lakukan penggantian untuk semua pesan dalam riwayat jika diperlukan
             # (Mungkin tidak perlu jika hanya pesan terakhir yang relevan)
@@ -494,11 +537,11 @@ class Interface:
             #         m["role"] = "assistant"
 
         elif Provider == "openai":
-                if "parts" in m:
-                    m["content"] = m["parts"]
-                    del m["parts"]
-                if "role" in m and m["role"] == "model":
-                    m["role"] = "assistant"
+            if "parts" in m:
+                m["content"] = m["parts"]
+                del m["parts"]
+            if "role" in m and m["role"] == "model":
+                m["role"] = "assistant"
 
         elif Provider == "openai":
             raise NotImplementedError("OpenAI API not supported")
@@ -600,7 +643,7 @@ class Interface:
                     Host = parsed.path.split("@")[1]
                 else:
                     Model = parsed.netloc
-                    Host = Writer.Config.OLLAMA_HOST # Gunakan nilai dari Config
+                    Host = Writer.Config.OLLAMA_HOST  # Gunakan nilai dari Config
 
             else:
                 Model = parsed.netloc
@@ -614,4 +657,9 @@ class Interface:
             return Provider, Model, Host, QueryParams
         else:
             # legacy support for `Model` format
-            return "ollama", _Model, Writer.Config.OLLAMA_HOST, None # Gunakan nilai dari Config
+            return (
+                "ollama",
+                _Model,
+                Writer.Config.OLLAMA_HOST,
+                None,
+            )  # Gunakan nilai dari Config

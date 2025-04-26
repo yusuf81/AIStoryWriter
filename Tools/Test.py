@@ -11,8 +11,12 @@ print("1 -> Gemini 1.5 flash, llama70b for editing")
 print("2 -> Gemini 1.5 flash, Gemini 1.5 flash for editing")
 print("3 -> Gemini 1.5 pro, Gemini 1.5 flash for editing")
 print("4 -> Gemini 1.5 pro, Gemini 1.5 pro for editing")
-print("5 -> ollama://mistral:7b, ollama://mistral:7b for editing (fast debug test, produces crap output)")
-print("6 -> Developer testing script 1, uses many local models, very slow, but decent output")
+print(
+    "5 -> ollama://mistral:7b, ollama://mistral:7b for editing (fast debug test, produces crap output)"
+)
+print(
+    "6 -> Developer testing script 1, uses many local models, very slow, but decent output"
+)
 print("7 -> Developer testing script 2, miqulitz-120b, one model, llama3:70b editor")
 print("8 -> Developer testing script 3, miqu-70b-v1.5, one model, llama3:70b editor")
 print("9 -> Developer testing script 4, gemma2:27b, one model, gemma2:27b editor")
@@ -21,10 +25,16 @@ print("11 -> Developer testing script 5, llama3, one model, llama3 editor")
 print("12 -> Developer testing script 6, gemma, one model, gemma editor")
 print("13 -> Developer testing script 7, rose-70b-v2, one model, llama3:70b editor")
 print("14 -> Developer testing script 8, miqu-103b-v1, one model, llama3:70b editor")
-print("15 -> Developer testing script 9, miqu-70b-v1.5, one model, command-r-plus editor")
+print(
+    "15 -> Developer testing script 9, miqu-70b-v1.5, one model, command-r-plus editor"
+)
 print("16 -> Developer testing script 10, mistral-nemo, one model, mistral-nemo editor")
-print("17 -> Developer testing script 11, mistral-large, one model, mistral-large editor")
-print("18 -> Developer testing script 10, mistral-large, one model, llama3.1:70b editor")
+print(
+    "17 -> Developer testing script 11, mistral-large, one model, mistral-large editor"
+)
+print(
+    "18 -> Developer testing script 10, mistral-large, one model, llama3.1:70b editor"
+)
 print("-------------------------------------------")
 
 
@@ -44,13 +54,12 @@ print("")
 PromptChoice = input("> ")
 
 Prompt = ""
-if (PromptChoice == "" or PromptChoice == "1"):
+if PromptChoice == "" or PromptChoice == "1":
     Prompt = "ExamplePrompts/Example1/Prompt.txt"
-elif (PromptChoice == "2"):
+elif PromptChoice == "2":
     Prompt = "ExamplePrompts/Example2/Prompt.txt"
-elif (PromptChoice == "3"):
+elif PromptChoice == "3":
     Prompt = input("Enter Prompt File Path: ")
-
 
 
 # Now, Add Any Extra Flags
@@ -68,10 +77,10 @@ if ExtraFlags == "":
     ExtraFlags = "-ExpandOutline"
 
 
-
 # Terrible but effective way to manage the choices
-if (choice == "1"):
-    os.system(f'''
+if choice == "1":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -87,10 +96,12 @@ cd .. && ./Write.py \
 -InfoModel ollama://llama3:70b@10.1.65.4:11434 \
 -NoScrubChapters \
 -Debug {ExtraFlags}
-              ''')
+              """
+    )
 
-elif (choice == "2"):
-    os.system(f'''
+elif choice == "2":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -106,10 +117,12 @@ cd .. && ./Write.py \
 -InfoModel google://gemini-1.5-flash \
 -NoScrubChapters \
 -Debug {ExtraFlags}
-              ''')
+              """
+    )
 
-elif (choice == "3"):
-    os.system(f'''
+elif choice == "3":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -125,10 +138,12 @@ cd .. && ./Write.py \
 -InfoModel google://gemini-1.5-flash \
 -NoScrubChapters \
 -Debug {ExtraFlags}
-              ''')
-    
-elif (choice == "4"):
-    os.system(f'''
+              """
+    )
+
+elif choice == "4":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -144,10 +159,12 @@ cd .. && ./Write.py \
 -InfoModel google://gemini-1.5-pro \
 -NoScrubChapters \
 -Debug {ExtraFlags}
-              ''')
-    
-elif (choice == "5"):
-    os.system(f'''
+              """
+    )
+
+elif choice == "5":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -163,10 +180,12 @@ cd .. && ./Write.py \
 -InfoModel ollama://mistral \
 -CheckerModel ollama://mistral \
 -NoScrubChapters {ExtraFlags}
-              ''')
-    
-elif (choice == "6"):
-    os.system(f'''
+              """
+    )
+
+elif choice == "6":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt Prompts/Genshin/Kaeluc.txt \
@@ -183,10 +202,12 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug \
 -NoChapterRevision {ExtraFlags}
-''')
-    
-elif (choice == "7"):
-    os.system(f'''
+"""
+    )
+
+elif choice == "7":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -204,10 +225,12 @@ cd .. && ./Write.py \
 -Debug {ExtraFlags}
 
 
-''')
-    
-elif (choice == "8"):
-    os.system(f'''
+"""
+    )
+
+elif choice == "8":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -227,11 +250,13 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
+"""
+    )
 
-    
-elif (choice == "9"):
-    os.system(f'''
+
+elif choice == "9":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -248,10 +273,12 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
-    
-elif (choice == "10"):
-    os.system(f'''
+"""
+    )
+
+elif choice == "10":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt ExamplePrompts/Example1/Prompt.txt \
@@ -268,10 +295,12 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
-    
-elif (choice == "11"):
-    os.system(f'''
+"""
+    )
+
+elif choice == "11":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt ExamplePrompts/Example1/Prompt.txt \
@@ -288,10 +317,12 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
-    
-elif (choice == "12"):
-    os.system(f'''
+"""
+    )
+
+elif choice == "12":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt ExamplePrompts/Example1/Prompt.txt \
@@ -308,10 +339,12 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
-    
-elif (choice == "13"):
-    os.system(f'''
+"""
+    )
+
+elif choice == "13":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -331,10 +364,12 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
-    
-elif (choice == "14"):
-    os.system(f'''
+"""
+    )
+
+elif choice == "14":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -354,10 +389,12 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
-    
-elif (choice == "15"):
-    os.system(f'''
+"""
+    )
+
+elif choice == "15":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -377,10 +414,12 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
+"""
+    )
 
-elif (choice == "16"):
-    os.system(f'''
+elif choice == "16":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -400,10 +439,12 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
+"""
+    )
 
-elif (choice == "17"):
-    os.system(f'''
+elif choice == "17":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -423,11 +464,13 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
+"""
+    )
 
 
-elif (choice == "18"):
-    os.system(f'''
+elif choice == "18":
+    os.system(
+        f"""
 cd .. && ./Write.py \
 -Seed 999 \
 -Prompt {Prompt} \
@@ -447,4 +490,5 @@ cd .. && ./Write.py \
 -NoScrubChapters \
 -Debug {ExtraFlags}
 
-''')
+"""
+    )

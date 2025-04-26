@@ -1,10 +1,11 @@
-from pydantic import BaseModel # Ditambahkan
+from pydantic import BaseModel  # Ditambahkan
 import json
 
 import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Prompts
+
 
 # Definisikan Skema Pydantic
 class SummaryComparisonSchema(BaseModel):
@@ -69,7 +70,10 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     )
     # Menggunakan SafeGenerateJSON dengan skema
     ComparisonLangchain, JSONResponse = Interface.SafeGenerateJSON(
-        _Logger, ComparisonLangchain, Writer.Config.REVISION_MODEL, _FormatSchema=SummaryComparisonSchema.model_json_schema()
+        _Logger,
+        ComparisonLangchain,
+        Writer.Config.REVISION_MODEL,
+        _FormatSchema=SummaryComparisonSchema.model_json_schema(),
     )
     return (
         JSONResponse["DidFollowOutline"],

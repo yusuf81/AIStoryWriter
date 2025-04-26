@@ -139,8 +139,10 @@ Also, the items in parenthesis are just to give you a better idea of what to wri
     _Logger.Log(f"Generating Main Story Elements", 4)
     Messages = [Interface.BuildUserQuery(Prompt)]
     Messages = Interface.SafeGenerateText(
-        _Logger, Messages, Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_STORY_ELEMENTS # Menggunakan Config
+        _Logger,
+        Messages,
+        Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,
+        _MinWordCount=Writer.Config.MIN_WORDS_STORY_ELEMENTS,  # Menggunakan Config
     )
     Elements: str = Interface.GetLastMessageText(Messages)
     _Logger.Log(f"Done Generating Main Story Elements", 4)

@@ -1,6 +1,7 @@
-from pydantic import BaseModel # Ditambahkan
+from pydantic import BaseModel  # Ditambahkan
 import Writer.Config
 import json
+
 
 # Definisikan Skema Pydantic
 class StoryInfoSchema(BaseModel):
@@ -19,7 +20,10 @@ def GetStoryInfo(Interface, _Logger, _Messages: list):
     Messages.append(Interface.BuildUserQuery(Prompt))
     # Menggunakan SafeGenerateJSON dengan skema
     Messages, JSONResponse = Interface.SafeGenerateJSON(
-        _Logger, Messages, Writer.Config.INFO_MODEL, _FormatSchema=StoryInfoSchema.model_json_schema()
+        _Logger,
+        Messages,
+        Writer.Config.INFO_MODEL,
+        _FormatSchema=StoryInfoSchema.model_json_schema(),
     )
     _Logger.Log("Finished Getting Stats Feedback", 5)
     return JSONResponse

@@ -23,8 +23,10 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
         Messages = Interface.SafeGenerateText(
-            _Logger, Messages, Writer.Config.CHAPTER_STAGE4_WRITER_MODEL, # Menggunakan model Stage 4 untuk edit pass
-            _MinWordCount=Writer.Config.MIN_WORDS_EDIT_NOVEL # Menggunakan Config
+            _Logger,
+            Messages,
+            Writer.Config.CHAPTER_STAGE4_WRITER_MODEL,  # Menggunakan model Stage 4 untuk edit pass
+            _MinWordCount=Writer.Config.MIN_WORDS_EDIT_NOVEL,  # Menggunakan Config
         )
         _Logger.Log(f"Finished Chapter {i} Second Pass In-Place Edit", 5)
 
