@@ -46,8 +46,9 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
 
     _Logger.Log(f"Entering Feedback/Revision Loop", 3)
     WritingHistory = Messages
-    Rating: int = 0
+    Rating: int = 0 # Seharusnya boolean
     Iterations: int = 0
+    OutlineRevisionLoopExitReason = "Unknown" # Tambahkan variabel ini
     while True:
         Iterations += 1
         Feedback = Writer.LLMEditor.GetFeedbackOnOutline(Interface, _Logger, Outline)
@@ -56,11 +57,14 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
         # Yes it has - the 0-100 int isn't actually good at all, LLM just returned a bunch of junk ratings
 
         if Iterations > Writer.Config.OUTLINE_MAX_REVISIONS:
+            OutlineRevisionLoopExitReason = "Max Revisions Reached" # Set alasan
             break
         if (Iterations > Writer.Config.OUTLINE_MIN_REVISIONS) and (Rating == True):
+            OutlineRevisionLoopExitReason = "Quality Standard Met" # Set alasan
             break
 
-        Outline = ReviseOutline(Interface, _Logger, Outline, Feedback)
+        # Perbaiki pemanggilan ReviseOutline agar sesuai dengan return value-nya (tuple)
+        Outline, WritingHistory = ReviseOutline(Interface, _Logger, Outline, Feedback, WritingHistory) # Pastikan menangkap kedua nilai
 
     _Logger.Log(f"Quality Standard Met, Exiting Feedback/Revision Loop", 4)
 
