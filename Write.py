@@ -1,3 +1,5 @@
+"""Main script for generating stories using AI models."""
+
 #!/bin/python3
 
 #!/bin/python3
@@ -222,6 +224,7 @@ def load_state(filepath):
 
 
 def main():
+    """Parses arguments, manages state (new run or resume), and orchestrates the story generation pipeline."""
     Args = Parser.parse_args()  # Pindahkan parsing ke sini
 
     # --- AWAL LOGIKA RESUME ---
