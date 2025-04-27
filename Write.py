@@ -853,16 +853,17 @@ Writer.Config.SCENE_GENERATION_PIPELINE = Args.SceneGenerationPipeline
 # Models = [
 #     Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,
 #     Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL,
-    Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
-    Writer.Config.CHAPTER_STAGE2_WRITER_MODEL,
-    Writer.Config.CHAPTER_STAGE3_WRITER_MODEL,
-    Writer.Config.CHAPTER_STAGE4_WRITER_MODEL,
-    Writer.Config.CHAPTER_REVISION_WRITER_MODEL,
-    Writer.Config.EVAL_MODEL,
-    Writer.Config.REVISION_MODEL,
-    Writer.Config.INFO_MODEL,
-    Writer.Config.SCRUB_MODEL,
-    Writer.Config.CHECKER_MODEL,
+#     Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
+#     Writer.Config.CHAPTER_STAGE2_WRITER_MODEL,
+#     Writer.Config.CHAPTER_STAGE3_WRITER_MODEL,
+#     Writer.Config.CHAPTER_STAGE4_WRITER_MODEL,
+#     Writer.Config.CHAPTER_REVISION_WRITER_MODEL,
+#     Writer.Config.EVAL_MODEL,
+#     Writer.Config.REVISION_MODEL,
+#     Writer.Config.INFO_MODEL,
+#     Writer.Config.SCRUB_MODEL,
+#     Writer.Config.CHECKER_MODEL,
+# ] # Tambahkan penutup list yang hilang dan komentari
 # Pindahkan semua logika utama ke dalam fungsi main()
 # Hapus blok ini dari sini
 # Models = list(set(Models))
