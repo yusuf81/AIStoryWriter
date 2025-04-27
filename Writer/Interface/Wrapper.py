@@ -514,34 +514,19 @@ class Interface:
                             "Generation Failed, Max Retries Exceeded, Aborting"
                         )
 
-            # Replace "parts" back to "content" for generalization
-            # and replace "model" with "assistant"
-            # Pastikan _Messages tidak kosong sebelum mengakses elemen terakhir
-            if _Messages and "parts" in _Messages[-1]:
-                _Messages[-1]["content"] = _Messages[-1]["parts"]
-                del _Messages[-1]["parts"]
-            if (
-                _Messages
-                and "role" in _Messages[-1]
-                and _Messages[-1]["role"] == "model"
-            ):
-                _Messages[-1]["role"] = "assistant"
-
-            # Lakukan penggantian untuk semua pesan dalam riwayat jika diperlukan
-            # (Mungkin tidak perlu jika hanya pesan terakhir yang relevan)
-            # for m in _Messages:
-            #     if "parts" in m:
-            #         m["content"] = m["parts"]
-            #         del m["parts"]
-            #     if "role" in m and m["role"] == "model":
-            #         m["role"] = "assistant"
-
-        elif Provider == "openai":
-            if "parts" in m:
-                m["content"] = m["parts"]
-                del m["parts"]
-            if "role" in m and m["role"] == "model":
-                m["role"] = "assistant"
+            # Replace "parts" back to "content" and "model" back to "assistant" for ALL messages
+            # before logging or returning, to maintain consistent internal format.
+            for m in _Messages:
+                if "parts" in m:
+                    m["content"] = m["parts"]
+                    del m["parts"]
+                if "role" in m and m["role"] == "model":
+                    m["role"] = "assistant"
+                # Juga konversi kembali 'user' yang mungkin berasal dari 'system' jika perlu
+                # (Namun, ini mungkin tidak diperlukan jika 'system' tidak digunakan lagi setelah konversi awal)
+                # Jika Anda ingin mempertahankan peran 'system' secara internal:
+                # Anda perlu menyimpan peran asli sebelum konversi ke Google
+                # atau menandainya dengan cara lain. Untuk saat ini, kita biarkan 'system' menjadi 'user'.
 
         elif Provider == "openai":
             raise NotImplementedError("OpenAI API not supported")
