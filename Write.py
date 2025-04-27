@@ -203,6 +203,10 @@ def save_state(state_data, filepath):
         print(f"FATAL: Failed to save state to {filepath}: {e}", file=sys.stderr)
         # Hapus file temp jika ada
         if os.path.exists(temp_filepath):
+            try:
+                os.remove(temp_filepath)
+            except OSError:
+                pass # Abaikan jika tidak bisa dihapus
     except Exception as e: # Keep a fallback for truly unexpected errors
         print(f"FATAL: Unexpected error saving state to {filepath}: {type(e).__name__} - {e}", file=sys.stderr)
         # Hapus file temp jika ada
