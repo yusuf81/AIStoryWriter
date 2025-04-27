@@ -25,6 +25,7 @@ import Writer.StoryInfo
 import Writer.NovelEditor
 import Writer.Translator
 import Writer.Prompts
+import Writer.Statistics # Pastikan ini ada
 
 
 # Setup Argparser
@@ -229,6 +230,64 @@ def load_state(filepath):
         raise ValueError(f"Failed to decode state file {filepath}: {e}") from e
     except Exception as e:
         raise IOError(f"Failed to read state file {filepath}: {e}") from e
+
+
+# Fungsi Helper Baru untuk Membangun MegaOutline
+def _build_mega_outline(current_state):
+    """Builds the MegaOutline string from the current state."""
+    Elements = current_state.get("story_elements", "")
+    ChapterOutlines = current_state.get("expanded_chapter_outlines", [])
+    DetailedOutline = ""
+    if Writer.Config.EXPAND_OUTLINE and ChapterOutlines:
+        for Chapter in ChapterOutlines:
+            DetailedOutline += Chapter + "\n\n"
+    MegaOutline = f"""
+# Base Outline
+{Elements if Elements else "N/A"}
+
+# Detailed Outline
+{DetailedOutline if DetailedOutline else "N/A"}
+"""
+    return MegaOutline
+
+
+# Fungsi Helper Baru untuk Mendapatkan Outline Bab dengan Fallback
+def _get_outline_for_chapter(SysLogger, current_state, chapter_index):
+    """Determines the best outline to use for a specific chapter, with fallback."""
+    Outline = current_state.get("full_outline", "")
+    ChapterOutlines = current_state.get("expanded_chapter_outlines", [])
+    MegaOutline = _build_mega_outline(current_state) # Bangun untuk potensi penggunaan
+
+    # Default ke MegaOutline jika ekspansi aktif & berhasil, jika tidak, ke base outline
+    UsedOutline = MegaOutline if Writer.Config.EXPAND_OUTLINE and ChapterOutlines else Outline
+
+    # Jika ekspansi aktif dan outline bab spesifik ada, coba validasi dan gunakan
+    if Writer.Config.EXPAND_OUTLINE and ChapterOutlines and len(ChapterOutlines) >= chapter_index:
+        potential_expanded_outline = ChapterOutlines[chapter_index - 1]
+        # --- AWAL BLOK VALIDASI ---
+        min_len_threshold = Writer.Config.MIN_WORDS_PER_CHAPTER_OUTLINE # Ambil batas minimal dari config
+        word_count = Writer.Statistics.GetWordCount(potential_expanded_outline)
+
+        if word_count >= min_len_threshold:
+            # Outline yang diperluas valid, gunakan ini
+            SysLogger.Log(f"Using valid expanded outline for Chapter {chapter_index} from state.", 6)
+            return potential_expanded_outline
+        else:
+            # Outline yang diperluas tidak valid/terlalu pendek, log peringatan dan biarkan fallback terjadi
+            SysLogger.Log(
+                f"Warning: Expanded outline for Chapter {chapter_index} from state is too short ({word_count} words, min {min_len_threshold}). Falling back to general outline.",
+                6,
+            )
+        # --- AKHIR BLOK VALIDASI ---
+        # Jika validasi gagal, kita tidak return di sini, biarkan fungsi melanjutkan ke fallback di bawah
+
+    # Fallback jika ekspansi tidak aktif, atau outline bab spesifik tidak ada/tidak valid
+    if not UsedOutline: # Fallback terakhir jika UsedOutline juga kosong
+         SysLogger.Log(f"Warning: No valid outline found for Chapter {chapter_index}, using base outline as last resort.", 6)
+         return Outline if Outline else "" # Kembalikan Outline dasar atau string kosong jika tidak ada
+    else:
+         SysLogger.Log(f"Using general outline (MegaOutline or Base) for Chapter {chapter_index}.", 6)
+         return UsedOutline # Return Mega atau Base outline
 
 
 def main():
@@ -621,42 +680,12 @@ def main():
 
         for i in range(start_chapter, NumChapters + 1):
             SysLogger.Log(f"--- Generating Chapter {i}/{NumChapters} ---", 3)
-            # Tentukan outline yang akan digunakan untuk bab ini
-            # Default ke outline utama (UsedOutline yang sudah ditentukan sebelumnya)
-            CurrentChapterOutlineTarget = UsedOutline
-            # Jika ekspansi aktif dan outline bab ini ada, gunakan itu
-            if (
-                Writer.Config.EXPAND_OUTLINE
-                and ChapterOutlines
-                and len(ChapterOutlines) >= i
-            ):
-                # Coba gunakan outline bab yang diperluas
-                potential_expanded_outline = ChapterOutlines[i - 1]
-                # Periksa apakah outline yang diperluas dari state cukup panjang/valid
-                min_len_threshold = Writer.Config.MIN_WORDS_PER_CHAPTER_OUTLINE # Gunakan konstanta config
-                if Writer.Statistics.GetWordCount(potential_expanded_outline) >= min_len_threshold:
-                    CurrentChapterOutlineTarget = potential_expanded_outline
-                    SysLogger.Log(f"Using valid expanded outline for Chapter {i} from state.", 6)
-                else:
-                    SysLogger.Log(
-                        f"Warning: Expanded outline for Chapter {i} from state is too short ({Writer.Statistics.GetWordCount(potential_expanded_outline)} words, min {min_len_threshold}). Falling back to general outline.",
-                        6,
-                    )
-                    # Fallback ke UsedOutline (yang merupakan MegaOutline atau Outline dasar)
-                    CurrentChapterOutlineTarget = UsedOutline
-            elif not CurrentChapterOutlineTarget:
-                # Ini seharusnya tidak terjadi jika UsedOutline selalu diinisialisasi, tapi sebagai fallback
-                SysLogger.Log(
-                    f"Warning: No specific outline target determined for Chapter {i}, attempting to use general outline.",
-                    6,
-                )
-                CurrentChapterOutlineTarget = (
-                    Outline  # Fallback ke outline asli jika UsedOutline kosong
-                )
+            # Panggil helper untuk mendapatkan outline bab dengan fallback
+            CurrentChapterOutlineTarget = _get_outline_for_chapter(SysLogger, current_state, i)
 
-            if not CurrentChapterOutlineTarget:
+            if not CurrentChapterOutlineTarget: # Periksa apakah helper mengembalikan sesuatu yang valid
                 SysLogger.Log(
-                    f"FATAL: No outline available for generating Chapter {i}.", 7
+                    f"FATAL: No outline could be determined for generating Chapter {i}.", 7
                 )
                 sys.exit(1)
 
