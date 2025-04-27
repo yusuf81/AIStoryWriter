@@ -6,6 +6,7 @@ import os
 import time
 import random
 import importlib
+import importlib.metadata # Add this import
 import subprocess
 import sys
 from urllib.parse import parse_qs, urlparse
@@ -26,13 +27,27 @@ class Interface:
         self.LoadModels(Models)
 
     def ensure_package_is_installed(self, package_name):
+        """Checks if a package is installed and installs it if not."""
         try:
-            importlib.import_module(package_name)
-        except ImportError:
+            # Check if package metadata exists
+            importlib.metadata.distribution(package_name)
+            # If the above line doesn't raise PackageNotFoundError, the package is installed.
+            # No need to print anything if it's found.
+        except importlib.metadata.PackageNotFoundError:
+            # Package is not found, print message and install
             print(f"Package {package_name} not found. Installing...")
-            subprocess.check_call(
-                [sys.executable, "-m", "pip", "install", package_name]
-            )
+            try:
+                subprocess.check_call(
+                    [sys.executable, "-m", "pip", "install", package_name]
+                )
+                print(f"Package {package_name} installed successfully.")
+            except subprocess.CalledProcessError as e:
+                print(f"Failed to install package {package_name}: {e}", file=sys.stderr)
+                # Optionally re-raise or exit if installation is critical
+                # raise e
+            except Exception as e:
+                print(f"An unexpected error occurred during installation: {e}", file=sys.stderr)
+
 
     def LoadModels(self, Models: list):
         for Model in Models:
