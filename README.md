@@ -98,6 +98,29 @@ CHAPTER_WRITER_MODEL = "google://gemini-1.5-flash"
 ...
 ```
 
+### 3. Automatic State Saving & Resuming
+
+The application automatically saves its progress to allow resuming interrupted runs. The state is saved at the following key points:
+
+-   After initializing a new run.
+-   After generating the main story outline.
+-   After detecting the total number of chapters.
+-   After expanding the main outline into per-chapter outlines (if enabled).
+-   After generating *each* individual chapter.
+-   After all chapters have been generated.
+-   Before starting post-processing steps (editing, scrubbing, translation).
+-   After the entire process is complete.
+
+The state is saved in a JSON file named `run.state.json`. By default, this file is located within the run-specific log directory:
+
+```
+Logs/Generation_YYYY-MM-DD_HH-MM-SS/run.state.json
+```
+
+Where `YYYY-MM-DD_HH-MM-SS` corresponds to the date and time the run was started.
+
+To resume a run, use the `-Resume` command-line argument, providing the path to the specific `run.state.json` file you wish to continue from.
+
 ## 🧰 Architecture Overview
 
 ![Block Diagram](Docs/BlockDiagram.drawio.svg)
