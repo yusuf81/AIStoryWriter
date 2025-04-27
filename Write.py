@@ -630,11 +630,24 @@ def main():
                 and ChapterOutlines
                 and len(ChapterOutlines) >= i
             ):
-                CurrentChapterOutlineTarget = ChapterOutlines[i - 1]
-                SysLogger.Log(f"Using expanded outline for Chapter {i}", 6)
+                # Coba gunakan outline bab yang diperluas
+                potential_expanded_outline = ChapterOutlines[i - 1]
+                # Periksa apakah outline yang diperluas dari state cukup panjang/valid
+                min_len_threshold = Writer.Config.MIN_WORDS_PER_CHAPTER_OUTLINE # Gunakan konstanta config
+                if Writer.Statistics.GetWordCount(potential_expanded_outline) >= min_len_threshold:
+                    CurrentChapterOutlineTarget = potential_expanded_outline
+                    SysLogger.Log(f"Using valid expanded outline for Chapter {i} from state.", 6)
+                else:
+                    SysLogger.Log(
+                        f"Warning: Expanded outline for Chapter {i} from state is too short ({Writer.Statistics.GetWordCount(potential_expanded_outline)} words, min {min_len_threshold}). Falling back to general outline.",
+                        6,
+                    )
+                    # Fallback ke UsedOutline (yang merupakan MegaOutline atau Outline dasar)
+                    CurrentChapterOutlineTarget = UsedOutline
             elif not CurrentChapterOutlineTarget:
+                # Ini seharusnya tidak terjadi jika UsedOutline selalu diinisialisasi, tapi sebagai fallback
                 SysLogger.Log(
-                    f"Warning: No specific outline found for Chapter {i}, using general outline.",
+                    f"Warning: No specific outline target determined for Chapter {i}, attempting to use general outline.",
                     6,
                 )
                 CurrentChapterOutlineTarget = (
