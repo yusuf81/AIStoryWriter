@@ -100,16 +100,16 @@ CHAPTER_WRITER_MODEL = "google://gemini-1.5-flash"
 
 ### 3. Automatic State Saving & Resuming
 
-The application automatically saves its progress to allow resuming interrupted runs. The state is saved at the following key points:
+The application automatically saves its progress to allow resuming interrupted runs. The state is saved after each major step, indicated by the `last_completed_step` value within the state file:
 
--   After initializing a new run.
--   After generating the main story outline.
--   After detecting the total number of chapters.
--   After expanding the main outline into per-chapter outlines (if enabled).
--   After generating *each* individual chapter.
--   After all chapters have been generated.
--   Before starting post-processing steps (editing, scrubbing, translation).
--   After the entire process is complete.
+1.  **`init`**: Saved right after initializing a new run or loading the state for resume, before any generation begins.
+2.  **`outline`**: Saved after the main story outline is successfully generated.
+3.  **`detect_chapters`**: Saved after the total number of chapters is detected.
+4.  **`expand_chapters`**: Saved after expanding the main outline into per-chapter outlines (only if the `-ExpandOutline` feature is enabled).
+5.  **`chapter_generation`**: Saved after *each* individual chapter is generated. This allows resuming mid-way through chapter writing.
+6.  **`chapter_generation_complete`**: Saved once all chapters have been initially generated.
+7.  **`post_processing`**: Saved just before starting the final editing, scrubbing, or translation steps.
+8.  **`complete`**: Saved after the entire process finishes and the final output files are written.
 
 The state is saved in a JSON file named `run.state.json`. By default, this file is located within the run-specific log directory:
 
