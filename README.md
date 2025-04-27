@@ -15,6 +15,11 @@ Generate full-length novels with AI! Harness the power of large language models 
 - Flexible configuration options: Fine-tune the generation process through easily modifiable settings.
 - Works across all operating systems
 - Supoorts translation of the generated stories in all languages
+- Resume interrupted generation runs from the last completed step
+- Optional scene-by-scene generation pipeline for initial chapter drafts
+- Optional final editing pass over the entire novel
+- Optional scrubbing pass to remove potential AI artifacts (like leftover instructions)
+- Includes a script (`Evaluate.py`) for comparing the quality of two generated stories
 
 ## 🏁 Quick Start
 
@@ -52,6 +57,16 @@ You can override the default models by specifying them as command-line arguments
 ```
 
 Available command-line arguments are stated in the `Write.py` file.
+
+Key arguments include:
+*   `-Resume {path/to/run.state.json}`: Resume a previous run from its state file.
+*   `-ExpandOutline`: Expand the main outline into detailed per-chapter outlines before writing. (Enabled by default)
+*   `-SceneGenerationPipeline`: Use the scene-by-scene generation method for initial chapter drafts. (Enabled by default)
+*   `-EnableFinalEditPass`: Perform an additional editing pass on each chapter after initial generation. (Disabled by default)
+*   `-NoScrubChapters`: Disable the final pass that cleans up potential AI artifacts. (Scrubbing enabled by default)
+*   `-NoChapterRevision`: Disable the feedback/revision loop during chapter generation. (Revisions enabled by default)
+*   `-Translate {Language}`: Translate the final story into the specified language (e.g., 'French').
+*   `-TranslatePrompt {Language}`: Translate the input prompt into the specified language before generation.
 
 The model format is: `{ModelProvider}://{ModelName}@{ModelHost}?parameter=value`
 
