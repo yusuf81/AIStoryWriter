@@ -13,23 +13,57 @@ def PrintMessageHistory(_Messages):
 
 class Logger:
 
-    def __init__(self, _LogfilePrefix="Logs"):
+    def __init__(self, _LogfilePrefix="Logs", _ExistingLogDir=None):
 
         # Make Paths For Log
-        LogDirPath = (
-            _LogfilePrefix
-            + "/Generation_"
-            + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        )
-        os.makedirs(LogDirPath + "/LangchainDebug", exist_ok=True)
+        if _ExistingLogDir:
+            LogDirPath = _ExistingLogDir
+            # Pastikan direktori LangchainDebug ada jika melanjutkan
+            os.makedirs(LogDirPath + "/LangchainDebug", exist_ok=True)
+            # self.Log("Resuming logging in existing directory.", 5) # Tidak bisa log sebelum file dibuka
+            log_mode = 'a' # Append mode for resuming
+        else:
+            LogDirPath = (
+                _LogfilePrefix
+                + "/Generation_"
+                + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            )
+            os.makedirs(LogDirPath + "/LangchainDebug", exist_ok=True)
+            log_mode = 'a' # Mulai dengan append juga tidak masalah
 
         # Setup Log Path
         self.LogDirPrefix = LogDirPath
         self.LogPath = LogDirPath + "/Main.log"
-        self.File = open(
-            self.LogPath, "a", encoding="utf-8"
-        )  # Tambahkan encoding utf-8
+        # Gunakan mode yang ditentukan dan encoding utf-8
+        self.File = open(self.LogPath, log_mode, encoding="utf-8")
         self.LangchainID = 0
+
+        # Hitung LangchainID awal jika melanjutkan
+        if _ExistingLogDir:
+            self.Log("Resuming logging in existing directory.", 5) # Log setelah file dibuka
+            try:
+                langchain_debug_path = os.path.join(LogDirPath, "LangchainDebug")
+                if os.path.exists(langchain_debug_path):
+                    langchain_files = [f for f in os.listdir(langchain_debug_path) if f.endswith(".md") or f.endswith(".json")]
+                    if langchain_files:
+                        # Cari ID tertinggi dari nama file
+                        ids = []
+                        for f in langchain_files:
+                            try:
+                                # Ambil bagian pertama sebelum '_' dan coba konversi ke int
+                                file_id = int(f.split('_')[0])
+                                ids.append(file_id)
+                            except (ValueError, IndexError):
+                                continue # Abaikan file yang tidak sesuai format ID_...
+                        self.LangchainID = max(ids) + 1 if ids else 0
+                        self.Log(f"Resuming Langchain ID counter at {self.LangchainID}", 6)
+                    else:
+                         self.LangchainID = 0 # Tidak ada file, mulai dari 0
+                else:
+                    self.LangchainID = 0 # Direktori debug tidak ada
+            except Exception as e:
+                self.Log(f"Could not determine last Langchain ID: {e}", 7)
+                self.LangchainID = 0 # Fallback
 
         self.LogItems = []
 
