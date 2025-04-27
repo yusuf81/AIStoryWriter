@@ -51,10 +51,14 @@ class ChapterEvalSchema(BaseModel):
 def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
 
     _Logger.Log(f"Evaluating Outlines From Story", 4)
-    Messages = [_Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)] # Menggunakan prompt terpusat
+    Messages = [
+        _Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)
+    ]  # Menggunakan prompt terpusat
     Messages.append(
         _Client.BuildUserQuery(
-            Writer.Prompts.EVALUATE_OUTLINES.format(_Outline1=_Outline1, _Outline2=_Outline2) # Menggunakan prompt terpusat
+            Writer.Prompts.EVALUATE_OUTLINES.format(
+                _Outline1=_Outline1, _Outline2=_Outline2
+            )  # Menggunakan prompt terpusat
         )
     )
     # Menggunakan SafeGenerateJSON dengan skema
@@ -81,10 +85,14 @@ def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
 def EvaluateChapter(_Client, _Logger, _ChapterA, _ChapterB):
 
     _Logger.Log(f"Evaluating Outlines From Story", 4)
-    Messages = [_Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)] # Menggunakan prompt terpusat
+    Messages = [
+        _Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)
+    ]  # Menggunakan prompt terpusat
     Messages.append(
         _Client.BuildUserQuery(
-            Writer.Prompts.EVALUATE_CHAPTERS.format(_ChapterA=_ChapterA, _ChapterB=_ChapterB) # Menggunakan prompt terpusat
+            Writer.Prompts.EVALUATE_CHAPTERS.format(
+                _ChapterA=_ChapterA, _ChapterB=_ChapterB
+            )  # Menggunakan prompt terpusat
         )
     )
 

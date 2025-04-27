@@ -6,7 +6,9 @@ import Writer.Prompts
 
 def GenerateStoryElements(Interface, _Logger, _OutlinePrompt):
 
-    Prompt: str = Writer.Prompts.GENERATE_STORY_ELEMENTS.format(_OutlinePrompt=_OutlinePrompt) # Menggunakan prompt terpusat
+    Prompt: str = Writer.Prompts.GENERATE_STORY_ELEMENTS.format(
+        _OutlinePrompt=_OutlinePrompt
+    )  # Menggunakan prompt terpusat
 
     # Generate Initial Story Elements
     _Logger.Log(f"Generating Main Story Elements", 4)

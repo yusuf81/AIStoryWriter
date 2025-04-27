@@ -21,7 +21,7 @@ class Logger:
             # Pastikan direktori LangchainDebug ada jika melanjutkan
             os.makedirs(LogDirPath + "/LangchainDebug", exist_ok=True)
             # self.Log("Resuming logging in existing directory.", 5) # Tidak bisa log sebelum file dibuka
-            log_mode = 'a' # Append mode for resuming
+            log_mode = "a"  # Append mode for resuming
         else:
             LogDirPath = (
                 _LogfilePrefix
@@ -29,7 +29,7 @@ class Logger:
                 + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             )
             os.makedirs(LogDirPath + "/LangchainDebug", exist_ok=True)
-            log_mode = 'a' # Mulai dengan append juga tidak masalah
+            log_mode = "a"  # Mulai dengan append juga tidak masalah
 
         # Setup Log Path
         self.LogDirPrefix = LogDirPath
@@ -40,30 +40,38 @@ class Logger:
 
         # Hitung LangchainID awal jika melanjutkan
         if _ExistingLogDir:
-            self.Log("Resuming logging in existing directory.", 5) # Log setelah file dibuka
+            self.Log(
+                "Resuming logging in existing directory.", 5
+            )  # Log setelah file dibuka
             try:
                 langchain_debug_path = os.path.join(LogDirPath, "LangchainDebug")
                 if os.path.exists(langchain_debug_path):
-                    langchain_files = [f for f in os.listdir(langchain_debug_path) if f.endswith(".md") or f.endswith(".json")]
+                    langchain_files = [
+                        f
+                        for f in os.listdir(langchain_debug_path)
+                        if f.endswith(".md") or f.endswith(".json")
+                    ]
                     if langchain_files:
                         # Cari ID tertinggi dari nama file
                         ids = []
                         for f in langchain_files:
                             try:
                                 # Ambil bagian pertama sebelum '_' dan coba konversi ke int
-                                file_id = int(f.split('_')[0])
+                                file_id = int(f.split("_")[0])
                                 ids.append(file_id)
                             except (ValueError, IndexError):
-                                continue # Abaikan file yang tidak sesuai format ID_...
+                                continue  # Abaikan file yang tidak sesuai format ID_...
                         self.LangchainID = max(ids) + 1 if ids else 0
-                        self.Log(f"Resuming Langchain ID counter at {self.LangchainID}", 6)
+                        self.Log(
+                            f"Resuming Langchain ID counter at {self.LangchainID}", 6
+                        )
                     else:
-                         self.LangchainID = 0 # Tidak ada file, mulai dari 0
+                        self.LangchainID = 0  # Tidak ada file, mulai dari 0
                 else:
-                    self.LangchainID = 0 # Direktori debug tidak ada
+                    self.LangchainID = 0  # Direktori debug tidak ada
             except Exception as e:
                 self.Log(f"Could not determine last Langchain ID: {e}", 7)
-                self.LangchainID = 0 # Fallback
+                self.LangchainID = 0  # Fallback
 
         self.LogItems = []
 
