@@ -199,8 +199,12 @@ def save_state(state_data, filepath):
             json.dump(state_data, f, indent=4)
         # Operasi atomik: ganti file lama dengan yang baru
         shutil.move(temp_filepath, filepath)
-    except Exception as e:
+    except (IOError, OSError) as e: # Catch specific file errors
         print(f"FATAL: Failed to save state to {filepath}: {e}", file=sys.stderr)
+        # Hapus file temp jika ada
+        if os.path.exists(temp_filepath):
+    except Exception as e: # Keep a fallback for truly unexpected errors
+        print(f"FATAL: Unexpected error saving state to {filepath}: {type(e).__name__} - {e}", file=sys.stderr)
         # Hapus file temp jika ada
         if os.path.exists(temp_filepath):
             try:
@@ -218,9 +222,9 @@ def load_state(filepath):
             state_data = json.load(f)
         return state_data
     except json.JSONDecodeError as e:
-        raise ValueError(f"Failed to decode state file {filepath}: {e}")
+        raise ValueError(f"Failed to decode state file {filepath}: {e}") from e
     except Exception as e:
-        raise IOError(f"Failed to read state file {filepath}: {e}")
+        raise IOError(f"Failed to read state file {filepath}: {e}") from e
 
 
 def main():
@@ -230,11 +234,9 @@ def main():
     # --- AWAL LOGIKA RESUME ---
     current_state = {}
     state_filepath = None
-    resuming = False
     log_directory = None  # Inisialisasi log_directory
 
     if Args.Resume:
-        resuming = True
         state_filepath = Args.Resume
         try:
             print(f"Attempting to resume from state file: {state_filepath}")
@@ -282,9 +284,7 @@ def main():
             if not Prompt:
                 SysLogger.Log("FATAL: Could not find prompt content in state file.", 7)
                 sys.exit(1)
-            BasePrompt = current_state.get(
-                "input_prompt_content"
-            )  # Selalu simpan prompt asli
+            # BasePrompt = current_state.get("input_prompt_content") # Removed unused variable
             Outline = current_state.get("full_outline")
             Elements = current_state.get("story_elements")
             RoughChapterOutline = current_state.get("rough_chapter_outline")
@@ -313,8 +313,11 @@ def main():
         except (FileNotFoundError, ValueError, IOError) as e:
             print(f"FATAL: Error loading state file: {e}", file=sys.stderr)
             sys.exit(1)
-        except Exception as e:
-            print(f"FATAL: Unexpected error during resume setup: {e}", file=sys.stderr)
+        except (KeyError, AttributeError, TypeError) as e: # Catch potential state structure/type errors
+            print(f"FATAL: Error processing state data during resume setup: {type(e).__name__} - {e}", file=sys.stderr)
+            sys.exit(1)
+        except Exception as e: # Fallback for other unexpected errors
+            print(f"FATAL: Unexpected error during resume setup: {type(e).__name__} - {e}", file=sys.stderr)
             sys.exit(1)
 
     else:
@@ -404,7 +407,7 @@ def main():
                 SysLogger.Log(
                     "FATAL: No Prompt Provided (-Prompt) and none in config.", 7
                 )
-                raise Exception("No Prompt Provided")
+                raise ValueError("No Prompt Provided (-Prompt)")
 
         try:
             with open(Args.Prompt, "r", encoding="utf-8") as f:  # Tambahkan encoding
@@ -412,13 +415,16 @@ def main():
         except FileNotFoundError:
             SysLogger.Log(f"FATAL: Prompt file not found: {Args.Prompt}", 7)
             sys.exit(1)
-        except Exception as e:
+        except IOError as e: # Catch file reading errors
             SysLogger.Log(f"FATAL: Error reading prompt file {Args.Prompt}: {e}", 7)
+            sys.exit(1)
+        except Exception as e: # Fallback
+            SysLogger.Log(f"FATAL: Unexpected error reading prompt file {Args.Prompt}: {type(e).__name__} - {e}", 7)
             sys.exit(1)
 
         current_state["input_prompt_file"] = Args.Prompt
         current_state["input_prompt_content"] = Prompt
-        BasePrompt = Prompt  # Simpan prompt asli
+        # BasePrompt = Prompt # Removed unused variable
 
         # Translate prompt jika perlu (sebelum save state awal)
         if Writer.Config.TRANSLATE_PROMPT_LANGUAGE != "":
@@ -842,7 +848,7 @@ def main():
             StatsString += f" - Prompt Content: {current_state.get('input_prompt_content', 'N/A')} \n"
 
         StatsString += "\n\nGeneration Settings:  \n"
-        StatsString += f" - Generator: AIStoryGenerator_2024-06-27  \n"  # Versi bisa ditambahkan ke state
+        StatsString += " - Generator: AIStoryGenerator_2024-06-27  \n"  # Versi bisa ditambahkan ke state
         # Ambil nama model dari Writer.Config
         StatsString += f" - Base Outline Writer Model: {Writer.Config.INITIAL_OUTLINE_WRITER_MODEL}  \n"
         StatsString += f" - Chapter Outline Writer Model: {Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL}  \n"
