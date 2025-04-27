@@ -834,7 +834,7 @@ def main():
             "generation_start_time",
             datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
         )
-        StatsString += f" - Generation Start Date: {gen_start_time_str}  \n"
+        StatsString += f" - Generation Start Date: {gen_start_time_str}\n" # Removed trailing space
         StatsString += f" - Generation Total Time: {ElapsedTime:.2f}s  \n"
         StatsString += (
             f" - Generation Average WPM: {60 * (TotalWords/ElapsedTime):.2f}  \n"
