@@ -66,7 +66,14 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
         # Perbaiki pemanggilan ReviseOutline agar sesuai dengan return value-nya (tuple)
         Outline, WritingHistory = ReviseOutline(Interface, _Logger, Outline, Feedback, WritingHistory) # Pastikan menangkap kedua nilai
 
-    _Logger.Log(f"Quality Standard Met, Exiting Feedback/Revision Loop", 4)
+    # Ganti pesan log ini:
+    # _Logger.Log(f"Quality Standard Met, Exiting Feedback/Revision Loop", 4)
+
+    # Dengan ini:
+    _Logger.Log(
+        f"{OutlineRevisionLoopExitReason}, Exiting Outline Feedback/Revision Loop after {Iterations} iteration(s). Final Rating: {Rating}",
+        4, # Level log bisa disesuaikan jika perlu
+    )
 
     # Generate Final Outline
     FinalOutline: str = f"""
