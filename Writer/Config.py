@@ -62,12 +62,3 @@ MAX_JSON_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateJSON
 
 # Maximum retries for SafeGenerateText (whitespace/short response)
 MAX_TEXT_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateText
-
-# Tested models:
-"llama3:70b"  # works as editor model, DO NOT use as writer model, it sucks
-"vanilj/midnight-miqu-70b-v1.5"  # works rather well as the writer, not well as anything else
-"command-r"
-"qwen:72b"
-"command-r-plus"
-"nous-hermes2"  # not big enough to really do a good job - do not use
-"dbrx"  # sucks - do not use
