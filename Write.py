@@ -817,34 +817,34 @@ if __name__ == "__main__":
 #
 # Writer.Config.INITIAL_OUTLINE_WRITER_MODEL = Args.InitialOutlineModel
 # Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL = Args.ChapterOutlineModel
-Writer.Config.CHAPTER_STAGE1_WRITER_MODEL = Args.ChapterS1Model
-Writer.Config.CHAPTER_STAGE2_WRITER_MODEL = Args.ChapterS2Model
-Writer.Config.CHAPTER_STAGE3_WRITER_MODEL = Args.ChapterS3Model
-Writer.Config.CHAPTER_STAGE4_WRITER_MODEL = Args.ChapterS4Model
-Writer.Config.CHAPTER_REVISION_WRITER_MODEL = Args.ChapterRevisionModel
-Writer.Config.EVAL_MODEL = Args.EvalModel
-Writer.Config.REVISION_MODEL = Args.RevisionModel
-Writer.Config.INFO_MODEL = Args.InfoModel
-Writer.Config.SCRUB_MODEL = Args.ScrubModel
-Writer.Config.CHECKER_MODEL = Args.CheckerModel
-Writer.Config.TRANSLATOR_MODEL = Args.TranslatorModel
-
-Writer.Config.TRANSLATE_LANGUAGE = Args.Translate
-Writer.Config.TRANSLATE_PROMPT_LANGUAGE = Args.TranslatePrompt
-
-Writer.Config.OUTLINE_MIN_REVISIONS = Args.OutlineMinRevisions
-Writer.Config.OUTLINE_MAX_REVISIONS = Args.OutlineMaxRevisions
-
-Writer.Config.CHAPTER_MIN_REVISIONS = Args.ChapterMinRevisions
-Writer.Config.CHAPTER_MAX_REVISIONS = Args.ChapterMaxRevisions
-Writer.Config.CHAPTER_NO_REVISIONS = Args.NoChapterRevision
-
-Writer.Config.SCRUB_NO_SCRUB = Args.NoScrubChapters
-Writer.Config.EXPAND_OUTLINE = Args.ExpandOutline
-Writer.Config.ENABLE_FINAL_EDIT_PASS = Args.EnableFinalEditPass
-
-Writer.Config.OPTIONAL_OUTPUT_NAME = Args.Output
-Writer.Config.SCENE_GENERATION_PIPELINE = Args.SceneGenerationPipeline
+# Writer.Config.CHAPTER_STAGE1_WRITER_MODEL = Args.ChapterS1Model
+# Writer.Config.CHAPTER_STAGE2_WRITER_MODEL = Args.ChapterS2Model
+# Writer.Config.CHAPTER_STAGE3_WRITER_MODEL = Args.ChapterS3Model
+# Writer.Config.CHAPTER_STAGE4_WRITER_MODEL = Args.ChapterS4Model
+# Writer.Config.CHAPTER_REVISION_WRITER_MODEL = Args.ChapterRevisionModel
+# Writer.Config.EVAL_MODEL = Args.EvalModel
+# Writer.Config.REVISION_MODEL = Args.RevisionModel
+# Writer.Config.INFO_MODEL = Args.InfoModel
+# Writer.Config.SCRUB_MODEL = Args.ScrubModel
+# Writer.Config.CHECKER_MODEL = Args.CheckerModel
+# Writer.Config.TRANSLATOR_MODEL = Args.TranslatorModel
+#
+# Writer.Config.TRANSLATE_LANGUAGE = Args.Translate
+# Writer.Config.TRANSLATE_PROMPT_LANGUAGE = Args.TranslatePrompt
+#
+# Writer.Config.OUTLINE_MIN_REVISIONS = Args.OutlineMinRevisions
+# Writer.Config.OUTLINE_MAX_REVISIONS = Args.OutlineMaxRevisions
+#
+# Writer.Config.CHAPTER_MIN_REVISIONS = Args.ChapterMinRevisions
+# Writer.Config.CHAPTER_MAX_REVISIONS = Args.ChapterMaxRevisions
+# Writer.Config.CHAPTER_NO_REVISIONS = Args.NoChapterRevision
+#
+# Writer.Config.SCRUB_NO_SCRUB = Args.NoScrubChapters
+# Writer.Config.EXPAND_OUTLINE = Args.ExpandOutline
+# Writer.Config.ENABLE_FINAL_EDIT_PASS = Args.EnableFinalEditPass
+#
+# Writer.Config.OPTIONAL_OUTPUT_NAME = Args.Output
+# Writer.Config.SCENE_GENERATION_PIPELINE = Args.SceneGenerationPipeline
 # Pindahkan semua setup config ke dalam logika run baru di main()
 # Hapus blok ini dari sini
 # Writer.Config.DEBUG = Args.Debug
