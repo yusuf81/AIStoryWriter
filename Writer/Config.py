@@ -1,16 +1,34 @@
-INITIAL_OUTLINE_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_OUTLINE_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_STAGE1_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_STAGE2_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_STAGE3_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_STAGE4_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_REVISION_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-REVISION_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-EVAL_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-INFO_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-SCRUB_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHECKER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Model used to check results
-TRANSLATOR_MODEL = "ollama://gemma3:12b@10.23.147.239"
+INITIAL_OUTLINE_WRITER_MODEL = (
+    "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+)
+CHAPTER_OUTLINE_WRITER_MODEL = (
+    "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE1_WRITER_MODEL = (
+    "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE2_WRITER_MODEL = (
+    "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE3_WRITER_MODEL = (
+    "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE4_WRITER_MODEL = (
+    "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+)
+CHAPTER_REVISION_WRITER_MODEL = (
+    "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+)
+REVISION_MODEL = (
+    "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+)
+EVAL_MODEL = "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+INFO_MODEL = "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+SCRUB_MODEL = (
+    "google://gemini-1.5-pro"  # Note this value is overridden by the argparser
+)
+CHECKER_MODEL = "google://gemini-1.5-pro"  # Model used to check results
+TRANSLATOR_MODEL = "google://gemini-1.5-pro"
 
 OLLAMA_CTX = 8192
 
@@ -62,3 +80,7 @@ MAX_JSON_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateJSON
 
 # Maximum retries for SafeGenerateText (whitespace/short response)
 MAX_TEXT_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateText
+
+
+"google://gemini-1.5-pro"
+"ollama://gemma3:12b@10.23.147.239"
