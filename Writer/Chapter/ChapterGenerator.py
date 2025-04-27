@@ -315,8 +315,9 @@ def GenerateChapter(
         4,
     )
     WritingHistory = MesssageHistory.copy()
-    Rating: int = 0
+    Rating: int = 0 # Seharusnya boolean, tapi kode saat ini menggunakannya seperti itu
     Iterations: int = 0
+    RevisionLoopExitReason = "Unknown" # Tambahkan variabel ini
     while True:
         Iterations += 1
         Feedback = Writer.LLMEditor.GetFeedbackOnChapter(
@@ -325,16 +326,18 @@ def GenerateChapter(
         Rating = Writer.LLMEditor.GetChapterRating(Interface, _Logger, Chapter)
 
         if Iterations > Writer.Config.CHAPTER_MAX_REVISIONS:
+            RevisionLoopExitReason = "Max Revisions Reached" # Set alasan
             break
         if (Iterations > Writer.Config.CHAPTER_MIN_REVISIONS) and (Rating == True):
+            RevisionLoopExitReason = "Quality Standard Met" # Set alasan
             break
         Chapter, WritingHistory = ReviseChapter(
             Interface, _Logger, Chapter, Feedback, WritingHistory
         )
 
     _Logger.Log(
-        f"Quality Standard Met, Exiting Feedback/Revision Loop (Stage 5) For Chapter {_ChapterNum}/{_TotalChapters}",
-        4,
+        f"{RevisionLoopExitReason}, Exiting Feedback/Revision Loop (Stage 5) For Chapter {_ChapterNum}/{_TotalChapters} after {Iterations} iteration(s). Final Rating: {Rating}",
+        4, # Level log bisa disesuaikan jika perlu
     )
 
     return Chapter
