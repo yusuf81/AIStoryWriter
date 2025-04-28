@@ -14,7 +14,7 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
             NovelText += Chapter
 
         Prompt: str = Writer.Prompts.CHAPTER_EDIT_PROMPT.format(
-            _Chapter=EditedChapters[i], NovelText=NovelText, i=i
+            _Outline=_Outline, NovelText=NovelText, i=i
         )
 
         _Logger.Log(
