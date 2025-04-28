@@ -37,7 +37,7 @@ def TranslateNovel(
         Prompt: str = Writer.Prompts.CHAPTER_TRANSLATE_PROMPT.format(
             _Chapter=EditedChapters[i], _Language=_Language
         )
-        _Logger.Log(f"Prompting LLM To Perform Chapter {i+1} Translation", 5)
+        _Logger.Log(f"Prompting LLM To Perform Chapter {i+1}/{_TotalChapters} Translation", 5)
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
         Messages = Interface.SafeGenerateText(
