@@ -1,5 +1,6 @@
 from pydantic import BaseModel  # Ditambahkan
 import Writer.Config
+import Writer.Prompts # Pastikan Prompts diimpor
 import json
 
 
