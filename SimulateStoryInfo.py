@@ -146,7 +146,8 @@ def simulate_get_info(state_filepath, info_model_override=None):
         # GetStoryInfo akan menambahkan prompt STATS_PROMPT dan memanggil SafeGenerateJSON
         # Kita perlu membuat list pesan awal yang akan dimodifikasi oleh GetStoryInfo
         initial_messages_for_info = [Interface.BuildUserQuery(InfoQueryContent)]
-        GeneratedInfo = Writer.StoryInfo.GetStoryInfo(Interface, SysLogger, initial_messages_for_info)
+        # Teruskan model yang benar (info_model) ke GetStoryInfo
+        GeneratedInfo = Writer.StoryInfo.GetStoryInfo(Interface, SysLogger, initial_messages_for_info, _Model=info_model)
 
         SysLogger.Log("Writer.StoryInfo.GetStoryInfo call finished.", 5)
         print("\n--- Generated Story Info ---")
