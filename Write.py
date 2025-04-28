@@ -67,12 +67,6 @@ Parser.add_argument(
     type=str,
     help="Model to use for writing the chapter (stage 3: dialogue)",
 )
-# Parser.add_argument(
-#     "-ChapterS4Model",
-#     default=Writer.Config.CHAPTER_STAGE4_WRITER_MODEL, # Default diambil dari config baru
-#     type=str,
-#     help="Model to use for writing the chapter (stage 4: final correction pass)",
-# )
 Parser.add_argument(
     "-FinalNovelEditorModel",  # Nama argumen baru
     default=Writer.Config.FINAL_NOVEL_EDITOR_MODEL,  # Default dari config baru

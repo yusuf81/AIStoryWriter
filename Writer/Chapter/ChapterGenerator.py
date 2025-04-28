@@ -47,13 +47,6 @@ def GenerateChapter(
             _Outline=_Outline, ChapterSuperlist=ChapterSuperlist
         )
 
-    #
-    # MesssageHistory.append(Interface.BuildUserQuery(f"""
-    # Here is the novel so far.
-    # """))
-    # MesssageHistory.append(Interface.BuildUserQuery(ChapterSuperlist))
-    # MesssageHistory.append(Interface.BuildSystemQuery("Make sure to pay attention to the content that has happened in these previous chapters. It's okay to deviate from the outline a little in order to ensure you continue the same story from previous chapters."))
-
     # Now, extract the this-chapter-outline segment
     _Logger.Log(f"Extracting Chapter Specific Outline for Chapter {_ChapterNum}/{_TotalChapters}", 4)
     ThisChapterOutline: str = ""
@@ -265,11 +258,6 @@ def GenerateChapter(
             5,
         )
 
-        # --- AWAL PERUBAHAN DIAGNOSTIK ---
-        # _Logger.Log("DIAGNOSTIC: Forcing break after first Stage 3 iteration.", 6)
-        # break # Selalu keluar setelah iterasi pertama untuk pengujian
-        # --- AKHIR PERUBAHAN DIAGNOSTIK ---
-
         # Check if LLM did the work
         if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
             _Logger.Log(
@@ -286,24 +274,6 @@ def GenerateChapter(
             )
             break
 
-        #     #### STAGE 4: Final-Pre-Revision Edit Pass
-        # Prompt = Writer.Prompts.CHAPTER_GENERATION_STAGE4.format(
-        #    ContextHistoryInsert=ContextHistoryInsert,
-        #     _ChapterNum=_ChapterNum,
-        #     _TotalChapters=_TotalChapters,
-        #     _Outline=_Outline,
-        #     Stage3Chapter=Stage3Chapter,
-        #     Feedback=Feedback,
-        # )
-
-    #     # Generate Initial Chapter
-    #     _Logger.Log(f"Generating Initial Chapter (Stage 4: Final Pass) {_ChapterNum}/{_TotalChapters}", 5)
-    #     Messages = MesssageHistory.copy()
-    #     Messages.append(Interface.BuildUserQuery(Prompt))
-
-    #     Messages = Interface.SafeGenerateText(_Logger, Messages, Writer.Config.CHAPTER_STAGE4_WRITER_MODEL)
-    #     Chapter:str = Interface.GetLastMessageText(Messages)
-    #     _Logger.Log(f"Done Generating Initial Chapter (Stage 4: Final Pass)  {_ChapterNum}/{_TotalChapters}", 5)
     Chapter: str = Stage3Chapter
 
     #### Stage 5: Revision Cycle
