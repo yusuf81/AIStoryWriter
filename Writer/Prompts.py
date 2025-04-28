@@ -308,8 +308,6 @@ Give a JSON formatted response with the following structure:
 Please do not include any other text, just the JSON object as your response will be parsed by a computer. Your entire response must be only the JSON object.
 """
 
-JSON_PARSE_ERROR = "Please revise your JSON. It encountered the following error during parsing: {_Error}. Remember that your entire response is plugged directly into a JSON parser, so don't write **anything** except pure json."
-
 CRITIC_CHAPTER_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
 CRITIC_CHAPTER_PROMPT = """<CHAPTER>
 {_Chapter}
