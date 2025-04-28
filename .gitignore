@@ -164,6 +164,7 @@ Stories/*
 Prompts/*
 Logs/*
 EvalLogs/*
+SimulateLogs/*
 
 .env
 .aider*
