@@ -155,7 +155,7 @@ def GenerateChapter(
             # Check if LLM did the work
             if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
                 _Logger.Log(
-                    "Chapter Summary-Based Revision Seems Stuck - Forcefully Exiting", 7
+                    "Chapter Summary-Based Revision Seems Stuck (Stage 1: Plot) - Forcefully Exiting", 7
                 )
                 break
             Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
@@ -215,7 +215,7 @@ def GenerateChapter(
         # Check if LLM did the work
         if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
             _Logger.Log(
-                "Chapter Summary-Based Revision Seems Stuck - Forcefully Exiting", 7
+                "Chapter Summary-Based Revision Seems Stuck (Stage 2: Character Dev) - Forcefully Exiting", 7
             )
             break
         Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
@@ -273,7 +273,7 @@ def GenerateChapter(
         # Check if LLM did the work
         if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
             _Logger.Log(
-                "Chapter Summary-Based Revision Seems Stuck - Forcefully Exiting", 7
+                "Chapter Summary-Based Revision Seems Stuck (Stage 3: Dialogue) - Forcefully Exiting", 7
             )
             break
         Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
