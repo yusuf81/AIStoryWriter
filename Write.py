@@ -169,6 +169,7 @@ Parser.add_argument(
 Parser.add_argument(
     "-EnableFinalEditPass",
     action="store_true",
+    default=True
     help="Enable a final edit pass of the whole story prior to scrubbing",
 )
 Parser.add_argument(
