@@ -132,7 +132,7 @@ def GenerateChapter(
 
             # Generate Initial Chapter
             _Logger.Log(
-                f"Generating Initial Chapter (Stage 1: Plot) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter})",
+                f"Generating Initial Chapter (Stage 1: Plot) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS})",
                 5,
             )
             Messages = MesssageHistory.copy()
@@ -155,7 +155,7 @@ def GenerateChapter(
             # Check if LLM did the work
             if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
                 _Logger.Log(
-                    "Chapter Summary-Based Revision Seems Stuck (Stage 1: Plot) - Forcefully Exiting", 7
+                    f"Chapter Summary-Based Revision Seems Stuck (Stage 1: Plot) - Forcefully Exiting after {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS} iterations.", 7
                 )
                 break
             Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
@@ -163,7 +163,7 @@ def GenerateChapter(
             )
             if Result:
                 _Logger.Log(
-                    f"Done Generating Initial Chapter (Stage 1: Plot)  {_ChapterNum}/{_TotalChapters}",
+                    f"Done Generating Initial Chapter (Stage 1: Plot) {_ChapterNum}/{_TotalChapters} after {IterCounter} iteration(s).",
                     5,
                 )
                 break
@@ -192,7 +192,7 @@ def GenerateChapter(
 
         # Generate Initial Chapter
         _Logger.Log(
-            f"Generating Initial Chapter (Stage 2: Character Development) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter})",
+            f"Generating Initial Chapter (Stage 2: Character Development) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS})",
             5,
         )
         Messages = MesssageHistory.copy()
@@ -215,7 +215,7 @@ def GenerateChapter(
         # Check if LLM did the work
         if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
             _Logger.Log(
-                "Chapter Summary-Based Revision Seems Stuck (Stage 2: Character Dev) - Forcefully Exiting", 7
+                f"Chapter Summary-Based Revision Seems Stuck (Stage 2: Character Dev) - Forcefully Exiting after {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS} iterations.", 7
             )
             break
         Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
@@ -223,7 +223,7 @@ def GenerateChapter(
         )
         if Result:
             _Logger.Log(
-                f"Done Generating Initial Chapter (Stage 2: Character Development)  {_ChapterNum}/{_TotalChapters}",
+                f"Done Generating Initial Chapter (Stage 2: Character Development) {_ChapterNum}/{_TotalChapters} after {IterCounter} iteration(s).",
                 5,
             )
             break
@@ -245,7 +245,7 @@ def GenerateChapter(
         )
         # Generate Initial Chapter
         _Logger.Log(
-            f"Generating Initial Chapter (Stage 3: Dialogue) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter})",
+            f"Generating Initial Chapter (Stage 3: Dialogue) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS})",
             5,
         )
         Messages = MesssageHistory.copy()
@@ -273,7 +273,7 @@ def GenerateChapter(
         # Check if LLM did the work
         if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
             _Logger.Log(
-                "Chapter Summary-Based Revision Seems Stuck (Stage 3: Dialogue) - Forcefully Exiting", 7
+                f"Chapter Summary-Based Revision Seems Stuck (Stage 3: Dialogue) - Forcefully Exiting after {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS} iterations.", 7
             )
             break
         Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
@@ -281,7 +281,7 @@ def GenerateChapter(
         )
         if Result:
             _Logger.Log(
-                f"Done Generating Initial Chapter (Stage 3: Dialogue)  {_ChapterNum}/{_TotalChapters}",
+                f"Done Generating Initial Chapter (Stage 3: Dialogue) {_ChapterNum}/{_TotalChapters} after {IterCounter} iteration(s).",
                 5,
             )
             break
@@ -333,18 +333,18 @@ def GenerateChapter(
             RevisionLoopExitReason = "Quality Standard Met" # Set alasan
             break
         Chapter, WritingHistory = ReviseChapter(
-            Interface, _Logger, Chapter, Feedback, WritingHistory
+            Interface, _Logger, Chapter, Feedback, WritingHistory, _Iteration=Iterations # Teruskan Iterations
         )
 
     _Logger.Log(
-        f"{RevisionLoopExitReason}, Exiting Feedback/Revision Loop (Stage 5) For Chapter {_ChapterNum}/{_TotalChapters} after {Iterations} iteration(s). Final Rating: {Rating}",
-        4, # Level log bisa disesuaikan jika perlu
+        f"{RevisionLoopExitReason}, Exiting Feedback/Revision Loop (Stage 5) For Chapter {_ChapterNum}/{_TotalChapters} after {Iterations}/{Writer.Config.CHAPTER_MAX_REVISIONS} iteration(s). Final Rating: {Rating}",
+        4,
     )
 
     return Chapter
 
 
-def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = []):
+def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = [], _Iteration: int = 0): # Tambahkan _Iteration
 
     # Dapatkan nomor bab dari riwayat pesan jika memungkinkan
     # Ini asumsi format prompt sebelumnya, mungkin perlu penyesuaian
@@ -378,7 +378,8 @@ def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = []):
         _Chapter=_Chapter, _Feedback=_Feedback
     )
 
-    _Logger.Log(f"Revising Chapter {ChapterNumStr}/{TotalChaptersStr}", 5)
+    # Kita tidak tahu iterasi ke berapa di sini, tapi kita tahu ini Stage 5
+    _Logger.Log(f"Revising Chapter {ChapterNumStr}/{TotalChaptersStr} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS})", 5)
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages = Interface.SafeGenerateText(
@@ -389,6 +390,7 @@ def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = []):
     )
     SummaryText: str = Interface.GetLastMessageText(Messages)
     NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
-    _Logger.Log(f"Done Revising Chapter {ChapterNumStr}/{TotalChaptersStr}. Word Count Change: {OriginalWordCount} -> {NewWordCount}", 5) # Tambahkan nomor bab di sini juga
+    # Menjadi ini:
+    _Logger.Log(f"Done Revising Chapter {ChapterNumStr}/{TotalChaptersStr} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS}). Word Count Change: {OriginalWordCount} -> {NewWordCount}", 5)
 
     return SummaryText, Messages

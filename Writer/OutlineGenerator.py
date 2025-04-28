@@ -71,8 +71,8 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
 
     # Dengan ini:
     _Logger.Log(
-        f"{OutlineRevisionLoopExitReason}, Exiting Outline Feedback/Revision Loop after {Iterations} iteration(s). Final Rating: {Rating}",
-        4, # Level log bisa disesuaikan jika perlu
+        f"{OutlineRevisionLoopExitReason}, Exiting Outline Feedback/Revision Loop after {Iterations}/{Writer.Config.OUTLINE_MAX_REVISIONS} iteration(s). Final Rating: {Rating}",
+        4,
     )
 
     # Generate Final Outline
@@ -93,7 +93,7 @@ def ReviseOutline(Interface, _Logger, _Outline, _Feedback, _History: list = [], 
         _Outline=_Outline, _Feedback=_Feedback
     )
 
-    _Logger.Log(f"Revising Outline (Iteration {_Iteration})", 2)
+    _Logger.Log(f"Revising Outline (Iteration {_Iteration}/{Writer.Config.OUTLINE_MAX_REVISIONS})", 2) # Tambahkan Max Revisions
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages = Interface.SafeGenerateText(
@@ -103,7 +103,7 @@ def ReviseOutline(Interface, _Logger, _Outline, _Feedback, _History: list = [], 
         _MinWordCount=Writer.Config.MIN_WORDS_REVISE_OUTLINE,  # Menggunakan Config
     )
     SummaryText: str = Interface.GetLastMessageText(Messages)
-    _Logger.Log(f"Done Revising Outline", 2)
+    _Logger.Log(f"Done Revising Outline (Iteration {_Iteration}/{Writer.Config.OUTLINE_MAX_REVISIONS})", 2) # Tambahkan Max Revisions
 
     return SummaryText, Messages
 
