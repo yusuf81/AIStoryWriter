@@ -89,7 +89,7 @@ cd .. && ./Write.py \
 -ChapterS1Model google://gemini-1.5-flash \
 -ChapterS2Model google://gemini-1.5-flash \
 -ChapterS3Model google://gemini-1.5-flash \
--ChapterS4Model google://gemini-1.5-flash \
+-FinalNovelEditorModel google://gemini-1.5-flash \
 -ChapterRevisionModel google://gemini-1.5-flash \
 -RevisionModel ollama://llama3:70b@10.1.65.4:11434 \
 -EvalModel ollama://llama3:70b@10.1.65.4:11434 \
@@ -110,7 +110,7 @@ cd .. && ./Write.py \
 -ChapterS1Model google://gemini-1.5-flash \
 -ChapterS2Model google://gemini-1.5-flash \
 -ChapterS3Model google://gemini-1.5-flash \
--ChapterS4Model google://gemini-1.5-flash \
+-FinalNovelEditorModel google://gemini-1.5-flash \
 -ChapterRevisionModel google://gemini-1.5-flash \
 -RevisionModel google://gemini-1.5-flash \
 -EvalModel google://gemini-1.5-flash \
@@ -131,7 +131,7 @@ cd .. && ./Write.py \
 -ChapterS1Model google://gemini-1.5-pro \
 -ChapterS2Model google://gemini-1.5-pro \
 -ChapterS3Model google://gemini-1.5-pro \
--ChapterS4Model google://gemini-1.5-pro \
+-FinalNovelEditorModel google://gemini-1.5-pro \
 -ChapterRevisionModel google://gemini-1.5-flash \
 -RevisionModel google://gemini-1.5-flash \
 -EvalModel google://gemini-1.5-flash \
@@ -152,7 +152,7 @@ cd .. && ./Write.py \
 -ChapterS1Model google://gemini-1.5-pro \
 -ChapterS2Model google://gemini-1.5-pro \
 -ChapterS3Model google://gemini-1.5-pro \
--ChapterS4Model google://gemini-1.5-pro \
+-FinalNovelEditorModel google://gemini-1.5-pro \
 -ChapterRevisionModel google://gemini-1.5-pro \
 -RevisionModel google://gemini-1.5-pro \
 -EvalModel google://gemini-1.5-pro \
@@ -173,7 +173,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://mistral \
 -ChapterS2Model ollama://mistral \
 -ChapterS3Model ollama://mistral \
--ChapterS4Model ollama://mistral \
+-FinalNovelEditorModel ollama://mistral \
 -ChapterRevisionModel ollama://mistral \
 -RevisionModel ollama://mistral \
 -EvalModel ollama://mistral \
@@ -194,7 +194,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
 -ChapterS2Model ollama://command-r-plus@10.1.65.4:11434 \
 -ChapterS3Model ollama://datacrystals/miqulitz120b-v2:latest@10.1.65.4:11434 \
--ChapterS4Model ollama://datacrystals/midnight-miqu103b-v1:latest@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://datacrystals/midnight-miqu103b-v1:latest@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://datacrystals/miqulitz120b-v2:latest@10.1.65.4:11434 \
 -RevisionModel ollama://llama3:70b@10.1.65.4:11434 \
 -EvalModel ollama://llama3:70b@10.1.65.4:11434 \
@@ -216,7 +216,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://datacrystals/miqulitz120b-v2:latest@10.1.65.4:11434 \
 -ChapterS2Model ollama://datacrystals/miqulitz120b-v2:latest@10.1.65.4:11434 \
 -ChapterS3Model ollama://datacrystals/miqulitz120b-v2:latest@10.1.65.4:11434 \
--ChapterS4Model ollama://datacrystals/miqulitz120b-v2:latest@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://datacrystals/miqulitz120b-v2:latest@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://datacrystals/miqulitz120b-v2:latest@10.1.65.4:11434 \
 -RevisionModel ollama://llama3:70b@10.1.65.4:11434 \
 -EvalModel ollama://llama3:70b@10.1.65.4:11434 \
@@ -239,7 +239,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
 -ChapterS2Model ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
 -ChapterS3Model ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
--ChapterS4Model ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
 -RevisionModel ollama://llama3:70b@10.1.65.4:11434 \
 -EvalModel ollama://llama3:70b@10.1.65.4:11434 \
@@ -265,7 +265,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://gemma2:27b@10.1.65.4:11434 \
 -ChapterS2Model ollama://gemma2:27b@10.1.65.4:11434 \
 -ChapterS3Model ollama://gemma2:27b@10.1.65.4:11434 \
--ChapterS4Model ollama://gemma2:27b@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://gemma2:27b@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://gemma2:27b@10.1.65.4:11434 \
 -RevisionModel ollama://gemma2:27b@10.1.65.4:11434 \
 -EvalModel ollama://gemma2:27b@10.1.65.4:11434 \
@@ -287,7 +287,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://qwen2:72b@10.1.65.4:11434 \
 -ChapterS2Model ollama://qwen2:72b@10.1.65.4:11434 \
 -ChapterS3Model ollama://qwen2:72b@10.1.65.4:11434 \
--ChapterS4Model ollama://qwen2:72b@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://qwen2:72b@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://qwen2:72b@10.1.65.4:11434 \
 -RevisionModel ollama://qwen2:72b@10.1.65.4:11434 \
 -EvalModel ollama://qwen2:72b@10.1.65.4:11434 \
@@ -309,7 +309,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://llama3@10.1.65.4:11434 \
 -ChapterS2Model ollama://llama3@10.1.65.4:11434 \
 -ChapterS3Model ollama://llama3@10.1.65.4:11434 \
--ChapterS4Model ollama://llama3@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://llama3@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://llama3@10.1.65.4:11434 \
 -RevisionModel ollama://llama3@10.1.65.4:11434 \
 -EvalModel ollama://llama3@10.1.65.4:11434 \
@@ -331,7 +331,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://gemma@10.1.65.4:11434 \
 -ChapterS2Model ollama://gemma@10.1.65.4:11434 \
 -ChapterS3Model ollama://gemma@10.1.65.4:11434 \
--ChapterS4Model ollama://gemma@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://gemma@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://gemma@10.1.65.4:11434 \
 -RevisionModel ollama://gemma@10.1.65.4:11434 \
 -EvalModel ollama://gemma@10.1.65.4:11434 \
@@ -353,7 +353,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://datacrystals/midnight-rose70b-v2:latest@10.1.65.4:11434 \
 -ChapterS2Model ollama://datacrystals/midnight-rose70b-v2:latest@10.1.65.4:11434 \
 -ChapterS3Model ollama://datacrystals/midnight-rose70b-v2:latest@10.1.65.4:11434 \
--ChapterS4Model ollama://datacrystals/midnight-rose70b-v2:latest@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://datacrystals/midnight-rose70b-v2:latest@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://datacrystals/midnight-rose70b-v2:latest@10.1.65.4:11434 \
 -RevisionModel ollama://llama3:70b@10.1.65.4:11434 \
 -EvalModel ollama://llama3:70b@10.1.65.4:11434 \
@@ -378,7 +378,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://datacrystals/midnight-miqu103b-v1:latest@10.1.65.4:11434 \
 -ChapterS2Model ollama://datacrystals/midnight-miqu103b-v1:latest@10.1.65.4:11434 \
 -ChapterS3Model ollama://datacrystals/midnight-miqu103b-v1:latest@10.1.65.4:11434 \
--ChapterS4Model ollama://datacrystals/midnight-miqu103b-v1:latest@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://datacrystals/midnight-miqu103b-v1:latest@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://datacrystals/midnight-miqu103b-v1:latest@10.1.65.4:11434 \
 -RevisionModel ollama://llama3:70b@10.1.65.4:11434 \
 -EvalModel ollama://llama3:70b@10.1.65.4:11434 \
@@ -403,7 +403,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
 -ChapterS2Model ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
 -ChapterS3Model ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
--ChapterS4Model ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://datacrystals/midnight-miqu70b-v1.5:latest@10.1.65.4:11434 \
 -RevisionModel ollama://command-r-plus@10.1.65.4:11434 \
 -EvalModel ollama://command-r-plus@10.1.65.4:11434 \
@@ -428,7 +428,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://mistral-nemo:latest@10.1.65.4:11434 \
 -ChapterS2Model ollama://mistral-nemo:latest@10.1.65.4:11434 \
 -ChapterS3Model ollama://mistral-nemo:latest@10.1.65.4:11434 \
--ChapterS4Model ollama://mistral-nemo:latest@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://mistral-nemo:latest@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://mistral-nemo:latest@10.1.65.4:11434 \
 -RevisionModel ollama://mistral-nemo@10.1.65.4:11434 \
 -EvalModel ollama://mistral-nemo@10.1.65.4:11434 \
@@ -453,7 +453,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://mistral-large:latest@10.1.65.4:11434 \
 -ChapterS2Model ollama://mistral-large:latest@10.1.65.4:11434 \
 -ChapterS3Model ollama://mistral-large:latest@10.1.65.4:11434 \
--ChapterS4Model ollama://mistral-large:latest@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://mistral-large:latest@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://mistral-large:latest@10.1.65.4:11434 \
 -RevisionModel ollama://mistral-large@10.1.65.4:11434 \
 -EvalModel ollama://mistral-large@10.1.65.4:11434 \
@@ -479,7 +479,7 @@ cd .. && ./Write.py \
 -ChapterS1Model ollama://mistral-large:latest@10.1.65.4:11434 \
 -ChapterS2Model ollama://mistral-large:latest@10.1.65.4:11434 \
 -ChapterS3Model ollama://mistral-large:latest@10.1.65.4:11434 \
--ChapterS4Model ollama://mistral-large:latest@10.1.65.4:11434 \
+-FinalNovelEditorModel ollama://mistral-large:latest@10.1.65.4:11434 \
 -ChapterRevisionModel ollama://mistral-large:latest@10.1.65.4:11434 \
 -RevisionModel ollama://llama3.1:70b@10.1.65.4:11434 \
 -EvalModel ollama://llama3.1:70b@10.1.65.4:11434 \

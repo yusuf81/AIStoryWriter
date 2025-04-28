@@ -67,11 +67,17 @@ Parser.add_argument(
     type=str,
     help="Model to use for writing the chapter (stage 3: dialogue)",
 )
+# Parser.add_argument(
+#     "-ChapterS4Model",
+#     default=Writer.Config.CHAPTER_STAGE4_WRITER_MODEL, # Default diambil dari config baru
+#     type=str,
+#     help="Model to use for writing the chapter (stage 4: final correction pass)",
+# )
 Parser.add_argument(
-    "-ChapterS4Model",
-    default=Writer.Config.CHAPTER_STAGE4_WRITER_MODEL,
+    "-FinalNovelEditorModel", # Nama argumen baru
+    default=Writer.Config.FINAL_NOVEL_EDITOR_MODEL, # Default dari config baru
     type=str,
-    help="Model to use for writing the chapter (stage 4: final correction pass)",
+    help="Model to use for the final novel-wide edit pass (via NovelEditor.py)", # Help text baru
 )
 Parser.add_argument(
     "-ChapterRevisionModel",
@@ -425,7 +431,8 @@ def main():
         Writer.Config.CHAPTER_STAGE1_WRITER_MODEL = Args.ChapterS1Model
         Writer.Config.CHAPTER_STAGE2_WRITER_MODEL = Args.ChapterS2Model
         Writer.Config.CHAPTER_STAGE3_WRITER_MODEL = Args.ChapterS3Model
-        Writer.Config.CHAPTER_STAGE4_WRITER_MODEL = Args.ChapterS4Model
+        # Writer.Config.CHAPTER_STAGE4_WRITER_MODEL = Args.ChapterS4Model # Baris lama dikomentari/dihapus
+        Writer.Config.FINAL_NOVEL_EDITOR_MODEL = Args.FinalNovelEditorModel # Gunakan nama argumen dan variabel config baru
         Writer.Config.CHAPTER_REVISION_WRITER_MODEL = Args.ChapterRevisionModel
         Writer.Config.EVAL_MODEL = Args.EvalModel
         Writer.Config.REVISION_MODEL = Args.RevisionModel
@@ -942,7 +949,7 @@ def main():
         StatsString += f" - Chapter Writer (Stage 1: Plot) Model: {Writer.Config.CHAPTER_STAGE1_WRITER_MODEL}  \n"
         StatsString += f" - Chapter Writer (Stage 2: Char Development) Model: {Writer.Config.CHAPTER_STAGE2_WRITER_MODEL}  \n"
         StatsString += f" - Chapter Writer (Stage 3: Dialogue) Model: {Writer.Config.CHAPTER_STAGE3_WRITER_MODEL}  \n"
-        StatsString += f" - Chapter Writer (Stage 4: Final Pass) Model: {Writer.Config.CHAPTER_STAGE4_WRITER_MODEL}  \n"
+        StatsString += f" - Final Novel Editor Model: {Writer.Config.FINAL_NOVEL_EDITOR_MODEL}  \n" # Gunakan nama variabel config baru dan label yang sesuai
         StatsString += f" - Chapter Writer (Revision) Model: {Writer.Config.CHAPTER_REVISION_WRITER_MODEL}  \n"
         StatsString += f" - Revision Model: {Writer.Config.REVISION_MODEL}  \n"
         StatsString += f" - Eval Model: {Writer.Config.EVAL_MODEL}  \n"
