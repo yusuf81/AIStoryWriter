@@ -80,7 +80,7 @@ def GenerateChapter(
     # Generate Summary of Last Chapter If Applicable
     FormattedLastChapterSummary: str = ""
     if len(_Chapters) > 0:
-        _Logger.Log(f"Creating Summary Of Last Chapter Info", 3)
+        _Logger.Log(f"Creating Summary Of Last Chapter Info for Chapter {_ChapterNum}/{_TotalChapters}", 3)
         ChapterSummaryMessages = []
         ChapterSummaryMessages.append(
             Interface.BuildSystemQuery(Writer.Prompts.CHAPTER_SUMMARY_INTRO)

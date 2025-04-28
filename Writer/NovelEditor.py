@@ -22,7 +22,7 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
         )
 
         _Logger.Log(
-            f"Prompting LLM To Perform Chapter {i} Second Pass In-Place Edit", 5
+            f"Prompting LLM To Perform Chapter {i}/{_TotalChapters} Second Pass In-Place Edit", 5
         )
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))

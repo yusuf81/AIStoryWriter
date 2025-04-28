@@ -21,7 +21,7 @@ def ChapterByScene(
     )
 
     SceneJSONList = Writer.Scene.ScenesToJSON.ScenesToJSON(
-        Interface, _Logger, SceneBySceneOutline
+        Interface, _Logger, _ChapterNum, _TotalChapters, SceneBySceneOutline # Pass chapter context
     )
 
     # Now we iterate through each scene one at a time and write it, then add it to this rough chapter, which is then returned for further editing

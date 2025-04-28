@@ -12,11 +12,11 @@ class SceneListSchema(BaseModel):
     scenes: List[str]
 
 
-def ScenesToJSON(Interface, _Logger, _Scenes: str):
+def ScenesToJSON(Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Scenes: str): # Added chapter context
 
     # This function converts the given scene list (from markdown format, to a specified JSON format).
 
-    _Logger.Log(f"Starting ChapterScenes->JSON", 2)
+    _Logger.Log(f"Starting ChapterScenes->JSON for Chapter {_ChapterNum}/{_TotalChapters}", 2)
     MesssageHistory: list = []
     MesssageHistory.append(
         Interface.BuildSystemQuery(Writer.Prompts.DEFAULT_SYSTEM_PROMPT)
@@ -33,6 +33,6 @@ def ScenesToJSON(Interface, _Logger, _Scenes: str):
         _FormatSchema=SceneListSchema.model_json_schema(),
     )
     SceneList = SceneJSONResponse["scenes"]  # Ekstrak list dari dictionary
-    _Logger.Log(f"Finished ChapterScenes->JSON ({len(SceneList)} Scenes Found)", 5)
+    _Logger.Log(f"Finished ChapterScenes->JSON for Chapter {_ChapterNum}/{_TotalChapters} ({len(SceneList)} Scenes Found)", 5)
 
     return SceneList

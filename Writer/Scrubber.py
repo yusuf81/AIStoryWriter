@@ -16,7 +16,7 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
         Prompt: str = Writer.Prompts.CHAPTER_SCRUB_PROMPT.format(
             _Chapter=EditedChapters[i]
         )
-        _Logger.Log(f"Prompting LLM To Perform Chapter {i+1} Scrubbing Edit", 5)
+        _Logger.Log(f"Prompting LLM To Perform Chapter {i+1}/{_TotalChapters} Scrubbing Edit", 5)
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
         Messages = Interface.SafeGenerateText(
@@ -25,7 +25,7 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
             Writer.Config.SCRUB_MODEL,
             _MinWordCount=Writer.Config.MIN_WORDS_SCRUB_CHAPTER,  # Menggunakan Config
         )
-        _Logger.Log(f"Finished Chapter {i+1} Scrubbing Edit", 5)
+        _Logger.Log(f"Finished Chapter {i+1}/{_TotalChapters} Scrubbing Edit", 5)
 
         NewChapter = Interface.GetLastMessageText(Messages)
         EditedChapters[i] = NewChapter
