@@ -54,7 +54,7 @@ def GenerateChapter(
     # MesssageHistory.append(Interface.BuildSystemQuery("Make sure to pay attention to the content that has happened in these previous chapters. It's okay to deviate from the outline a little in order to ensure you continue the same story from previous chapters."))
 
     # Now, extract the this-chapter-outline segment
-    _Logger.Log(f"Extracting Chapter Specific Outline", 4)
+    _Logger.Log(f"Extracting Chapter Specific Outline for Chapter {_ChapterNum}/{_TotalChapters}", 4)
     ThisChapterOutline: str = ""
     ChapterSegmentMessages = []
     ChapterSegmentMessages.append(
@@ -109,7 +109,7 @@ def GenerateChapter(
     if FormattedLastChapterSummary != "":
         DetailedChapterOutline = ThisChapterOutline
 
-    _Logger.Log(f"Done with base langchain setup", 2)
+    _Logger.Log(f"Done with base langchain setup for Chapter {_ChapterNum}/{_TotalChapters}", 2)
 
     # If scene generation disabled, use the normal initial plot generator
     Stage1Chapter = ""
@@ -170,7 +170,7 @@ def GenerateChapter(
     else:
 
         Stage1Chapter = Writer.Scene.ChapterByScene.ChapterByScene(
-            Interface, _Logger, ThisChapterOutline, _Outline, _BaseContext
+            Interface, _Logger, _ChapterNum, _TotalChapters, ThisChapterOutline, _Outline, _BaseContext
         )
 
     #### STAGE 2: Add Character Development

@@ -32,6 +32,6 @@ def ChapterOutlineToScenes(
         Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL,
         _MinWordCount=Writer.Config.MIN_WORDS_SCENE_OUTLINE,  # Menggunakan Config
     )
-    _Logger.Log(f"Finished Splitting Chapter Into Scenes", 5)
+    _Logger.Log(f"Finished Splitting Chapter {_ChapterNum}/{_TotalChapters} Into Scenes", 5)
 
     return Interface.GetLastMessageText(Response)
