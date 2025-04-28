@@ -50,7 +50,7 @@ class ChapterEvalSchema(BaseModel):
 
 def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
 
-    _Logger.Log(f"Evaluating Outlines From Story", 4)
+    _Logger.Log(f"Evaluating Outlines", 4) # Perbaiki pesan log
     Messages = [
         _Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)
     ]  # Menggunakan prompt terpusat
@@ -77,14 +77,14 @@ def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
     Report += f"Winner of Narrative: {JSONResponse['Narrative']}\n"
     Report += f"Overall Winner: {JSONResponse['OverallWinner']}\n"
 
-    _Logger.Log(f"Finished Evaluating Outlines From Story", 4)
+    _Logger.Log(f"Finished Evaluating Outlines", 4) # Perbaiki pesan log
 
     return Report, JSONResponse
 
 
-def EvaluateChapter(_Client, _Logger, _ChapterA, _ChapterB):
+def EvaluateChapter(_Client, _Logger, _ChapterNum: int, _ChapterA, _ChapterB): # Tambahkan _ChapterNum
 
-    _Logger.Log(f"Evaluating Outlines From Story", 4)
+    _Logger.Log(f"Evaluating Chapter {_ChapterNum}", 4) # Perbaiki pesan log
     Messages = [
         _Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)
     ]  # Menggunakan prompt terpusat
@@ -112,7 +112,7 @@ def EvaluateChapter(_Client, _Logger, _ChapterA, _ChapterB):
     Report += f"Winner of Narrative: {JSONResponse['Narrative']}\n"
     Report += f"Overall Winner: {JSONResponse['OverallWinner']}\n"
 
-    _Logger.Log(f"Finished Evaluating Outlines From Story", 4)
+    _Logger.Log(f"Finished Evaluating Chapter {_ChapterNum}", 4) # Perbaiki pesan log
 
     return Report, JSONResponse
 
@@ -183,10 +183,11 @@ ShortestStory = min(
 ChapterJSONs: list = []
 for i in range(ShortestStory):
 
-    Report += f"## Chapter {i}\n"
+    Report += f"## Chapter {i+1}\n" # Gunakan i+1 untuk nomor bab 1-based
     ChapterReport, ChapterJSON = EvaluateChapter(
         Interface,
         Logger,
+        i + 1, # Teruskan nomor bab (1-based)
         Story1["UnscrubbedChapters"][i],
         Story2["UnscrubbedChapters"][i],
     )

@@ -346,6 +346,31 @@ def GenerateChapter(
 
 def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = []):
 
+    # Dapatkan nomor bab dari riwayat pesan jika memungkinkan
+    # Ini asumsi format prompt sebelumnya, mungkin perlu penyesuaian
+    ChapterNumStr = "Unknown"
+    TotalChaptersStr = "Unknown"
+    try:
+        # Cari prompt yang mengandung '_ChapterNum=' dan '_TotalChapters='
+        for msg in reversed(_History):
+            if msg['role'] == 'user' and '_ChapterNum=' in msg['content'] and '_TotalChapters=' in msg['content']:
+                # Ekstrak nomor bab (ini cara sederhana, mungkin perlu regex yang lebih kuat)
+                # Cari '_ChapterNum=X/_TotalChapters=Y'
+                import re
+                match = re.search(r'_ChapterNum=(\d+)/_TotalChapters=(\d+)', msg['content'])
+                if match:
+                    ChapterNumStr = match.group(1)
+                    TotalChaptersStr = match.group(2)
+                    break
+                # Fallback jika formatnya '_ChapterNum=X of Y'
+                match = re.search(r'chapter (\d+) of (\d+)', msg['content'], re.IGNORECASE)
+                if match:
+                    ChapterNumStr = match.group(1)
+                    TotalChaptersStr = match.group(2)
+                    break
+    except Exception as e:
+        _Logger.Log(f"Could not extract chapter number for logging in ReviseChapter: {e}", 6) # Log jika gagal
+
     # Get original word count before revising
     OriginalWordCount = Writer.Statistics.GetWordCount(_Chapter)
 
@@ -353,7 +378,7 @@ def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = []):
         _Chapter=_Chapter, _Feedback=_Feedback
     )
 
-    _Logger.Log("Revising Chapter", 5)
+    _Logger.Log(f"Revising Chapter {ChapterNumStr}/{TotalChaptersStr}", 5)
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages = Interface.SafeGenerateText(
@@ -364,6 +389,6 @@ def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = []):
     )
     SummaryText: str = Interface.GetLastMessageText(Messages)
     NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
-    _Logger.Log(f"Done Revising Chapter. Word Count Change: {OriginalWordCount} -> {NewWordCount}", 5)
+    _Logger.Log(f"Done Revising Chapter {ChapterNumStr}/{TotalChaptersStr}. Word Count Change: {OriginalWordCount} -> {NewWordCount}", 5) # Tambahkan nomor bab di sini juga
 
     return SummaryText, Messages

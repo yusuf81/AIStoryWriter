@@ -64,7 +64,7 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
             break
 
         # Perbaiki pemanggilan ReviseOutline agar sesuai dengan return value-nya (tuple)
-        Outline, WritingHistory = ReviseOutline(Interface, _Logger, Outline, Feedback, WritingHistory) # Pastikan menangkap kedua nilai
+        Outline, WritingHistory = ReviseOutline(Interface, _Logger, Outline, Feedback, WritingHistory, _Iteration=Iterations) # Teruskan Iterations # Pastikan menangkap kedua nilai
 
     # Ganti pesan log ini:
     # _Logger.Log(f"Quality Standard Met, Exiting Feedback/Revision Loop", 4)
@@ -87,13 +87,13 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
     return FinalOutline, StoryElements, Outline, BaseContext
 
 
-def ReviseOutline(Interface, _Logger, _Outline, _Feedback, _History: list = []):
+def ReviseOutline(Interface, _Logger, _Outline, _Feedback, _History: list = [], _Iteration: int = 0): # Tambahkan _Iteration
 
     RevisionPrompt: str = Writer.Prompts.OUTLINE_REVISION_PROMPT.format(
         _Outline=_Outline, _Feedback=_Feedback
     )
 
-    _Logger.Log(f"Revising Outline", 2)
+    _Logger.Log(f"Revising Outline (Iteration {_Iteration})", 2)
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages = Interface.SafeGenerateText(
