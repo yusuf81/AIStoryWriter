@@ -6,12 +6,12 @@ import Writer.Prompts
 
 
 def SceneOutlineToScene(
-    Interface, _Logger, _ThisSceneOutline: str, _Outline: str, _BaseContext: str = ""
-):
+    Interface, _Logger, _SceneNum: int, _TotalScenes: int, _ThisSceneOutline: str, _Outline: str, _BaseContext: str = ""
+): # Added _SceneNum, _TotalScenes
 
     # Now we're finally going to go and write the scene provided.
 
-    _Logger.Log(f"Starting SceneOutline->Scene", 2)
+    _Logger.Log(f"Starting SceneOutline->Scene Generation for Scene {_SceneNum}/{_TotalScenes}", 2)
     MesssageHistory: list = []
     MesssageHistory.append(
         Interface.BuildSystemQuery(Writer.Prompts.DEFAULT_SYSTEM_PROMPT)
@@ -30,6 +30,6 @@ def SceneOutlineToScene(
         Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
         _MinWordCount=Writer.Config.MIN_WORDS_SCENE_WRITE,  # Menggunakan Config
     )
-    _Logger.Log(f"Finished SceneOutline->Scene", 5)
+    _Logger.Log(f"Finished SceneOutline->Scene Generation for Scene {_SceneNum}/{_TotalScenes}", 5)
 
     return Interface.GetLastMessageText(Response)

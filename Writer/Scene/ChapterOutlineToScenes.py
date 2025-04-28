@@ -6,14 +6,14 @@ import Writer.Prompts
 
 
 def ChapterOutlineToScenes(
-    Interface, _Logger, _ThisChapter: str, _Outline: str, _BaseContext: str = ""
-):
+    Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _ThisChapterOutline: str, _Outline: str, _BaseContext: str = ""
+): # Added _ChapterNum, _TotalChapters, renamed _ThisChapter
 
     # We're now going to convert the chapter outline into a more detailed outline for each scene.
     # The scene by scene outline will be returned, JSONified, and then later converted into fully written scenes
     # These will then be concatenated into chapters and revised
 
-    _Logger.Log(f"Splitting Chapter Into Scenes", 2)
+    _Logger.Log(f"Splitting Chapter {_ChapterNum}/{_TotalChapters} Into Scenes", 2)
     MesssageHistory: list = []
     MesssageHistory.append(
         Interface.BuildSystemQuery(Writer.Prompts.DEFAULT_SYSTEM_PROMPT)
@@ -21,7 +21,7 @@ def ChapterOutlineToScenes(
     MesssageHistory.append(
         Interface.BuildUserQuery(
             Writer.Prompts.CHAPTER_TO_SCENES.format(
-                _ThisChapter=_ThisChapter, _Outline=_Outline
+                _ThisChapter=_ThisChapterOutline, _Outline=_Outline # Use renamed variable
             )
         )
     )

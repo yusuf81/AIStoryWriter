@@ -74,7 +74,7 @@ def GenerateChapter(
         _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_SEGMENT_EXTRACT,  # Menggunakan Config
     )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
     ThisChapterOutline: str = Interface.GetLastMessageText(ChapterSegmentMessages)
-    _Logger.Log(f"Created Chapter Specific Outline", 4)
+    _Logger.Log(f"Created Chapter Specific Outline for Chapter {_ChapterNum}/{_TotalChapters}", 4)
 
     # Generate Summary of Last Chapter If Applicable
     FormattedLastChapterSummary: str = ""
