@@ -60,9 +60,22 @@ Available command-line arguments are stated in the `Write.py` file.
 
 Key arguments include:
 *   `-Resume {path/to/run.state.json}`: Resume a previous run from its state file.
+*   `-InitialOutlineModel {model_string}`: Model for initial outline generation and revision.
+*   `-ChapterOutlineModel {model_string}`: Model for per-chapter outline expansion or scene outline generation.
+*   `-ChapterS1Model {model_string}`: Model for chapter stage 1 (plot/scene writing).
+*   `-ChapterS2Model {model_string}`: Model for chapter stage 2 (character development).
+*   `-ChapterS3Model {model_string}`: Model for chapter stage 3 (dialogue).
+*   `-FinalNovelEditorModel {model_string}`: Model for the final novel-wide edit pass.
+*   `-ChapterRevisionModel {model_string}`: Model for revising chapters during the feedback loop.
+*   `-RevisionModel {model_string}`: Model for generating feedback/critique.
+*   `-EvalModel {model_string}`: Model for quality evaluation (true/false) and chapter counting.
+*   `-InfoModel {model_string}`: Model for extracting final story info (title, summary, tags).
+*   `-ScrubModel {model_string}`: Model for the final scrubbing pass.
+*   `-CheckerModel {model_string}`: Model for internal checks (e.g., scene JSON conversion).
+*   `-TranslatorModel {model_string}`: Model for translation tasks.
 *   `-ExpandOutline`: Expand the main outline into detailed per-chapter outlines before writing. (Enabled by default)
 *   `-SceneGenerationPipeline`: Use the scene-by-scene generation method for initial chapter drafts. (Enabled by default)
-*   `-EnableFinalEditPass`: Perform an additional editing pass on each chapter after initial generation. (Disabled by default)
+*   `-EnableFinalEditPass`: Perform an additional editing pass on the *entire novel* after initial generation. (Enabled by default)
 *   `-NoScrubChapters`: Disable the final pass that cleans up potential AI artifacts. (Scrubbing enabled by default)
 *   `-NoChapterRevision`: Disable the feedback/revision loop during chapter generation. (Revisions enabled by default)
 *   `-Translate {Language}`: Translate the final story into the specified language (e.g., 'French').
