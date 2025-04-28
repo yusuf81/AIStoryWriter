@@ -25,7 +25,7 @@ import Writer.StoryInfo
 import Writer.NovelEditor
 import Writer.Translator
 import Writer.Prompts
-import Writer.Statistics # Pastikan ini ada
+import Writer.Statistics  # Pastikan ini ada
 
 
 # Setup Argparser
@@ -169,7 +169,7 @@ Parser.add_argument(
 Parser.add_argument(
     "-EnableFinalEditPass",
     action="store_true",
-    default=True
+    default=True,
     help="Enable a final edit pass of the whole story prior to scrubbing",
 )
 Parser.add_argument(
@@ -201,16 +201,19 @@ def save_state(state_data, filepath):
             json.dump(state_data, f, indent=4)
         # Operasi atomik: ganti file lama dengan yang baru
         shutil.move(temp_filepath, filepath)
-    except (IOError, OSError) as e: # Catch specific file errors
+    except (IOError, OSError) as e:  # Catch specific file errors
         print(f"FATAL: Failed to save state to {filepath}: {e}", file=sys.stderr)
         # Hapus file temp jika ada
         if os.path.exists(temp_filepath):
             try:
                 os.remove(temp_filepath)
             except OSError:
-                pass # Abaikan jika tidak bisa dihapus
-    except Exception as e: # Keep a fallback for truly unexpected errors
-        print(f"FATAL: Unexpected error saving state to {filepath}: {type(e).__name__} - {e}", file=sys.stderr)
+                pass  # Abaikan jika tidak bisa dihapus
+    except Exception as e:  # Keep a fallback for truly unexpected errors
+        print(
+            f"FATAL: Unexpected error saving state to {filepath}: {type(e).__name__} - {e}",
+            file=sys.stderr,
+        )
         # Hapus file temp jika ada
         if os.path.exists(temp_filepath):
             try:
@@ -257,21 +260,32 @@ def _get_outline_for_chapter(SysLogger, current_state, chapter_index):
     """Determines the best outline to use for a specific chapter, with fallback."""
     Outline = current_state.get("full_outline", "")
     ChapterOutlines = current_state.get("expanded_chapter_outlines", [])
-    MegaOutline = _build_mega_outline(current_state) # Bangun untuk potensi penggunaan
+    MegaOutline = _build_mega_outline(current_state)  # Bangun untuk potensi penggunaan
 
     # Default ke MegaOutline jika ekspansi aktif & berhasil, jika tidak, ke base outline
-    UsedOutline = MegaOutline if Writer.Config.EXPAND_OUTLINE and ChapterOutlines else Outline
+    UsedOutline = (
+        MegaOutline if Writer.Config.EXPAND_OUTLINE and ChapterOutlines else Outline
+    )
 
     # Jika ekspansi aktif dan outline bab spesifik ada, coba validasi dan gunakan
-    if Writer.Config.EXPAND_OUTLINE and ChapterOutlines and len(ChapterOutlines) >= chapter_index:
+    if (
+        Writer.Config.EXPAND_OUTLINE
+        and ChapterOutlines
+        and len(ChapterOutlines) >= chapter_index
+    ):
         potential_expanded_outline = ChapterOutlines[chapter_index - 1]
         # --- AWAL BLOK VALIDASI ---
-        min_len_threshold = Writer.Config.MIN_WORDS_PER_CHAPTER_OUTLINE # Ambil batas minimal dari config
+        min_len_threshold = (
+            Writer.Config.MIN_WORDS_PER_CHAPTER_OUTLINE
+        )  # Ambil batas minimal dari config
         word_count = Writer.Statistics.GetWordCount(potential_expanded_outline)
 
         if word_count >= min_len_threshold:
             # Outline yang diperluas valid, gunakan ini
-            SysLogger.Log(f"Using valid expanded outline for Chapter {chapter_index} from state.", 6)
+            SysLogger.Log(
+                f"Using valid expanded outline for Chapter {chapter_index} from state.",
+                6,
+            )
             return potential_expanded_outline
         else:
             # Outline yang diperluas tidak valid/terlalu pendek, log peringatan dan biarkan fallback terjadi
@@ -283,12 +297,20 @@ def _get_outline_for_chapter(SysLogger, current_state, chapter_index):
         # Jika validasi gagal, kita tidak return di sini, biarkan fungsi melanjutkan ke fallback di bawah
 
     # Fallback jika ekspansi tidak aktif, atau outline bab spesifik tidak ada/tidak valid
-    if not UsedOutline: # Fallback terakhir jika UsedOutline juga kosong
-         SysLogger.Log(f"Warning: No valid outline found for Chapter {chapter_index}, using base outline as last resort.", 6)
-         return Outline if Outline else "" # Kembalikan Outline dasar atau string kosong jika tidak ada
+    if not UsedOutline:  # Fallback terakhir jika UsedOutline juga kosong
+        SysLogger.Log(
+            f"Warning: No valid outline found for Chapter {chapter_index}, using base outline as last resort.",
+            6,
+        )
+        return (
+            Outline if Outline else ""
+        )  # Kembalikan Outline dasar atau string kosong jika tidak ada
     else:
-         SysLogger.Log(f"Using general outline (MegaOutline or Base) for Chapter {chapter_index}.", 6)
-         return UsedOutline # Return Mega atau Base outline
+        SysLogger.Log(
+            f"Using general outline (MegaOutline or Base) for Chapter {chapter_index}.",
+            6,
+        )
+        return UsedOutline  # Return Mega atau Base outline
 
 
 def main():
@@ -377,11 +399,21 @@ def main():
         except (FileNotFoundError, ValueError, IOError) as e:
             print(f"FATAL: Error loading state file: {e}", file=sys.stderr)
             sys.exit(1)
-        except (KeyError, AttributeError, TypeError) as e: # Catch potential state structure/type errors
-            print(f"FATAL: Error processing state data during resume setup: {type(e).__name__} - {e}", file=sys.stderr)
+        except (
+            KeyError,
+            AttributeError,
+            TypeError,
+        ) as e:  # Catch potential state structure/type errors
+            print(
+                f"FATAL: Error processing state data during resume setup: {type(e).__name__} - {e}",
+                file=sys.stderr,
+            )
             sys.exit(1)
-        except Exception as e: # Fallback for other unexpected errors
-            print(f"FATAL: Unexpected error during resume setup: {type(e).__name__} - {e}", file=sys.stderr)
+        except Exception as e:  # Fallback for other unexpected errors
+            print(
+                f"FATAL: Unexpected error during resume setup: {type(e).__name__} - {e}",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     else:
@@ -479,11 +511,14 @@ def main():
         except FileNotFoundError:
             SysLogger.Log(f"FATAL: Prompt file not found: {Args.Prompt}", 7)
             sys.exit(1)
-        except IOError as e: # Catch file reading errors
+        except IOError as e:  # Catch file reading errors
             SysLogger.Log(f"FATAL: Error reading prompt file {Args.Prompt}: {e}", 7)
             sys.exit(1)
-        except Exception as e: # Fallback
-            SysLogger.Log(f"FATAL: Unexpected error reading prompt file {Args.Prompt}: {type(e).__name__} - {e}", 7)
+        except Exception as e:  # Fallback
+            SysLogger.Log(
+                f"FATAL: Unexpected error reading prompt file {Args.Prompt}: {type(e).__name__} - {e}",
+                7,
+            )
             sys.exit(1)
 
         current_state["input_prompt_file"] = Args.Prompt
@@ -682,11 +717,16 @@ def main():
         for i in range(start_chapter, NumChapters + 1):
             SysLogger.Log(f"--- Generating Chapter {i}/{NumChapters} ---", 3)
             # Panggil helper untuk mendapatkan outline bab dengan fallback
-            CurrentChapterOutlineTarget = _get_outline_for_chapter(SysLogger, current_state, i)
+            CurrentChapterOutlineTarget = _get_outline_for_chapter(
+                SysLogger, current_state, i
+            )
 
-            if not CurrentChapterOutlineTarget: # Periksa apakah helper mengembalikan sesuatu yang valid
+            if (
+                not CurrentChapterOutlineTarget
+            ):  # Periksa apakah helper mengembalikan sesuatu yang valid
                 SysLogger.Log(
-                    f"FATAL: No outline could be determined for generating Chapter {i}.", 7
+                    f"FATAL: No outline could be determined for generating Chapter {i}.",
+                    7,
                 )
                 sys.exit(1)
 
@@ -877,7 +917,7 @@ def main():
             "generation_start_time",
             datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
         )
-        StatsString += f" - Generation Start Date: {gen_start_time_str}\n" # Removed trailing space
+        StatsString += f" - Generation Start Date: {gen_start_time_str}\n"  # Removed trailing space
         StatsString += f" - Generation Total Time: {ElapsedTime:.2f}s  \n"
         StatsString += (
             f" - Generation Average WPM: {60 * (TotalWords/ElapsedTime):.2f}  \n"
