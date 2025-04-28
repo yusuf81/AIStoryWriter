@@ -28,9 +28,9 @@ These variables define which Large Language Model (LLM) is used for specific tas
     -   **Function:** Model used for the third stage of chapter writing, taking the output of Stage 2 and adding dialogue between characters.
     -   **Usage:** Called by `Writer.Chapter.ChapterGenerator.GenerateChapter` (Stage 3).
 
--   **`CHAPTER_STAGE4_WRITER_MODEL`**:
-    -   **Function:** Model used for an optional final editing pass on each chapter *after* the main generation stages (Stages 1-3) but *before* the revision cycle. Also used for the optional full-novel edit pass (`ENABLE_FINAL_EDIT_PASS`).
-    -   **Usage:** Called by `Writer.NovelEditor.EditNovel`. (Note: Stage 4 in `ChapterGenerator.py` seems commented out, but the model is used by `NovelEditor`).
+-   **`FINAL_NOVEL_EDITOR_MODEL`**:
+    -   **Function:** Model used for the optional final editing pass over the entire novel (triggered by `ENABLE_FINAL_EDIT_PASS`). This pass aims to improve consistency and flow across all chapters.
+    -   **Usage:** Called by `Writer.NovelEditor.EditNovel`.
 
 -   **`CHAPTER_REVISION_WRITER_MODEL`**:
     -   **Function:** Model used specifically during the chapter revision cycle (if enabled). It takes the generated chapter draft and feedback/critique to produce an improved version.
