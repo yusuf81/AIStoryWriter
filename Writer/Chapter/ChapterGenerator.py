@@ -5,6 +5,7 @@ import Writer.PrintUtils
 import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
 import Writer.Prompts
+import Writer.Statistics # Add near other imports at the top
 
 import Writer.Scene.ChapterByScene
 
@@ -345,6 +346,9 @@ def GenerateChapter(
 
 def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = []):
 
+    # Get original word count before revising
+    OriginalWordCount = Writer.Statistics.GetWordCount(_Chapter)
+
     RevisionPrompt = Writer.Prompts.CHAPTER_REVISION.format(
         _Chapter=_Chapter, _Feedback=_Feedback
     )
@@ -359,6 +363,7 @@ def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = []):
         _MinWordCount=Writer.Config.MIN_WORDS_REVISE_CHAPTER,  # Menggunakan Config
     )
     SummaryText: str = Interface.GetLastMessageText(Messages)
-    _Logger.Log("Done Revising Chapter", 5)
+    NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
+    _Logger.Log(f"Done Revising Chapter. Word Count Change: {OriginalWordCount} -> {NewWordCount}", 5)
 
     return SummaryText, Messages

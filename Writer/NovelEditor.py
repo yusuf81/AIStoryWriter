@@ -1,6 +1,7 @@
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Prompts
+import Writer.Statistics # Add this import
 
 
 def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters: int):
@@ -12,6 +13,9 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
         NovelText: str = ""
         for Chapter in EditedChapters:
             NovelText += Chapter
+
+        # Get original word count before editing
+        OriginalWordCount = Writer.Statistics.GetWordCount(EditedChapters[i - 1])
 
         Prompt: str = Writer.Prompts.CHAPTER_EDIT_PROMPT.format(
             _Outline=_Outline, NovelText=NovelText, i=i
@@ -32,7 +36,7 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
 
         NewChapter = Interface.GetLastMessageText(Messages)
         EditedChapters[i - 1] = NewChapter # Use 0-based index
-        ChapterWordCount = Writer.Statistics.GetWordCount(NewChapter)
-        _Logger.Log(f"New Chapter Word Count: {ChapterWordCount}", 3)
+        NewWordCount = Writer.Statistics.GetWordCount(NewChapter)
+        _Logger.Log(f"Word Count Change (Edit): Chapter {i} {OriginalWordCount} -> {NewWordCount}", 3)
 
     return EditedChapters

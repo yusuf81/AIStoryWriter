@@ -1,5 +1,7 @@
 import Writer.PrintUtils
 import Writer.Prompts
+import Writer.Config # Add this
+import Writer.Statistics # Add this import
 
 
 def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
@@ -7,6 +9,9 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
     EditedChapters = _Chapters
 
     for i in range(_TotalChapters):
+
+        # Get original word count before scrubbing
+        OriginalWordCount = Writer.Statistics.GetWordCount(EditedChapters[i])
 
         Prompt: str = Writer.Prompts.CHAPTER_SCRUB_PROMPT.format(
             _Chapter=EditedChapters[i]
@@ -24,7 +29,7 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
 
         NewChapter = Interface.GetLastMessageText(Messages)
         EditedChapters[i] = NewChapter
-        ChapterWordCount = Writer.Statistics.GetWordCount(NewChapter)
-        _Logger.Log(f"Scrubbed Chapter Word Count: {ChapterWordCount}", 3)
+        NewWordCount = Writer.Statistics.GetWordCount(NewChapter)
+        _Logger.Log(f"Word Count Change (Scrub): Chapter {i+1} {OriginalWordCount} -> {NewWordCount}", 3)
 
     return EditedChapters

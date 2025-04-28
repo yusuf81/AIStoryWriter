@@ -1,6 +1,7 @@
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Prompts
+import Writer.Statistics # Add this import
 
 
 def TranslatePrompt(Interface, _Logger, _Prompt: str, _Language: str = "French"):
@@ -30,6 +31,9 @@ def TranslateNovel(
 
     for i in range(_TotalChapters):
 
+        # Get original word count before translating
+        OriginalWordCount = Writer.Statistics.GetWordCount(EditedChapters[i])
+
         Prompt: str = Writer.Prompts.CHAPTER_TRANSLATE_PROMPT.format(
             _Chapter=EditedChapters[i], _Language=_Language
         )
@@ -43,7 +47,7 @@ def TranslateNovel(
 
         NewChapter = Interface.GetLastMessageText(Messages)
         EditedChapters[i] = NewChapter
-        ChapterWordCount = Writer.Statistics.GetWordCount(NewChapter)
-        _Logger.Log(f"Translation Chapter Word Count: {ChapterWordCount}", 3)
+        NewWordCount = Writer.Statistics.GetWordCount(NewChapter)
+        _Logger.Log(f"Word Count Change (Translate): Chapter {i+1} {OriginalWordCount} -> {NewWordCount}", 3)
 
     return EditedChapters
