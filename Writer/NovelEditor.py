@@ -31,7 +31,7 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
         _Logger.Log(f"Finished Chapter {i} Second Pass In-Place Edit", 5)
 
         NewChapter = Interface.GetLastMessageText(Messages)
-        EditedChapters[i] = NewChapter
+        EditedChapters[i - 1] = NewChapter # Use 0-based index
         ChapterWordCount = Writer.Statistics.GetWordCount(NewChapter)
         _Logger.Log(f"New Chapter Word Count: {ChapterWordCount}", 3)
 
