@@ -302,8 +302,9 @@ def GenerateChapter(
         if (Iterations > Writer.Config.CHAPTER_MIN_REVISIONS) and (Rating == True):
             RevisionLoopExitReason = "Quality Standard Met" # Set alasan
             break
+        # Teruskan _ChapterNum dan _TotalChapters ke ReviseChapter
         Chapter, WritingHistory = ReviseChapter(
-            Interface, _Logger, Chapter, Feedback, WritingHistory, _Iteration=Iterations # Teruskan Iterations
+            Interface, _Logger, _ChapterNum, _TotalChapters, Chapter, Feedback, WritingHistory, _Iteration=Iterations
         )
 
     _Logger.Log(
@@ -314,32 +315,7 @@ def GenerateChapter(
     return Chapter
 
 
-def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = [], _Iteration: int = 0): # Tambahkan _Iteration
-
-    # Dapatkan nomor bab dari riwayat pesan jika memungkinkan
-    # Ini asumsi format prompt sebelumnya, mungkin perlu penyesuaian
-    ChapterNumStr = "Unknown"
-    TotalChaptersStr = "Unknown"
-    try:
-        # Cari prompt yang mengandung '_ChapterNum=' dan '_TotalChapters='
-        for msg in reversed(_History):
-            if msg['role'] == 'user' and '_ChapterNum=' in msg['content'] and '_TotalChapters=' in msg['content']:
-                # Ekstrak nomor bab (ini cara sederhana, mungkin perlu regex yang lebih kuat)
-                # Cari '_ChapterNum=X/_TotalChapters=Y'
-                import re
-                match = re.search(r'_ChapterNum=(\d+)/_TotalChapters=(\d+)', msg['content'])
-                if match:
-                    ChapterNumStr = match.group(1)
-                    TotalChaptersStr = match.group(2)
-                    break
-                # Fallback jika formatnya '_ChapterNum=X of Y'
-                match = re.search(r'chapter (\d+) of (\d+)', msg['content'], re.IGNORECASE)
-                if match:
-                    ChapterNumStr = match.group(1)
-                    TotalChaptersStr = match.group(2)
-                    break
-    except Exception as e:
-        _Logger.Log(f"Could not extract chapter number for logging in ReviseChapter: {e}", 6) # Log jika gagal
+def ReviseChapter(Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Chapter, _Feedback, _History: list = [], _Iteration: int = 0): # Tambahkan _ChapterNum, _TotalChapters
 
     # Get original word count before revising
     OriginalWordCount = Writer.Statistics.GetWordCount(_Chapter)
@@ -348,8 +324,8 @@ def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = [], 
         _Chapter=_Chapter, _Feedback=_Feedback
     )
 
-    # Kita tidak tahu iterasi ke berapa di sini, tapi kita tahu ini Stage 5
-    _Logger.Log(f"Revising Chapter {ChapterNumStr}/{TotalChaptersStr} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS})", 5)
+    # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
+    _Logger.Log(f"Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS})", 5)
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages = Interface.SafeGenerateText(
@@ -360,7 +336,7 @@ def ReviseChapter(Interface, _Logger, _Chapter, _Feedback, _History: list = [], 
     )
     SummaryText: str = Interface.GetLastMessageText(Messages)
     NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
-    # Menjadi ini:
-    _Logger.Log(f"Done Revising Chapter {ChapterNumStr}/{TotalChaptersStr} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS}). Word Count Change: {OriginalWordCount} -> {NewWordCount}", 5)
+    # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
+    _Logger.Log(f"Done Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS}). Word Count Change: {OriginalWordCount} -> {NewWordCount}", 5)
 
     return SummaryText, Messages
