@@ -94,44 +94,38 @@ def simulate_get_info(state_filepath, info_model_override=None):
         traceback.print_exc()
         return
 
-    # 5. Dapatkan Konten Cerita dari State
-    # Coba ambil dari kunci yang mungkin menyimpan bab final setelah semua proses
-    final_chapters = current_state.get("final_processed_chapters") # Kunci hipotetis
-    if not final_chapters:
-        final_chapters = current_state.get("TranslatedChapters") # Coba hasil terjemahan
-    if not final_chapters:
-        final_chapters = current_state.get("ScrubbedChapter") # Coba hasil scrub
-    if not final_chapters:
-        final_chapters = current_state.get("EditedChapters") # Coba hasil edit
-    # Fallback ke bab yang selesai sebelum pasca-proses
-    completed_chapters = current_state.get("completed_chapters")
-    # Fallback terakhir ke outline
-    full_outline = current_state.get("full_outline")
-
-
-    InfoQueryContent = ""
+    # 5. Dapatkan Konten Cerita dari State (dengan prioritas yang diperbarui)
+    story_content_list = None
     source = "Unknown"
 
-    # Prioritaskan final_chapters jika ada dan valid
-    if final_chapters and isinstance(final_chapters, list) and final_chapters:
-        InfoQueryContent = "\n\n\n".join(final_chapters)
-        # Tentukan sumber yang lebih spesifik jika memungkinkan
-        if current_state.get("TranslatedChapters"): source = "TranslatedChapters"
-        elif current_state.get("ScrubbedChapter"): source = "ScrubbedChapter"
-        elif current_state.get("EditedChapters"): source = "EditedChapters"
-        else: source = "final_processed_chapters (unknown origin)" # Jika hanya kunci hipotetis
-    # Jika tidak, gunakan completed_chapters jika ada dan valid
-    elif completed_chapters and isinstance(completed_chapters, list) and completed_chapters:
-        InfoQueryContent = "\n\n\n".join(completed_chapters)
-        source = "completed_chapters"
-    # Jika tidak, gunakan full_outline jika ada
-    elif full_outline:
-        InfoQueryContent = full_outline
-        source = "full_outline"
+    # Urutan prioritas kunci state untuk konten cerita
+    priority_keys = [
+        "FinalProcessedChapters", # Kunci baru yang paling akhir
+        "TranslatedChapters",
+        "ScrubbedChapters", # Gunakan plural
+        "EditedChapters",
+        "completed_chapters", # Bab sebelum pasca-proses
+    ]
 
-    if not InfoQueryContent:
-        SysLogger.Log("FATAL: No story content (chapters or outline) found in state file.", 7)
-        return
+    for key in priority_keys:
+        content = current_state.get(key)
+        if content and isinstance(content, list) and content: # Pastikan list tidak kosong
+            story_content_list = content
+            source = key
+            break # Berhenti setelah menemukan konten valid pertama
+
+    # Fallback ke outline jika tidak ada list bab yang valid
+    if not story_content_list:
+        full_outline = current_state.get("full_outline")
+        if full_outline:
+            InfoQueryContent = full_outline
+            source = "full_outline"
+        else:
+            SysLogger.Log("FATAL: No story content (chapters or outline) found in state file.", 7)
+            return
+    else:
+        # Gabungkan list bab menjadi satu string
+        InfoQueryContent = "\n\n\n".join(story_content_list)
 
     SysLogger.Log(f"Using story content from state key: '{source}'", 6)
     SysLogger.Log(f"Content length (chars): {len(InfoQueryContent)}", 6)

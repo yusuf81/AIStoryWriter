@@ -794,7 +794,7 @@ def main():
 
     if last_completed_step == "post_processing":
 
-        # Siapkan StoryInfoJSON (selalu buat ulang dari state/variabel saat ini)
+        # Siapkan StoryInfoJSON dasar (akan diperbarui setelah setiap langkah)
         StoryInfoJSON = {"Outline": Outline if Outline else ""}
         StoryInfoJSON.update({"StoryElements": Elements if Elements else ""})
         StoryInfoJSON.update(
@@ -803,68 +803,108 @@ def main():
         StoryInfoJSON.update({"BaseContext": BaseContext if BaseContext else ""})
         StoryInfoJSON.update(
             {"UnscrubbedChapters": Chapters}
-        )  # Simpan bab sebelum edit/scrub
+        )  # Simpan bab asli sebelum diproses
 
-        # Edit Novel (jika diaktifkan)
-        NewChapters = Chapters  # Mulai dengan bab yang ada
+        # --- Mulai Langkah Pasca-Pemrosesan dengan Penanganan Error ---
+        processed_chapters = Chapters[:] # Salin list bab awal
+        post_processing_successful = True # Flag untuk melacak keberhasilan
+
+        # 1. Edit Novel (jika diaktifkan)
         if Writer.Config.ENABLE_FINAL_EDIT_PASS:
             SysLogger.Log("Starting Final Edit Pass...", 3)
-            if not Chapters:
+            if not processed_chapters:
                 SysLogger.Log("Warning: No chapters available for final edit pass.", 6)
             else:
-                NewChapters = Writer.NovelEditor.EditNovel(
-                    Interface, SysLogger, Chapters, Outline, NumChapters
-                )
-                StoryInfoJSON.update(
-                    {"EditedChapters": NewChapters}
-                )  # Simpan hasil edit
-                SysLogger.Log("Final Edit Pass Complete.", 4)
+                try:
+                    edited_chapters_result = Writer.NovelEditor.EditNovel(
+                        Interface, SysLogger, processed_chapters, Outline, NumChapters
+                    )
+                    processed_chapters = edited_chapters_result # Perbarui bab yang diproses
+                    current_state["EditedChapters"] = processed_chapters # Simpan ke state
+                    StoryInfoJSON["EditedChapters"] = processed_chapters # Simpan ke JSON info
+                    current_state["last_completed_step"] = "post_processing_edit_complete"
+                    save_state(current_state, state_filepath) # Simpan state segera
+                    SysLogger.Log("Final Edit Pass Complete. State Saved.", 4)
+                except Exception as e:
+                    post_processing_successful = False
+                    SysLogger.Log(f"ERROR during Final Edit Pass: {e}. Skipping further edits on this version.", 7)
+                    import traceback
+                    traceback.print_exc() # Cetak traceback untuk debug
+                    # Jangan perbarui processed_chapters, gunakan versi sebelumnya
         else:
             SysLogger.Log("Skipping Final Edit Pass (disabled).", 4)
 
-        # Scrub Novel (jika diaktifkan)
+        # 2. Scrub Novel (jika diaktifkan)
         if not Writer.Config.SCRUB_NO_SCRUB:
             SysLogger.Log("Starting Scrubbing Pass...", 3)
-            if not NewChapters:
+            if not processed_chapters:
                 SysLogger.Log("Warning: No chapters available for scrubbing pass.", 6)
             else:
-                NewChapters = Writer.Scrubber.ScrubNovel(
-                    Interface, SysLogger, NewChapters, NumChapters
-                )
-                StoryInfoJSON.update(
-                    {"ScrubbedChapter": NewChapters}
-                )  # Simpan hasil scrub
-                SysLogger.Log("Scrubbing Pass Complete.", 4)
+                try:
+                    scrubbed_chapters_result = Writer.Scrubber.ScrubNovel(
+                        Interface, SysLogger, processed_chapters, NumChapters
+                    )
+                    processed_chapters = scrubbed_chapters_result # Perbarui bab yang diproses
+                    current_state["ScrubbedChapters"] = processed_chapters # Simpan ke state (Gunakan plural)
+                    StoryInfoJSON["ScrubbedChapters"] = processed_chapters # Simpan ke JSON info (Gunakan plural)
+                    current_state["last_completed_step"] = "post_processing_scrub_complete"
+                    save_state(current_state, state_filepath) # Simpan state segera
+                    SysLogger.Log("Scrubbing Pass Complete. State Saved.", 4)
+                except Exception as e:
+                    post_processing_successful = False
+                    SysLogger.Log(f"ERROR during Scrubbing Pass: {e}. Skipping further scrubbing on this version.", 7)
+                    import traceback
+                    traceback.print_exc()
+                    # Jangan perbarui processed_chapters
         else:
             SysLogger.Log(f"Skipping Scrubbing Due To Config", 4)
 
-        # Translate Novel (jika diaktifkan)
+        # 3. Translate Novel (jika diaktifkan)
         if Writer.Config.TRANSLATE_LANGUAGE != "":
             SysLogger.Log(
                 f"Starting Translation to {Writer.Config.TRANSLATE_LANGUAGE}...", 3
             )
-            if not NewChapters:
+            if not processed_chapters:
                 SysLogger.Log("Warning: No chapters available for translation.", 6)
             else:
-                NewChapters = Writer.Translator.TranslateNovel(
-                    Interface,
-                    SysLogger,
-                    NewChapters,
-                    NumChapters,
-                    Writer.Config.TRANSLATE_LANGUAGE,
-                )
-                StoryInfoJSON.update(
-                    {"TranslatedChapters": NewChapters}
-                )  # Simpan hasil terjemahan
-                SysLogger.Log("Translation Complete.", 4)
+                try:
+                    translated_chapters_result = Writer.Translator.TranslateNovel(
+                        Interface,
+                        SysLogger,
+                        processed_chapters,
+                        NumChapters,
+                        Writer.Config.TRANSLATE_LANGUAGE,
+                    )
+                    processed_chapters = translated_chapters_result # Perbarui bab yang diproses
+                    current_state["TranslatedChapters"] = processed_chapters # Simpan ke state
+                    StoryInfoJSON["TranslatedChapters"] = processed_chapters # Simpan ke JSON info
+                    current_state["last_completed_step"] = "post_processing_translate_complete"
+                    save_state(current_state, state_filepath) # Simpan state segera
+                    SysLogger.Log("Translation Complete. State Saved.", 4)
+                except Exception as e:
+                    post_processing_successful = False
+                    SysLogger.Log(f"ERROR during Translation: {e}. Translation failed.", 7)
+                    import traceback
+                    traceback.print_exc()
+                    # Jangan perbarui processed_chapters
         else:
             SysLogger.Log(
                 f"No Novel Translation Requested, Skipping Translation Step", 4
             )
 
-        # Compile The Final Story Text (setelah semua proses)
+        # --- Akhir Langkah Pasca-Pemrosesan ---
+
+        # Simpan versi final bab yang berhasil diproses ke state dan JSON info
+        current_state["FinalProcessedChapters"] = processed_chapters
+        StoryInfoJSON["FinalProcessedChapters"] = processed_chapters
+        current_state["last_completed_step"] = "post_processing_complete" # Tandai semua pasca-proses selesai (atau sejauh mana berhasil)
+        save_state(current_state, state_filepath) # Simpan state akhir pasca-proses
+        SysLogger.Log("Post-Processing Steps Finished. Final State Saved.", 4)
+
+
+        # Compile The Final Story Text (gunakan processed_chapters)
         StoryBodyText = ""
-        for Chapter in NewChapters:
+        for Chapter in processed_chapters: # Gunakan versi final yang berhasil diproses
             StoryBodyText += Chapter + "\n\n\n"
 
         # Generate Info (gunakan StoryBodyText final)
@@ -1035,6 +1075,11 @@ Please scroll to the bottom if you wish to read that.
 
         # Save JSON Info
         try:
+            # Pastikan FinalProcessedChapters ada sebelum menyimpan
+            if "FinalProcessedChapters" not in StoryInfoJSON:
+                 SysLogger.Log("Warning: 'FinalProcessedChapters' key missing from StoryInfoJSON before final save. Adding current processed_chapters.", 6)
+                 StoryInfoJSON["FinalProcessedChapters"] = processed_chapters # Fallback
+
             with open(FinalJSONPath, "w", encoding="utf-8") as F:
                 # Tambahkan statistik ke JSON jika diinginkan
                 StoryInfoJSON["Stats"] = {
