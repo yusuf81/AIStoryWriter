@@ -1065,13 +1065,30 @@ Please scroll to the bottom if you wish to read that.
 
         # --- DEBUG LOGGING START ---
         SysLogger.Log(f"DEBUG: Keys in current_state before final save: {list(current_state.keys())}", 6)
-        if "final_processed_chapters" in current_state:
-             SysLogger.Log(f"DEBUG: final_processed_chapters IS present before final save.", 6)
+        # Check for the key used to store the final chapters after all processing
+        final_chapters_key = None
+        if "TranslatedChapters" in current_state:
+            final_chapters_key = "TranslatedChapters"
+        elif "ScrubbedChapter" in current_state: # Note: Should likely be ScrubbedChapters if it's a list
+             final_chapters_key = "ScrubbedChapter"
+        elif "EditedChapters" in current_state:
+             final_chapters_key = "EditedChapters"
+        elif "completed_chapters" in current_state: # Fallback to completed if no post-processing happened
+             final_chapters_key = "completed_chapters"
+
+        if final_chapters_key and final_chapters_key in current_state:
+             SysLogger.Log(f"DEBUG: Final chapters key '{final_chapters_key}' IS present before final save.", 6)
+             # Optionally log the type or length
+             # SysLogger.Log(f"DEBUG: Type of '{final_chapters_key}': {type(current_state[final_chapters_key])}", 6)
+             # if isinstance(current_state[final_chapters_key], list):
+             #    SysLogger.Log(f"DEBUG: Length of '{final_chapters_key}': {len(current_state[final_chapters_key])}", 6)
+        elif final_chapters_key:
+             SysLogger.Log(f"DEBUG: Final chapters key '{final_chapters_key}' IS MISSING before final save!", 7)
         else:
-             SysLogger.Log(f"DEBUG: final_processed_chapters IS MISSING before final save!", 7) # Log sebagai error jika hilang
+             SysLogger.Log(f"DEBUG: Could not determine the final chapters key to check before final save!", 7)
         # --- DEBUG LOGGING END ---
 
-        save_state(current_state, state_filepath)
+        save_state(current_state, state_filepath) # Simpan state setelah debug log
         SysLogger.Log("Run completed successfully and state marked as completed.", 5)
 
     elif last_completed_step == "complete":
