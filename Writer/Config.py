@@ -24,7 +24,7 @@ TRANSLATE_PROMPT_LANGUAGE = "Indonesian"  # If the user wants to translate their
 OUTLINE_QUALITY = 87  # Note this value is overridden by the argparser
 OUTLINE_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
 OUTLINE_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
-CHAPTER_NO_REVISIONS = True  # Note this value is overridden by the argparser # disables all revision checks for the chapter, overriding any other chapter quality/revision settings
+CHAPTER_NO_REVISIONS = False  # Note this value is overridden by the argparser # disables all revision checks for the chapter, overriding any other chapter quality/revision settings
 CHAPTER_QUALITY = 85  # Note this value is overridden by the argparser
 CHAPTER_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
 CHAPTER_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
@@ -48,7 +48,7 @@ MIN_WORDS_SCRUB_CHAPTER = 100  # Minimum words for scrubbing a chapter
 MIN_WORDS_EDIT_NOVEL = 150  # Minimum words for final novel edit pass per chapter
 
 SCRUB_NO_SCRUB = False  # Note this value is overridden by the argparser
-EXPAND_OUTLINE = False  # Note this value is overridden by the argparser
+EXPAND_OUTLINE = True  # Note this value is overridden by the argparser
 ENABLE_FINAL_EDIT_PASS = True  # Note this value is overridden by the argparser
 
 SCENE_GENERATION_PIPELINE = True
