@@ -1062,6 +1062,15 @@ Please scroll to the bottom if you wish to read that.
         current_state["final_story_path"] = FinalMDPath
         current_state["final_json_path"] = FinalJSONPath
         current_state["last_completed_step"] = "complete"
+
+        # --- DEBUG LOGGING START ---
+        SysLogger.Log(f"DEBUG: Keys in current_state before final save: {list(current_state.keys())}", 6)
+        if "final_processed_chapters" in current_state:
+             SysLogger.Log(f"DEBUG: final_processed_chapters IS present before final save.", 6)
+        else:
+             SysLogger.Log(f"DEBUG: final_processed_chapters IS MISSING before final save!", 7) # Log sebagai error jika hilang
+        # --- DEBUG LOGGING END ---
+
         save_state(current_state, state_filepath)
         SysLogger.Log("Run completed successfully and state marked as completed.", 5)
 
