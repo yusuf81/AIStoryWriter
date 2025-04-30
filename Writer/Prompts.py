@@ -12,7 +12,15 @@ Please do not include any other text, just the JSON object as your response will
 """
 CHAPTER_GENERATION_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
 
-# Definisi CHAPTER_GENERATION_PROMPT yang pertama (tidak terpakai) dihapus dari sini.
+CHAPTER_GENERATION_PROMPT = """
+Please help me extract the part of this outline that is just for chapter {_ChapterNum}.
+
+<OUTLINE>
+{_Outline}
+</OUTLINE>
+
+Do not include anything else in your response except just the content for chapter {_ChapterNum}.
+"""
 
 CHAPTER_HISTORY_INSERT = """
 Please help me write my novel.
@@ -27,17 +35,6 @@ And here is what I've written so far:
 <PREVIOUS_CHAPTERS>
 {ChapterSuperlist}
 </PREVIOUS_CHAPTERS>
-"""
-
-# Definisi CHAPTER_GENERATION_PROMPT yang kedua (yang aktif digunakan) tetap di sini.
-CHAPTER_GENERATION_PROMPT = """
-Please help me extract the part of this outline that is just for chapter {_ChapterNum}.
-
-<OUTLINE>
-{_Outline}
-</OUTLINE>
-
-Do not include anything else in your response except just the content for chapter {_ChapterNum}.
 """
 
 CHAPTER_SUMMARY_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
