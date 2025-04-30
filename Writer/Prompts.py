@@ -184,7 +184,7 @@ Don't take away content, instead expand upon it to make a longer and more detail
 Here's what I have so far for this chapter:
 <CHAPTER_CONTENT>
 {Stage2Chapter}
-</CHAPTER_CONTENT
+</CHAPTER_CONTENT>
 
 As a reminder to keep the following criteria in mind:
     - Dialogue: Does the dialogue make sense? Is it appropriate given the situation? Does the pacing make sense for the scene E.g: (Is it fast-paced because they're running, or slow-paced because they're having a romantic dinner)? 
@@ -352,7 +352,7 @@ CHAPTER_EDIT_PROMPT = """
 
 <NOVEL>
 {NovelText}
-</NOVEL
+</NOVEL>
 
 Given the above novel and outline, please edit chapter {i} so that it fits together with the rest of the story.
 """
@@ -508,7 +508,7 @@ Given the above text, please translate it to english from {_Language}.
 CHAPTER_TRANSLATE_PROMPT = """
 <CHAPTER>
 {_Chapter}
-</CHAPTER
+</CHAPTER>
 
 Given the above chapter, please translate it to {_Language}.
 """
