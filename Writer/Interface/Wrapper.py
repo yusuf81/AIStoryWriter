@@ -303,7 +303,11 @@ class Interface:
                 # --- AKHIR BLOK EKSTRAKSI JSON ---
 
                 # Gunakan CleanedResponseText untuk parsing (yang mungkin sudah dipotong)
-                JSONResponse = json.loads(CleanedResponseText)  # Modifikasi baris ini
+                # --- CHANGE THIS LINE ---
+                # Replace standard json.loads with json_repair.loads
+                # JSONResponse = json.loads(CleanedResponseText)
+                JSONResponse = json_repair.loads(CleanedResponseText) # Use json_repair here
+                # -----------------------
 
                 # Validasi skema Pydantic jika perlu (opsional, karena Ollama seharusnya sudah melakukannya)
                 # Jika Anda menggunakan Pydantic untuk validasi *setelah* menerima respons:
