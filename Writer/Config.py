@@ -1,20 +1,40 @@
-INITIAL_OUTLINE_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_OUTLINE_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_STAGE1_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_STAGE2_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_STAGE3_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-FINAL_NOVEL_EDITOR_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Model for the final novel-wide edit pass (used by NovelEditor.py) # Note this value is overridden by the argparser
-CHAPTER_REVISION_WRITER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-REVISION_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-EVAL_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-INFO_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-SCRUB_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Note this value is overridden by the argparser
-CHECKER_MODEL = "ollama://gemma3:12b@10.23.147.239"  # Model used to check results
-TRANSLATOR_MODEL = "ollama://gemma3:12b@10.23.147.239"
+INITIAL_OUTLINE_WRITER_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHAPTER_OUTLINE_WRITER_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE1_WRITER_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE2_WRITER_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE3_WRITER_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+FINAL_NOVEL_EDITOR_MODEL = "ollama://gemma3:12b@10.23.82.116"  # Model for the final novel-wide edit pass (used by NovelEditor.py) # Note this value is overridden by the argparser
+CHAPTER_REVISION_WRITER_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+REVISION_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+EVAL_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+INFO_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+SCRUB_MODEL = (
+    "ollama://gemma3:12b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHECKER_MODEL = "ollama://gemma3:12b@10.23.82.116"  # Model used to check results
+TRANSLATOR_MODEL = "ollama://gemma3:12b@10.23.82.116"
 
 OLLAMA_CTX = 8192
 
-OLLAMA_HOST = "10.23.147.239:11434"
+OLLAMA_HOST = "10.23.82.116:11434"
 
 SEED = 12  # Note this value is overridden by the argparser
 
