@@ -53,6 +53,35 @@ This approach combines the benefits of full translation with better modularity.
         *   **Crucially:** Keep the example JSON structure and all JSON **key names** (e.g., `"TotalChapters"`, `"DidFollowOutline"`, `"scenes"`) **exactly as they are in English**.
         *   Instruct the LLM (using the target language) to provide values for the fields while adhering strictly to the provided English keys and structure.
 
+## Interaksi dengan Flag Terjemahan yang Ada
+
+Pendekatan hybrid dengan `NATIVE_LANGUAGE` perlu berinteraksi secara cerdas dengan flag terjemahan yang sudah ada (`-TranslatePrompt`, `-Translate`, `-TranslatorModel`) untuk memberikan fleksibilitas maksimum tanpa menyebabkan kebingungan atau redundansi. Berikut adalah peran yang disesuaikan untuk flag-flag ini ketika `NATIVE_LANGUAGE` digunakan:
+
+1.  **`NATIVE_LANGUAGE` (Config Baru):**
+    *   Menjadi pengendali **utama** bahasa generasi.
+    *   Menentukan file prompt yang dimuat (misalnya, `Prompts_id.py` jika `NATIVE_LANGUAGE="id"`).
+    *   Menentukan bahasa target di mana LLM diharapkan untuk "berpikir" dan menghasilkan konten kreatif.
+
+2.  **`-TranslatePrompt <language_code>` (Flag yang Ada):**
+    *   **Peran yang Disesuaikan:** Menerjemahkan *prompt input pengguna awal* (dari file yang ditentukan oleh `-Prompt`) **ke dalam** bahasa yang ditentukan oleh `NATIVE_LANGUAGE`, *sebelum* proses generasi utama dimulai.
+    *   **Logika:**
+        *   Jika `-TranslatePrompt` diatur ke kode bahasa yang **sama** dengan `NATIVE_LANGUAGE` (dan `NATIVE_LANGUAGE` bukan bahasa default prompt, biasanya Inggris), maka `Translator.TranslatePrompt` akan dipanggil untuk menerjemahkan input prompt.
+        *   Jika `-TranslatePrompt` tidak diatur, atau nilainya berbeda dari `NATIVE_LANGUAGE`, diasumsikan prompt input sudah dalam `NATIVE_LANGUAGE` atau bahasa default yang dapat diproses langsung oleh prompt native.
+    *   **Kasus Penggunaan:** Memungkinkan pengguna memberikan prompt dalam satu bahasa (misalnya, Prancis) tetapi meminta generasi native dalam bahasa lain (misalnya, Indonesia) dengan mengatur `NATIVE_LANGUAGE="id"` dan `-TranslatePrompt id`.
+
+3.  **`-Translate <language_code>` (Flag yang Ada):**
+    *   **Peran yang Disesuaikan:** Menerjemahkan *output cerita akhir yang sudah digenerasi secara native* (setelah semua langkah seperti edit dan scrub selesai) **dari** bahasa `NATIVE_LANGUAGE` **ke** bahasa target yang ditentukan oleh flag ini.
+    *   **Logika:**
+        *   Jika `-Translate` diatur ke kode bahasa yang **berbeda** dari `NATIVE_LANGUAGE`, maka `Translator.TranslateNovel` akan dipanggil pada *akhir* pipeline, setelah `FinalProcessedChapters` siap.
+        *   Jika `-Translate` tidak diatur, atau nilainya sama dengan `NATIVE_LANGUAGE`, maka langkah terjemahan akhir ini akan dilewati (karena output sudah dalam bahasa yang diinginkan atau tidak ada terjemahan tambahan yang diminta).
+    *   **Kasus Penggunaan:** Memungkinkan pengguna mendapatkan output native dalam satu bahasa (misalnya, Indonesia dengan `NATIVE_LANGUAGE="id"`) dan *juga* mendapatkan versi terjemahan akhir dalam bahasa lain (misalnya, Jepang dengan `-Translate ja`).
+
+4.  **`-TranslatorModel <model_name>` (Flag yang Ada):**
+    *   **Peran:** Tetap tidak berubah. Flag ini menentukan model LLM mana yang akan digunakan untuk *semua* tugas terjemahan yang diperlukan, baik itu terjemahan prompt input awal (jika dipicu oleh `-TranslatePrompt`) maupun terjemahan output akhir (jika dipicu oleh `-Translate`).
+    *   **Pertimbangan:** Model yang dipilih untuk `-TranslatorModel` idealnya memiliki kemampuan terjemahan yang baik antara berbagai pasangan bahasa yang mungkin digunakan.
+
+Dengan penyesuaian ini, kita dapat memanfaatkan kekuatan generasi native sambil mempertahankan kemampuan untuk menangani input dalam berbagai bahasa dan menghasilkan output terjemahan tambahan jika diperlukan, semuanya dikendalikan secara logis melalui kombinasi `NATIVE_LANGUAGE` dan flag terjemahan yang ada.
+
 ## Conclusion: Why the Hybrid Approach is Preferred
 
 While requiring more setup than simply prefixing instructions, the **Hybrid Approach (Dynamic Prompt Loading)** offers the best balance:
