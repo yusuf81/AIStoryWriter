@@ -33,8 +33,6 @@ And here is what I've written so far:
 </PREVIOUS_CHAPTERS>
 """
 
-CHAPTER_GENERATION_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
-
 CHAPTER_GENERATION_PROMPT = """
 Please help me extract the part of this outline that is just for chapter {_ChapterNum}.
 
