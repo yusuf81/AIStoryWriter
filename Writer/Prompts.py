@@ -12,12 +12,7 @@ Please do not include any other text, just the JSON object as your response will
 """
 CHAPTER_GENERATION_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
 
-CHAPTER_GENERATION_PROMPT = """
-You are a great fiction writer, and you're working on a great new story. 
-You're working on a new novel, and you want to produce a quality output.
-Here is your outline:
-<OUTLINE>\n{_Outline}\n</OUTLINE>
-"""
+# Definisi CHAPTER_GENERATION_PROMPT yang pertama (tidak terpakai) dihapus dari sini.
 
 CHAPTER_HISTORY_INSERT = """
 Please help me write my novel.
