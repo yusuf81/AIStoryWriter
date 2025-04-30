@@ -12,6 +12,7 @@ import sys
 from urllib.parse import parse_qs, urlparse
 from pydantic import BaseModel  # Ditambahkan
 import Writer.Config  # Pastikan ini diimpor
+import json_repair # Add near other imports at the top
 
 dotenv.load_dotenv()
 
