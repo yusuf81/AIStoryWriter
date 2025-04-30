@@ -34,6 +34,7 @@ And here is what I've written so far:
 </PREVIOUS_CHAPTERS>
 """
 
+# Definisi CHAPTER_GENERATION_PROMPT yang kedua (yang aktif digunakan) tetap di sini.
 CHAPTER_GENERATION_PROMPT = """
 Please help me extract the part of this outline that is just for chapter {_ChapterNum}.
 
