@@ -68,11 +68,7 @@ def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
 
     # Setup Initial Context History
     History = []
-    History.append(
-        Interface.BuildSystemQuery(
-            Writer.Prompts.CRITIC_CHAPTER_INTRO.format(_Chapter=_Chapter)
-        )
-    )
+    History.append(Interface.BuildSystemQuery(Writer.Prompts.CRITIC_CHAPTER_INTRO))
 
     # Disabled seeing the outline too.
     StartingPrompt: str = Writer.Prompts.CRITIC_CHAPTER_PROMPT.format(

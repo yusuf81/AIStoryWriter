@@ -28,11 +28,7 @@ def GenerateChapter(
     _Logger.Log(f"Creating Base Langchain For Chapter {_ChapterNum} Generation", 2)
     MesssageHistory: list = []
     MesssageHistory.append(
-        Interface.BuildSystemQuery(
-            Writer.Prompts.CHAPTER_GENERATION_INTRO.format(
-                _ChapterNum=_ChapterNum, _TotalChapters=_TotalChapters
-            )
-        )
+        Interface.BuildSystemQuery(Writer.Prompts.CHAPTER_GENERATION_INTRO)
     )
 
     ContextHistoryInsert: str = ""
