@@ -821,7 +821,7 @@ def main():
                     )
                     processed_chapters = edited_chapters_result # Perbarui bab yang diproses
                     current_state["EditedChapters"] = processed_chapters # Simpan ke state
-                    StoryInfoJSON["EditedChapters"] = processed_chapters # Simpan ke JSON info
+                    StoryInfoJSON["EditedChapters"] = processed_chapters[:] # Simpan SALINAN ke JSON info
                     current_state["last_completed_step"] = "post_processing_edit_complete"
                     save_state(current_state, state_filepath) # Simpan state segera
                     SysLogger.Log("Final Edit Pass Complete. State Saved.", 4)
@@ -846,7 +846,7 @@ def main():
                     )
                     processed_chapters = scrubbed_chapters_result # Perbarui bab yang diproses
                     current_state["ScrubbedChapters"] = processed_chapters # Simpan ke state (Gunakan plural)
-                    StoryInfoJSON["ScrubbedChapters"] = processed_chapters # Simpan ke JSON info (Gunakan plural)
+                    StoryInfoJSON["ScrubbedChapters"] = processed_chapters[:] # Simpan SALINAN ke JSON info (Gunakan plural)
                     current_state["last_completed_step"] = "post_processing_scrub_complete"
                     save_state(current_state, state_filepath) # Simpan state segera
                     SysLogger.Log("Scrubbing Pass Complete. State Saved.", 4)
@@ -877,7 +877,7 @@ def main():
                     )
                     processed_chapters = translated_chapters_result # Perbarui bab yang diproses
                     current_state["TranslatedChapters"] = processed_chapters # Simpan ke state
-                    StoryInfoJSON["TranslatedChapters"] = processed_chapters # Simpan ke JSON info
+                    StoryInfoJSON["TranslatedChapters"] = processed_chapters[:] # Simpan SALINAN ke JSON info
                     current_state["last_completed_step"] = "post_processing_translate_complete"
                     save_state(current_state, state_filepath) # Simpan state segera
                     SysLogger.Log("Translation Complete. State Saved.", 4)
