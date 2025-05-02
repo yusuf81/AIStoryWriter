@@ -546,12 +546,45 @@ Be detailed and well-formatted in your response, yet ensure you have a well-thou
 
 # Prompts moved from Write.py
 EXPAND_OUTLINE_CHAPTER_BY_CHAPTER = """
-Please help me expand upon the following outline, chapter by chapter.
+# Objective
+Review the complete story outline provided below. Your task is to refine and structure it clearly on a chapter-by-chapter basis, ensuring each chapter's core purpose is evident before we proceed to detailed scene breakdowns.
 
-```
+# Input Outline
+<OUTLINE>
 {_Outline}
+</OUTLINE>
+
+# Tasks
+1.  **Verify Chapter Structure:** Ensure the outline is clearly divided into distinct chapters. If any sections seem ambiguous or span multiple chapters, restructure them logically.
+2.  **Identify Chapter Purpose:** For each chapter, add a brief (1-sentence) comment or heading indicating its main narrative function (e.g., "Introduces Conflict", "Character Development Focus", "Rising Action", "Climax Setup", "Subplot Resolution").
+3.  **Ensure Sufficient Detail (High-Level):** Check if each chapter description provides enough high-level detail about the key events or character progression within that chapter. If a chapter description is too vague, add 1-2 sentences of clarifying detail (do NOT break it down into scenes yet).
+
+# Output Format
+Produce the refined, chapter-structured outline in Markdown format. Use clear headings for each chapter (e.g., `## Chapter 1: Introduction and Inciting Incident`).
+
+# Example Snippet of Output:
+```markdown
+## Chapter 1: Introduction and Inciting Incident
+- Introduce protagonist Alice in her mundane life.
+- Establish the initial setting: futuristic Neo-Veridia.
+- Detail the discovery of the mysterious artifact (inciting incident).
+- Hint at the initial stakes and Alice's reluctance.
+
+## Chapter 2: Rising Action and First Obstacle
+- *Purpose: Develop the initial conflict and introduce the antagonist's influence.*
+- Alice seeks information about the artifact, encountering minor obstacles.
+- First encounter (indirect) with the antagonist's agents.
+- Alice decides to protect the artifact, overcoming initial fear.
+- Ends with Alice planning her next move.
+
+... (continue for all chapters)
 ```
 
+# Instructions
+- Focus on clear chapter separation and high-level purpose/events.
+- Do **not** break chapters down into individual scenes in this step.
+- Maintain the core plot points from the original outline.
+- Your entire response should be the refined, chapter-structured outline.
 """
 
 # Prompts moved from Writer/Outline/StoryElements.py

@@ -636,15 +636,49 @@ def main():
                     7,
                 )
                 sys.exit(1)
-            Messages = [
+
+            # --- AWAL BLOK BARU: Penyempurnaan Outline Tingkat Tinggi ---
+            SysLogger.Log("Starting High-Level Chapter Outline Refinement...", 3)
+            if not Outline: # Pastikan Outline ada
+                 SysLogger.Log("FATAL: Cannot refine chapters, Outline is missing.", 7)
+                 sys.exit(1)
+
+            # Panggil prompt baru untuk penyempurnaan
+            RefinementMessages = [
                 Interface.BuildUserQuery(
                     Writer.Prompts.EXPAND_OUTLINE_CHAPTER_BY_CHAPTER.format(
-                        _Outline=Outline
+                        _Outline=Outline # Gunakan outline global asli
                     )
                 )
-            ]  # Reset messages untuk langkah ini
-            ChapterOutlines = []  # Mulai list kosong
+            ]
+            RefinementMessages = Interface.SafeGenerateText(
+                 _Logger=SysLogger,
+                 _Messages=RefinementMessages,
+                 _Model=Writer.Config.INITIAL_OUTLINE_WRITER_MODEL, # Atau model outline lain yang sesuai
+                 _MinWordCount=Writer.Config.MIN_WORDS_INITIAL_OUTLINE # Sesuaikan min words jika perlu
+            )
+            RefinedOutline = Interface.GetLastMessageText(RefinementMessages)
+
+            # Simpan hasil refine ke state (opsional tapi bagus)
+            current_state["refined_global_outline"] = RefinedOutline
+            # Timpa variabel Outline lokal dengan versi yang sudah disempurnakan
+            Outline = RefinedOutline
+            current_state["full_outline"] = Outline # Simpan Outline yang sudah di-refine ke state
+
+            # Update state untuk menandai langkah baru ini selesai
+            current_state["last_completed_step"] = "refine_chapters" # Langkah baru
+            save_state(current_state, state_filepath)
+            SysLogger.Log("High-Level Chapter Outline Refinement Complete. State Saved.", 4)
+            last_completed_step = "refine_chapters" # Update status lokal
+
+            # Inisialisasi Messages untuk loop GeneratePerChapterOutline berikutnya
+            Messages = [] # Mulai dengan list kosong untuk riwayat loop ekspansi bab
+            # --- AKHIR BLOK BARU ---
+
+            # Loop for ChapterIdx dimulai setelah ini...
+            ChapterOutlines = [] # Pastikan ini diinisialisasi sebelum loop
             for ChapterIdx in range(1, NumChapters + 1):
+                # GeneratePerChapterOutline akan menggunakan variabel 'Outline' yang sudah di-refine
                 ChapterOutline, Messages = (
                     Writer.OutlineGenerator.GeneratePerChapterOutline(
                         Interface,
@@ -661,8 +695,9 @@ def main():
             current_state["last_completed_step"] = "expand_chapters"
             save_state(current_state, state_filepath)
             SysLogger.Log("Per-Chapter Outline Expansion Complete. State Saved.", 4)
-            last_completed_step = "expand_chapters"
+            last_completed_step = "expand_chapters" # Update status lokal
         elif last_completed_step not in [
+            "refine_chapters", # Tambahkan state baru
             "expand_chapters",
             "chapter_generation",
             "chapter_generation_complete",
@@ -702,10 +737,12 @@ def main():
         UsedOutline = MegaOutline
 
     # Write the chapters (Mulai dari start_chapter)
+    # Tentukan langkah terakhir sebelum generasi bab, tergantung pada EXPAND_OUTLINE
+    step_before_chapters = "expand_chapters" if Writer.Config.EXPAND_OUTLINE else "detect_chapters"
+
     if last_completed_step in [
-        "detect_chapters",
-        "expand_chapters",
-        "chapter_generation",
+        step_before_chapters, # Mulai jika langkah sebelumnya selesai
+        "chapter_generation", # Atau jika resume di tengah bab
     ]:
         SysLogger.Log(f"Starting Chapter Writing from chapter {start_chapter}...", 5)
         # Pastikan Chapters adalah list (penting untuk resume)
