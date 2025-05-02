@@ -342,11 +342,22 @@ CHAPTER_EDIT_PROMPT = """
 {_Outline}
 </OUTLINE>
 
-<NOVEL>
+<ADJACENT_CHAPTERS_CONTEXT>
 {NovelText}
-</NOVEL>
+</ADJACENT_CHAPTERS_CONTEXT>
 
-Given the above novel and outline, please edit chapter {i} so that it fits together with the rest of the story.
+# Task: Edit Chapter {i} for Local Coherence
+
+You are provided with the overall story outline and a context snippet containing the chapter immediately before chapter {i} (if it exists), chapter {i} itself (before editing), and the chapter immediately after chapter {i} (if it exists).
+
+Your goal is to edit the content of chapter {i} (found within the <ADJACENT_CHAPTERS_CONTEXT>) to ensure it flows smoothly from the previous chapter, leads effectively into the next chapter, and aligns with the provided story <OUTLINE>.
+
+Focus on:
+- Maintaining consistency in plot, characterization, and tone with the adjacent chapters.
+- Ensuring events within chapter {i} logically connect the previous and next chapters.
+- Refining prose for clarity and impact within this local context.
+
+Return only the full, edited text for chapter {i}.
 """
 
 INITIAL_OUTLINE_PROMPT = """
