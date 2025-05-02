@@ -10,19 +10,35 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
 
     for i in range(1, _TotalChapters + 1):
 
-        NovelText: str = ""
-        for Chapter in EditedChapters:
-            NovelText += Chapter
+        current_chapter_index = i - 1
+
+        # Build the context snippet using only adjacent chapters
+        context_parts = []
+        # Previous Chapter (if it exists)
+        if i > 1:
+            prev_chapter_text = EditedChapters[current_chapter_index - 1]
+            context_parts.append(prev_chapter_text)
+        # Current Chapter (the one being edited, before this edit)
+        current_chapter_text = EditedChapters[current_chapter_index]
+        context_parts.append(current_chapter_text)
+        # Next Chapter (if it exists)
+        if i < _TotalChapters:
+            next_chapter_text = EditedChapters[current_chapter_index + 1]
+            context_parts.append(next_chapter_text)
+
+        # Join the parts with a separator to form the limited context
+        NovelText = "\n\n---\n\n".join(context_parts)
+
 
         # Get original word count before editing
-        OriginalWordCount = Writer.Statistics.GetWordCount(EditedChapters[i - 1])
+        OriginalWordCount = Writer.Statistics.GetWordCount(EditedChapters[current_chapter_index]) # Pastikan menggunakan current_chapter_index
 
         Prompt: str = Writer.Prompts.CHAPTER_EDIT_PROMPT.format(
             _Outline=_Outline, NovelText=NovelText, i=i
         )
 
         _Logger.Log(
-            f"Prompting LLM To Perform Chapter {i}/{_TotalChapters} Second Pass In-Place Edit", 5
+            f"Prompting LLM To Perform Chapter {i}/{_TotalChapters} Second Pass In-Place Edit (Limited Context)", 5 # Tambahkan catatan konteks
         )
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
@@ -35,7 +51,7 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
         _Logger.Log(f"Finished Chapter {i} Second Pass In-Place Edit", 5)
 
         NewChapter = Interface.GetLastMessageText(Messages)
-        EditedChapters[i - 1] = NewChapter # Use 0-based index
+        EditedChapters[current_chapter_index] = NewChapter # Pastikan menggunakan current_chapter_index
         NewWordCount = Writer.Statistics.GetWordCount(NewChapter)
         _Logger.Log(f"Word Count Change (Edit): Chapter {i} {OriginalWordCount} -> {NewWordCount}", 3)
 
