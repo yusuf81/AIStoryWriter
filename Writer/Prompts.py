@@ -502,7 +502,9 @@ CHAPTER_TRANSLATE_PROMPT = """
 {_Chapter}
 </CHAPTER>
 
-Given the above chapter, please translate it to {_Language}.
+Translate the entire text within the <CHAPTER> tags above into {_Language}.
+Your response MUST contain ONLY the translated text of the chapter.
+Do NOT include any introductory phrases, explanations, comments, apologies, markdown formatting, or any text other than the direct translation itself.
 """
 
 DEFAULT_SYSTEM_PROMPT = """You are a helpful assistant."""
