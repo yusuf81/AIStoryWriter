@@ -28,6 +28,16 @@ Berikut adalah analisis dan kritik terhadap basis kode AIStoryWriter yang ada, b
     *   **Kompleksitas Prompt:** Beberapa prompt di `Writer/Prompts.py` sangat panjang dan kompleks, menyematkan instruksi, contoh, dan konteks. Ini dapat menyulitkan LLM untuk mengikuti dengan sempurna dan sulit untuk di-debug atau disesuaikan. Memecah tugas kompleks menjadi prompt yang lebih kecil dan terfokus mungkin memberikan hasil yang lebih baik dan lebih andal.
     *   **Ketergantungan pada Format:** Kode sangat bergantung pada LLM yang mengikuti instruksi format spesifik dalam prompt (misalnya, format ringkasan, struktur JSON). Meskipun Pydantic membantu memvalidasi output JSON, LLM masih bisa menyimpang, membuat parsing menjadi rapuh.
     *   **Pembersihan JSON Rapuh:** Logika pembersihan JSON di `SafeGenerateJSON` (menghapus ```json```, mengekstrak `{...}`) berguna tetapi mungkin tidak cukup kuat jika LLM menghasilkan output yang lebih bervariasi atau menyertakan teks penjelasan di luar blok JSON utama.
+    *   **Potensi Overload Konteks (Risiko Tinggi):** Beberapa bagian dari alur kerja mengirimkan jumlah teks yang sangat besar sebagai konteks ke LLM, yang sangat berisiko melebihi batas token model dan menyebabkan error atau hasil yang buruk: # Add this point and the following sub-points
+        *   **Generasi Info Akhir (`GetStoryInfo`):** Mengirimkan *seluruh teks novel* yang telah diproses untuk menghasilkan judul/ringkasan/tag. Ini adalah risiko tertinggi untuk novel panjang.
+        *   **Generasi Bab Bertahap (`GenerateChapter` Tahap 1/2/3):** Mengirimkan *semua bab sebelumnya* (`ChapterSuperlist`) ditambah outline global sebagai konteks untuk setiap tahap generasi bab baru. Ukuran konteks tumbuh secara linear dengan jumlah bab.
+        *   **Ekspansi Outline per Bab (`GeneratePerChapterOutline`):** Mengakumulasi riwayat pesan dari generasi outline bab sebelumnya ditambah dengan outline global yang mungkin sudah besar.
+        *   **Evaluasi (`Evaluate.py`):** Mengirimkan dua outline atau dua bab lengkap untuk perbandingan.
+    *   **Potensi Overload Konteks (Risiko Moderat):** Area lain juga berpotensi mengirim konteks besar, meskipun biasanya lebih kecil dari kasus di atas:
+        *   **Edit Novel (`EditNovel`):** Meskipun dioptimalkan untuk mengirim bab N-1, N, N+1, gabungan panjangnya masih bisa signifikan.
+        *   **Revisi/Feedback Outline/Bab:** Mengirimkan outline/bab lengkap.
+        *   **Pipeline Adegan:** Menggunakan outline global dan outline bab/adegan.
+        *   **Scrubbing/Translasi:** Memproses bab individual, tergantung panjang bab.
 
 4.  **Logika Inti dan Algoritma:**
     *   **Generasi Bertahap (`ChapterGenerator.py`):** Pembagian generasi chapter menjadi Stage 1 (Plot), Stage 2 (Char Dev), Stage 3 (Dialogue) bersifat linear dan kaku. Plot, karakter, dan dialog seringkali saling terkait erat. Proses linear ini mungkin menghasilkan teks yang terasa terputus-putus dan memerlukan revisi berat.
