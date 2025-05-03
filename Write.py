@@ -944,21 +944,44 @@ def main():
         for Chapter in processed_chapters: # Gunakan versi final yang berhasil diproses
             StoryBodyText += Chapter + "\n\n\n"
 
-        # Generate Info (gunakan StoryBodyText final)
+        # Generate Info (gunakan Outline Detail atau Outline Dasar sebagai konteks)
         SysLogger.Log("Generating Story Info...", 5)
-        # Membuat pesan baru khusus untuk GetStoryInfo dengan konten cerita akhir
-        # Gunakan outline jika body text kosong (misalnya jika semua bab gagal dibuat)
-        InfoQueryContent = (
-            StoryBodyText
-            if StoryBodyText
-            else (Outline if Outline else "No content available.")
-        )
+
+        # --- Determine Content for GetStoryInfo (Solution 1: Use Outline) ---
+        InfoQueryContent = ""
+        info_source = "N/A"
+        # Prioritaskan outline per bab yang diperluas jika ekspansi diaktifkan dan hasilnya ada
+        if Writer.Config.EXPAND_OUTLINE and current_state.get("expanded_chapter_outlines"):
+            expanded_outlines = current_state["expanded_chapter_outlines"]
+            # Pastikan itu list dan tidak kosong
+            if isinstance(expanded_outlines, list) and expanded_outlines:
+                InfoQueryContent = "\n\n---\n\n".join(expanded_outlines) # Gabungkan dengan pemisah
+                info_source = "expanded_chapter_outlines"
+                SysLogger.Log(f"Using joined expanded chapter outlines for GetStoryInfo.", 6)
+
+        # Fallback ke outline global jika outline per bab tidak digunakan atau tidak valid
+        if not InfoQueryContent:
+            full_outline_content = current_state.get("full_outline")
+            if full_outline_content:
+                InfoQueryContent = full_outline_content
+                info_source = "full_outline"
+                SysLogger.Log(f"Using full_outline for GetStoryInfo.", 6)
+            else: # Pilihan terakhir jika outline global juga tidak ada
+                InfoQueryContent = "No outline information available."
+                info_source = "fallback_string"
+                SysLogger.Log(f"Warning: No outline found for GetStoryInfo, using fallback string.", 6)
+
+        SysLogger.Log(f"Final content source for GetStoryInfo: {info_source}", 6)
+        # Buat pesan awal HANYA dengan konten outline yang dipilih
         StoryInfoMessages = [Interface.BuildUserQuery(InfoQueryContent)]
+        # --- End Determine Content ---
+
         try:
+            # Panggil GetStoryInfo dengan pesan yang hanya berisi outline
             Info = Writer.StoryInfo.GetStoryInfo(
                 Interface, SysLogger, StoryInfoMessages
             )
-            Title = Info.get("Title", "Untitled Story")  # Gunakan .get() untuk fallback
+            Title = Info.get("Title", "Untitled Story")
             StoryInfoJSON.update({"Title": Title})
             Summary = Info.get("Summary", "No summary generated.")
             StoryInfoJSON.update({"Summary": Summary})

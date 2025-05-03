@@ -95,51 +95,43 @@ def simulate_get_info(state_filepath, info_model_override=None):
         return
 
     # 5. Dapatkan Konten Cerita dari State (dengan prioritas yang diperbarui)
-    story_content_list = None
-    source = "Unknown"
+    # Hapus logika lama yang mencari list bab untuk InfoQueryContent
 
-    # Urutan prioritas kunci state untuk konten cerita
-    priority_keys = [
-        "FinalProcessedChapters", # Kunci baru yang paling akhir
-        "TranslatedChapters",
-        "ScrubbedChapters", # Gunakan plural
-        "EditedChapters",
-        "completed_chapters", # Bab sebelum pasca-proses
-    ]
+    # --- Determine Content for GetStoryInfo (Solution 1: Use Outline) ---
+    InfoQueryContent = ""
+    source = "N/A"
+    # Periksa apakah EXPAND_OUTLINE diaktifkan selama run asli (dari state config)
+    expand_outline_enabled = current_state.get("config", {}).get("EXPAND_OUTLINE", Writer.Config.EXPAND_OUTLINE)
 
-    for key in priority_keys:
-        content = current_state.get(key)
-        if content and isinstance(content, list) and content: # Pastikan list tidak kosong
-            story_content_list = content
-            source = key
-            break # Berhenti setelah menemukan konten valid pertama
+    if expand_outline_enabled and current_state.get("expanded_chapter_outlines"):
+        expanded_outlines = current_state["expanded_chapter_outlines"]
+        if isinstance(expanded_outlines, list) and expanded_outlines:
+            InfoQueryContent = "\n\n---\n\n".join(expanded_outlines) # Gabungkan dengan pemisah
+            source = "expanded_chapter_outlines"
+            SysLogger.Log(f"Using joined expanded chapter outlines for GetStoryInfo.", 6)
 
-    # Fallback ke outline jika tidak ada list bab yang valid
-    if not story_content_list:
-        full_outline = current_state.get("full_outline")
-        if full_outline:
-            InfoQueryContent = full_outline
+    if not InfoQueryContent: # Fallback ke full_outline
+        full_outline_content = current_state.get("full_outline")
+        if full_outline_content:
+            InfoQueryContent = full_outline_content
             source = "full_outline"
-        else:
-            SysLogger.Log("FATAL: No story content (chapters or outline) found in state file.", 7)
-            return
-    else:
-        # Gabungkan list bab menjadi satu string
-        InfoQueryContent = "\n\n\n".join(story_content_list)
+            SysLogger.Log(f"Using full_outline for GetStoryInfo.", 6)
+        else: # Pilihan terakhir
+            InfoQueryContent = "No outline information available."
+            source = "fallback_string"
+            SysLogger.Log(f"Warning: No outline found for GetStoryInfo, using fallback string.", 6)
+    # --- End Determine Content ---
 
-    SysLogger.Log(f"Using story content from state key: '{source}'", 6)
+    SysLogger.Log(f"Using story content source: '{source}' for GetStoryInfo", 6) # Perbarui pesan log
     SysLogger.Log(f"Content length (chars): {len(InfoQueryContent)}", 6)
 
     # 6. Bangun Pesan Awal
-    # GetStoryInfo akan membangun pesan query sendiri, kita hanya perlu kontennya
-    # StoryInfoMessages = [Interface.BuildUserQuery(InfoQueryContent)] # Tidak perlu lagi
+    # Baris ini tetap sama, menggunakan InfoQueryContent yang baru ditentukan
+    initial_messages_for_info = [Interface.BuildUserQuery(InfoQueryContent)]
 
-    # 7. Panggil GetStoryInfo
+    # 7. Panggil GetStoryInfo (Sisa kode tetap sama)
     try:
         SysLogger.Log("Calling Writer.StoryInfo.GetStoryInfo...", 5)
-        # GetStoryInfo akan menambahkan prompt STATS_PROMPT dan memanggil SafeGenerateJSON
-        # Kita perlu membuat list pesan awal yang akan dimodifikasi oleh GetStoryInfo
-        initial_messages_for_info = [Interface.BuildUserQuery(InfoQueryContent)]
         # Teruskan model yang benar (info_model) ke GetStoryInfo
         GeneratedInfo = Writer.StoryInfo.GetStoryInfo(Interface, SysLogger, initial_messages_for_info, _Model=info_model)
 

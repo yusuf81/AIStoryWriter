@@ -18,7 +18,7 @@ Daftar ini digunakan untuk melacak implementasi perbaikan berdasarkan kritik dan
 ## Manajemen Konteks
 
 -   [x] **Optimalkan Konteks `CHAPTER_EDIT_PROMPT`:** Uji coba dan implementasikan strategi untuk mengurangi konteks yang dikirim ke `CHAPTER_EDIT_PROMPT`, misalnya hanya mengirim bab N-1, N, dan N+1, bukan seluruh teks novel, untuk menghindari batas konteks LLM. # Diimplementasikan di Writer/NovelEditor.py
--   [ ] **Atasi Ukuran Konteks `STATS_PROMPT`:** Selidiki dan implementasikan strategi untuk mengurangi konteks yang dikirim saat menghasilkan info akhir (judul, ringkasan, tag), karena mengirim seluruh novel berisiko melebihi batas konteks. # Add this checklist item
+-   [x] **Atasi Ukuran Konteks `STATS_PROMPT`:** Selidiki dan implementasikan strategi untuk mengurangi konteks yang dikirim saat menghasilkan info akhir (judul, ringkasan, tag), karena mengirim seluruh novel berisiko melebihi batas konteks. # Implemented Solution 1 (Use Outline Detail)
 
 ## Panduan Gaya dan Genre
 
