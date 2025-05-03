@@ -74,6 +74,7 @@ Analisis ini mengevaluasi efektivitas prompt yang didefinisikan dalam `Writer/Pr
 ### 9. Generasi Info Final
 
 *   `STATS_PROMPT`: Format JSON jelas diminta (Judul, Ringkasan, Tag, Rating). **Kritik:** Rating 0-100 bersifat subjektif dan sulit bagi LLM. Tag mungkin generik. Judul/Ringkasan adalah standar.
+*   **Ukuran Konteks `STATS_PROMPT`:** Prompt ini, saat digunakan oleh `GetStoryInfo` (dan disimulasikan oleh `SimulateStoryInfo.py`), mengirimkan *seluruh teks novel* yang telah diproses sebagai konteks ke `INFO_MODEL`. Ini sangat berisiko melebihi batas konteks LLM, terutama untuk novel panjang, yang dapat mengakibatkan error, pemotongan konteks, atau ringkasan/tag/rating yang tidak akurat karena LLM tidak dapat memproses keseluruhan cerita. Fallback ke outline lebih aman dari segi konteks tetapi kurang representatif terhadap karya akhir. # Add this critique point
 
 ### 10. Evaluasi (Evaluate.py)
 
