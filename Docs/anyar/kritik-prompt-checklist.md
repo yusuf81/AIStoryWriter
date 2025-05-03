@@ -12,12 +12,12 @@ Daftar ini digunakan untuk melacak implementasi perbaikan berdasarkan kritik dan
 
 ## Kejelasan dan Konsistensi Prompt
 
--   [ ] **Bersihkan Prompt Usang/Tidak Jelas:** Perjelas fungsi atau hapus prompt `EXPAND_OUTLINE_CHAPTER_BY_CHAPTER` karena ambigu dan tampaknya digantikan oleh `CHAPTER_OUTLINE_PROMPT`.
+-   [x] **Bersihkan Prompt Usang/Tidak Jelas:** Perjelas fungsi atau hapus prompt `EXPAND_OUTLINE_CHAPTER_BY_CHAPTER` karena ambigu dan tampaknya digantikan oleh `CHAPTER_OUTLINE_PROMPT`. # Fungsi diperjelas di Write.py sebagai refinement outline global
 -   [ ] **Perkuat Prompt JSON:** Tinjau dan perkuat prompt yang meminta output JSON (`SCENES_TO_JSON`, `STATS_PROMPT`, `CHAPTER_COUNT_PROMPT`, dll.) dengan instruksi yang lebih eksplisit mengenai format, penanganan error (jika relevan), dan struktur data yang kompleks (list, nested object).
 
 ## Manajemen Konteks
 
--   [ ] **Optimalkan Konteks `CHAPTER_EDIT_PROMPT`:** Uji coba dan implementasikan strategi untuk mengurangi konteks yang dikirim ke `CHAPTER_EDIT_PROMPT`, misalnya hanya mengirim bab N-1, N, dan N+1, bukan seluruh teks novel, untuk menghindari batas konteks LLM.
+-   [x] **Optimalkan Konteks `CHAPTER_EDIT_PROMPT`:** Uji coba dan implementasikan strategi untuk mengurangi konteks yang dikirim ke `CHAPTER_EDIT_PROMPT`, misalnya hanya mengirim bab N-1, N, dan N+1, bukan seluruh teks novel, untuk menghindari batas konteks LLM. # Diimplementasikan di Writer/NovelEditor.py
 
 ## Panduan Gaya dan Genre
 
