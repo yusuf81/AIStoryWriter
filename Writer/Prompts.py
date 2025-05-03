@@ -356,6 +356,7 @@ Focus on:
 - Maintaining consistency in plot, characterization, and tone with the adjacent chapters.
 - Ensuring events within chapter {i} logically connect the previous and next chapters.
 - Refining prose for clarity and impact within this local context.
+- Correcting any incorrect references to the chapter number within the text of chapter {i} itself (ensure it consistently refers to being chapter {i}). # Add this line
 
 Return only the full, edited text for chapter {i}.
 """
