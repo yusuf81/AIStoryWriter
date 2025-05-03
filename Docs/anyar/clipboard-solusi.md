@@ -138,3 +138,56 @@
 1.  **Coba Solusi 1 (Andalkan Outline + Ringkasan Bab Terakhir) terlebih dahulu.** Ini perubahan termudah dan paling drastis.
 2.  **Jika Solusi 1 bermasalah, implementasikan Solusi 2 (Batasi ke N Bab Terakhir) dengan N=1.** Ini kompromi yang baik.
 3.  **Pertimbangkan Solusi 3 (Ringkasan Bergulir) sebagai peningkatan di masa mendatang.**
+
+---
+
+# Solusi untuk Masalah Ukuran Konteks Jumbo `Writer.OutlineGenerator.GeneratePerChapterOutline` (Akumulasi Riwayat)
+
+**Masalah:** Fungsi `GeneratePerChapterOutline` dipanggil dalam loop untuk setiap bab. Variabel riwayat pesan (`Messages` di `Write.py`, diteruskan sebagai `_History`) diakumulasikan dari setiap panggilan sebelumnya. Ini berarti seluruh riwayat generasi outline bab sebelumnya dikirim sebagai konteks untuk menghasilkan outline bab berikutnya, menyebabkan ukuran konteks tumbuh secara linear dengan jumlah bab dan berisiko tinggi melebihi batas token LLM.
+
+**Solusi yang Diusulkan:**
+
+### Solusi 1: Hapus Riwayat Akumulasi (Paling Direkomendasikan)
+
+*   **Konsep:** Hentikan pengiriman riwayat pesan (`_History`) yang terakumulasi. Setiap panggilan `GeneratePerChapterOutline` hanya akan menerima outline global (yang mungkin sudah di-refine) dan prompt untuk bab spesifik tersebut.
+*   **Implementasi:**
+    1.  **Di `Write.py`:** Hapus inisialisasi dan pembaruan variabel `Messages` yang digunakan untuk akumulasi riwayat dalam loop ekspansi outline. Ubah pemanggilan `GeneratePerChapterOutline` agar tidak meneruskan argumen `_History`. Abaikan nilai return riwayat dari fungsi tersebut.
+    2.  **Di `Writer\OutlineGenerator.py`:** Hapus parameter `_History` dari definisi fungsi `GeneratePerChapterOutline`. Inisialisasi `Messages = []` di dalam fungsi. Ubah nilai return fungsi menjadi hanya teks outline bab (`SummaryText`).
+*   **Pro:**
+    *   Solusi paling sederhana dan efektif menghentikan pertumbuhan konteks linear.
+    *   Konteks tetap relevan dan ukurannya relatif konstan per panggilan.
+    *   Sejalan dengan adanya langkah refinement outline global sebelumnya.
+*   **Kontra:**
+    *   Kehilangan sedikit konteks tentang *bagaimana* outline bab sebelumnya dibuat (kemungkinan dampaknya kecil).
+
+### Solusi 2: Gunakan Hanya Outline Bab Sebelumnya (N-1)
+
+*   **Konsep:** Hanya kirim teks dari outline bab N-1 sebagai konteks tambahan saat membuat outline bab N.
+*   **Implementasi:**
+    1.  **Di `Write.py`:** Simpan hasil `ChapterOutline` dari iterasi sebelumnya. Teruskan sebagai argumen baru (misal `_PreviousChapterOutlineText`) ke `GeneratePerChapterOutline`.
+    2.  **Di `Writer\OutlineGenerator.py`:** Tambahkan parameter baru `_PreviousChapterOutlineText`. Modifikasi prompt `CHAPTER_OUTLINE_PROMPT` untuk menyertakan placeholder konteks N-1. Format prompt dengan teks N-1 jika ada. Hapus akumulasi riwayat `Messages` (seperti Solusi 1).
+*   **Pro:**
+    *   Memberikan konteks lokal dari bab sebelumnya.
+    *   Mencegah pertumbuhan konteks *sepenuhnya* linear.
+*   **Kontra:**
+    *   Lebih kompleks dari Solusi 1.
+    *   Ukuran konteks tidak sepenuhnya tetap.
+    *   Manfaat konteks N-1 mungkin minimal.
+
+### Solusi 3: Ringkasan Bergulir Outline
+
+*   **Konsep:** Pertahankan ringkasan bergulir dari semua outline bab yang telah dibuat. Kirim ringkasan ini sebagai konteks.
+*   **Implementasi:**
+    *   Memerlukan fungsi baru untuk memperbarui ringkasan outline.
+    *   Menambah panggilan LLM dan kompleksitas state.
+*   **Pro:**
+    *   Ukuran konteks tetap.
+    *   Menangkap esensi dari semua outline sebelumnya.
+*   **Kontra:**
+    *   Paling kompleks.
+    *   Panggilan LLM tambahan (waktu/biaya).
+    *   Potensi kehilangan detail dalam ringkasan.
+
+**Rekomendasi:**
+
+1.  **Implementasikan Solusi 1 (Hapus Riwayat Akumulasi).** Ini adalah solusi paling bersih, mudah, dan langsung mengatasi masalah pertumbuhan konteks linear.
