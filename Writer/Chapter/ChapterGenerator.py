@@ -35,12 +35,11 @@ def GenerateChapter(
 
     if len(_Chapters) > 0:
 
-        ChapterSuperlist: str = ""
-        for Chapter in _Chapters:
-            ChapterSuperlist += f"{Chapter}\n"
+        # ChapterSuperlist tidak lagi dibuat atau digunakan untuk konteks
+        # sebagai bagian dari Solusi 1 untuk masalah ukuran konteks.
 
         ContextHistoryInsert += Writer.Prompts.CHAPTER_HISTORY_INSERT.format(
-            _Outline=_Outline, ChapterSuperlist=ChapterSuperlist
+            _Outline=_Outline # ChapterSuperlist dihapus dari format
         )
 
     # Now, extract the this-chapter-outline segment

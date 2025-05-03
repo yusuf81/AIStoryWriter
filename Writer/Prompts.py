@@ -31,11 +31,9 @@ I'm basing my work on this outline:
 {_Outline}
 </OUTLINE>
 
-And here is what I've written so far:
-<PREVIOUS_CHAPTERS>
-{ChapterSuperlist}
-</PREVIOUS_CHAPTERS>
 """
+# Bagian <PREVIOUS_CHAPTERS> dihapus sebagai bagian dari Solusi 1
+# untuk masalah ukuran konteks GenerateChapter.
 
 CHAPTER_SUMMARY_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
 
