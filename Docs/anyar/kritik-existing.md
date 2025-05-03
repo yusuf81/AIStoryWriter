@@ -27,7 +27,7 @@ Berikut adalah analisis dan kritik terhadap basis kode AIStoryWriter yang ada, b
 3.  **Interaksi LLM dan Prompting:**
     *   **Kompleksitas Prompt:** Beberapa prompt di `Writer/Prompts.py` sangat panjang dan kompleks, menyematkan instruksi, contoh, dan konteks. Ini dapat menyulitkan LLM untuk mengikuti dengan sempurna dan sulit untuk di-debug atau disesuaikan. Memecah tugas kompleks menjadi prompt yang lebih kecil dan terfokus mungkin memberikan hasil yang lebih baik dan lebih andal.
     *   **Ketergantungan pada Format:** Kode sangat bergantung pada LLM yang mengikuti instruksi format spesifik dalam prompt (misalnya, format ringkasan, struktur JSON). Meskipun Pydantic membantu memvalidasi output JSON, LLM masih bisa menyimpang, membuat parsing menjadi rapuh.
-    *   **Pembersihan JSON Rapuh:** Logika pembersihan JSON di `SafeGenerateJSON` (menghapus ```json```, mengekstrak `{...}`) berguna tetapi mungkin tidak cukup kuat jika LLM menghasilkan output yang lebih bervariasi atau menyertakan teks penjelasan di luar blok JSON utama.
+    *   **Ketergantungan pada Output JSON LLM:** Kode bergantung pada LLM yang menghasilkan JSON yang valid dan terstruktur sesuai permintaan prompt. Meskipun penggunaan `json_repair` dan logika ekstraksi yang ditingkatkan di `SafeGenerateJSON` menambah ketahanan, ketergantungan inti pada output LLM yang benar tetap ada.
     *   **Potensi Overload Konteks (Risiko Tinggi):** Beberapa bagian dari alur kerja mengirimkan jumlah teks yang sangat besar sebagai konteks ke LLM, yang sangat berisiko melebihi batas token model dan menyebabkan error atau hasil yang buruk: # Add this point and the following sub-points
         *   **Generasi Info Akhir (`GetStoryInfo`):** Mengirimkan *seluruh teks novel* yang telah diproses untuk menghasilkan judul/ringkasan/tag. Ini adalah risiko tertinggi untuk novel panjang.
         *   **Generasi Bab Bertahap (`GenerateChapter` Tahap 1/2/3):** Mengirimkan *semua bab sebelumnya* (`ChapterSuperlist`) ditambah outline global sebagai konteks untuk setiap tahap generasi bab baru. Ukuran konteks tumbuh secara linear dengan jumlah bab.
@@ -48,7 +48,6 @@ Berikut adalah analisis dan kritik terhadap basis kode AIStoryWriter yang ada, b
     *   **Pipeline Scene-by-Scene:** Meskipun modular, pipeline ini (`ChapterOutlineToScenes` -> `ScenesToJSON` -> `SceneOutlineToScene` -> `ChapterByScene`) melibatkan banyak transformasi data dan panggilan LLM. Setiap langkah menambah potensi titik kegagalan, kehilangan informasi, atau distorsi.
 
 5.  **Penanganan Error dan Robustness:**
-    *   **Kurangnya Save/Resume:** Seperti yang diidentifikasi sebelumnya, tidak adanya mekanisme save/resume membuat proses rentan terhadap interupsi. Kesalahan di tengah jalan berarti memulai dari awal, yang bisa sangat memakan waktu.
     *   **Spesifisitas Penanganan Error:** Loop retry Ollama menangkap `ollama.ResponseError` tetapi kemudian memunculkan `Exception` generik. Ini mungkin menyembunyikan jenis error asli lebih jauh di tumpukan panggilan.
     *   **Variabilitas Output LLM:** Kode harus tangguh terhadap variasi output LLM yang tidak terduga (misalnya, format JSON yang sedikit salah, teks tambahan, respons kosong meskipun ada retry).
 
