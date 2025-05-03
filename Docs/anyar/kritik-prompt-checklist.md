@@ -20,6 +20,7 @@ Daftar ini digunakan untuk melacak implementasi perbaikan berdasarkan kritik dan
 -   [x] **Optimalkan Konteks `CHAPTER_EDIT_PROMPT`:** Uji coba dan implementasikan strategi untuk mengurangi konteks yang dikirim ke `CHAPTER_EDIT_PROMPT`, misalnya hanya mengirim bab N-1, N, dan N+1, bukan seluruh teks novel, untuk menghindari batas konteks LLM. # Diimplementasikan di Writer/NovelEditor.py
 -   [x] **Atasi Ukuran Konteks `STATS_PROMPT`:** Selidiki dan implementasikan strategi untuk mengurangi konteks yang dikirim saat menghasilkan info akhir (judul, ringkasan, tag), karena mengirim seluruh novel berisiko melebihi batas konteks. # Implemented Solution 1 (Use Outline Detail)
 -   [x] **Atasi Ukuran Konteks `GenerateChapter` (ChapterSuperlist):** Hentikan pengiriman semua bab sebelumnya sebagai konteks untuk generasi bab baru karena menyebabkan pertumbuhan konteks linear. # Implemented Solution 1 (Remove ChapterSuperlist, rely on Outline + Last Chapter Summary)
+-   [x] **Atasi Ukuran Konteks `GeneratePerChapterOutline` (Akumulasi Riwayat):** Hentikan akumulasi riwayat pesan antar panggilan dalam loop ekspansi outline per bab untuk mencegah pertumbuhan konteks linear. # Implemented Solution 1 (Remove History Accumulation)
 
 ## Panduan Gaya dan Genre
 

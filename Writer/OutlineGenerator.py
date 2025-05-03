@@ -114,7 +114,7 @@ def GeneratePerChapterOutline(
     _Chapter,
     _TotalChapters: int,
     _Outline: str,
-    _History: list = [],
+    # Parameter _History dihapus dari definisi fungsi
 ):  # Tambahkan _TotalChapters
 
     RevisionPrompt: str = Writer.Prompts.CHAPTER_OUTLINE_PROMPT.format(
@@ -122,7 +122,7 @@ def GeneratePerChapterOutline(
     )
     # Modifikasi pesan log ini
     _Logger.Log(f"Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5)
-    Messages = _History
+    Messages = [] # Inisialisasi Messages sebagai list kosong di dalam fungsi
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages = Interface.SafeGenerateText(
         _Logger,
@@ -136,4 +136,4 @@ def GeneratePerChapterOutline(
         f"Done Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5
     )
 
-    return SummaryText, Messages
+    return SummaryText # Hanya kembalikan teks outline

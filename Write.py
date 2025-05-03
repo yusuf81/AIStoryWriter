@@ -670,23 +670,22 @@ def main():
             save_state(current_state, state_filepath)
             SysLogger.Log("High-Level Chapter Outline Refinement Complete. State Saved.", 4)
             last_completed_step = "refine_chapters" # Update status lokal
-
-            # Inisialisasi Messages untuk loop GeneratePerChapterOutline berikutnya
-            Messages = [] # Mulai dengan list kosong untuk riwayat loop ekspansi bab
             # --- AKHIR BLOK BARU ---
 
             # Loop for ChapterIdx dimulai setelah ini...
+            # Inisialisasi Messages dihapus dari sini
             ChapterOutlines = [] # Pastikan ini diinisialisasi sebelum loop
             for ChapterIdx in range(1, NumChapters + 1):
                 # GeneratePerChapterOutline akan menggunakan variabel 'Outline' yang sudah di-refine
-                ChapterOutline, Messages = (
+                # Hanya tangkap ChapterOutline, Messages (riwayat) tidak lagi diteruskan atau dikembalikan
+                ChapterOutline = (
                     Writer.OutlineGenerator.GeneratePerChapterOutline(
                         Interface,
                         SysLogger,
                         ChapterIdx,
                         NumChapters,
                         Outline,
-                        Messages,
+                        # Argumen Messages (untuk _History) dihapus dari pemanggilan
                     )
                 )
                 ChapterOutlines.append(ChapterOutline)
