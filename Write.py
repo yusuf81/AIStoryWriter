@@ -984,7 +984,7 @@ def main():
                 Interface, SysLogger, StoryInfoMessages
             )
             # The rest of the block remains the same
-            Title = Info.get("Title", "Untitled Story")
+            Title = Info.get("Title", "Untitled Story") # This line should now work correctly
             StoryInfoJSON.update({"Title": Title})
             Summary = Info.get("Summary", "No summary generated.")
             StoryInfoJSON.update({"Summary": Summary})
