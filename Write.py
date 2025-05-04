@@ -531,7 +531,7 @@ def main():
         # Translate prompt jika perlu (sebelum save state awal)
         if Writer.Config.TRANSLATE_PROMPT_LANGUAGE != "":
             SysLogger.Log(
-                f"Translating prompt to {Writer.Config.TRANSLATE_PROMPT_LANGUAGE}...", 4
+                f"Translating prompt from {Writer.Config.TRANSLATE_PROMPT_LANGUAGE} to English...", 4 # Pesan log diperbaiki
             )
             Prompt = Writer.Translator.TranslatePrompt(
                 Interface, SysLogger, Prompt, Writer.Config.TRANSLATE_PROMPT_LANGUAGE
