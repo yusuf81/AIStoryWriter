@@ -163,13 +163,12 @@ class Interface:
             if _Messages[i]["content"].strip() == "":
                 del _Messages[i]
 
-        Retries = 0  # Tambahkan penghitung retry
+        Retries = 0
         # Panggil ChatAndStreamResponse *sebelum* loop untuk percobaan pertama
-        # Modify the initial call to ChatAndStreamResponse
-        NewMsgMessages, TokenUsage = self.ChatAndStreamResponse( # Unpack tuple
+        # Update unpack untuk menangkap 4 nilai
+        NewMsgMessages, TokenUsage, InputChars, EstInputTokens = self.ChatAndStreamResponse( # Unpack 4 values
             _Logger, _Messages, _Model, _SeedOverride, _FormatSchema
         )
-        # Use NewMsgMessages for checks and potential deletion
         NewMsg = NewMsgMessages # Keep variable name consistency if needed elsewhere
 
         # Loop untuk memeriksa dan mencoba lagi jika perlu
@@ -230,23 +229,33 @@ class Interface:
             # --- AKHIR LOGGING DIAGNOSTIK ---
 
             # Coba lagi dengan seed acak baru
-            # Modify the retry call to ChatAndStreamResponse
-            NewMsgMessagesRetry, TokenUsageRetry = self.ChatAndStreamResponse( # Unpack tuple
+            # Update unpack untuk menangkap 4 nilai
+            NewMsgMessagesRetry, TokenUsageRetry, InputCharsRetry, EstInputTokensRetry = self.ChatAndStreamResponse( # Unpack 4 values
                 _Logger, NewMsg, _Model, random.randint(0, 99999), _FormatSchema
             )
-            NewMsg = NewMsgMessagesRetry # Update NewMsg with the latest messages list
+            NewMsg = NewMsgMessagesRetry
+            # Update nilai untuk log akhir jika retry berhasil
+            TokenUsage = TokenUsageRetry
+            InputChars = InputCharsRetry
+            EstInputTokens = EstInputTokensRetry
 
-            # Optional: Log token usage from retry
-            if TokenUsageRetry:
-                 _Logger.Log(f"SafeGenerateText Retry Token Usage - Prompt: {TokenUsageRetry.get('prompt_tokens', 'N/A')}, Completion: {TokenUsageRetry.get('completion_tokens', 'N/A')}", 6)
+            # Hapus log token retry individual jika ada
+            # if TokenUsageRetry:
+            #     _Logger.Log(f"SafeGenerateText Retry Token Usage - Prompt: {TokenUsageRetry.get('prompt_tokens', 'N/A')}, Completion: {TokenUsageRetry.get('completion_tokens', 'N/A')}", 6)
 
+        # --- HAPUS LOG LAMA INI ---
+        # if TokenUsage:
+        #     _Logger.Log(f"SafeGenerateText Final Token Usage - Prompt: {TokenUsage.get('prompt_tokens', 'N/A')}, Completion: {TokenUsage.get('completion_tokens', 'N/A')}", 6)
+        # --- AKHIR HAPUS LOG LAMA ---
 
-        # Optional: Log token usage from the successful call outside the loop
-        if TokenUsage:
-             _Logger.Log(f"SafeGenerateText Final Token Usage - Prompt: {TokenUsage.get('prompt_tokens', 'N/A')}, Completion: {TokenUsage.get('completion_tokens', 'N/A')}", 6)
+        # --- TAMBAHKAN LOG GABUNGAN BARU ---
+        prompt_tokens_str = TokenUsage.get('prompt_tokens', 'N/A') if TokenUsage else 'N/A'
+        completion_tokens_str = TokenUsage.get('completion_tokens', 'N/A') if TokenUsage else 'N/A'
+        _Logger.Log(f"Text Call Stats: Input Chars={InputChars}, Est. Input Tokens={EstInputTokens} | Actual Tokens: Prompt={prompt_tokens_str}, Completion={completion_tokens_str}", 6)
+        # --- AKHIR TAMBAHAN LOG GABUNGAN ---
 
         # Return the final, validated message list AND token usage
-        return NewMsg, TokenUsage # Return the message list AND the token usage
+        return NewMsg, TokenUsage
 
     def SafeGenerateJSON(
         self,
@@ -256,15 +265,19 @@ class Interface:
         _SeedOverride: int = -1,
         _FormatSchema: dict = None,  # Diubah dari _Format, _RequiredAttribs dihapus
     ):
-        Retries = 0  # Tambahkan penghitung retry
-        LastTokenUsage = None # Initialize token usage variable
+        Retries = 0
+        LastTokenUsage = None
+        LastInputChars = 0 # Tambahkan ini
+        LastEstInputTokens = 0 # Tambahkan ini
         while True:
-            # Menggunakan ChatAndStreamResponse langsung dengan skema
-            # Modify the call to ChatAndStreamResponse
-            ResponseMessages, TokenUsage = self.ChatAndStreamResponse( # Unpack tuple
+            # Update unpack untuk menangkap 4 nilai
+            ResponseMessages, TokenUsage, InputChars, EstInputTokens = self.ChatAndStreamResponse( # Unpack 4 values
                 _Logger, _Messages, _Model, _SeedOverride, _FormatSchema=_FormatSchema
             )
-            LastTokenUsage = TokenUsage # Store the token usage from this attempt
+            # Simpan nilai dari iterasi ini
+            LastTokenUsage = TokenUsage
+            LastInputChars = InputChars
+            LastEstInputTokens = EstInputTokens
 
             # Tambahkan blok ini untuk membersihkan markdown
             # --------------------------------------------------
@@ -347,12 +360,17 @@ class Interface:
                 # for _Attrib in _RequiredAttribs:
                 #     JSONResponse[_Attrib]
 
-                # Now return the json
-                # Modify the successful return statement
-                return ResponseMessages, JSONResponse, LastTokenUsage # Return messages, JSON, and tokens
+                # --- TAMBAHKAN LOG GABUNGAN BARU ---
+                prompt_tokens_str = LastTokenUsage.get('prompt_tokens', 'N/A') if LastTokenUsage else 'N/A'
+                completion_tokens_str = LastTokenUsage.get('completion_tokens', 'N/A') if LastTokenUsage else 'N/A'
+                _Logger.Log(f"JSON Call Stats: Input Chars={LastInputChars}, Est. Input Tokens={LastEstInputTokens} | Actual Tokens: Prompt={prompt_tokens_str}, Completion={completion_tokens_str}", 6)
+                # --- AKHIR TAMBAHAN LOG GABUNGAN ---
+
+                # Return yang berhasil
+                return ResponseMessages, JSONResponse, LastTokenUsage
 
             except Exception as e:
-                Retries += 1  # Tingkatkan penghitung retry
+                Retries += 1
                 _Logger.Log(
                     f"JSON Error during parsing: {e}. Raw Response: '{RawResponseText}'. Retry {Retries}/{Writer.Config.MAX_JSON_RETRIES}",
                     7,
@@ -388,22 +406,23 @@ class Interface:
         _Messages,
         _Model: str = "llama3",
         _SeedOverride: int = -1,
-        _FormatSchema: dict = None,  # Diubah dari _Format
+        _FormatSchema: dict = None,
     ):
-        # --- AWAL BLOK LOGGING KARAKTER INPUT ---
+        # --- AWAL PERHITUNGAN INPUT ---
         TotalInputChars = 0
+        EstimatedInputTokens = 0 # Tambahkan ini
         try:
-            # Iterasi melalui pesan dan jumlahkan panjang kontennya
             for msg in _Messages:
-                # Pastikan 'content' ada dan merupakan string sebelum menghitung panjangnya
                 if isinstance(msg.get('content'), str):
                     TotalInputChars += len(msg['content'])
-            # Log jumlah karakter input sebelum dikirim ke LLM
-            _Logger.Log(f"Input Content Length (chars): {TotalInputChars} being sent to {_Model}", 6) # Level 6 (kuning) cocok untuk detail ini
+            # Hitung estimasi token (gunakan pembagi 5 seperti log estimasi lainnya)
+            EstimatedInputTokens = round(TotalInputChars / 5)
+            # --- HAPUS LOG INI ---
+            # _Logger.Log(f"Input Content Length (chars): {TotalInputChars} being sent to {_Model}", 6)
+            # --- AKHIR HAPUS LOG INI ---
         except Exception as e:
-            # Tangani jika ada error saat menghitung karakter (seharusnya jarang terjadi)
-            _Logger.Log(f"Warning: Could not calculate input character count. Error: {e}", 7)
-        # --- AKHIR BLOK LOGGING KARAKTER INPUT ---
+            _Logger.Log(f"Warning: Could not calculate input character/token count. Error: {e}", 7)
+        # --- AKHIR PERHITUNGAN INPUT ---
 
         # --- Sisa kode fungsi dimulai di sini ---
         Provider, ProviderModel, ModelHost, ModelOptions = self.GetModelAndProvider(
@@ -679,8 +698,10 @@ class Interface:
             CallStack += f"{Frame.function}."
         CallStack = CallStack[:-1].replace("<module>", "Main")
         _Logger.SaveLangchain(CallStack, _Messages)
-        # Return the updated messages AND the token usage from the last successful call
-        return _Messages, LastTokenUsage
+        # --- MODIFIKASI RETURN STATEMENT ---
+        # Kembalikan juga TotalInputChars dan EstimatedInputTokens
+        # return _Messages, LastTokenUsage # Baris lama
+        return _Messages, LastTokenUsage, TotalInputChars, EstimatedInputTokens # Baris baru
 
     def StreamResponse(self, _Stream, _Provider: str):
         Response: str = ""
