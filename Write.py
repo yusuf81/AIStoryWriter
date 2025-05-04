@@ -977,9 +977,13 @@ def main():
 
         try:
             # Panggil GetStoryInfo dengan pesan yang hanya berisi outline
-            Info = Writer.StoryInfo.GetStoryInfo(
+            # Modify this line:
+            # Info = Writer.StoryInfo.GetStoryInfo(...)
+            # To unpack two values, ignoring the second one:
+            Info, _ = Writer.StoryInfo.GetStoryInfo( # Unpack 2 values, ignore token usage
                 Interface, SysLogger, StoryInfoMessages
             )
+            # The rest of the block remains the same
             Title = Info.get("Title", "Untitled Story")
             StoryInfoJSON.update({"Title": Title})
             Summary = Info.get("Summary", "No summary generated.")
