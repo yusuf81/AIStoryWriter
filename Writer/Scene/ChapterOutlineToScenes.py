@@ -26,7 +26,7 @@ def ChapterOutlineToScenes(
         )
     )
 
-    Response = Interface.SafeGenerateText(
+    Response, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger,
         MesssageHistory,
         Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL,

@@ -42,7 +42,7 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
         )
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
-        Messages = Interface.SafeGenerateText(
+        Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
             _Logger,
             Messages,
             Writer.Config.FINAL_NOVEL_EDITOR_MODEL,  # Gunakan nama variabel config baru

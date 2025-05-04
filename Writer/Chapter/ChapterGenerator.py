@@ -56,7 +56,7 @@ def GenerateChapter(
             )
         )
     )
-    ChapterSegmentMessages = Interface.SafeGenerateText(
+    ChapterSegmentMessages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger,
         ChapterSegmentMessages,
         Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
@@ -83,7 +83,7 @@ def GenerateChapter(
                 )
             )
         )
-        ChapterSummaryMessages = Interface.SafeGenerateText(
+        ChapterSummaryMessages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
             _Logger,
             ChapterSummaryMessages,
             Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
@@ -126,7 +126,7 @@ def GenerateChapter(
             Messages = MesssageHistory.copy()
             Messages.append(Interface.BuildUserQuery(Prompt))
 
-            Messages = Interface.SafeGenerateText(
+            Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
                 _Logger,
                 Messages,
                 Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
@@ -186,7 +186,7 @@ def GenerateChapter(
         Messages = MesssageHistory.copy()
         Messages.append(Interface.BuildUserQuery(Prompt))
 
-        Messages = Interface.SafeGenerateText(
+        Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
             _Logger,
             Messages,
             Writer.Config.CHAPTER_STAGE2_WRITER_MODEL,
@@ -239,7 +239,7 @@ def GenerateChapter(
         Messages = MesssageHistory.copy()
         Messages.append(Interface.BuildUserQuery(Prompt))
 
-        Messages = Interface.SafeGenerateText(
+        Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
             _Logger,
             Messages,
             Writer.Config.CHAPTER_STAGE3_WRITER_MODEL,
@@ -323,7 +323,7 @@ def ReviseChapter(Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Ch
     _Logger.Log(f"Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS})", 5)
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
-    Messages = Interface.SafeGenerateText(
+    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger,
         Messages,
         Writer.Config.CHAPTER_REVISION_WRITER_MODEL,

@@ -24,7 +24,7 @@ def SceneOutlineToScene(
         )
     )
 
-    Response = Interface.SafeGenerateText(
+    Response, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger,
         MesssageHistory,
         Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,

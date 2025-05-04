@@ -24,7 +24,7 @@ def GetFeedbackOnOutline(Interface, _Logger, _Outline: str):
 
     _Logger.Log("Prompting LLM To Critique Outline", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    History = Interface.SafeGenerateText(
+    History, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger,
         History,
         Writer.Config.REVISION_MODEL,
@@ -77,7 +77,7 @@ def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
 
     _Logger.Log("Prompting LLM To Critique Chapter", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    Messages = Interface.SafeGenerateText(
+    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger, History, Writer.Config.REVISION_MODEL
     )
     _Logger.Log("Finished Getting Chapter Feedback", 5)

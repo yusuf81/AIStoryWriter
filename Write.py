@@ -651,7 +651,7 @@ def main():
                     )
                 )
             ]
-            RefinementMessages = Interface.SafeGenerateText(
+            RefinementMessages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
                  _Logger=SysLogger,
                  _Messages=RefinementMessages,
                  _Model=Writer.Config.INITIAL_OUTLINE_WRITER_MODEL, # Atau model outline lain yang sesuai

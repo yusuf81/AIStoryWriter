@@ -12,7 +12,7 @@ def TranslatePrompt(Interface, _Logger, _Prompt: str, _Language: str = "French")
     _Logger.Log(f"Prompting LLM To Translate User Prompt", 5)
     Messages = []
     Messages.append(Interface.BuildUserQuery(Prompt))
-    Messages = Interface.SafeGenerateText(
+    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger,
         Messages,
         Writer.Config.TRANSLATOR_MODEL,
@@ -40,7 +40,7 @@ def TranslateNovel(
         _Logger.Log(f"Prompting LLM To Perform Chapter {i+1}/{_TotalChapters} Translation", 5)
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
-        Messages = Interface.SafeGenerateText(
+        Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
             _Logger, Messages, Writer.Config.TRANSLATOR_MODEL
         )
         _Logger.Log(f"Finished Chapter {i+1} Translation", 5)

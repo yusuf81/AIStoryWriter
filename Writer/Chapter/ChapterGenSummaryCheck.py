@@ -38,7 +38,7 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     )
     # Tambahkan log sebelum memanggil SafeGenerateText pertama
     _Logger.Log(f"Generating summary of generated work for comparison.", 6) # Tambahkan log ini
-    SummaryLangchain = Interface.SafeGenerateText(
+    SummaryLangchain, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
     )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
     WorkSummary: str = Interface.GetLastMessageText(SummaryLangchain)
@@ -56,7 +56,7 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     )
     # Tambahkan log sebelum memanggil SafeGenerateText kedua
     _Logger.Log(f"Generating summary of reference outline for comparison.", 6) # Tambahkan log ini
-    SummaryLangchain = Interface.SafeGenerateText(
+    SummaryLangchain, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
     )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
     OutlineSummary: str = Interface.GetLastMessageText(SummaryLangchain)

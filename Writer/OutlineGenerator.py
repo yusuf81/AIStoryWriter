@@ -17,7 +17,7 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
 
     _Logger.Log(f"Extracting Important Base Context", 4)
     Messages = [Interface.BuildUserQuery(Prompt)]
-    Messages = Interface.SafeGenerateText(
+    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger, Messages, Writer.Config.INITIAL_OUTLINE_WRITER_MODEL
     )
     BaseContext: str = Interface.GetLastMessageText(Messages)
@@ -35,7 +35,7 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
 
     _Logger.Log(f"Generating Initial Outline", 4)
     Messages = [Interface.BuildUserQuery(Prompt)]
-    Messages = Interface.SafeGenerateText(
+    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger,
         Messages,
         Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,
@@ -96,7 +96,7 @@ def ReviseOutline(Interface, _Logger, _Outline, _Feedback, _History: list = [], 
     _Logger.Log(f"Revising Outline (Iteration {_Iteration}/{Writer.Config.OUTLINE_MAX_REVISIONS})", 2) # Tambahkan Max Revisions
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
-    Messages = Interface.SafeGenerateText(
+    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger,
         Messages,
         Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,
@@ -124,7 +124,7 @@ def GeneratePerChapterOutline(
     _Logger.Log(f"Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5)
     Messages = [] # Inisialisasi Messages sebagai list kosong di dalam fungsi
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
-    Messages = Interface.SafeGenerateText(
+    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
         _Logger,
         Messages,
         Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL,

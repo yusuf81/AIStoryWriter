@@ -19,7 +19,7 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
         _Logger.Log(f"Prompting LLM To Perform Chapter {i+1}/{_TotalChapters} Scrubbing Edit", 5)
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
-        Messages = Interface.SafeGenerateText(
+        Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
             _Logger,
             Messages,
             Writer.Config.SCRUB_MODEL,
