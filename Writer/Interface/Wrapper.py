@@ -390,6 +390,22 @@ class Interface:
         _SeedOverride: int = -1,
         _FormatSchema: dict = None,  # Diubah dari _Format
     ):
+        # --- AWAL BLOK LOGGING KARAKTER INPUT ---
+        TotalInputChars = 0
+        try:
+            # Iterasi melalui pesan dan jumlahkan panjang kontennya
+            for msg in _Messages:
+                # Pastikan 'content' ada dan merupakan string sebelum menghitung panjangnya
+                if isinstance(msg.get('content'), str):
+                    TotalInputChars += len(msg['content'])
+            # Log jumlah karakter input sebelum dikirim ke LLM
+            _Logger.Log(f"Input Content Length (chars): {TotalInputChars} being sent to {_Model}", 6) # Level 6 (kuning) cocok untuk detail ini
+        except Exception as e:
+            # Tangani jika ada error saat menghitung karakter (seharusnya jarang terjadi)
+            _Logger.Log(f"Warning: Could not calculate input character count. Error: {e}", 7)
+        # --- AKHIR BLOK LOGGING KARAKTER INPUT ---
+
+        # --- Sisa kode fungsi dimulai di sini ---
         Provider, ProviderModel, ModelHost, ModelOptions = self.GetModelAndProvider(
             _Model
         )
