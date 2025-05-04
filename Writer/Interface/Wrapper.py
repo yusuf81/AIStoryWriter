@@ -245,8 +245,8 @@ class Interface:
         if TokenUsage:
              _Logger.Log(f"SafeGenerateText Final Token Usage - Prompt: {TokenUsage.get('prompt_tokens', 'N/A')}, Completion: {TokenUsage.get('completion_tokens', 'N/A')}", 6)
 
-        # Return the final, validated message list
-        return NewMsg
+        # Return the final, validated message list AND token usage
+        return NewMsg, TokenUsage # Return the message list AND the token usage
 
     def SafeGenerateJSON(
         self,
