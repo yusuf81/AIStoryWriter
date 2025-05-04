@@ -20,7 +20,8 @@ def LLMCountChapters(Interface, _Logger, _Summary):
     Messages.append(Interface.BuildUserQuery(Prompt))
 
     # Menggunakan SafeGenerateJSON dengan skema
-    Messages, JSONResponse = Interface.SafeGenerateJSON(
+    # Unpack 3 values, ignore messages and tokens
+    _, JSONResponse, _ = Interface.SafeGenerateJSON(
         _Logger,
         Messages,
         Writer.Config.EVAL_MODEL,

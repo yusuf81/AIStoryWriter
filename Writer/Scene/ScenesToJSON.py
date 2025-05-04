@@ -26,7 +26,9 @@ def ScenesToJSON(Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Sce
     )
 
     # Menggunakan SafeGenerateJSON dengan skema
-    Response, SceneJSONResponse = Interface.SafeGenerateJSON(
+    # Unpack 3 values, ignore messages and tokens
+    _, SceneJSONResponse, _ = Interface.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
+    # Response, SceneJSONResponse = Interface.SafeGenerateJSON( # Baris lama
         _Logger,
         MesssageHistory,
         Writer.Config.CHECKER_MODEL,

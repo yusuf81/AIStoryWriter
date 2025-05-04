@@ -77,7 +77,9 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     # Tambahkan log sebelum memanggil SafeGenerateJSON
     _Logger.Log(f"Comparing generated work summary vs reference outline summary.", 6) # Tambahkan log ini
     # Menggunakan SafeGenerateJSON dengan skema
-    ComparisonLangchain, JSONResponse = Interface.SafeGenerateJSON(
+    # Unpack 3 values, ignore messages and tokens
+    _, JSONResponse, _ = Interface.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
+    # ComparisonLangchain, JSONResponse = Interface.SafeGenerateJSON( # Baris lama
         _Logger,
         ComparisonLangchain,
         Writer.Config.REVISION_MODEL,

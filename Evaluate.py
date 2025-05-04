@@ -62,7 +62,9 @@ def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
         )
     )
     # Menggunakan SafeGenerateJSON dengan skema
-    Messages, JSONResponse = _Client.SafeGenerateJSON(
+    # Unpack 3 values, ignore messages and tokens
+    _, JSONResponse, _ = _Client.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
+    # Messages, JSONResponse = _Client.SafeGenerateJSON( # Baris lama
         _Logger,  # Menggunakan _Logger, bukan Logger global
         Messages,
         Args.Model,
@@ -97,7 +99,9 @@ def EvaluateChapter(_Client, _Logger, _ChapterNum: int, _TotalChapters: int, _Ch
     )
 
     # Menggunakan SafeGenerateJSON dengan skema
-    Messages, JSONResponse = _Client.SafeGenerateJSON(
+    # Unpack 3 values, ignore messages and tokens
+    _, JSONResponse, _ = _Client.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
+    # Messages, JSONResponse = _Client.SafeGenerateJSON( # Baris lama
         _Logger,  # Menggunakan _Logger, bukan Logger global
         Messages,
         Args.Model,

@@ -54,7 +54,7 @@ def GetOutlineRating(
     History.append(Interface.BuildUserQuery(StartingPrompt))
     # Menggunakan SafeGenerateJSON dengan skema
     # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = Interface.SafeGenerateJSON(
+    _, JSONResponse, _ = Interface.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
         _Logger,
         History, # Pass the current history
         Writer.Config.EVAL_MODEL,
@@ -100,7 +100,8 @@ def GetChapterRating(Interface, _Logger, _Chapter: str):
     _Logger.Log("Prompting LLM To Get Review JSON", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
     # Menggunakan SafeGenerateJSON dengan skema
-    History, JSONResponse = Interface.SafeGenerateJSON(
+    # Unpack 3 values, ignore messages and tokens
+    _, JSONResponse, _ = Interface.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
         _Logger,
         History,
         Writer.Config.EVAL_MODEL,
