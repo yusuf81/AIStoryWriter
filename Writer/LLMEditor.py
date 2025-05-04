@@ -53,9 +53,10 @@ def GetOutlineRating(
 
     History.append(Interface.BuildUserQuery(StartingPrompt))
     # Menggunakan SafeGenerateJSON dengan skema
-    History, JSONResponse = Interface.SafeGenerateJSON(
+    # Unpack 3 values, ignore messages and tokens
+    _, JSONResponse, _ = Interface.SafeGenerateJSON(
         _Logger,
-        History,
+        History, # Pass the current history
         Writer.Config.EVAL_MODEL,
         _FormatSchema=OutlineCompleteSchema.model_json_schema(),
     )
