@@ -158,13 +158,22 @@ class Interface:
             if _Messages[i]["content"].strip() == "":
                 del _Messages[i]
 
+        # Strip Empty Messages
+        for i in range(len(_Messages) - 1, 0, -1):
+            if _Messages[i]["content"].strip() == "":
+                del _Messages[i]
+
         Retries = 0  # Tambahkan penghitung retry
         # Panggil ChatAndStreamResponse *sebelum* loop untuk percobaan pertama
-        NewMsg = self.ChatAndStreamResponse(
+        # Modify the initial call to ChatAndStreamResponse
+        NewMsgMessages, TokenUsage = self.ChatAndStreamResponse( # Unpack tuple
             _Logger, _Messages, _Model, _SeedOverride, _FormatSchema
         )
+        # Use NewMsgMessages for checks and potential deletion
+        NewMsg = NewMsgMessages # Keep variable name consistency if needed elsewhere
 
         # Loop untuk memeriksa dan mencoba lagi jika perlu
+        # Inside the while loop, modify the retry call
         while (self.GetLastMessageText(NewMsg).strip() == "") or (
             len(self.GetLastMessageText(NewMsg).split(" ")) < _MinWordCount
         ):
@@ -193,9 +202,9 @@ class Interface:
                     f"Failed to generate valid text after {Writer.Config.MAX_TEXT_RETRIES} retries (whitespace/short response)."
                 )  # Naikkan exception
 
-            # Hapus respons asisten yang gagal
-            if len(_Messages) > 0 and _Messages[-1]["role"] == "assistant":
-                del _Messages[-1]
+            # Hapus respons asisten yang gagal (using NewMsg which is NewMsgMessages)
+            if len(NewMsg) > 0 and NewMsg[-1]["role"] == "assistant":
+                del NewMsg[-1] # Delete from the list returned by ChatAndStreamResponse
 
             # --- AWAL LOGGING DIAGNOSTIK ---
             _Logger.Log(
@@ -221,11 +230,23 @@ class Interface:
             # --- AKHIR LOGGING DIAGNOSTIK ---
 
             # Coba lagi dengan seed acak baru
-            NewMsg = self.ChatAndStreamResponse(
-                _Logger, _Messages, _Model, random.randint(0, 99999), _FormatSchema
+            # Modify the retry call to ChatAndStreamResponse
+            NewMsgMessagesRetry, TokenUsageRetry = self.ChatAndStreamResponse( # Unpack tuple
+                _Logger, NewMsg, _Model, random.randint(0, 99999), _FormatSchema
             )
+            NewMsg = NewMsgMessagesRetry # Update NewMsg with the latest messages list
 
-        return NewMsg  # Kembalikan NewMsg (yang merupakan _Messages yang berhasil)
+            # Optional: Log token usage from retry
+            if TokenUsageRetry:
+                 _Logger.Log(f"SafeGenerateText Retry Token Usage - Prompt: {TokenUsageRetry.get('prompt_tokens', 'N/A')}, Completion: {TokenUsageRetry.get('completion_tokens', 'N/A')}", 6)
+
+
+        # Optional: Log token usage from the successful call outside the loop
+        if TokenUsage:
+             _Logger.Log(f"SafeGenerateText Final Token Usage - Prompt: {TokenUsage.get('prompt_tokens', 'N/A')}, Completion: {TokenUsage.get('completion_tokens', 'N/A')}", 6)
+
+        # Return the final, validated message list
+        return NewMsg
 
     def SafeGenerateJSON(
         self,
@@ -236,15 +257,19 @@ class Interface:
         _FormatSchema: dict = None,  # Diubah dari _Format, _RequiredAttribs dihapus
     ):
         Retries = 0  # Tambahkan penghitung retry
+        LastTokenUsage = None # Initialize token usage variable
         while True:
             # Menggunakan ChatAndStreamResponse langsung dengan skema
-            Response = self.ChatAndStreamResponse(
+            # Modify the call to ChatAndStreamResponse
+            ResponseMessages, TokenUsage = self.ChatAndStreamResponse( # Unpack tuple
                 _Logger, _Messages, _Model, _SeedOverride, _FormatSchema=_FormatSchema
             )
+            LastTokenUsage = TokenUsage # Store the token usage from this attempt
 
             # Tambahkan blok ini untuk membersihkan markdown
             # --------------------------------------------------
-            RawResponseText = self.GetLastMessageText(Response)
+            # Use ResponseMessages for subsequent processing
+            RawResponseText = self.GetLastMessageText(ResponseMessages)
             CleanedResponseText = RawResponseText.strip()
             if CleanedResponseText.startswith("```json"):
                 CleanedResponseText = CleanedResponseText[7:]  # Hapus ```json
@@ -341,11 +366,14 @@ class Interface:
                     raise Exception(
                         f"Failed to generate valid JSON after {Writer.Config.MAX_JSON_RETRIES} retries."
                     )  # Naikkan exception
+                    # Return None, None, None # Or raise exception as above
 
-                # Hapus pesan terakhir (permintaan) dan respons gagal dari riwayat
-                # Asumsi: ChatAndStreamResponse menambahkan respons ke _Messages. Jika tidak, baris ini mungkin perlu dihapus.
-                if len(_Messages) > 0 and _Messages[-1]["role"] == "assistant":
-                    del _Messages[-1]  # Hapus respons gagal dari LLM
+                # Hapus pesan asisten yang gagal dari ResponseMessages
+                if len(ResponseMessages) > 0 and ResponseMessages[-1]["role"] == "assistant":
+                    del ResponseMessages[-1]
+                # Update _Messages for the next retry iteration *if* ResponseMessages was based on it
+                # It's safer to pass the modified list back into the next ChatAndStreamResponse call
+                _Messages = ResponseMessages # Ensure the list for the next loop iteration is the one without the failed assistant message
 
                 # Mencoba lagi dengan seed baru dan skema yang sama pada iterasi berikutnya
                 _SeedOverride = random.randint(
@@ -443,6 +471,7 @@ class Interface:
 
             # Gunakan konstanta dari Config jika ada, jika tidak gunakan default 3
             MaxRetries = getattr(Writer.Config, "MAX_OLLAMA_RETRIES", 3)
+            LastTokenUsage = None # Initialize token usage variable
             while MaxRetries > 0:
                 try:
                     Stream = self.Clients[_Model].chat(
@@ -452,10 +481,11 @@ class Interface:
                         options=ModelOptions,
                     )
 
-                    # Langsung panggil StreamResponse tanpa loop retry untuk respons kosong/spasi
-                    # Penanganan respons kosong/pendek sudah dilakukan oleh SafeGenerateText
-                    _Messages.append(self.StreamResponse(Stream, Provider))
-                    break  # Keluar dari loop jika berhasil
+                    # Capture both return values from StreamResponse
+                    AssistantMessage, TokenUsage = self.StreamResponse(Stream, Provider)
+                    _Messages.append(AssistantMessage)
+                    LastTokenUsage = TokenUsage # Store token usage on success
+                    break # Exit loop on success
 
                 except ollama.ResponseError as e:  # Tangkap error spesifik Ollama
                     MaxRetries -= 1
@@ -505,6 +535,7 @@ class Interface:
                     m["role"] = "user"
 
             MaxRetries = 3
+            LastTokenUsage = None # Initialize token usage variable
             while True:
                 try:
                     Stream = self.Clients[_Model].generate_content(
@@ -517,9 +548,13 @@ class Interface:
                             HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
                         },
                     )
-                    _Messages.append(self.StreamResponse(Stream, Provider))
+                    # Capture both return values from StreamResponse
+                    AssistantMessage, TokenUsage = self.StreamResponse(Stream, Provider)
+                    _Messages.append(AssistantMessage)
+                    LastTokenUsage = TokenUsage # Store token usage on success
                     break
                 except Exception as e:
+                    # Make sure the exception is raised if retries are exceeded
                     if MaxRetries > 0:
                         _Logger.Log(
                             f"Exception During Generation '{e}', {MaxRetries} Retries Remaining",
@@ -577,6 +612,9 @@ class Interface:
 
             Response = Client.chat(messages=_Messages, seed=Seed)
             _Messages.append({"role": "assistant", "content": Response})
+            # TODO: OpenRouter token usage - The current OpenRouter client doesn't easily expose this.
+            # We'll return None for now. This would require modifying the OpenRouter class.
+            LastTokenUsage = None # Placeholder
 
         elif Provider == "Anthropic":
             raise NotImplementedError("Anthropic API not supported")
@@ -596,23 +634,42 @@ class Interface:
             CallStack += f"{Frame.function}."
         CallStack = CallStack[:-1].replace("<module>", "Main")
         _Logger.SaveLangchain(CallStack, _Messages)
-        return _Messages
+        # Return the updated messages AND the token usage from the last successful call
+        return _Messages, LastTokenUsage
 
     def StreamResponse(self, _Stream, _Provider: str):
         Response: str = ""
+        LastChunk = None # Add this line
+        PromptTokens = 0 # Add this line
+        CompletionTokens = 0 # Add this line
+
         for chunk in _Stream:
+            LastChunk = chunk # Store the current chunk
             if _Provider == "ollama":
-                ChunkText = chunk["message"]["content"]
+                # Check if 'message' and 'content' exist before accessing
+                if chunk.get('message') and chunk['message'].get('content'):
+                     ChunkText = chunk["message"]["content"]
+                     Response += ChunkText
+                     print(ChunkText, end="", flush=True)
+                # No else needed, just skip if content isn't there (like in the final chunk)
             elif _Provider == "google":
                 ChunkText = chunk.text
-            else:
-                raise ValueError(f"Unsupported provider: {_Provider}")
-
-            Response += ChunkText
-            print(ChunkText, end="", flush=True)
+                Response += ChunkText
+                print(ChunkText, end="", flush=True)
+            # else: # Keep the error for unsupported providers
+            #     raise ValueError(f"Unsupported provider: {_Provider}")
 
         print("\n\n\n" if Writer.Config.DEBUG else "")
-        return {"role": "assistant", "content": Response}
+
+        # --- Add token extraction logic after the loop ---
+        if _Provider == "ollama" and LastChunk and LastChunk.get('done'):
+            PromptTokens = LastChunk.get('prompt_eval_count', 0)
+            CompletionTokens = LastChunk.get('eval_count', 0)
+        # --- End token extraction logic ---
+
+        # Modify the return statement
+        TokenUsage = {"prompt_tokens": PromptTokens, "completion_tokens": CompletionTokens}
+        return {"role": "assistant", "content": Response}, TokenUsage # Return message and tokens
 
     def BuildUserQuery(self, _Query: str):
         return {"role": "user", "content": _Query}

@@ -133,13 +133,20 @@ def simulate_get_info(state_filepath, info_model_override=None):
     try:
         SysLogger.Log("Calling Writer.StoryInfo.GetStoryInfo...", 5)
         # Teruskan model yang benar (info_model) ke GetStoryInfo
-        GeneratedInfo = Writer.StoryInfo.GetStoryInfo(Interface, SysLogger, initial_messages_for_info, _Model=info_model)
+        # Unpack both values returned by GetStoryInfo
+        GeneratedInfo, TokenUsage = Writer.StoryInfo.GetStoryInfo(Interface, SysLogger, initial_messages_for_info, _Model=info_model)
 
         SysLogger.Log("Writer.StoryInfo.GetStoryInfo call finished.", 5)
         print("\n--- Generated Story Info ---")
         # GeneratedInfo sudah berupa dictionary JSON yang di-parse
         print(json.dumps(GeneratedInfo, indent=4))
+        print("---------------------------")
+        # Print token usage if available
+        if TokenUsage:
+            print(f"Prompt Tokens: {TokenUsage.get('prompt_tokens', 'N/A')}")
+            print(f"Completion Tokens: {TokenUsage.get('completion_tokens', 'N/A')}")
         print("---------------------------\n")
+
 
     except Exception as e:
         SysLogger.Log(f"Error during GetStoryInfo execution: {e}", 7)

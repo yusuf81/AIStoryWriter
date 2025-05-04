@@ -23,11 +23,15 @@ def GetStoryInfo(Interface, _Logger, _Messages: list, _Model: str = None): # Tam
     Messages = _Messages
     Messages.append(Interface.BuildUserQuery(Prompt))
     # Menggunakan SafeGenerateJSON dengan skema dan model yang benar (ModelToUse)
-    Messages, JSONResponse = Interface.SafeGenerateJSON(
+    # Modify the call to SafeGenerateJSON to unpack three values
+    # Instead of: Messages, JSONResponse = Interface.SafeGenerateJSON(...)
+    Messages, JSONResponse, TokenUsage = Interface.SafeGenerateJSON(
         _Logger,
         Messages,
         ModelToUse, # Gunakan model yang sudah ditentukan
         _FormatSchema=StoryInfoSchema.model_json_schema(),
     )
     _Logger.Log("Finished Getting Stats Feedback", 5)
-    return JSONResponse
+    # Modify the return statement
+    # Instead of: return JSONResponse
+    return JSONResponse, TokenUsage # Return JSON and tokens
