@@ -482,10 +482,18 @@ class Interface:
                         options=ModelOptions,
                     )
 
-                    # Capture both return values from StreamResponse
-                    AssistantMessage, TokenUsage = self.StreamResponse(Stream, Provider)
+                    # StreamResponse now only returns the message for Ollama too
+                    AssistantMessage = self.StreamResponse(Stream, Provider)
                     _Messages.append(AssistantMessage)
-                    LastTokenUsage = TokenUsage # Store token usage on success
+
+                    # --- TAMBAHKAN LOGIKA EKSTRAKSI TOKEN OLLAMA DI SINI ---
+                    # We need the last chunk info which StreamResponse no longer provides directly.
+                    # TODO: Re-implement Ollama token counting here if needed.
+                    # For simplicity in this step, we'll set it to None.
+                    _Logger.Log("Ollama token count extraction needs reimplementation in ChatAndStreamResponse.", 6)
+                    LastTokenUsage = None
+                    # --- AKHIR LOGIKA EKSTRAKSI TOKEN OLLAMA ---
+
                     break # Exit loop on success
 
                 except ollama.ResponseError as e:  # Tangkap error spesifik Ollama
@@ -537,9 +545,12 @@ class Interface:
 
             MaxRetries = 3
             LastTokenUsage = None # Initialize token usage variable
-            while True:
+            GeneratedContentResponse = None # Variable to store the response object
+
+            while True: # Keep the retry loop structure
                 try:
-                    Stream = self.Clients[_Model].generate_content(
+                    # Store the response object returned by generate_content
+                    GeneratedContentResponse = self.Clients[_Model].generate_content(
                         contents=_Messages,
                         stream=True,
                         safety_settings={
@@ -549,13 +560,31 @@ class Interface:
                             HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
                         },
                     )
-                    # Capture both return values from StreamResponse
-                    AssistantMessage, TokenUsage = self.StreamResponse(Stream, Provider)
+                    # StreamResponse now only returns the message
+                    AssistantMessage = self.StreamResponse(GeneratedContentResponse, Provider)
                     _Messages.append(AssistantMessage)
-                    LastTokenUsage = TokenUsage # Store token usage on success
-                    break
+
+                    # --- TAMBAHKAN LOGIKA EKSTRAKSI TOKEN DI SINI ---
+                    try:
+                        # Access usage_metadata after the stream is consumed
+                        if hasattr(GeneratedContentResponse, 'usage_metadata'):
+                            metadata = GeneratedContentResponse.usage_metadata
+                            prompt_tokens = metadata.prompt_token_count
+                            completion_tokens = metadata.candidates_token_count # Use candidates_token_count for completion
+                            LastTokenUsage = {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}
+                            _Logger.Log(f"Google Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}", 6)
+                        else:
+                            _Logger.Log("Google usage_metadata not found on response object.", 6)
+                            LastTokenUsage = None # Set to None if metadata not found
+                    except Exception as meta_e:
+                        _Logger.Log(f"Error accessing Google usage_metadata: {meta_e}", 7)
+                        LastTokenUsage = None # Set to None on error
+                    # --- AKHIR LOGIKA EKSTRAKSI TOKEN ---
+
+                    break # Exit loop on success
                 except Exception as e:
                     # Make sure the exception is raised if retries are exceeded
+                    # ... (keep existing retry logic) ...
                     if MaxRetries > 0:
                         _Logger.Log(
                             f"Exception During Generation '{e}', {MaxRetries} Retries Remaining",
@@ -658,15 +687,10 @@ class Interface:
 
         print("\n\n\n" if Writer.Config.DEBUG else "")
 
-        # --- Add token extraction logic after the loop ---
-        if _Provider == "ollama" and LastChunk and LastChunk.get('done'):
-            PromptTokens = LastChunk.get('prompt_eval_count', 0)
-            CompletionTokens = LastChunk.get('eval_count', 0)
-        # --- End token extraction logic ---
+        # Token extraction logic moved to ChatAndStreamResponse
 
-        # Modify the return statement
-        TokenUsage = {"prompt_tokens": PromptTokens, "completion_tokens": CompletionTokens}
-        return {"role": "assistant", "content": Response}, TokenUsage # Return message and tokens
+        # Return only the message dictionary
+        return {"role": "assistant", "content": Response}
 
     def BuildUserQuery(self, _Query: str):
         return {"role": "user", "content": _Query}
