@@ -21,8 +21,10 @@ import Writer.StoryInfo
 import Writer.Prompts
 import dotenv
 
+
 # Muat variabel lingkungan (misalnya GOOGLE_API_KEY)
 dotenv.load_dotenv()
+
 
 def load_state(filepath):
     """Loads the state from a JSON file."""
@@ -36,6 +38,7 @@ def load_state(filepath):
         raise ValueError(f"Failed to decode state file {filepath}: {e}") from e
     except Exception as e:
         raise IOError(f"Failed to read state file {filepath}: {e}") from e
+
 
 def simulate_get_info(state_filepath, info_model_override=None):
     """
@@ -63,13 +66,14 @@ def simulate_get_info(state_filepath, info_model_override=None):
     else:
         # Buat logger baru di direktori simulasi agar tidak menimpa log asli
         sim_log_base_dir = "SimulateLogs"
-        sim_log_dir = os.path.join(sim_log_base_dir, f"Simulate_{os.path.basename(log_directory)}")
+        sim_log_dir = os.path.join(
+            sim_log_base_dir, f"Simulate_{os.path.basename(log_directory)}"
+        )
         print(f"Creating simulation logs in: {sim_log_dir}")
         # Pastikan direktori ada
         os.makedirs(sim_log_dir, exist_ok=True)
         # Berikan path lengkap ke Logger
         SysLogger = Writer.PrintUtils.Logger(_LogfilePrefix=sim_log_dir)
-
 
     SysLogger.Log("Starting Story Info Simulation...", 5)
 
@@ -82,7 +86,7 @@ def simulate_get_info(state_filepath, info_model_override=None):
         # Cari kunci yang sesuai (mungkin INFO_MODEL atau InfoModel tergantung bagaimana disimpan)
         info_model = state_config.get("INFO_MODEL", state_config.get("InfoModel"))
     if not info_model:
-        info_model = Writer.Config.INFO_MODEL # Default dari Config.py
+        info_model = Writer.Config.INFO_MODEL  # Default dari Config.py
     SysLogger.Log(f"Using INFO_MODEL: {info_model}", 4)
 
     # 4. Inisialisasi Interface (HANYA dengan model info)
@@ -91,6 +95,7 @@ def simulate_get_info(state_filepath, info_model_override=None):
     except Exception as e:
         SysLogger.Log(f"Error initializing interface: {e}", 7)
         import traceback
+
         traceback.print_exc()
         return
 
@@ -101,28 +106,38 @@ def simulate_get_info(state_filepath, info_model_override=None):
     InfoQueryContent = ""
     source = "N/A"
     # Periksa apakah EXPAND_OUTLINE diaktifkan selama run asli (dari state config)
-    expand_outline_enabled = current_state.get("config", {}).get("EXPAND_OUTLINE", Writer.Config.EXPAND_OUTLINE)
+    expand_outline_enabled = current_state.get("config", {}).get(
+        "EXPAND_OUTLINE", Writer.Config.EXPAND_OUTLINE
+    )
 
     if expand_outline_enabled and current_state.get("expanded_chapter_outlines"):
         expanded_outlines = current_state["expanded_chapter_outlines"]
         if isinstance(expanded_outlines, list) and expanded_outlines:
-            InfoQueryContent = "\n\n---\n\n".join(expanded_outlines) # Gabungkan dengan pemisah
+            InfoQueryContent = "\n\n---\n\n".join(
+                expanded_outlines
+            )  # Gabungkan dengan pemisah
             source = "expanded_chapter_outlines"
-            SysLogger.Log(f"Using joined expanded chapter outlines for GetStoryInfo.", 6)
+            SysLogger.Log(
+                f"Using joined expanded chapter outlines for GetStoryInfo.", 6
+            )
 
-    if not InfoQueryContent: # Fallback ke full_outline
+    if not InfoQueryContent:  # Fallback ke full_outline
         full_outline_content = current_state.get("full_outline")
         if full_outline_content:
             InfoQueryContent = full_outline_content
             source = "full_outline"
             SysLogger.Log(f"Using full_outline for GetStoryInfo.", 6)
-        else: # Pilihan terakhir
+        else:  # Pilihan terakhir
             InfoQueryContent = "No outline information available."
             source = "fallback_string"
-            SysLogger.Log(f"Warning: No outline found for GetStoryInfo, using fallback string.", 6)
+            SysLogger.Log(
+                f"Warning: No outline found for GetStoryInfo, using fallback string.", 6
+            )
     # --- End Determine Content ---
 
-    SysLogger.Log(f"Using story content source: '{source}' for GetStoryInfo", 6) # Perbarui pesan log
+    SysLogger.Log(
+        f"Using story content source: '{source}' for GetStoryInfo", 6
+    )  # Perbarui pesan log
     SysLogger.Log(f"Content length (chars): {len(InfoQueryContent)}", 6)
 
     # 6. Bangun Pesan Awal
@@ -134,7 +149,9 @@ def simulate_get_info(state_filepath, info_model_override=None):
         SysLogger.Log("Calling Writer.StoryInfo.GetStoryInfo...", 5)
         # Teruskan model yang benar (info_model) ke GetStoryInfo
         # Unpack both values returned by GetStoryInfo
-        GeneratedInfo, TokenUsage = Writer.StoryInfo.GetStoryInfo(Interface, SysLogger, initial_messages_for_info, _Model=info_model)
+        GeneratedInfo, TokenUsage = Writer.StoryInfo.GetStoryInfo(
+            Interface, SysLogger, initial_messages_for_info, _Model=info_model
+        )
 
         SysLogger.Log("Writer.StoryInfo.GetStoryInfo call finished.", 5)
         print("\n--- Generated Story Info ---")
@@ -147,11 +164,11 @@ def simulate_get_info(state_filepath, info_model_override=None):
             print(f"Completion Tokens: {TokenUsage.get('completion_tokens', 'N/A')}")
         print("---------------------------\n")
 
-
     except Exception as e:
         SysLogger.Log(f"Error during GetStoryInfo execution: {e}", 7)
         import traceback
-        traceback.print_exc() # Cetak traceback lengkap untuk debug
+
+        traceback.print_exc()  # Cetak traceback lengkap untuk debug
 
     SysLogger.Log("Simulation finished.", 5)
 
