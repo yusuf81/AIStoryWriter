@@ -348,7 +348,8 @@ class Interface:
                 #     JSONResponse[_Attrib]
 
                 # Now return the json
-                return Response, JSONResponse
+                # Modify the successful return statement
+                return ResponseMessages, JSONResponse, LastTokenUsage # Return messages, JSON, and tokens
 
             except Exception as e:
                 Retries += 1  # Tingkatkan penghitung retry
@@ -562,12 +563,8 @@ class Interface:
                         )
                         MaxRetries -= 1
                     else:
-                        _Logger.Log(
-                            f"Max Retries Exceeded During Generation, Aborting!", 7
-                        )
-                        raise Exception(
-                            "Generation Failed, Max Retries Exceeded, Aborting"
-                        )
+                         _Logger.Log(f"Max Retries Exceeded During Generation, Aborting!", 7)
+                         raise Exception("Generation Failed, Max Retries Exceeded, Aborting") # Ensure exception is raised
 
             # Replace "parts" back to "content" and "model" back to "assistant" for ALL messages
             # before logging or returning, to maintain consistent internal format.
