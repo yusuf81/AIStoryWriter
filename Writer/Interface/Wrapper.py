@@ -482,17 +482,20 @@ class Interface:
                         options=ModelOptions,
                     )
 
-                    # StreamResponse now only returns the message for Ollama too
-                    AssistantMessage = self.StreamResponse(Stream, Provider)
+                    # Capture both return values from StreamResponse
+                    AssistantMessage, LastChunk = self.StreamResponse(Stream, Provider) # Capture LastChunk
                     _Messages.append(AssistantMessage)
 
-                    # --- TAMBAHKAN LOGIKA EKSTRAKSI TOKEN OLLAMA DI SINI ---
-                    # We need the last chunk info which StreamResponse no longer provides directly.
-                    # TODO: Re-implement Ollama token counting here if needed.
-                    # For simplicity in this step, we'll set it to None.
-                    _Logger.Log("Ollama token count extraction needs reimplementation in ChatAndStreamResponse.", 6)
-                    LastTokenUsage = None
-                    # --- AKHIR LOGIKA EKSTRAKSI TOKEN OLLAMA ---
+                    # --- RE-ADD OLLAMA TOKEN EXTRACTION LOGIC ---
+                    if LastChunk and LastChunk.get('done'):
+                        prompt_tokens = LastChunk.get('prompt_eval_count', 0)
+                        completion_tokens = LastChunk.get('eval_count', 0)
+                        LastTokenUsage = {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}
+                        _Logger.Log(f"Ollama Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}", 6)
+                    else:
+                        _Logger.Log("Could not extract Ollama token usage from last chunk.", 6)
+                        LastTokenUsage = None # Set to None if extraction fails
+                    # --- END OLLAMA TOKEN EXTRACTION LOGIC ---
 
                     break # Exit loop on success
 
@@ -560,11 +563,11 @@ class Interface:
                             HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
                         },
                     )
-                    # StreamResponse now only returns the message
-                    AssistantMessage = self.StreamResponse(GeneratedContentResponse, Provider)
+                    # Capture both return values, but ignore the second one (LastChunk)
+                    AssistantMessage, _ = self.StreamResponse(GeneratedContentResponse, Provider) # Use _ to ignore LastChunk
                     _Messages.append(AssistantMessage)
 
-                    # --- TAMBAHKAN LOGIKA EKSTRAKSI TOKEN DI SINI ---
+                    # --- Keep existing Google token extraction logic ---
                     try:
                         # Access usage_metadata after the stream is consumed
                         if hasattr(GeneratedContentResponse, 'usage_metadata'):
@@ -689,8 +692,8 @@ class Interface:
 
         # Token extraction logic moved to ChatAndStreamResponse
 
-        # Return only the message dictionary
-        return {"role": "assistant", "content": Response}
+        # Return the message dictionary AND the last chunk
+        return {"role": "assistant", "content": Response}, LastChunk # Return message AND last chunk
 
     def BuildUserQuery(self, _Query: str):
         return {"role": "user", "content": _Query}
