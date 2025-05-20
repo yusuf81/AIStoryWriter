@@ -6,13 +6,13 @@ import os
 import time
 import random
 import importlib
-import importlib.metadata # Add this import
+import importlib.metadata  # Add this import
 import subprocess
 import sys
 from urllib.parse import parse_qs, urlparse
 from pydantic import BaseModel  # Ditambahkan
 import Writer.Config  # Pastikan ini diimpor
-import json_repair # Add near other imports at the top
+import json_repair  # Add near other imports at the top
 
 dotenv.load_dotenv()
 
@@ -47,8 +47,10 @@ class Interface:
                 # Optionally re-raise or exit if installation is critical
                 # raise e
             except Exception as e:
-                print(f"An unexpected error occurred during installation: {e}", file=sys.stderr)
-
+                print(
+                    f"An unexpected error occurred during installation: {e}",
+                    file=sys.stderr,
+                )
 
     def LoadModels(self, Models: list):
         for Model in Models:
@@ -166,10 +168,12 @@ class Interface:
         Retries = 0
         # Panggil ChatAndStreamResponse *sebelum* loop untuk percobaan pertama
         # Update unpack untuk menangkap 4 nilai
-        NewMsgMessages, TokenUsage, InputChars, EstInputTokens = self.ChatAndStreamResponse( # Unpack 4 values
-            _Logger, _Messages, _Model, _SeedOverride, _FormatSchema
+        NewMsgMessages, TokenUsage, InputChars, EstInputTokens = (
+            self.ChatAndStreamResponse(  # Unpack 4 values
+                _Logger, _Messages, _Model, _SeedOverride, _FormatSchema
+            )
         )
-        NewMsg = NewMsgMessages # Keep variable name consistency if needed elsewhere
+        NewMsg = NewMsgMessages  # Keep variable name consistency if needed elsewhere
 
         # Loop untuk memeriksa dan mencoba lagi jika perlu
         # Inside the while loop, modify the retry call
@@ -203,7 +207,7 @@ class Interface:
 
             # Hapus respons asisten yang gagal (using NewMsg which is NewMsgMessages)
             if len(NewMsg) > 0 and NewMsg[-1]["role"] == "assistant":
-                del NewMsg[-1] # Delete from the list returned by ChatAndStreamResponse
+                del NewMsg[-1]  # Delete from the list returned by ChatAndStreamResponse
 
             # --- AWAL LOGGING DIAGNOSTIK ---
             _Logger.Log(
@@ -230,7 +234,12 @@ class Interface:
 
             # Coba lagi dengan seed acak baru
             # Update unpack untuk menangkap 4 nilai
-            NewMsgMessagesRetry, TokenUsageRetry, InputCharsRetry, EstInputTokensRetry = self.ChatAndStreamResponse( # Unpack 4 values
+            (
+                NewMsgMessagesRetry,
+                TokenUsageRetry,
+                InputCharsRetry,
+                EstInputTokensRetry,
+            ) = self.ChatAndStreamResponse(  # Unpack 4 values
                 _Logger, NewMsg, _Model, random.randint(0, 99999), _FormatSchema
             )
             NewMsg = NewMsgMessagesRetry
@@ -249,9 +258,16 @@ class Interface:
         # --- AKHIR HAPUS LOG LAMA ---
 
         # --- TAMBAHKAN LOG GABUNGAN BARU ---
-        prompt_tokens_str = TokenUsage.get('prompt_tokens', 'N/A') if TokenUsage else 'N/A'
-        completion_tokens_str = TokenUsage.get('completion_tokens', 'N/A') if TokenUsage else 'N/A'
-        _Logger.Log(f"Text Call Stats: Input Chars={InputChars}, Est. Input Tokens={EstInputTokens} | Actual Tokens: Prompt={prompt_tokens_str}, Completion={completion_tokens_str}", 6)
+        prompt_tokens_str = (
+            TokenUsage.get("prompt_tokens", "N/A") if TokenUsage else "N/A"
+        )
+        completion_tokens_str = (
+            TokenUsage.get("completion_tokens", "N/A") if TokenUsage else "N/A"
+        )
+        _Logger.Log(
+            f"Text Call Stats: Input Chars={InputChars}, Est. Input Tokens={EstInputTokens} | Actual Tokens: Prompt={prompt_tokens_str}, Completion={completion_tokens_str}",
+            6,
+        )
         # --- AKHIR TAMBAHAN LOG GABUNGAN ---
 
         # Return the final, validated message list AND token usage
@@ -267,12 +283,18 @@ class Interface:
     ):
         Retries = 0
         LastTokenUsage = None
-        LastInputChars = 0 # Tambahkan ini
-        LastEstInputTokens = 0 # Tambahkan ini
+        LastInputChars = 0  # Tambahkan ini
+        LastEstInputTokens = 0  # Tambahkan ini
         while True:
             # Update unpack untuk menangkap 4 nilai
-            ResponseMessages, TokenUsage, InputChars, EstInputTokens = self.ChatAndStreamResponse( # Unpack 4 values
-                _Logger, _Messages, _Model, _SeedOverride, _FormatSchema=_FormatSchema
+            ResponseMessages, TokenUsage, InputChars, EstInputTokens = (
+                self.ChatAndStreamResponse(  # Unpack 4 values
+                    _Logger,
+                    _Messages,
+                    _Model,
+                    _SeedOverride,
+                    _FormatSchema=_FormatSchema,
+                )
             )
             # Simpan nilai dari iterasi ini
             LastTokenUsage = TokenUsage
@@ -345,7 +367,9 @@ class Interface:
                 # --- CHANGE THIS LINE ---
                 # Replace standard json.loads with json_repair.loads
                 # JSONResponse = json.loads(CleanedResponseText)
-                JSONResponse = json_repair.loads(CleanedResponseText) # Use json_repair here
+                JSONResponse = json_repair.loads(
+                    CleanedResponseText
+                )  # Use json_repair here
                 # -----------------------
 
                 # Validasi skema Pydantic jika perlu (opsional, karena Ollama seharusnya sudah melakukannya)
@@ -361,9 +385,20 @@ class Interface:
                 #     JSONResponse[_Attrib]
 
                 # --- TAMBAHKAN LOG GABUNGAN BARU ---
-                prompt_tokens_str = LastTokenUsage.get('prompt_tokens', 'N/A') if LastTokenUsage else 'N/A'
-                completion_tokens_str = LastTokenUsage.get('completion_tokens', 'N/A') if LastTokenUsage else 'N/A'
-                _Logger.Log(f"JSON Call Stats: Input Chars={LastInputChars}, Est. Input Tokens={LastEstInputTokens} | Actual Tokens: Prompt={prompt_tokens_str}, Completion={completion_tokens_str}", 6)
+                prompt_tokens_str = (
+                    LastTokenUsage.get("prompt_tokens", "N/A")
+                    if LastTokenUsage
+                    else "N/A"
+                )
+                completion_tokens_str = (
+                    LastTokenUsage.get("completion_tokens", "N/A")
+                    if LastTokenUsage
+                    else "N/A"
+                )
+                _Logger.Log(
+                    f"JSON Call Stats: Input Chars={LastInputChars}, Est. Input Tokens={LastEstInputTokens} | Actual Tokens: Prompt={prompt_tokens_str}, Completion={completion_tokens_str}",
+                    6,
+                )
                 # --- AKHIR TAMBAHAN LOG GABUNGAN ---
 
                 # Return yang berhasil
@@ -388,11 +423,14 @@ class Interface:
                     # Return None, None, None # Or raise exception as above
 
                 # Hapus pesan asisten yang gagal dari ResponseMessages
-                if len(ResponseMessages) > 0 and ResponseMessages[-1]["role"] == "assistant":
+                if (
+                    len(ResponseMessages) > 0
+                    and ResponseMessages[-1]["role"] == "assistant"
+                ):
                     del ResponseMessages[-1]
                 # Update _Messages for the next retry iteration *if* ResponseMessages was based on it
                 # It's safer to pass the modified list back into the next ChatAndStreamResponse call
-                _Messages = ResponseMessages # Ensure the list for the next loop iteration is the one without the failed assistant message
+                _Messages = ResponseMessages  # Ensure the list for the next loop iteration is the one without the failed assistant message
 
                 # Mencoba lagi dengan seed baru dan skema yang sama pada iterasi berikutnya
                 _SeedOverride = random.randint(
@@ -410,18 +448,21 @@ class Interface:
     ):
         # --- AWAL PERHITUNGAN INPUT ---
         TotalInputChars = 0
-        EstimatedInputTokens = 0 # Tambahkan ini
+        EstimatedInputTokens = 0  # Tambahkan ini
         try:
             for msg in _Messages:
-                if isinstance(msg.get('content'), str):
-                    TotalInputChars += len(msg['content'])
+                if isinstance(msg.get("content"), str):
+                    TotalInputChars += len(msg["content"])
             # Hitung estimasi token (gunakan pembagi 5 seperti log estimasi lainnya)
             EstimatedInputTokens = round(TotalInputChars / 5)
             # --- HAPUS LOG INI ---
             # _Logger.Log(f"Input Content Length (chars): {TotalInputChars} being sent to {_Model}", 6)
             # --- AKHIR HAPUS LOG INI ---
         except Exception as e:
-            _Logger.Log(f"Warning: Could not calculate input character/token count. Error: {e}", 7)
+            _Logger.Log(
+                f"Warning: Could not calculate input character/token count. Error: {e}",
+                7,
+            )
         # --- AKHIR PERHITUNGAN INPUT ---
 
         # --- Sisa kode fungsi dimulai di sini ---
@@ -507,7 +548,7 @@ class Interface:
 
             # Gunakan konstanta dari Config jika ada, jika tidak gunakan default 3
             MaxRetries = getattr(Writer.Config, "MAX_OLLAMA_RETRIES", 3)
-            LastTokenUsage = None # Initialize token usage variable
+            LastTokenUsage = None  # Initialize token usage variable
             while MaxRetries > 0:
                 try:
                     Stream = self.Clients[_Model].chat(
@@ -518,21 +559,31 @@ class Interface:
                     )
 
                     # Capture both return values from StreamResponse
-                    AssistantMessage, LastChunk = self.StreamResponse(Stream, Provider) # Capture LastChunk
+                    AssistantMessage, LastChunk = self.StreamResponse(
+                        Stream, Provider
+                    )  # Capture LastChunk
                     _Messages.append(AssistantMessage)
 
                     # --- RE-ADD OLLAMA TOKEN EXTRACTION LOGIC ---
-                    if LastChunk and LastChunk.get('done'):
-                        prompt_tokens = LastChunk.get('prompt_eval_count', 0)
-                        completion_tokens = LastChunk.get('eval_count', 0)
-                        LastTokenUsage = {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}
-                        _Logger.Log(f"Ollama Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}", 6)
+                    if LastChunk and LastChunk.get("done"):
+                        prompt_tokens = LastChunk.get("prompt_eval_count", 0)
+                        completion_tokens = LastChunk.get("eval_count", 0)
+                        LastTokenUsage = {
+                            "prompt_tokens": prompt_tokens,
+                            "completion_tokens": completion_tokens,
+                        }
+                        _Logger.Log(
+                            f"Ollama Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}",
+                            6,
+                        )
                     else:
-                        _Logger.Log("Could not extract Ollama token usage from last chunk.", 6)
-                        LastTokenUsage = None # Set to None if extraction fails
+                        _Logger.Log(
+                            "Could not extract Ollama token usage from last chunk.", 6
+                        )
+                        LastTokenUsage = None  # Set to None if extraction fails
                     # --- END OLLAMA TOKEN EXTRACTION LOGIC ---
 
-                    break # Exit loop on success
+                    break  # Exit loop on success
 
                 except ollama.ResponseError as e:  # Tangkap error spesifik Ollama
                     MaxRetries -= 1
@@ -582,10 +633,10 @@ class Interface:
                     m["role"] = "user"
 
             MaxRetries = 3
-            LastTokenUsage = None # Initialize token usage variable
-            GeneratedContentResponse = None # Variable to store the response object
+            LastTokenUsage = None  # Initialize token usage variable
+            GeneratedContentResponse = None  # Variable to store the response object
 
-            while True: # Keep the retry loop structure
+            while True:  # Keep the retry loop structure
                 try:
                     # Store the response object returned by generate_content
                     GeneratedContentResponse = self.Clients[_Model].generate_content(
@@ -599,27 +650,41 @@ class Interface:
                         },
                     )
                     # Capture both return values, but ignore the second one (LastChunk)
-                    AssistantMessage, _ = self.StreamResponse(GeneratedContentResponse, Provider) # Use _ to ignore LastChunk
+                    AssistantMessage, _ = self.StreamResponse(
+                        GeneratedContentResponse, Provider
+                    )  # Use _ to ignore LastChunk
                     _Messages.append(AssistantMessage)
 
                     # --- Keep existing Google token extraction logic ---
                     try:
                         # Access usage_metadata after the stream is consumed
-                        if hasattr(GeneratedContentResponse, 'usage_metadata'):
+                        if hasattr(GeneratedContentResponse, "usage_metadata"):
                             metadata = GeneratedContentResponse.usage_metadata
                             prompt_tokens = metadata.prompt_token_count
-                            completion_tokens = metadata.candidates_token_count # Use candidates_token_count for completion
-                            LastTokenUsage = {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}
-                            _Logger.Log(f"Google Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}", 6)
+                            completion_tokens = (
+                                metadata.candidates_token_count
+                            )  # Use candidates_token_count for completion
+                            LastTokenUsage = {
+                                "prompt_tokens": prompt_tokens,
+                                "completion_tokens": completion_tokens,
+                            }
+                            _Logger.Log(
+                                f"Google Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}",
+                                6,
+                            )
                         else:
-                            _Logger.Log("Google usage_metadata not found on response object.", 6)
-                            LastTokenUsage = None # Set to None if metadata not found
+                            _Logger.Log(
+                                "Google usage_metadata not found on response object.", 6
+                            )
+                            LastTokenUsage = None  # Set to None if metadata not found
                     except Exception as meta_e:
-                        _Logger.Log(f"Error accessing Google usage_metadata: {meta_e}", 7)
-                        LastTokenUsage = None # Set to None on error
+                        _Logger.Log(
+                            f"Error accessing Google usage_metadata: {meta_e}", 7
+                        )
+                        LastTokenUsage = None  # Set to None on error
                     # --- AKHIR LOGIKA EKSTRAKSI TOKEN ---
 
-                    break # Exit loop on success
+                    break  # Exit loop on success
                 except Exception as e:
                     # Make sure the exception is raised if retries are exceeded
                     # ... (keep existing retry logic) ...
@@ -630,8 +695,12 @@ class Interface:
                         )
                         MaxRetries -= 1
                     else:
-                         _Logger.Log(f"Max Retries Exceeded During Generation, Aborting!", 7)
-                         raise Exception("Generation Failed, Max Retries Exceeded, Aborting") # Ensure exception is raised
+                        _Logger.Log(
+                            f"Max Retries Exceeded During Generation, Aborting!", 7
+                        )
+                        raise Exception(
+                            "Generation Failed, Max Retries Exceeded, Aborting"
+                        )  # Ensure exception is raised
 
             # Replace "parts" back to "content" and "model" back to "assistant" for ALL messages
             # before logging or returning, to maintain consistent internal format.
@@ -678,7 +747,7 @@ class Interface:
             _Messages.append({"role": "assistant", "content": Response})
             # TODO: OpenRouter token usage - The current OpenRouter client doesn't easily expose this.
             # We'll return None for now. This would require modifying the OpenRouter class.
-            LastTokenUsage = None # Placeholder
+            LastTokenUsage = None  # Placeholder
 
         elif Provider == "Anthropic":
             raise NotImplementedError("Anthropic API not supported")
@@ -701,22 +770,27 @@ class Interface:
         # --- MODIFIKASI RETURN STATEMENT ---
         # Kembalikan juga TotalInputChars dan EstimatedInputTokens
         # return _Messages, LastTokenUsage # Baris lama
-        return _Messages, LastTokenUsage, TotalInputChars, EstimatedInputTokens # Baris baru
+        return (
+            _Messages,
+            LastTokenUsage,
+            TotalInputChars,
+            EstimatedInputTokens,
+        )  # Baris baru
 
     def StreamResponse(self, _Stream, _Provider: str):
         Response: str = ""
-        LastChunk = None # Add this line
-        PromptTokens = 0 # Add this line
-        CompletionTokens = 0 # Add this line
+        LastChunk = None  # Add this line
+        PromptTokens = 0  # Add this line
+        CompletionTokens = 0  # Add this line
 
         for chunk in _Stream:
-            LastChunk = chunk # Store the current chunk
+            LastChunk = chunk  # Store the current chunk
             if _Provider == "ollama":
                 # Check if 'message' and 'content' exist before accessing
-                if chunk.get('message') and chunk['message'].get('content'):
-                     ChunkText = chunk["message"]["content"]
-                     Response += ChunkText
-                     print(ChunkText, end="", flush=True)
+                if chunk.get("message") and chunk["message"].get("content"):
+                    ChunkText = chunk["message"]["content"]
+                    Response += ChunkText
+                    print(ChunkText, end="", flush=True)
                 # No else needed, just skip if content isn't there (like in the final chunk)
             elif _Provider == "google":
                 ChunkText = chunk.text
@@ -730,7 +804,10 @@ class Interface:
         # Token extraction logic moved to ChatAndStreamResponse
 
         # Return the message dictionary AND the last chunk
-        return {"role": "assistant", "content": Response}, LastChunk # Return message AND last chunk
+        return {
+            "role": "assistant",
+            "content": Response,
+        }, LastChunk  # Return message AND last chunk
 
     def BuildUserQuery(self, _Query: str):
         return {"role": "user", "content": _Query}
