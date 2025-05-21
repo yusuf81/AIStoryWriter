@@ -823,11 +823,25 @@ class Interface:
 
                 _Messages.append(AssistantMessage)
 
-                # Token usage tidak tersedia dari stream OpenRouter saat ini
-                LastTokenUsage = None
-                _Logger.Log(
-                    "OpenRouter Token Usage: Not available for streaming responses.", 6
-                )
+                # Ekstrak token usage dari LastChunk jika tersedia
+                LastTokenUsage = None # Default ke None
+                if LastChunk and isinstance(LastChunk, dict) and "usage" in LastChunk:
+                    usage_data = LastChunk["usage"]
+                    prompt_tokens = usage_data.get("prompt_tokens", 0)
+                    completion_tokens = usage_data.get("completion_tokens", 0)
+                    LastTokenUsage = {
+                        "prompt_tokens": prompt_tokens,
+                        "completion_tokens": completion_tokens,
+                    }
+                    _Logger.Log(
+                        f"OpenRouter Token Usage (from stream) - Prompt: {prompt_tokens}, Completion: {completion_tokens}",
+                        6,
+                    )
+                    # Anda juga bisa log 'cost' jika mau: cost = usage_data.get("cost")
+                else:
+                    _Logger.Log(
+                        "OpenRouter Token Usage: Not found in the last stream chunk.", 6
+                    )
 
             except Exception as e:
                 _Logger.Log(f"Error during OpenRouter streaming: {e}", 7)
@@ -895,6 +909,16 @@ class Interface:
                 # chunk diharapkan berupa dictionary dari event SSE yang sudah diparsing
                 # Contoh: {"id": ..., "choices": [{"index": 0, "delta": {"content": "some text"}, "finish_reason": null}]}
                 if isinstance(chunk, dict):
+                    # Periksa apakah chunk ini berisi informasi 'usage'
+                    # Ini akan menjadi chunk terakhir dari stream menurut dokumentasi OpenRouter
+                    if "usage" in chunk:
+                        # LastChunk akan secara otomatis menyimpan chunk ini karena loop
+                        # Tidak perlu tindakan khusus di sini, penanganan token akan dilakukan
+                        # di ChatAndStreamResponse menggunakan LastChunk.
+                        # Kita bisa menambahkan log di sini jika mau:
+                        # print(f"\nOpenRouter Usage Chunk: {chunk['usage']}", file=sys.stderr)
+                        pass # Biarkan LastChunk menangkapnya
+
                     choices = chunk.get("choices")
                     if choices and isinstance(choices, list) and len(choices) > 0:
                         delta = choices[0].get("delta")

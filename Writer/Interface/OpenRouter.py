@@ -214,6 +214,7 @@ class OpenRouter:
             "stop": self.stop,
             "provider": self.provider,
             "stream": stream,  # Atur stream secara dinamis
+            "usage": {"include": True} # <-- TAMBAHKAN BARIS INI
         }
 
         # Hapus kunci dengan nilai None dari body untuk menghindari error dari beberapa model/provider
