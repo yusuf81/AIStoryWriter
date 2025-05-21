@@ -1,4 +1,4 @@
-import json, requests, time
+import json, requests, time, sys # Add sys for stderr
 from typing import Any, List, Mapping, Optional, Literal, Union, TypedDict
 
 
@@ -178,17 +178,18 @@ class OpenRouter:
         else:
             return [input_msg]
 
-    def chat(self, messages: Message_Type, max_retries: int = 10, seed: int = None):
+    # Modifikasi signature metode chat
+    def chat(self, messages: Message_Type, max_retries: int = 10, seed: int = None, stream: bool = False): # Tambahkan stream
         messages = self.ensure_array(messages)
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://github.com/datacrystals/AIStoryWriter",
-            "X-Title": "StoryForgeAI",
+            "HTTP-Referer": "https://github.com/datacrystals/AIStoryWriter", # Opsional, bisa dipertimbangkan untuk dihapus jika tidak diperlukan
+            "X-Title": "StoryForgeAI", # Opsional
         }
         body = {
             "model": self.model,
             "messages": messages,
-            "max_token": self.max_tokens,
+            "max_token": self.max_tokens if self.max_tokens > 0 else None, # Kirim None jika 0
             "temperature": self.temperature,
             "top_k": self.top_k,
             "top_p": self.top_p,
@@ -199,94 +200,119 @@ class OpenRouter:
             "top_a": self.top_a,
             "seed": self.seed if seed is None else seed,
             "logit_bias": self.logit_bias,
-            "response_format": self.response_format, # Add or modify this line
+            "response_format": self.response_format,
             "stop": self.stop,
             "provider": self.provider,
-            "stream": False, # Keep stream as False for now as per current implementation
+            "stream": stream, # Atur stream secara dinamis
         }
 
-        retries = 0
-        while retries < max_retries:
+        # Hapus kunci dengan nilai None dari body untuk menghindari error dari beberapa model/provider
+        body = {k: v for k, v in body.items() if v is not None}
+
+        if stream:
             try:
                 response = requests.post(
                     url=self.api_url,
                     headers=headers,
                     data=json.dumps(body),
-                    timeout=self.timeout,
-                    stream=False,
+                    timeout=self.timeout, # Timeout untuk keseluruhan stream
+                    stream=True # Penting untuk library requests
                 )
-                response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an unsuccessful status code
-                response_json = response.json() # Simpan JSON respons untuk penggunaan ganda
-                if "choices" in response_json:
-                    # --- START MODIFICATION ---
-                    content = response_json["choices"][0]["message"]["content"]
-                    usage_info = response_json.get("usage") # Dapatkan objek 'usage' jika ada
-                    return content, usage_info # Kembalikan konten dan info penggunaan
-                    # --- END MODIFICATION ---
-                elif "error" in response_json: # Gunakan response_json di sini
-                    print(
-                        f"Openrouter returns error '{response_json['error']['code']}' with message '{response_json['error']['message']}', retry attempt {retries + 1}."
-                    )
-                    if response.json()["error"]["code"] == 400:
-                        print("Bad Request (invalid or missing params, CORS)")
-                    if response.json()["error"]["code"] == 401:
-                        raise Exception(
-                            "Invalid credentials (OAuth session expired, disabled/invalid API key)"
-                        )
-                    if response.json()["error"]["code"] == 402:
-                        raise Exception(
-                            "Your account or API key has insufficient credits. Add more credits and retry the request."
-                        )
-                    if response.json()["error"]["code"] == 403:
-                        print(
-                            "Your chosen model requires moderation and your input was flagged"
-                        )
-                    if response.json()["error"]["code"] == 408:
-                        print("Your request timed out")
-                    if response.json()["error"]["code"] == 429:
-                        print("You are being rate limited")
-                        print("Waiting 10 seconds")
-                        time.sleep(10)
-                    if response.json()["error"]["code"] == 502:
-                        print(
-                            "Your chosen model is down or we received an invalid response from it"
-                        )
-                    if response.json()["error"]["code"] == 503:
-                        print(
-                            "There is no available model provider that meets your routing requirements"
-                        )
-                else:
-                    from pprint import pprint
-
-                    print(
-                        f"Response without error but missing choices, retry attempt {retries + 1}."
-                    )
-                    pprint(response.json())
-            except requests.exceptions.HTTPError as http_err:
-                # HTTP error status code
-                print(
-                    f"HTTP error occurred: '{http_err}' - Status Code: '{http_err.response.status_code}', retry attempt {retries + 1}."
-                )
-                # Funny Cloudflare being funny.
-                # This is a lie: https://community.cloudflare.com/t/community-tip-fixing-error-524-a-timeout-occurred/42342
-                if http_err.response.status_code == 524:
-                    time.sleep(10)
-            except (
-                requests.exceptions.Timeout,
-                requests.exceptions.TooManyRedirects,
-            ) as err:
-                # timeouts and redirects
-                print(f"Retry attempt {retries + 1} after error: '{err}'")
-            except requests.exceptions.RequestException as req_err:
-                # any other request errors that haven't been caught by the previous except blocks
-                print(
-                    f"An error occurred while making the request: '{req_err}', retry attempt {retries + 1}."
-                )
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if line:
+                        decoded_line = line.decode('utf-8')
+                        if decoded_line.startswith('data: '):
+                            json_data_string = decoded_line[len('data: '):].strip()
+                            if json_data_string == "[DONE]":
+                                break
+                            try:
+                                data = json.loads(json_data_string)
+                                yield data # Yield dictionary yang diparsing
+                            except json.JSONDecodeError:
+                                print(f"OpenRouter Stream: JSONDecodeError for '{json_data_string}'", file=sys.stderr)
+                                continue
+                return # Akhir dari generator
+            except requests.exceptions.RequestException as e:
+                print(f"OpenRouter Stream: RequestException: {e}", file=sys.stderr)
+                raise # Naikkan kembali exception agar bisa ditangani di level atas
             except Exception as e:
-                # all other exceptions
-                print(
-                    f"An unexpected error occurred: '{e}', retry attempt {retries + 1}."
-                )
-            retries += 1
-        # Jika loop selesai tanpa return (semua retry gagal)
-        return None, None # Kembalikan None untuk konten dan usage jika semua retry gagal
+                print(f"OpenRouter Stream: Unexpected error: {e}", file=sys.stderr)
+                raise
+        else:
+            # Logika non-streaming yang sudah ada
+            retries = 0
+            while retries < max_retries:
+                try:
+                    response = requests.post(
+                        url=self.api_url,
+                        headers=headers,
+                        data=json.dumps(body), # body sudah memiliki stream: False
+                        timeout=self.timeout,
+                        stream=False, # Eksplisit False untuk non-streaming
+                    )
+                    response.raise_for_status()
+                    response_json = response.json()
+                    if "choices" in response_json:
+                        content = response_json["choices"][0]["message"]["content"]
+                        usage_info = response_json.get("usage")
+                        return content, usage_info
+                    elif "error" in response_json:
+                        print(
+                            f"Openrouter returns error '{response_json['error']['code']}' with message '{response_json['error']['message']}', retry attempt {retries + 1}."
+                        )
+                        if response_json['error']['code'] == 400:
+                            print("Bad Request (invalid or missing params, CORS)")
+                        if response_json['error']['code'] == 401:
+                            raise Exception(
+                                "Invalid credentials (OAuth session expired, disabled/invalid API key)"
+                            )
+                        if response_json['error']['code'] == 402:
+                            raise Exception(
+                                "Your account or API key has insufficient credits. Add more credits and retry the request."
+                            )
+                        if response_json['error']['code'] == 403:
+                            print(
+                                "Your chosen model requires moderation and your input was flagged"
+                            )
+                        if response_json['error']['code'] == 408:
+                            print("Your request timed out")
+                        if response_json['error']['code'] == 429: # Pastikan ini response_json
+                            print("You are being rate limited")
+                            print("Waiting 10 seconds")
+                            time.sleep(10)
+                        if response_json['error']['code'] == 502:
+                            print(
+                                "Your chosen model is down or we received an invalid response from it"
+                            )
+                        if response_json['error']['code'] == 503:
+                            print(
+                                "There is no available model provider that meets your routing requirements"
+                            )
+                    else:
+                        from pprint import pprint # Pastikan import ada jika digunakan
+                        print(
+                            f"Response without error but missing choices, retry attempt {retries + 1}."
+                        )
+                        pprint(response.json())
+                except requests.exceptions.HTTPError as http_err:
+                    print(
+                        f"HTTP error occurred: '{http_err}' - Status Code: '{http_err.response.status_code}', retry attempt {retries + 1}."
+                    )
+                    if http_err.response.status_code == 524:
+                        time.sleep(10)
+                except (
+                    requests.exceptions.Timeout,
+                    requests.exceptions.TooManyRedirects,
+                ) as err:
+                    print(f"Retry attempt {retries + 1} after error: '{err}'")
+                except requests.exceptions.RequestException as req_err:
+                    print(
+                        f"An error occurred while making the request: '{req_err}', retry attempt {retries + 1}."
+                    )
+                except Exception as e:
+                    print(
+                        f"An unexpected error occurred: '{e}', retry attempt {retries + 1}."
+                    )
+                retries += 1
+            return None, None # Jika semua retry gagal untuk non-streaming

@@ -800,36 +800,28 @@ class Interface:
             Client.set_params(**final_params_for_openrouter)
             # --- END MODIFICATION ---
 
-            # --- START MODIFICATION FOR TOKEN USAGE ---
-            ResponseContent, UsageInfo = Client.chat(messages=_Messages, seed=Seed)
-
-            if ResponseContent is not None:
-                _Messages.append({"role": "assistant", "content": ResponseContent})
-                if UsageInfo:
-                    prompt_tokens = UsageInfo.get("prompt_tokens", 0)
-                    completion_tokens = UsageInfo.get("completion_tokens", 0) # OpenRouter menggunakan 'completion_tokens'
-                    LastTokenUsage = {
-                        "prompt_tokens": prompt_tokens,
-                        "completion_tokens": completion_tokens,
-                    }
-                    _Logger.Log(
-                        f"OpenRouter Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}",
-                        6,
-                    )
-                else:
-                    _Logger.Log(
-                        "Could not extract OpenRouter token usage from response.", 6
-                    )
-                    LastTokenUsage = None
-            else:
-                # Handle kasus di mana Client.chat mengembalikan None (misalnya, semua retry gagal)
-                _Logger.Log("OpenRouter client did not return a valid response.", 7)
-                # Tambahkan pesan error ke _Messages atau raise exception jika diperlukan
-                # Untuk saat ini, kita akan membiarkan _Messages tidak berubah dan LastTokenUsage tetap None
-                # atau Anda bisa menambahkan pesan error dummy:
-                # _Messages.append({"role": "assistant", "content": "Error: No response from OpenRouter."})
+            # --- START MODIFICATION FOR STREAMING ---
+            try:
+                # Panggil chat dengan stream=True
+                Stream = Client.chat(messages=_Messages, seed=Seed, stream=True)
+                
+                # Proses stream menggunakan self.StreamResponse
+                AssistantMessage, LastChunk = self.StreamResponse(Stream, Provider) # Provider adalah "openrouter"
+                
+                _Messages.append(AssistantMessage)
+                
+                # Token usage tidak tersedia dari stream OpenRouter saat ini
                 LastTokenUsage = None
-            # --- END MODIFICATION FOR TOKEN USAGE ---
+                _Logger.Log("OpenRouter Token Usage: Not available for streaming responses.", 6)
+
+            except Exception as e:
+                _Logger.Log(f"Error during OpenRouter streaming: {e}", 7)
+                # Tambahkan pesan error dummy atau naikkan exception jika diperlukan
+                _Messages.append({"role": "assistant", "content": f"Error: OpenRouter stream failed. {e}"})
+                LastTokenUsage = None
+                # Pertimbangkan untuk menaikkan kembali exception jika ini adalah error fatal
+                # raise
+            # --- END MODIFICATION FOR STREAMING ---
 
         elif Provider == "Anthropic":
             raise NotImplementedError("Anthropic API not supported")
@@ -878,7 +870,31 @@ class Interface:
                 ChunkText = chunk.text
                 Response += ChunkText
                 print(ChunkText, end="", flush=True)
-            # else: # Keep the error for unsupported providers
+            # --- START MODIFICATION FOR OPENROUTER STREAMING ---
+            elif _Provider == "openrouter":
+                # chunk diharapkan berupa dictionary dari event SSE yang sudah diparsing
+                # Contoh: {"id": ..., "choices": [{"index": 0, "delta": {"content": "some text"}, "finish_reason": null}]}
+                if isinstance(chunk, dict):
+                    choices = chunk.get("choices")
+                    if choices and isinstance(choices, list) and len(choices) > 0:
+                        delta = choices[0].get("delta")
+                        if delta and isinstance(delta, dict):
+                            ChunkText = delta.get("content")
+                            if ChunkText is not None: # Konten bisa berupa string kosong
+                                Response += ChunkText
+                                print(ChunkText, end="", flush=True)
+                        # finish_reason bisa diperiksa di sini jika perlu
+                        # finish_reason = choices[0].get("finish_reason")
+                        # if finish_reason:
+                        #     # Stream untuk choice ini selesai
+                        #     pass
+                else:
+                    # Ini seharusnya tidak terjadi jika OpenRouter.py menghasilkan dict
+                    # Bisa ditambahkan log jika diperlukan:
+                    # print(f"OpenRouter Stream: Received unexpected chunk type: {type(chunk)}", file=sys.stderr)
+                    pass
+            # --- END MODIFICATION FOR OPENROUTER STREAMING ---
+            # else: # Hapus atau komentari error untuk provider yang tidak didukung jika ada
             #     raise ValueError(f"Unsupported provider: {_Provider}")
 
         print("\n\n\n" if Writer.Config.DEBUG else "")
