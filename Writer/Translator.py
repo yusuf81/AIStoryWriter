@@ -14,7 +14,7 @@ def TranslatePrompt(Interface, _Logger, _Prompt: str, _SourceLanguage: str, Targ
     )
     _Logger.Log(f"Prompting LLM To Translate User Prompt from {_SourceLanguage} to {TargetLang}", 5)
     Messages = []
-    Messages.append(Interface.BuildUserQuery(Prompt))
+    Messages.append(Interface.BuildUserQuery(PromptFormatted))
     Messages, _ = Interface.SafeGenerateText(
         _Logger,
         Messages,
