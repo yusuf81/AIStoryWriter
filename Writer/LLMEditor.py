@@ -1,6 +1,6 @@
 from pydantic import BaseModel  # Ditambahkan
 import Writer.PrintUtils
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 import json
 
@@ -15,12 +15,13 @@ class ChapterCompleteSchema(BaseModel):
 
 
 def GetFeedbackOnOutline(Interface, _Logger, _Outline: str):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # Setup Initial Context History
     History = []
-    History.append(Interface.BuildSystemQuery(Writer.Prompts.CRITIC_OUTLINE_INTRO))
+    History.append(Interface.BuildSystemQuery(ActivePrompts.CRITIC_OUTLINE_INTRO))
 
-    StartingPrompt: str = Writer.Prompts.CRITIC_OUTLINE_PROMPT.format(_Outline=_Outline)
+    StartingPrompt: str = ActivePrompts.CRITIC_OUTLINE_PROMPT.format(_Outline=_Outline)
 
     _Logger.Log("Prompting LLM To Critique Outline", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
@@ -40,12 +41,13 @@ def GetOutlineRating(
     _Logger,
     _Outline: str,
 ):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # Setup Initial Context History
     History = []
-    History.append(Interface.BuildSystemQuery(Writer.Prompts.OUTLINE_COMPLETE_INTRO))
+    History.append(Interface.BuildSystemQuery(ActivePrompts.OUTLINE_COMPLETE_INTRO))
 
-    StartingPrompt: str = Writer.Prompts.OUTLINE_COMPLETE_PROMPT.format(
+    StartingPrompt: str = ActivePrompts.OUTLINE_COMPLETE_PROMPT.format(
         _Outline=_Outline
     )
 
@@ -68,13 +70,14 @@ def GetOutlineRating(
 
 
 def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # Setup Initial Context History
     History = []
-    History.append(Interface.BuildSystemQuery(Writer.Prompts.CRITIC_CHAPTER_INTRO))
+    History.append(Interface.BuildSystemQuery(ActivePrompts.CRITIC_CHAPTER_INTRO))
 
     # Disabled seeing the outline too.
-    StartingPrompt: str = Writer.Prompts.CRITIC_CHAPTER_PROMPT.format(
+    StartingPrompt: str = ActivePrompts.CRITIC_CHAPTER_PROMPT.format(
         _Chapter=_Chapter, _Outline=_Outline
     )
 
@@ -90,12 +93,13 @@ def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
 
 # Switch this to iscomplete true/false (similar to outline)
 def GetChapterRating(Interface, _Logger, _Chapter: str):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # Setup Initial Context History
     History = []
-    History.append(Interface.BuildSystemQuery(Writer.Prompts.CHAPTER_COMPLETE_INTRO))
+    History.append(Interface.BuildSystemQuery(ActivePrompts.CHAPTER_COMPLETE_INTRO))
 
-    StartingPrompt: str = Writer.Prompts.CHAPTER_COMPLETE_PROMPT.format(
+    StartingPrompt: str = ActivePrompts.CHAPTER_COMPLETE_PROMPT.format(
         _Chapter=_Chapter
     )
 

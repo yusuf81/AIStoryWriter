@@ -10,7 +10,7 @@ import os
 import Writer.Interface.Wrapper
 import Writer.Config
 import Writer.PrintUtils
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
 # Definisikan Skema Pydantic
@@ -49,14 +49,15 @@ class ChapterEvalSchema(BaseModel):
 
 
 def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     _Logger.Log(f"Evaluating Outlines", 4)
     Messages = [
-        _Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)
+        _Client.BuildSystemQuery(ActivePrompts.EVALUATE_SYSTEM_PROMPT)
     ]  # Menggunakan prompt terpusat
     Messages.append(
         _Client.BuildUserQuery(
-            Writer.Prompts.EVALUATE_OUTLINES.format(
+            ActivePrompts.EVALUATE_OUTLINES.format(
                 _Outline1=_Outline1, _Outline2=_Outline2
             )  # Menggunakan prompt terpusat
         )
@@ -89,14 +90,15 @@ def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
 def EvaluateChapter(
     _Client, _Logger, _ChapterNum: int, _TotalChapters: int, _ChapterA, _ChapterB
 ):  # Tambahkan _TotalChapters
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     _Logger.Log(f"Evaluating Chapter {_ChapterNum}/{_TotalChapters}", 4)
     Messages = [
-        _Client.BuildSystemQuery(Writer.Prompts.EVALUATE_SYSTEM_PROMPT)
+        _Client.BuildSystemQuery(ActivePrompts.EVALUATE_SYSTEM_PROMPT)
     ]  # Menggunakan prompt terpusat
     Messages.append(
         _Client.BuildUserQuery(
-            Writer.Prompts.EVALUATE_CHAPTERS.format(
+            ActivePrompts.EVALUATE_CHAPTERS.format(
                 _ChapterA=_ChapterA, _ChapterB=_ChapterB
             )  # Menggunakan prompt terpusat
         )

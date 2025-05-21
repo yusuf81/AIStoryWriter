@@ -2,16 +2,17 @@ import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Outline.StoryElements
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
 # We should probably do outline generation in stages, allowing us to go back and add foreshadowing, etc back to previous segments
 
 
 def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int = 85):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # Get any important info about the base prompt to pass along
-    Prompt: str = Writer.Prompts.GET_IMPORTANT_BASE_PROMPT_INFO.format(
+    Prompt: str = ActivePrompts.GET_IMPORTANT_BASE_PROMPT_INFO.format(
         _Prompt=_OutlinePrompt
     )
 
@@ -29,7 +30,7 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
     )
 
     # Now, Generate Initial Outline
-    Prompt: str = Writer.Prompts.INITIAL_OUTLINE_PROMPT.format(
+    Prompt: str = ActivePrompts.INITIAL_OUTLINE_PROMPT.format(
         StoryElements=StoryElements, _OutlinePrompt=_OutlinePrompt
     )
 
@@ -92,8 +93,9 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
 def ReviseOutline(
     Interface, _Logger, _Outline, _Feedback, _History: list = [], _Iteration: int = 0
 ):  # Tambahkan _Iteration
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
-    RevisionPrompt: str = Writer.Prompts.OUTLINE_REVISION_PROMPT.format(
+    RevisionPrompt: str = ActivePrompts.OUTLINE_REVISION_PROMPT.format(
         _Outline=_Outline, _Feedback=_Feedback
     )
 
@@ -126,8 +128,9 @@ def GeneratePerChapterOutline(
     _Outline: str,
     # Parameter _History dihapus dari definisi fungsi
 ):  # Tambahkan _TotalChapters
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
-    RevisionPrompt: str = Writer.Prompts.CHAPTER_OUTLINE_PROMPT.format(
+    RevisionPrompt: str = ActivePrompts.CHAPTER_OUTLINE_PROMPT.format(
         _Chapter=_Chapter, _Outline=_Outline
     )
     # Modifikasi pesan log ini

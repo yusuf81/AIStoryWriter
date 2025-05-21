@@ -2,7 +2,7 @@ import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
 def ChapterOutlineToScenes(
@@ -14,6 +14,7 @@ def ChapterOutlineToScenes(
     _Outline: str,
     _BaseContext: str = "",
 ):  # Added _ChapterNum, _TotalChapters, renamed _ThisChapter
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # We're now going to convert the chapter outline into a more detailed outline for each scene.
     # The scene by scene outline will be returned, JSONified, and then later converted into fully written scenes
@@ -22,11 +23,11 @@ def ChapterOutlineToScenes(
     _Logger.Log(f"Splitting Chapter {_ChapterNum}/{_TotalChapters} Into Scenes", 2)
     MesssageHistory: list = []
     MesssageHistory.append(
-        Interface.BuildSystemQuery(Writer.Prompts.DEFAULT_SYSTEM_PROMPT)
+        Interface.BuildSystemQuery(ActivePrompts.DEFAULT_SYSTEM_PROMPT)
     )
     MesssageHistory.append(
         Interface.BuildUserQuery(
-            Writer.Prompts.CHAPTER_TO_SCENES.format(
+            ActivePrompts.CHAPTER_TO_SCENES.format(
                 _ThisChapter=_ThisChapterOutline,
                 _Outline=_Outline,  # Use renamed variable
             )

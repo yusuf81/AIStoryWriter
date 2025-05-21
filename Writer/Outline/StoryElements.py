@@ -1,12 +1,13 @@
 import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
 def GenerateStoryElements(Interface, _Logger, _OutlinePrompt):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
-    Prompt: str = Writer.Prompts.GENERATE_STORY_ELEMENTS.format(
+    Prompt: str = ActivePrompts.GENERATE_STORY_ELEMENTS.format(
         _OutlinePrompt=_OutlinePrompt
     )  # Menggunakan prompt terpusat
 

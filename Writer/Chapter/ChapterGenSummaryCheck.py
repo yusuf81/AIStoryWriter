@@ -4,7 +4,7 @@ import json
 import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
 # Definisikan Skema Pydantic
@@ -14,6 +14,7 @@ class SummaryComparisonSchema(BaseModel):
 
 
 def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
     """
     Generates a summary of the work provided, and compares that to the reference summary, asking if they answered the prompt correctly.
     """
@@ -29,11 +30,11 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     # Build Summariziation Langchain
     SummaryLangchain: list = []
     SummaryLangchain.append(
-        Interface.BuildSystemQuery(Writer.Prompts.SUMMARY_CHECK_INTRO)
+        Interface.BuildSystemQuery(ActivePrompts.SUMMARY_CHECK_INTRO)
     )
     SummaryLangchain.append(
         Interface.BuildUserQuery(
-            Writer.Prompts.SUMMARY_CHECK_PROMPT.format(_Work=_Work)
+            ActivePrompts.SUMMARY_CHECK_PROMPT.format(_Work=_Work)
         )
     )
     # Tambahkan log sebelum memanggil SafeGenerateText pertama
@@ -53,11 +54,11 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     # Now Summarize The Outline
     SummaryLangchain: list = []
     SummaryLangchain.append(
-        Interface.BuildSystemQuery(Writer.Prompts.SUMMARY_OUTLINE_INTRO)
+        Interface.BuildSystemQuery(ActivePrompts.SUMMARY_OUTLINE_INTRO)
     )
     SummaryLangchain.append(
         Interface.BuildUserQuery(
-            Writer.Prompts.SUMMARY_OUTLINE_PROMPT.format(_RefSummary=_RefSummary)
+            ActivePrompts.SUMMARY_OUTLINE_PROMPT.format(_RefSummary=_RefSummary)
         )
     )
     # Tambahkan log sebelum memanggil SafeGenerateText kedua
@@ -77,11 +78,11 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     # Now, generate a comparison JSON value.
     ComparisonLangchain: list = []
     ComparisonLangchain.append(
-        Interface.BuildSystemQuery(Writer.Prompts.SUMMARY_COMPARE_INTRO)
+        Interface.BuildSystemQuery(ActivePrompts.SUMMARY_COMPARE_INTRO)
     )
     ComparisonLangchain.append(
         Interface.BuildUserQuery(
-            Writer.Prompts.SUMMARY_COMPARE_PROMPT.format(
+            ActivePrompts.SUMMARY_COMPARE_PROMPT.format(
                 WorkSummary=WorkSummary, OutlineSummary=OutlineSummary
             )
         )

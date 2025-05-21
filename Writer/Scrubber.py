@@ -1,10 +1,11 @@
 import Writer.PrintUtils
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 import Writer.Config  # Add this
 import Writer.Statistics  # Add this import
 
 
 def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     EditedChapters = _Chapters
 
@@ -13,7 +14,7 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
         # Get original word count before scrubbing
         OriginalWordCount = Writer.Statistics.GetWordCount(EditedChapters[i])
 
-        Prompt: str = Writer.Prompts.CHAPTER_SCRUB_PROMPT.format(
+        Prompt: str = ActivePrompts.CHAPTER_SCRUB_PROMPT.format(
             _Chapter=EditedChapters[i]
         )
         _Logger.Log(

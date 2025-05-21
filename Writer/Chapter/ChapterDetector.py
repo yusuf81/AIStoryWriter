@@ -1,6 +1,6 @@
 from pydantic import BaseModel  # Ditambahkan
 import Writer.Config
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 import re
 import json
@@ -12,8 +12,9 @@ class ChapterCountSchema(BaseModel):
 
 
 def LLMCountChapters(Interface, _Logger, _Summary):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
-    Prompt = Writer.Prompts.CHAPTER_COUNT_PROMPT.format(_Summary=_Summary)
+    Prompt = ActivePrompts.CHAPTER_COUNT_PROMPT.format(_Summary=_Summary)
 
     _Logger.Log("Prompting LLM To Get ChapterCount JSON", 5)
     Messages = []

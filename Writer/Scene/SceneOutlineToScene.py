@@ -2,7 +2,7 @@ import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
 def SceneOutlineToScene(
@@ -14,6 +14,7 @@ def SceneOutlineToScene(
     _Outline: str,
     _BaseContext: str = "",
 ):  # Added _SceneNum, _TotalScenes
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # Now we're finally going to go and write the scene provided.
 
@@ -23,11 +24,11 @@ def SceneOutlineToScene(
     )
     MesssageHistory: list = []
     MesssageHistory.append(
-        Interface.BuildSystemQuery(Writer.Prompts.DEFAULT_SYSTEM_PROMPT)
+        Interface.BuildSystemQuery(ActivePrompts.DEFAULT_SYSTEM_PROMPT)
     )
     MesssageHistory.append(
         Interface.BuildUserQuery(
-            Writer.Prompts.SCENE_OUTLINE_TO_SCENE.format(
+            ActivePrompts.SCENE_OUTLINE_TO_SCENE.format(
                 _SceneOutline=_ThisSceneOutline, _Outline=_Outline
             )
         )

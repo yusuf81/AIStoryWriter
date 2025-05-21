@@ -1,10 +1,11 @@
 import Writer.PrintUtils
 import Writer.Config
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 import Writer.Statistics  # Add this import
 
 
 def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters: int):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     EditedChapters = _Chapters
 
@@ -34,7 +35,7 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
             EditedChapters[current_chapter_index]
         )  # Pastikan menggunakan current_chapter_index
 
-        Prompt: str = Writer.Prompts.CHAPTER_EDIT_PROMPT.format(
+        Prompt: str = ActivePrompts.CHAPTER_EDIT_PROMPT.format(
             _Outline=_Outline, NovelText=NovelText, i=i
         )
 

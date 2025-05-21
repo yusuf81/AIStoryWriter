@@ -1,6 +1,6 @@
 from pydantic import BaseModel  # Ditambahkan
 import Writer.Config
-import Writer.Prompts  # Pastikan Prompts diimpor
+# import Writer.Prompts  # Dihapus untuk pemuatan dinamis
 import json
 
 
@@ -15,8 +15,9 @@ class StoryInfoSchema(BaseModel):
 def GetStoryInfo(
     Interface, _Logger, _Messages: list, _Model: str = None
 ):  # Tambahkan parameter _Model opsional
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
-    Prompt: str = Writer.Prompts.STATS_PROMPT
+    Prompt: str = ActivePrompts.STATS_PROMPT
 
     # Tentukan model yang akan digunakan: parameter _Model jika ada, jika tidak fallback ke Config
     ModelToUse = _Model if _Model is not None else Writer.Config.INFO_MODEL

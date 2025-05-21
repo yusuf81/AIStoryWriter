@@ -4,7 +4,7 @@ import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 import Writer.Statistics  # Add near other imports at the top
 
 import Writer.Scene.ChapterByScene
@@ -20,6 +20,7 @@ def GenerateChapter(
     _QualityThreshold: int = 85,
     _BaseContext: str = "",
 ):
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # Some important notes
     # We're going to remind the author model of the previous chapters here, so it knows what has been written before.
@@ -28,7 +29,7 @@ def GenerateChapter(
     _Logger.Log(f"Creating Base Langchain For Chapter {_ChapterNum} Generation", 2)
     MesssageHistory: list = []
     MesssageHistory.append(
-        Interface.BuildSystemQuery(Writer.Prompts.CHAPTER_GENERATION_INTRO)
+        Interface.BuildSystemQuery(ActivePrompts.CHAPTER_GENERATION_INTRO)
     )
 
     ContextHistoryInsert: str = ""
@@ -38,7 +39,7 @@ def GenerateChapter(
         # ChapterSuperlist tidak lagi dibuat atau digunakan untuk konteks
         # sebagai bagian dari Solusi 1 untuk masalah ukuran konteks.
 
-        ContextHistoryInsert += Writer.Prompts.CHAPTER_HISTORY_INSERT.format(
+        ContextHistoryInsert += ActivePrompts.CHAPTER_HISTORY_INSERT.format(
             _Outline=_Outline  # ChapterSuperlist dihapus dari format
         )
 
@@ -50,11 +51,11 @@ def GenerateChapter(
     ThisChapterOutline: str = ""
     ChapterSegmentMessages = []
     ChapterSegmentMessages.append(
-        Interface.BuildSystemQuery(Writer.Prompts.CHAPTER_GENERATION_INTRO)
+        Interface.BuildSystemQuery(ActivePrompts.CHAPTER_GENERATION_INTRO)
     )
     ChapterSegmentMessages.append(
         Interface.BuildUserQuery(
-            Writer.Prompts.CHAPTER_GENERATION_PROMPT.format(
+            ActivePrompts.CHAPTER_GENERATION_PROMPT.format(
                 _Outline=_Outline, _ChapterNum=_ChapterNum
             )
         )
@@ -82,11 +83,11 @@ def GenerateChapter(
         )
         ChapterSummaryMessages = []
         ChapterSummaryMessages.append(
-            Interface.BuildSystemQuery(Writer.Prompts.CHAPTER_SUMMARY_INTRO)
+            Interface.BuildSystemQuery(ActivePrompts.CHAPTER_SUMMARY_INTRO)
         )
         ChapterSummaryMessages.append(
             Interface.BuildUserQuery(
-                Writer.Prompts.CHAPTER_SUMMARY_PROMPT.format(
+                ActivePrompts.CHAPTER_SUMMARY_PROMPT.format(
                     _ChapterNum=_ChapterNum,
                     _TotalChapters=_TotalChapters,
                     _Outline=_Outline,
@@ -123,7 +124,7 @@ def GenerateChapter(
         IterCounter: int = 0
         Feedback: str = ""
         while True:
-            Prompt = Writer.Prompts.CHAPTER_GENERATION_STAGE1.format(
+            Prompt = ActivePrompts.CHAPTER_GENERATION_STAGE1.format(
                 ContextHistoryInsert=ContextHistoryInsert,
                 _ChapterNum=_ChapterNum,
                 _TotalChapters=_TotalChapters,
@@ -191,7 +192,7 @@ def GenerateChapter(
     IterCounter: int = 0
     Feedback: str = ""
     while True:
-        Prompt = Writer.Prompts.CHAPTER_GENERATION_STAGE2.format(
+        Prompt = ActivePrompts.CHAPTER_GENERATION_STAGE2.format(
             ContextHistoryInsert=ContextHistoryInsert,
             _ChapterNum=_ChapterNum,
             _TotalChapters=_TotalChapters,
@@ -246,7 +247,7 @@ def GenerateChapter(
     IterCounter: int = 0
     Feedback: str = ""
     while True:
-        Prompt = Writer.Prompts.CHAPTER_GENERATION_STAGE3.format(
+        Prompt = ActivePrompts.CHAPTER_GENERATION_STAGE3.format(
             ContextHistoryInsert=ContextHistoryInsert,
             _ChapterNum=_ChapterNum,
             _TotalChapters=_TotalChapters,
@@ -353,11 +354,12 @@ def ReviseChapter(
     _History: list = [],
     _Iteration: int = 0,
 ):  # Tambahkan _ChapterNum, _TotalChapters
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # Get original word count before revising
     OriginalWordCount = Writer.Statistics.GetWordCount(_Chapter)
 
-    RevisionPrompt = Writer.Prompts.CHAPTER_REVISION.format(
+    RevisionPrompt = ActivePrompts.CHAPTER_REVISION.format(
         _Chapter=_Chapter, _Feedback=_Feedback
     )
 

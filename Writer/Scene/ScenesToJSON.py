@@ -4,7 +4,7 @@ import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
-import Writer.Prompts
+# import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
 # Definisikan Skema Pydantic
@@ -15,6 +15,7 @@ class SceneListSchema(BaseModel):
 def ScenesToJSON(
     Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Scenes: str
 ):  # Added chapter context
+    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
 
     # This function converts the given scene list (from markdown format, to a specified JSON format).
 
@@ -23,10 +24,10 @@ def ScenesToJSON(
     )
     MesssageHistory: list = []
     MesssageHistory.append(
-        Interface.BuildSystemQuery(Writer.Prompts.DEFAULT_SYSTEM_PROMPT)
+        Interface.BuildSystemQuery(ActivePrompts.DEFAULT_SYSTEM_PROMPT)
     )
     MesssageHistory.append(
-        Interface.BuildUserQuery(Writer.Prompts.SCENES_TO_JSON.format(_Scenes=_Scenes))
+        Interface.BuildUserQuery(ActivePrompts.SCENES_TO_JSON.format(_Scenes=_Scenes))
     )
 
     # Menggunakan SafeGenerateJSON dengan skema

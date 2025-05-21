@@ -25,7 +25,7 @@ import Writer.Config
 import Writer.Interface.Wrapper
 import Writer.PrintUtils
 import Writer.StoryInfo
-import Writer.Prompts
+# import Writer.Prompts # Dihapus karena tidak digunakan secara langsung di file ini
 
 
 # Load environment variables (e.g., GOOGLE_API_KEY)
