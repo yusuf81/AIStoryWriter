@@ -739,9 +739,44 @@ class Interface:
             ModelOptions = ModelOptions if ModelOptions is not None else {}
 
             Client = self.Clients[_Model]
-            Client.set_params(**ModelOptions)
+            # Client.set_params(**ModelOptions) # ModelOptions might conflict with structured output, handle carefully
             Client.model = ProviderModel
             print(ProviderModel)
+
+            # --- START MODIFICATION ---
+            openrouter_response_format = None
+            if _FormatSchema is not None:
+                # Construct the response_format payload for OpenRouter
+                # The schema itself is expected to be in _FormatSchema
+                # We need to wrap it as per OpenRouter's documentation
+                openrouter_response_format = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        # "name": "your_schema_name", # Name is optional, can be omitted or derived
+                        "strict": True,  # Recommended by OpenRouter docs
+                        "schema": _FormatSchema # This is the Pydantic schema
+                    }
+                }
+                _Logger.Log(f"Using OpenRouter Structured Output with schema", 4)
+                # Ensure temperature is low for deterministic structured output, if not already set by ModelOptions
+                if "temperature" not in ModelOptions: # Check ModelOptions first
+                    ModelOptions["temperature"] = 0.0 # Set to float
+
+            # Apply ModelOptions and the constructed response_format
+            # We need to be careful not to overwrite response_format if it's part of ModelOptions
+            # and _FormatSchema was not provided.
+            # A safer way is to merge them, giving priority to the structured output if _FormatSchema is present.
+
+            final_params_for_openrouter = ModelOptions.copy() if ModelOptions is not None else {}
+
+            if openrouter_response_format:
+                final_params_for_openrouter["response_format"] = openrouter_response_format
+            elif "response_format" not in final_params_for_openrouter: # If not set by ModelOptions and no _FormatSchema
+                final_params_for_openrouter["response_format"] = None
+
+
+            Client.set_params(**final_params_for_openrouter)
+            # --- END MODIFICATION ---
 
             Response = Client.chat(messages=_Messages, seed=Seed)
             _Messages.append({"role": "assistant", "content": Response})

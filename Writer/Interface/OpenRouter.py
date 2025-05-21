@@ -86,7 +86,7 @@ class OpenRouter:
         self.max_tokens = max_tokens
         self.seed = seed
         self.logit_bias = logit_bias
-        self.response_format = response_format
+        self.response_format = response_format # Ensure this line is present and correctly assigned
         self.stop = stop
         self.timeout = timeout
 
@@ -199,10 +199,10 @@ class OpenRouter:
             "top_a": self.top_a,
             "seed": self.seed if seed is None else seed,
             "logit_bias": self.logit_bias,
-            "response_format": self.response_format,
+            "response_format": self.response_format, # Add or modify this line
             "stop": self.stop,
             "provider": self.provider,
-            "stream": False,
+            "stream": False, # Keep stream as False for now as per current implementation
         }
 
         retries = 0
