@@ -405,6 +405,7 @@ def main():
             
             # --- PEMUATAN PROMPT DINAMIS (BAGIAN INTI SETELAH CONFIG DARI STATE) ---
             native_lang_config_resume = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en').lower()
+            _early_print(f"DEBUG: NATIVE_LANGUAGE for resumed run, before dynamic prompt load: '{native_lang_config_resume}'") # Tambahan log diagnostik
             if native_lang_config_resume == 'en':
                 try:
                     import Writer.Prompts as Prompts_en
@@ -453,6 +454,7 @@ def main():
             SysLogger.Log(
                 f"Successfully resumed run from state file: {state_filepath}", 5
             )
+            SysLogger.Log(f"NATIVE_LANGUAGE (resumed) set to '{native_lang_config_resume}'. Active prompt module: '{ActivePrompts.__name__}'.", 5) # Tambahan log
 
             # Pulihkan variabel penting dari state
             Prompt = current_state.get(
@@ -512,9 +514,10 @@ def main():
     else:
         # --- AWAL LOGIKA RUN BARU ---
         # Config sudah di-set dari Args di awal fungsi main() jika bukan resume.
-        
+    
         # --- PEMUATAN PROMPT DINAMIS (BAGIAN INTI UNTUK RUN BARU) ---
         native_lang_config_new = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en').lower()
+        _early_print(f"DEBUG: NATIVE_LANGUAGE for new run, before dynamic prompt load: '{native_lang_config_new}'") # Tambahan log diagnostik
         if native_lang_config_new == 'en':
             try:
                 import Writer.Prompts as Prompts_en
