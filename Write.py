@@ -9,8 +9,9 @@ import time
 import datetime
 import os
 import json
-import sys  # Tambahkan ini
+import sys
 import shutil  # Untuk penulisan atomik
+import importlib # Tambahkan importlib
 
 import Writer.Config
 
@@ -315,7 +316,60 @@ def _get_outline_for_chapter(SysLogger, current_state, chapter_index):
 
 def main():
     """Parses arguments, manages state (new run or resume), and orchestrates the story generation pipeline."""
-    Args = Parser.parse_args()  # Pindahkan parsing ke sini
+    Args = Parser.parse_args()
+
+    # --- AWAL BLOK SETUP CONFIG (UNTUK RUN BARU) ---
+    if not Args.Resume: # Hanya set dari Args jika bukan resume
+        Writer.Config.SEED = Args.Seed
+        Writer.Config.INITIAL_OUTLINE_WRITER_MODEL = Args.InitialOutlineModel
+        Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL = Args.ChapterOutlineModel
+        Writer.Config.CHAPTER_STAGE1_WRITER_MODEL = Args.ChapterS1Model
+        Writer.Config.CHAPTER_STAGE2_WRITER_MODEL = Args.ChapterS2Model
+        Writer.Config.CHAPTER_STAGE3_WRITER_MODEL = Args.ChapterS3Model
+        Writer.Config.FINAL_NOVEL_EDITOR_MODEL = Args.FinalNovelEditorModel
+        Writer.Config.CHAPTER_REVISION_WRITER_MODEL = Args.ChapterRevisionModel
+        Writer.Config.EVAL_MODEL = Args.EvalModel
+        Writer.Config.REVISION_MODEL = Args.RevisionModel
+        Writer.Config.INFO_MODEL = Args.InfoModel
+        Writer.Config.SCRUB_MODEL = Args.ScrubModel
+        Writer.Config.CHECKER_MODEL = Args.CheckerModel
+        Writer.Config.TRANSLATOR_MODEL = Args.TranslatorModel
+        Writer.Config.TRANSLATE_LANGUAGE = Args.Translate
+        Writer.Config.TRANSLATE_PROMPT_LANGUAGE = Args.TranslatePrompt
+        Writer.Config.OUTLINE_MIN_REVISIONS = Args.OutlineMinRevisions
+        Writer.Config.OUTLINE_MAX_REVISIONS = Args.OutlineMaxRevisions
+        Writer.Config.CHAPTER_MIN_REVISIONS = Args.ChapterMinRevisions
+        Writer.Config.CHAPTER_MAX_REVISIONS = Args.ChapterMaxRevisions
+        Writer.Config.CHAPTER_NO_REVISIONS = Args.NoChapterRevision
+        Writer.Config.SCRUB_NO_SCRUB = Args.NoScrubChapters
+        Writer.Config.EXPAND_OUTLINE = Args.ExpandOutline
+        Writer.Config.ENABLE_FINAL_EDIT_PASS = Args.EnableFinalEditPass
+        Writer.Config.OPTIONAL_OUTPUT_NAME = Args.Output
+        Writer.Config.SCENE_GENERATION_PIPELINE = Args.SceneGenerationPipeline
+        Writer.Config.DEBUG = Args.Debug
+        # Jika Anda menambahkan argumen -NativeLanguage, proses di sini:
+        # Writer.Config.NATIVE_LANGUAGE = getattr(Args, 'NativeLanguage', Writer.Config.NATIVE_LANGUAGE)
+    # --- AKHIR BLOK SETUP CONFIG ---
+
+    # --- AWAL PEMUATAN PROMPT DINAMIS ---
+    ActivePrompts = None
+    # Dapatkan NATIVE_LANGUAGE dari Config, yang mungkin sudah di-override oleh Args atau state (jika resume)
+    # Untuk run baru, ini akan mengambil dari Writer.Config (yang mungkin baru saja diatur oleh Args)
+    # Untuk resume, Writer.Config akan di-override oleh state_config *setelah* blok ini jika Args.Resume True.
+    # Jadi, kita perlu memastikan NATIVE_LANGUAGE dari state digunakan jika resume.
+    # Ini akan ditangani nanti di blok resume. Untuk sekarang, kita gunakan apa yang ada di Writer.Config.
+    
+    _early_print = lambda msg: print(f"INFO: {msg}")
+    _early_warn = lambda msg: print(f"WARNING: {msg}")
+    _early_error = lambda msg: print(f"ERROR: {msg}")
+
+    # Logika ini akan dijalankan sebelum SysLogger mungkin diinisialisasi jika ini adalah run baru.
+    # Jika ini adalah resume, Writer.Config.NATIVE_LANGUAGE akan diatur dari state *sebelum* blok ini.
+    # Namun, pemuatan prompt dinamis harus terjadi setelah konfigurasi (termasuk NATIVE_LANGUAGE) final.
+    # Jadi, kita akan memindahkan bagian inti dari pemuatan prompt dinamis ke *setelah* konfigurasi dari state (jika resume).
+
+    # Placeholder untuk ActivePrompts, akan diisi setelah konfigurasi NATIVE_LANGUAGE final.
+    # --- AKHIR PEMUATAN PROMPT DINAMIS (BAGIAN AWAL) ---
 
     # --- AWAL LOGIKA RESUME ---
     current_state = {}
@@ -344,10 +398,49 @@ def main():
                     and not callable(getattr(Writer.Config, key))
                     and not key.startswith("_")
                 ):
-                    setattr(Writer.Config, key, value)
+                    setattr(Writer.Config, key, value) # Ini akan me-restore NATIVE_LANGUAGE
                     # print(f"  Restored Config.{key} = {value}") # Debugging
                 # else:
                 # print(f"  Skipping restore for {key}") # Debugging
+            
+            # --- PEMUATAN PROMPT DINAMIS (BAGIAN INTI SETELAH CONFIG DARI STATE) ---
+            native_lang_config_resume = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en').lower()
+            if native_lang_config_resume == 'en':
+                try:
+                    import Writer.Prompts as Prompts_en
+                    ActivePrompts = Prompts_en
+                    _early_print(f"Using English prompts (Writer.Prompts) as NATIVE_LANGUAGE is '{native_lang_config_resume}'.")
+                except ImportError as e:
+                    _early_error(f"Failed to import Writer.Prompts (English default): {e}. This is critical.")
+                    sys.exit(1)
+            else:
+                try:
+                    module_name = f"Writer.Prompts_{native_lang_config_resume}"
+                    ActivePrompts = importlib.import_module(module_name)
+                    _early_print(f"Successfully loaded prompt module '{module_name}' for NATIVE_LANGUAGE '{native_lang_config_resume}'.")
+                except ImportError:
+                    _early_warn(f"Prompt module for NATIVE_LANGUAGE '{native_lang_config_resume}' ('{module_name}') not found. Falling back to English prompts (Writer.Prompts).")
+                    try:
+                        import Writer.Prompts as Prompts_en
+                        ActivePrompts = Prompts_en
+                    except ImportError as e:
+                        _early_error(f"Failed to import fallback Writer.Prompts (English default) after failing to load '{module_name}': {e}.")
+                        sys.exit(1)
+                except Exception as e:
+                    _early_error(f"Unexpected error loading prompt module for NATIVE_LANGUAGE '{native_lang_config_resume}': {e}. Falling back to English prompts.")
+                    try:
+                        import Writer.Prompts as Prompts_en
+                        ActivePrompts = Prompts_en
+                    except ImportError as ie:
+                        _early_error(f"Failed to import fallback Writer.Prompts (English default) after unexpected error: {ie}.")
+                        sys.exit(1)
+
+            if ActivePrompts is None:
+                _early_error(f"CRITICAL: ActivePrompts is None after attempting to load for NATIVE_LANGUAGE '{native_lang_config_resume}'. Cannot continue.")
+                sys.exit(1)
+            sys.modules['Writer.Prompts'] = ActivePrompts
+            _early_print(f"Dynamically set sys.modules['Writer.Prompts'] to '{ActivePrompts.__name__}'.")
+            # --- AKHIR PEMUATAN PROMPT DINAMIS (BAGIAN INTI) ---
 
             # Setup Logger untuk resume
             log_directory = current_state.get("log_directory")
@@ -418,43 +511,51 @@ def main():
 
     else:
         # --- AWAL LOGIKA RUN BARU ---
-        # Setup Config dari Args
-        Writer.Config.SEED = Args.Seed
-        Writer.Config.INITIAL_OUTLINE_WRITER_MODEL = Args.InitialOutlineModel
-        Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL = Args.ChapterOutlineModel
-        Writer.Config.CHAPTER_STAGE1_WRITER_MODEL = Args.ChapterS1Model
-        Writer.Config.CHAPTER_STAGE2_WRITER_MODEL = Args.ChapterS2Model
-        Writer.Config.CHAPTER_STAGE3_WRITER_MODEL = Args.ChapterS3Model
-        # Writer.Config.CHAPTER_STAGE4_WRITER_MODEL = Args.ChapterS4Model # Baris lama dikomentari/dihapus
-        Writer.Config.FINAL_NOVEL_EDITOR_MODEL = (
-            Args.FinalNovelEditorModel
-        )  # Gunakan nama argumen dan variabel config baru
-        Writer.Config.CHAPTER_REVISION_WRITER_MODEL = Args.ChapterRevisionModel
-        Writer.Config.EVAL_MODEL = Args.EvalModel
-        Writer.Config.REVISION_MODEL = Args.RevisionModel
-        Writer.Config.INFO_MODEL = Args.InfoModel
-        Writer.Config.SCRUB_MODEL = Args.ScrubModel
-        Writer.Config.CHECKER_MODEL = Args.CheckerModel
-        Writer.Config.TRANSLATOR_MODEL = Args.TranslatorModel
-        Writer.Config.TRANSLATE_LANGUAGE = Args.Translate
-        Writer.Config.TRANSLATE_PROMPT_LANGUAGE = Args.TranslatePrompt
-        Writer.Config.OUTLINE_MIN_REVISIONS = Args.OutlineMinRevisions
-        Writer.Config.OUTLINE_MAX_REVISIONS = Args.OutlineMaxRevisions
-        Writer.Config.CHAPTER_MIN_REVISIONS = Args.ChapterMinRevisions
-        Writer.Config.CHAPTER_MAX_REVISIONS = Args.ChapterMaxRevisions
-        Writer.Config.CHAPTER_NO_REVISIONS = Args.NoChapterRevision
-        Writer.Config.SCRUB_NO_SCRUB = Args.NoScrubChapters
-        Writer.Config.EXPAND_OUTLINE = Args.ExpandOutline
-        Writer.Config.ENABLE_FINAL_EDIT_PASS = Args.EnableFinalEditPass
-        Writer.Config.OPTIONAL_OUTPUT_NAME = Args.Output
-        Writer.Config.SCENE_GENERATION_PIPELINE = Args.SceneGenerationPipeline
-        Writer.Config.DEBUG = Args.Debug
+        # Config sudah di-set dari Args di awal fungsi main() jika bukan resume.
+        
+        # --- PEMUATAN PROMPT DINAMIS (BAGIAN INTI UNTUK RUN BARU) ---
+        native_lang_config_new = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en').lower()
+        if native_lang_config_new == 'en':
+            try:
+                import Writer.Prompts as Prompts_en
+                ActivePrompts = Prompts_en
+                _early_print(f"Using English prompts (Writer.Prompts) as NATIVE_LANGUAGE is '{native_lang_config_new}'.")
+            except ImportError as e:
+                _early_error(f"Failed to import Writer.Prompts (English default): {e}. This is critical.")
+                sys.exit(1)
+        else:
+            try:
+                module_name = f"Writer.Prompts_{native_lang_config_new}"
+                ActivePrompts = importlib.import_module(module_name)
+                _early_print(f"Successfully loaded prompt module '{module_name}' for NATIVE_LANGUAGE '{native_lang_config_new}'.")
+            except ImportError:
+                _early_warn(f"Prompt module for NATIVE_LANGUAGE '{native_lang_config_new}' ('{module_name}') not found. Falling back to English prompts (Writer.Prompts).")
+                try:
+                    import Writer.Prompts as Prompts_en
+                    ActivePrompts = Prompts_en
+                except ImportError as e:
+                    _early_error(f"Failed to import fallback Writer.Prompts (English default) after failing to load '{module_name}': {e}.")
+                    sys.exit(1)
+            except Exception as e:
+                _early_error(f"Unexpected error loading prompt module for NATIVE_LANGUAGE '{native_lang_config_new}': {e}. Falling back to English prompts.")
+                try:
+                    import Writer.Prompts as Prompts_en
+                    ActivePrompts = Prompts_en
+                except ImportError as ie:
+                    _early_error(f"Failed to import fallback Writer.Prompts (English default) after unexpected error: {ie}.")
+                    sys.exit(1)
 
-        # Setup Logger untuk run baru
+        if ActivePrompts is None:
+            _early_error(f"CRITICAL: ActivePrompts is None after attempting to load for NATIVE_LANGUAGE '{native_lang_config_new}'. Cannot continue.")
+            sys.exit(1)
+        sys.modules['Writer.Prompts'] = ActivePrompts
+        _early_print(f"Dynamically set sys.modules['Writer.Prompts'] to '{ActivePrompts.__name__}'.")
+        # --- AKHIR PEMUATAN PROMPT DINAMIS (BAGIAN INTI) ---
+
         SysLogger = Writer.PrintUtils.Logger()
-        log_directory = (
-            SysLogger.LogDirPrefix
-        )  # Dapatkan direktori log yang baru dibuat
+        log_directory = SysLogger.LogDirPrefix
+        SysLogger.Log(f"NATIVE_LANGUAGE set to '{native_lang_config_new}'. Active prompt module: '{ActivePrompts.__name__}'.", 5)
+
 
         # Buat state awal
         current_state = {
@@ -525,22 +626,33 @@ def main():
             sys.exit(1)
 
         current_state["input_prompt_file"] = Args.Prompt
-        current_state["input_prompt_content"] = Prompt
-        # BasePrompt = Prompt # Removed unused variable
+        # Prompt asli disimpan sebelum potensi terjemahan ke native
+        original_prompt_content_for_state = Prompt 
+        current_state["input_prompt_content"] = original_prompt_content_for_state
+        translated_to_native_prompt_content_for_state = None
 
-        # Translate prompt jika perlu (sebelum save state awal)
-        if Writer.Config.TRANSLATE_PROMPT_LANGUAGE != "":
+        # --- AWAL BLOK TERJEMAHAN PROMPT INPUT (HANYA UNTUK RUN BARU) ---
+        # 'Prompt' adalah variabel yang berisi konten prompt dari file.
+        # Writer.Config.TRANSLATE_PROMPT_LANGUAGE adalah bahasa ASLI dari file input prompt pengguna.
+        # Writer.Config.NATIVE_LANGUAGE adalah bahasa target untuk generasi internal.
+        if Writer.Config.TRANSLATE_PROMPT_LANGUAGE and \
+           Writer.Config.TRANSLATE_PROMPT_LANGUAGE.lower() != Writer.Config.NATIVE_LANGUAGE.lower():
             SysLogger.Log(
-                f"Translating prompt from {Writer.Config.TRANSLATE_PROMPT_LANGUAGE} to English...",
-                4,  # Pesan log diperbaiki
+                f"Translating user prompt from '{Writer.Config.TRANSLATE_PROMPT_LANGUAGE}' to native language '{Writer.Config.NATIVE_LANGUAGE}'...",
+                4,
             )
-            Prompt = Writer.Translator.TranslatePrompt(
-                Interface, SysLogger, Prompt, Writer.Config.TRANSLATE_PROMPT_LANGUAGE
+            Prompt = Writer.Translator.TranslatePrompt( # Prompt di sini adalah konten yang akan diterjemahkan
+                Interface, SysLogger, Prompt,
+                _SourceLanguage=Writer.Config.TRANSLATE_PROMPT_LANGUAGE,
+                TargetLang=Writer.Config.NATIVE_LANGUAGE
             )
-            current_state["translated_prompt_content"] = (
-                Prompt  # Simpan hasil terjemahan jika ada
-            )
-            SysLogger.Log("Prompt translation complete.", 4)
+            translated_to_native_prompt_content_for_state = Prompt # Simpan hasil terjemahan
+            SysLogger.Log("User prompt translation to native language complete.", 4)
+        
+        if translated_to_native_prompt_content_for_state:
+            current_state["translated_to_native_prompt_content"] = translated_to_native_prompt_content_for_state
+        # 'Prompt' sekarang berisi versi yang akan digunakan untuk generasi (asli atau terjemahan ke native)
+        # --- AKHIR BLOK TERJEMAHAN PROMPT INPUT ---
 
         # Inisialisasi variabel lain untuk run baru
         Outline, Elements, RoughChapterOutline, BaseContext = (
@@ -886,8 +998,13 @@ def main():
 
                     traceback.print_exc()  # Cetak traceback untuk debug
                     # Jangan perbarui processed_chapters, gunakan versi sebelumnya
+                current_state["last_completed_step"] = "post_processing_edit_complete" # Tandai selesai atau dilewati
+                save_state(current_state, state_filepath)
         else:
             SysLogger.Log("Skipping Final Edit Pass (disabled).", 4)
+            current_state["last_completed_step"] = "post_processing_edit_complete" # Tandai dilewati
+            save_state(current_state, state_filepath)
+
 
         # 2. Scrub Novel (jika diaktifkan)
         if not Writer.Config.SCRUB_NO_SCRUB:
@@ -923,53 +1040,52 @@ def main():
 
                     traceback.print_exc()
                     # Jangan perbarui processed_chapters
+                current_state["last_completed_step"] = "post_processing_scrub_complete" # Tandai selesai atau dilewati
+                save_state(current_state, state_filepath)
         else:
             SysLogger.Log(f"Skipping Scrubbing Due To Config", 4)
+            current_state["last_completed_step"] = "post_processing_scrub_complete" # Tandai dilewati
+            save_state(current_state, state_filepath)
 
-        # 3. Translate Novel (jika diaktifkan)
-        if Writer.Config.TRANSLATE_LANGUAGE != "":
+        # 3. Translate Novel (jika diaktifkan) - Ini adalah terjemahan AKHIR
+        # processed_chapters saat ini dalam NATIVE_LANGUAGE
+        if post_processing_successful and \
+           Writer.Config.TRANSLATE_LANGUAGE and \
+           Writer.Config.TRANSLATE_LANGUAGE.lower() != Writer.Config.NATIVE_LANGUAGE.lower():
             SysLogger.Log(
-                f"Starting Translation to {Writer.Config.TRANSLATE_LANGUAGE}...", 3
+                f"Starting Final Translation of story from native '{Writer.Config.NATIVE_LANGUAGE}' to '{Writer.Config.TRANSLATE_LANGUAGE}'...", 3
             )
             if not processed_chapters:
-                SysLogger.Log("Warning: No chapters available for translation.", 6)
+                SysLogger.Log("Warning: No chapters available for final translation.", 6)
             else:
                 try:
-                    translated_chapters_result = Writer.Translator.TranslateNovel(
+                    translated_final_chapters = Writer.Translator.TranslateNovel(
                         Interface,
                         SysLogger,
-                        processed_chapters,
+                        processed_chapters, # Ini adalah bab dalam NATIVE_LANGUAGE
                         NumChapters,
-                        Writer.Config.TRANSLATE_LANGUAGE,
+                        _TargetLanguage=Writer.Config.TRANSLATE_LANGUAGE,
+                        _SourceLanguage=Writer.Config.NATIVE_LANGUAGE # Tentukan bahasa sumber
                     )
-                    processed_chapters = (
-                        translated_chapters_result  # Perbarui bab yang diproses
-                    )
-                    current_state["TranslatedChapters"] = (
-                        processed_chapters  # Simpan ke state
-                    )
-                    StoryInfoJSON["TranslatedChapters"] = processed_chapters[
-                        :
-                    ]  # Simpan SALINAN ke JSON info
-                    current_state["last_completed_step"] = (
-                        "post_processing_translate_complete"
-                    )
-                    save_state(current_state, state_filepath)  # Simpan state segera
-                    SysLogger.Log("Translation Complete. State Saved.", 4)
+                    processed_chapters = translated_final_chapters # Timpa dengan versi terjemahan
+                    current_state["TranslatedFinalChapters"] = processed_chapters 
+                    StoryInfoJSON["TranslatedFinalChapters"] = processed_chapters[:] 
+                    SysLogger.Log(f"Final story translation to '{Writer.Config.TRANSLATE_LANGUAGE}' complete.", 4)
                 except Exception as e:
-                    post_processing_successful = False
+                    # post_processing_successful tetap true, tapi terjemahan akhir gagal
                     SysLogger.Log(
-                        f"ERROR during Translation: {e}. Translation failed.", 7
+                        f"ERROR during final story translation: {e}. Using chapters in native language '{Writer.Config.NATIVE_LANGUAGE}'.", 7
                     )
                     import traceback
-
                     traceback.print_exc()
-                    # Jangan perbarui processed_chapters
         else:
-            SysLogger.Log(
-                f"No Novel Translation Requested, Skipping Translation Step", 4
-            )
-
+            if not (Writer.Config.TRANSLATE_LANGUAGE and Writer.Config.TRANSLATE_LANGUAGE.lower() != Writer.Config.NATIVE_LANGUAGE.lower()):
+                 SysLogger.Log(f"Skipping final story translation (not requested or target is same as native).", 4)
+            elif not post_processing_successful:
+                 SysLogger.Log(f"Skipping final story translation due to earlier post-processing errors.", 6)
+        
+        current_state["last_completed_step"] = "post_processing_final_translate_complete" # Tandai selesai atau dilewati
+        save_state(current_state, state_filepath)
         # --- Akhir Langkah Pasca-Pemrosesan ---
 
         # Simpan versi final bab yang berhasil diproses ke state dan JSON info
@@ -1099,6 +1215,7 @@ def main():
         StatsString += "\n\nGeneration Settings:  \n"
         StatsString += " - Generator: AIStoryGenerator_2024-06-27  \n"  # Versi bisa ditambahkan ke state
         # Ambil nama model dari Writer.Config
+        StatsString += f" - Native Language for Generation: {Writer.Config.NATIVE_LANGUAGE} \n"
         StatsString += f" - Base Outline Writer Model: {Writer.Config.INITIAL_OUTLINE_WRITER_MODEL}  \n"
         StatsString += f" - Chapter Outline Writer Model: {Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL}  \n"
         StatsString += f" - Chapter Writer (Stage 1: Plot) Model: {Writer.Config.CHAPTER_STAGE1_WRITER_MODEL}  \n"

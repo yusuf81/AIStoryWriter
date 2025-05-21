@@ -63,6 +63,9 @@ OPTIONAL_OUTPUT_NAME = ""
 
 DEBUG = False
 
+NATIVE_LANGUAGE = "en"  # Default ke Bahasa Inggris. Akan diubah menjadi "id" untuk pengujian.
+                        # Nilai ini bisa juga di-override oleh argumen command-line jika diinginkan di masa depan.
+
 # Maximum retries for SafeGenerateJSON
 MAX_JSON_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateJSON
 
