@@ -37,7 +37,7 @@ class Logger:
         # Gunakan mode yang ditentukan dan encoding utf-8
         self.File = open(self.LogPath, log_mode, encoding="utf-8")
         self.LangchainID = 0
-        self.LogItems = [] # Initialize LogItems here
+        self.LogItems = []  # Initialize LogItems here
 
         # Hitung LangchainID awal jika melanjutkan
         if _ExistingLogDir:
@@ -73,7 +73,6 @@ class Logger:
             except Exception as e:
                 self.Log(f"Could not determine last Langchain ID: {e}", 7)
                 self.LangchainID = 0  # Fallback
-
 
     # Helper function that saves the entire language chain object as both json and markdown for debugging later
     def SaveLangchain(self, _LangChainID: str, _LangChain: list):

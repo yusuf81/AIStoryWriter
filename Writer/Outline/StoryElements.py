@@ -13,7 +13,7 @@ def GenerateStoryElements(Interface, _Logger, _OutlinePrompt):
     # Generate Initial Story Elements
     _Logger.Log(f"Generating Main Story Elements", 4)
     Messages = [Interface.BuildUserQuery(Prompt)]
-    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
+    Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
         _Logger,
         Messages,
         Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,

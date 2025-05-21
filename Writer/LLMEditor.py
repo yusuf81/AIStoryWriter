@@ -24,7 +24,7 @@ def GetFeedbackOnOutline(Interface, _Logger, _Outline: str):
 
     _Logger.Log("Prompting LLM To Critique Outline", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    History, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
+    History, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
         _Logger,
         History,
         Writer.Config.REVISION_MODEL,
@@ -54,11 +54,13 @@ def GetOutlineRating(
     History.append(Interface.BuildUserQuery(StartingPrompt))
     # Menggunakan SafeGenerateJSON dengan skema
     # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = Interface.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
-        _Logger,
-        History, # Pass the current history
-        Writer.Config.EVAL_MODEL,
-        _FormatSchema=OutlineCompleteSchema.model_json_schema(),
+    _, JSONResponse, _ = (
+        Interface.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
+            _Logger,
+            History,  # Pass the current history
+            Writer.Config.EVAL_MODEL,
+            _FormatSchema=OutlineCompleteSchema.model_json_schema(),
+        )
     )
     Rating = JSONResponse["IsComplete"]
     _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)
@@ -78,7 +80,7 @@ def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
 
     _Logger.Log("Prompting LLM To Critique Chapter", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
+    Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
         _Logger, History, Writer.Config.REVISION_MODEL
     )
     _Logger.Log("Finished Getting Chapter Feedback", 5)
@@ -101,11 +103,13 @@ def GetChapterRating(Interface, _Logger, _Chapter: str):
     History.append(Interface.BuildUserQuery(StartingPrompt))
     # Menggunakan SafeGenerateJSON dengan skema
     # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = Interface.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
-        _Logger,
-        History,
-        Writer.Config.EVAL_MODEL,
-        _FormatSchema=ChapterCompleteSchema.model_json_schema(),
+    _, JSONResponse, _ = (
+        Interface.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
+            _Logger,
+            History,
+            Writer.Config.EVAL_MODEL,
+            _FormatSchema=ChapterCompleteSchema.model_json_schema(),
+        )
     )
     Rating = JSONResponse["IsComplete"]
     _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)

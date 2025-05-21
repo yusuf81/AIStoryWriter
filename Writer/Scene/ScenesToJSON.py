@@ -12,11 +12,15 @@ class SceneListSchema(BaseModel):
     scenes: List[str]
 
 
-def ScenesToJSON(Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Scenes: str): # Added chapter context
+def ScenesToJSON(
+    Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Scenes: str
+):  # Added chapter context
 
     # This function converts the given scene list (from markdown format, to a specified JSON format).
 
-    _Logger.Log(f"Starting ChapterScenes->JSON for Chapter {_ChapterNum}/{_TotalChapters}", 2)
+    _Logger.Log(
+        f"Starting ChapterScenes->JSON for Chapter {_ChapterNum}/{_TotalChapters}", 2
+    )
     MesssageHistory: list = []
     MesssageHistory.append(
         Interface.BuildSystemQuery(Writer.Prompts.DEFAULT_SYSTEM_PROMPT)
@@ -27,14 +31,19 @@ def ScenesToJSON(Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Sce
 
     # Menggunakan SafeGenerateJSON dengan skema
     # Unpack 3 values, ignore messages and tokens
-    _, SceneJSONResponse, _ = Interface.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
-    # Response, SceneJSONResponse = Interface.SafeGenerateJSON( # Baris lama
-        _Logger,
-        MesssageHistory,
-        Writer.Config.CHECKER_MODEL,
-        _FormatSchema=SceneListSchema.model_json_schema(),
+    _, SceneJSONResponse, _ = (
+        Interface.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
+            # Response, SceneJSONResponse = Interface.SafeGenerateJSON( # Baris lama
+            _Logger,
+            MesssageHistory,
+            Writer.Config.CHECKER_MODEL,
+            _FormatSchema=SceneListSchema.model_json_schema(),
+        )
     )
     SceneList = SceneJSONResponse["scenes"]  # Ekstrak list dari dictionary
-    _Logger.Log(f"Finished ChapterScenes->JSON for Chapter {_ChapterNum}/{_TotalChapters} ({len(SceneList)} Scenes Found)", 5)
+    _Logger.Log(
+        f"Finished ChapterScenes->JSON for Chapter {_ChapterNum}/{_TotalChapters} ({len(SceneList)} Scenes Found)",
+        5,
+    )
 
     return SceneList

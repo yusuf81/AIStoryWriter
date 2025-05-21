@@ -5,7 +5,7 @@ import Writer.PrintUtils
 import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
 import Writer.Prompts
-import Writer.Statistics # Add near other imports at the top
+import Writer.Statistics  # Add near other imports at the top
 
 import Writer.Scene.ChapterByScene
 
@@ -39,11 +39,14 @@ def GenerateChapter(
         # sebagai bagian dari Solusi 1 untuk masalah ukuran konteks.
 
         ContextHistoryInsert += Writer.Prompts.CHAPTER_HISTORY_INSERT.format(
-            _Outline=_Outline # ChapterSuperlist dihapus dari format
+            _Outline=_Outline  # ChapterSuperlist dihapus dari format
         )
 
     # Now, extract the this-chapter-outline segment
-    _Logger.Log(f"Extracting Chapter Specific Outline for Chapter {_ChapterNum}/{_TotalChapters}", 4)
+    _Logger.Log(
+        f"Extracting Chapter Specific Outline for Chapter {_ChapterNum}/{_TotalChapters}",
+        4,
+    )
     ThisChapterOutline: str = ""
     ChapterSegmentMessages = []
     ChapterSegmentMessages.append(
@@ -56,19 +59,27 @@ def GenerateChapter(
             )
         )
     )
-    ChapterSegmentMessages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
-        _Logger,
-        ChapterSegmentMessages,
-        Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_SEGMENT_EXTRACT,  # Menggunakan Config
+    ChapterSegmentMessages, _ = (
+        Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+            _Logger,
+            ChapterSegmentMessages,
+            Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
+            _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_SEGMENT_EXTRACT,  # Menggunakan Config
+        )
     )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
     ThisChapterOutline: str = Interface.GetLastMessageText(ChapterSegmentMessages)
-    _Logger.Log(f"Created Chapter Specific Outline for Chapter {_ChapterNum}/{_TotalChapters}", 4)
+    _Logger.Log(
+        f"Created Chapter Specific Outline for Chapter {_ChapterNum}/{_TotalChapters}",
+        4,
+    )
 
     # Generate Summary of Last Chapter If Applicable
     FormattedLastChapterSummary: str = ""
     if len(_Chapters) > 0:
-        _Logger.Log(f"Creating Summary Of Last Chapter Info for Chapter {_ChapterNum}/{_TotalChapters}", 3)
+        _Logger.Log(
+            f"Creating Summary Of Last Chapter Info for Chapter {_ChapterNum}/{_TotalChapters}",
+            3,
+        )
         ChapterSummaryMessages = []
         ChapterSummaryMessages.append(
             Interface.BuildSystemQuery(Writer.Prompts.CHAPTER_SUMMARY_INTRO)
@@ -83,11 +94,13 @@ def GenerateChapter(
                 )
             )
         )
-        ChapterSummaryMessages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
-            _Logger,
-            ChapterSummaryMessages,
-            Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
-            _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_SUMMARY,  # Menggunakan Config
+        ChapterSummaryMessages, _ = (
+            Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+                _Logger,
+                ChapterSummaryMessages,
+                Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
+                _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_SUMMARY,  # Menggunakan Config
+            )
         )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
         FormattedLastChapterSummary: str = Interface.GetLastMessageText(
             ChapterSummaryMessages
@@ -98,7 +111,9 @@ def GenerateChapter(
     if FormattedLastChapterSummary != "":
         DetailedChapterOutline = ThisChapterOutline
 
-    _Logger.Log(f"Done with base langchain setup for Chapter {_ChapterNum}/{_TotalChapters}", 2)
+    _Logger.Log(
+        f"Done with base langchain setup for Chapter {_ChapterNum}/{_TotalChapters}", 2
+    )
 
     # If scene generation disabled, use the normal initial plot generator
     Stage1Chapter = ""
@@ -126,12 +141,14 @@ def GenerateChapter(
             Messages = MesssageHistory.copy()
             Messages.append(Interface.BuildUserQuery(Prompt))
 
-            Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
-                _Logger,
-                Messages,
-                Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
-                _SeedOverride=IterCounter + Writer.Config.SEED,
-                _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_DRAFT,  # Menggunakan Config
+            Messages, _ = (
+                Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+                    _Logger,
+                    Messages,
+                    Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
+                    _SeedOverride=IterCounter + Writer.Config.SEED,
+                    _MinWordCount=Writer.Config.MIN_WORDS_CHAPTER_DRAFT,  # Menggunakan Config
+                )
             )
             IterCounter += 1
             Stage1Chapter: str = Interface.GetLastMessageText(Messages)
@@ -143,7 +160,8 @@ def GenerateChapter(
             # Check if LLM did the work
             if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
                 _Logger.Log(
-                    f"Chapter Summary-Based Revision Seems Stuck (Stage 1: Plot) - Forcefully Exiting after {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS} iterations.", 7
+                    f"Chapter Summary-Based Revision Seems Stuck (Stage 1: Plot) - Forcefully Exiting after {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS} iterations.",
+                    7,
                 )
                 break
             Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
@@ -159,7 +177,13 @@ def GenerateChapter(
     else:
 
         Stage1Chapter = Writer.Scene.ChapterByScene.ChapterByScene(
-            Interface, _Logger, _ChapterNum, _TotalChapters, ThisChapterOutline, _Outline, _BaseContext
+            Interface,
+            _Logger,
+            _ChapterNum,
+            _TotalChapters,
+            ThisChapterOutline,
+            _Outline,
+            _BaseContext,
         )
 
     #### STAGE 2: Add Character Development
@@ -186,7 +210,7 @@ def GenerateChapter(
         Messages = MesssageHistory.copy()
         Messages.append(Interface.BuildUserQuery(Prompt))
 
-        Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
+        Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
             _Logger,
             Messages,
             Writer.Config.CHAPTER_STAGE2_WRITER_MODEL,
@@ -203,7 +227,8 @@ def GenerateChapter(
         # Check if LLM did the work
         if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
             _Logger.Log(
-                f"Chapter Summary-Based Revision Seems Stuck (Stage 2: Character Dev) - Forcefully Exiting after {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS} iterations.", 7
+                f"Chapter Summary-Based Revision Seems Stuck (Stage 2: Character Dev) - Forcefully Exiting after {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS} iterations.",
+                7,
             )
             break
         Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
@@ -239,7 +264,7 @@ def GenerateChapter(
         Messages = MesssageHistory.copy()
         Messages.append(Interface.BuildUserQuery(Prompt))
 
-        Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
+        Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
             _Logger,
             Messages,
             Writer.Config.CHAPTER_STAGE3_WRITER_MODEL,
@@ -256,7 +281,8 @@ def GenerateChapter(
         # Check if LLM did the work
         if IterCounter > Writer.Config.CHAPTER_MAX_REVISIONS:
             _Logger.Log(
-                f"Chapter Summary-Based Revision Seems Stuck (Stage 3: Dialogue) - Forcefully Exiting after {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS} iterations.", 7
+                f"Chapter Summary-Based Revision Seems Stuck (Stage 3: Dialogue) - Forcefully Exiting after {IterCounter}/{Writer.Config.CHAPTER_MAX_REVISIONS} iterations.",
+                7,
             )
             break
         Result, Feedback = Writer.Chapter.ChapterGenSummaryCheck.LLMSummaryCheck(
@@ -281,9 +307,9 @@ def GenerateChapter(
         4,
     )
     WritingHistory = MesssageHistory.copy()
-    Rating: int = 0 # Seharusnya boolean, tapi kode saat ini menggunakannya seperti itu
+    Rating: int = 0  # Seharusnya boolean, tapi kode saat ini menggunakannya seperti itu
     Iterations: int = 0
-    RevisionLoopExitReason = "Unknown" # Tambahkan variabel ini
+    RevisionLoopExitReason = "Unknown"  # Tambahkan variabel ini
     while True:
         Iterations += 1
         Feedback = Writer.LLMEditor.GetFeedbackOnChapter(
@@ -292,14 +318,21 @@ def GenerateChapter(
         Rating = Writer.LLMEditor.GetChapterRating(Interface, _Logger, Chapter)
 
         if Iterations > Writer.Config.CHAPTER_MAX_REVISIONS:
-            RevisionLoopExitReason = "Max Revisions Reached" # Set alasan
+            RevisionLoopExitReason = "Max Revisions Reached"  # Set alasan
             break
         if (Iterations > Writer.Config.CHAPTER_MIN_REVISIONS) and (Rating == True):
-            RevisionLoopExitReason = "Quality Standard Met" # Set alasan
+            RevisionLoopExitReason = "Quality Standard Met"  # Set alasan
             break
         # Teruskan _ChapterNum dan _TotalChapters ke ReviseChapter
         Chapter, WritingHistory = ReviseChapter(
-            Interface, _Logger, _ChapterNum, _TotalChapters, Chapter, Feedback, WritingHistory, _Iteration=Iterations
+            Interface,
+            _Logger,
+            _ChapterNum,
+            _TotalChapters,
+            Chapter,
+            Feedback,
+            WritingHistory,
+            _Iteration=Iterations,
         )
 
     _Logger.Log(
@@ -310,7 +343,16 @@ def GenerateChapter(
     return Chapter
 
 
-def ReviseChapter(Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Chapter, _Feedback, _History: list = [], _Iteration: int = 0): # Tambahkan _ChapterNum, _TotalChapters
+def ReviseChapter(
+    Interface,
+    _Logger,
+    _ChapterNum: int,
+    _TotalChapters: int,
+    _Chapter,
+    _Feedback,
+    _History: list = [],
+    _Iteration: int = 0,
+):  # Tambahkan _ChapterNum, _TotalChapters
 
     # Get original word count before revising
     OriginalWordCount = Writer.Statistics.GetWordCount(_Chapter)
@@ -320,10 +362,13 @@ def ReviseChapter(Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Ch
     )
 
     # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
-    _Logger.Log(f"Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS})", 5)
+    _Logger.Log(
+        f"Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS})",
+        5,
+    )
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
-    Messages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
+    Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
         _Logger,
         Messages,
         Writer.Config.CHAPTER_REVISION_WRITER_MODEL,
@@ -332,6 +377,9 @@ def ReviseChapter(Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Ch
     SummaryText: str = Interface.GetLastMessageText(Messages)
     NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
     # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
-    _Logger.Log(f"Done Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS}). Word Count Change: {OriginalWordCount} -> {NewWordCount}", 5)
+    _Logger.Log(
+        f"Done Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS}). Word Count Change: {OriginalWordCount} -> {NewWordCount}",
+        5,
+    )
 
     return SummaryText, Messages

@@ -5,7 +5,7 @@ import argparse
 import json
 import os
 import sys
-import traceback # Moved import to top
+import traceback  # Moved import to top
 
 # Third-party imports
 import dotenv
@@ -43,8 +43,9 @@ def load_state(filepath):
         return state_data
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to decode state file {filepath}: {e}") from e
-    except IOError as e: # More specific than generic Exception
+    except IOError as e:  # More specific than generic Exception
         raise IOError(f"Failed to read state file {filepath}: {e}") from e
+
 
 # Add helper function for logger initialization
 def _initialize_logger(state_data):
@@ -65,7 +66,8 @@ def _initialize_logger(state_data):
         os.makedirs(sim_log_dir, exist_ok=True)
         # Rename SysLogger to sys_logger
         sys_logger = Writer.PrintUtils.Logger(_LogfilePrefix=sim_log_dir)
-    return sys_logger # Return the logger instance
+    return sys_logger  # Return the logger instance
+
 
 # Add helper function for determining the info model
 def _determine_info_model(state_data, info_model_override):
@@ -77,6 +79,7 @@ def _determine_info_model(state_data, info_model_override):
     if not info_model:
         info_model = Writer.Config.INFO_MODEL
     return info_model
+
 
 # Add helper function for determining the query content
 def _determine_query_content(state_data, sys_logger):
@@ -94,7 +97,8 @@ def _determine_query_content(state_data, sys_logger):
             info_query_content = "\n\n---\n\n".join(expanded_outlines)
             source = "expanded_chapter_outlines"
             sys_logger.Log(
-                "Using joined expanded chapter outlines for GetStoryInfo.", 6 # Removed f-string
+                "Using joined expanded chapter outlines for GetStoryInfo.",
+                6,  # Removed f-string
             )
 
     if not info_query_content:
@@ -102,17 +106,18 @@ def _determine_query_content(state_data, sys_logger):
         if full_outline_content:
             info_query_content = full_outline_content
             source = "full_outline"
-            sys_logger.Log("Using full_outline for GetStoryInfo.", 6) # Removed f-string
+            sys_logger.Log(
+                "Using full_outline for GetStoryInfo.", 6
+            )  # Removed f-string
         else:
             info_query_content = "No outline information available."
             source = "fallback_string"
             sys_logger.Log(
-                "Warning: No outline found for GetStoryInfo, using fallback string.", 6 # Removed f-string
+                "Warning: No outline found for GetStoryInfo, using fallback string.",
+                6,  # Removed f-string
             )
 
-    sys_logger.Log(
-        f"Using story content source: '{source}' for GetStoryInfo", 6
-    )
+    sys_logger.Log(f"Using story content source: '{source}' for GetStoryInfo", 6)
     sys_logger.Log(f"Content length (chars): {len(info_query_content)}", 6)
     return info_query_content
 
@@ -136,9 +141,8 @@ def simulate_get_info(state_filepath, info_model_override=None):
     # Keep a general catch for unexpected issues during loading, but log traceback
     except Exception as e:
         print(f"Unexpected error loading state file: {e}")
-        traceback.print_exc() # Log traceback for unexpected errors
+        traceback.print_exc()  # Log traceback for unexpected errors
         return
-
 
     # 2. Initialize Logger (using helper function)
     # Rename SysLogger to sys_logger
@@ -153,7 +157,9 @@ def simulate_get_info(state_filepath, info_model_override=None):
     try:
         # Rename Interface to interface
         interface = Writer.Interface.Wrapper.Interface([info_model])
-    except Exception as e: # Keep general exception here as Interface init could fail variously
+    except (
+        Exception
+    ) as e:  # Keep general exception here as Interface init could fail variously
         sys_logger.Log(f"Error initializing interface: {e}", 7)
         traceback.print_exc()
         return
@@ -186,9 +192,13 @@ def simulate_get_info(state_filepath, info_model_override=None):
             if token_usage:
                 # Rename TokenUsage to token_usage
                 print(f"Prompt Tokens: {token_usage.get('prompt_tokens', 'N/A')}")
-                print(f"Completion Tokens: {token_usage.get('completion_tokens', 'N/A')}")
+                print(
+                    f"Completion Tokens: {token_usage.get('completion_tokens', 'N/A')}"
+                )
             else:
-                 print("Token usage information not available.") # Handle case where token_usage might be None
+                print(
+                    "Token usage information not available."
+                )  # Handle case where token_usage might be None
             print("---------------------------\n")
         else:
             # Handle the case where GetStoryInfo returned None for info
@@ -197,8 +207,7 @@ def simulate_get_info(state_filepath, info_model_override=None):
             print("Failed to generate story info.")
             print("---------------------------\n")
 
-
-    except Exception as e: # Keep general exception for the main execution block
+    except Exception as e:  # Keep general exception for the main execution block
         sys_logger.Log(f"Error during GetStoryInfo execution: {e}", 7)
         traceback.print_exc()
 
@@ -209,14 +218,14 @@ def simulate_get_info(state_filepath, info_model_override=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate the GetStoryInfo step.")
     parser.add_argument(
-        "--state-file", # Renamed from -StateFile
-        dest="state_file", # Use dest to store in snake_case variable
+        "--state-file",  # Renamed from -StateFile
+        dest="state_file",  # Use dest to store in snake_case variable
         required=True,
         help="Path to the run.state.json file of a completed or near-completed run.",
     )
     parser.add_argument(
-        "--info-model", # Renamed from -InfoModel
-        dest="info_model", # Use dest to store in snake_case variable
+        "--info-model",  # Renamed from -InfoModel
+        dest="info_model",  # Use dest to store in snake_case variable
         default=None,
         help="Override the INFO_MODEL defined in the state file or Config.py.",
     )

@@ -63,12 +63,14 @@ def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
     )
     # Menggunakan SafeGenerateJSON dengan skema
     # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = _Client.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
-    # Messages, JSONResponse = _Client.SafeGenerateJSON( # Baris lama
-        _Logger,  # Menggunakan _Logger, bukan Logger global
-        Messages,
-        Args.Model,
-        _FormatSchema=OutlineEvalSchema.model_json_schema(),
+    _, JSONResponse, _ = (
+        _Client.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
+            # Messages, JSONResponse = _Client.SafeGenerateJSON( # Baris lama
+            _Logger,  # Menggunakan _Logger, bukan Logger global
+            Messages,
+            Args.Model,
+            _FormatSchema=OutlineEvalSchema.model_json_schema(),
+        )
     )
     Report = ""
     Report += f"Winner of Plot: {JSONResponse['Plot']}\n"
@@ -84,7 +86,9 @@ def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
     return Report, JSONResponse
 
 
-def EvaluateChapter(_Client, _Logger, _ChapterNum: int, _TotalChapters: int, _ChapterA, _ChapterB): # Tambahkan _TotalChapters
+def EvaluateChapter(
+    _Client, _Logger, _ChapterNum: int, _TotalChapters: int, _ChapterA, _ChapterB
+):  # Tambahkan _TotalChapters
 
     _Logger.Log(f"Evaluating Chapter {_ChapterNum}/{_TotalChapters}", 4)
     Messages = [
@@ -100,12 +104,14 @@ def EvaluateChapter(_Client, _Logger, _ChapterNum: int, _TotalChapters: int, _Ch
 
     # Menggunakan SafeGenerateJSON dengan skema
     # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = _Client.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
-    # Messages, JSONResponse = _Client.SafeGenerateJSON( # Baris lama
-        _Logger,  # Menggunakan _Logger, bukan Logger global
-        Messages,
-        Args.Model,
-        _FormatSchema=ChapterEvalSchema.model_json_schema(),
+    _, JSONResponse, _ = (
+        _Client.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
+            # Messages, JSONResponse = _Client.SafeGenerateJSON( # Baris lama
+            _Logger,  # Menggunakan _Logger, bukan Logger global
+            Messages,
+            Args.Model,
+            _FormatSchema=ChapterEvalSchema.model_json_schema(),
+        )
     )
     Report = ""
     Report += f"Winner of Plot: {JSONResponse['Plot']}\n"
@@ -187,12 +193,12 @@ ShortestStory = min(
 ChapterJSONs: list = []
 for i in range(ShortestStory):
 
-    Report += f"## Chapter {i+1}\n" # Gunakan i+1 untuk nomor bab 1-based
+    Report += f"## Chapter {i+1}\n"  # Gunakan i+1 untuk nomor bab 1-based
     ChapterReport, ChapterJSON = EvaluateChapter(
         Interface,
         Logger,
-        i + 1, # Teruskan nomor bab (1-based)
-        ShortestStory, # Teruskan total bab yang dievaluasi
+        i + 1,  # Teruskan nomor bab (1-based)
+        ShortestStory,  # Teruskan total bab yang dievaluasi
         Story1["UnscrubbedChapters"][i],
         Story2["UnscrubbedChapters"][i],
     )

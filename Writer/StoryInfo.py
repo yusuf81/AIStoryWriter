@@ -1,6 +1,6 @@
 from pydantic import BaseModel  # Ditambahkan
 import Writer.Config
-import Writer.Prompts # Pastikan Prompts diimpor
+import Writer.Prompts  # Pastikan Prompts diimpor
 import json
 
 
@@ -12,14 +12,18 @@ class StoryInfoSchema(BaseModel):
     OverallRating: int
 
 
-def GetStoryInfo(Interface, _Logger, _Messages: list, _Model: str = None): # Tambahkan parameter _Model opsional
+def GetStoryInfo(
+    Interface, _Logger, _Messages: list, _Model: str = None
+):  # Tambahkan parameter _Model opsional
 
     Prompt: str = Writer.Prompts.STATS_PROMPT
 
     # Tentukan model yang akan digunakan: parameter _Model jika ada, jika tidak fallback ke Config
     ModelToUse = _Model if _Model is not None else Writer.Config.INFO_MODEL
 
-    _Logger.Log(f"Prompting LLM ({ModelToUse}) To Generate Stats", 5) # Log model yang digunakan
+    _Logger.Log(
+        f"Prompting LLM ({ModelToUse}) To Generate Stats", 5
+    )  # Log model yang digunakan
     Messages = _Messages
     Messages.append(Interface.BuildUserQuery(Prompt))
     # Menggunakan SafeGenerateJSON dengan skema dan model yang benar (ModelToUse)
@@ -28,10 +32,10 @@ def GetStoryInfo(Interface, _Logger, _Messages: list, _Model: str = None): # Tam
     Messages, JSONResponse, TokenUsage = Interface.SafeGenerateJSON(
         _Logger,
         Messages,
-        ModelToUse, # Gunakan model yang sudah ditentukan
+        ModelToUse,  # Gunakan model yang sudah ditentukan
         _FormatSchema=StoryInfoSchema.model_json_schema(),
     )
     _Logger.Log("Finished Getting Stats Feedback", 5)
     # Modify the return statement
     # Instead of: return JSONResponse
-    return JSONResponse, TokenUsage # Return JSON and tokens
+    return JSONResponse, TokenUsage  # Return JSON and tokens

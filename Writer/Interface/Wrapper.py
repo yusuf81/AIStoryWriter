@@ -632,7 +632,7 @@ class Interface:
                 if "role" in m and m["role"] == "system":
                     m["role"] = "user"
 
-            MaxRetries = 3 # Anda mungkin ingin memindahkan ini ke Writer.Config.MAX_GOOGLE_RETRIES
+            MaxRetries = 3  # Anda mungkin ingin memindahkan ini ke Writer.Config.MAX_GOOGLE_RETRIES
             LastTokenUsage = None
             GeneratedContentResponse = None
 
@@ -647,8 +647,10 @@ class Interface:
             }
 
             # Inisialisasi generation_config_dict dengan ModelOptions jika ada
-            generation_config_dict = ModelOptions.copy() if ModelOptions is not None else {}
-            
+            generation_config_dict = (
+                ModelOptions.copy() if ModelOptions is not None else {}
+            )
+
             # Tambahkan/Timpa safety_settings
             generation_config_dict["safety_settings"] = safety_settings_val
 
@@ -657,10 +659,14 @@ class Interface:
                 generation_config_dict["response_schema"] = _FormatSchema
                 _Logger.Log(f"Using Google Structured Output with schema", 4)
                 # Atur temperature ke 0 untuk output terstruktur yang deterministik jika belum diatur
-                if "temperature" not in generation_config_dict: # Periksa apakah sudah ada dari ModelOptions
+                if (
+                    "temperature" not in generation_config_dict
+                ):  # Periksa apakah sudah ada dari ModelOptions
                     generation_config_dict["temperature"] = 0.0
-            
-            _Logger.Log(f"Using Google Generation Config: {generation_config_dict}", 4) # Log config yang digunakan
+
+            _Logger.Log(
+                f"Using Google Generation Config: {generation_config_dict}", 4
+            )  # Log config yang digunakan
 
             # --- END MODIFICATION FOR STRUCTURED OUTPUT AND CONFIG ---
 
@@ -670,7 +676,7 @@ class Interface:
                         contents=_Messages,
                         stream=True,
                         # Hapus safety_settings dari sini
-                        generation_config=generation_config_dict # Tambahkan generation_config
+                        generation_config=generation_config_dict,  # Tambahkan generation_config
                     )
                     AssistantMessage, _ = self.StreamResponse(
                         GeneratedContentResponse, Provider
@@ -776,26 +782,31 @@ class Interface:
                     "json_schema": {
                         # "name": "your_schema_name", # Name is optional, can be omitted or derived
                         "strict": True,  # Recommended by OpenRouter docs
-                        "schema": _FormatSchema # This is the Pydantic schema
-                    }
+                        "schema": _FormatSchema,  # This is the Pydantic schema
+                    },
                 }
                 _Logger.Log(f"Using OpenRouter Structured Output with schema", 4)
                 # Ensure temperature is low for deterministic structured output, if not already set by ModelOptions
-                if "temperature" not in ModelOptions: # Check ModelOptions first
-                    ModelOptions["temperature"] = 0.0 # Set to float
+                if "temperature" not in ModelOptions:  # Check ModelOptions first
+                    ModelOptions["temperature"] = 0.0  # Set to float
 
             # Apply ModelOptions and the constructed response_format
             # We need to be careful not to overwrite response_format if it's part of ModelOptions
             # and _FormatSchema was not provided.
             # A safer way is to merge them, giving priority to the structured output if _FormatSchema is present.
 
-            final_params_for_openrouter = ModelOptions.copy() if ModelOptions is not None else {}
+            final_params_for_openrouter = (
+                ModelOptions.copy() if ModelOptions is not None else {}
+            )
 
             if openrouter_response_format:
-                final_params_for_openrouter["response_format"] = openrouter_response_format
-            elif "response_format" not in final_params_for_openrouter: # If not set by ModelOptions and no _FormatSchema
+                final_params_for_openrouter["response_format"] = (
+                    openrouter_response_format
+                )
+            elif (
+                "response_format" not in final_params_for_openrouter
+            ):  # If not set by ModelOptions and no _FormatSchema
                 final_params_for_openrouter["response_format"] = None
-
 
             Client.set_params(**final_params_for_openrouter)
             # --- END MODIFICATION ---
@@ -804,20 +815,29 @@ class Interface:
             try:
                 # Panggil chat dengan stream=True
                 Stream = Client.chat(messages=_Messages, seed=Seed, stream=True)
-                
+
                 # Proses stream menggunakan self.StreamResponse
-                AssistantMessage, LastChunk = self.StreamResponse(Stream, Provider) # Provider adalah "openrouter"
-                
+                AssistantMessage, LastChunk = self.StreamResponse(
+                    Stream, Provider
+                )  # Provider adalah "openrouter"
+
                 _Messages.append(AssistantMessage)
-                
+
                 # Token usage tidak tersedia dari stream OpenRouter saat ini
                 LastTokenUsage = None
-                _Logger.Log("OpenRouter Token Usage: Not available for streaming responses.", 6)
+                _Logger.Log(
+                    "OpenRouter Token Usage: Not available for streaming responses.", 6
+                )
 
             except Exception as e:
                 _Logger.Log(f"Error during OpenRouter streaming: {e}", 7)
                 # Tambahkan pesan error dummy atau naikkan exception jika diperlukan
-                _Messages.append({"role": "assistant", "content": f"Error: OpenRouter stream failed. {e}"})
+                _Messages.append(
+                    {
+                        "role": "assistant",
+                        "content": f"Error: OpenRouter stream failed. {e}",
+                    }
+                )
                 LastTokenUsage = None
                 # Pertimbangkan untuk menaikkan kembali exception jika ini adalah error fatal
                 # raise
@@ -880,7 +900,9 @@ class Interface:
                         delta = choices[0].get("delta")
                         if delta and isinstance(delta, dict):
                             ChunkText = delta.get("content")
-                            if ChunkText is not None: # Konten bisa berupa string kosong
+                            if (
+                                ChunkText is not None
+                            ):  # Konten bisa berupa string kosong
                                 Response += ChunkText
                                 print(ChunkText, end="", flush=True)
                         # finish_reason bisa diperiksa di sini jika perlu

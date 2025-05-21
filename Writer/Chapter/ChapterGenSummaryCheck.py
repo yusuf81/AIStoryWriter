@@ -37,12 +37,18 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
         )
     )
     # Tambahkan log sebelum memanggil SafeGenerateText pertama
-    _Logger.Log(f"Generating summary of generated work for comparison.", 6) # Tambahkan log ini
-    SummaryLangchain, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
-        _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
+    _Logger.Log(
+        f"Generating summary of generated work for comparison.", 6
+    )  # Tambahkan log ini
+    SummaryLangchain, _ = (
+        Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+            _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
+        )
     )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
     WorkSummary: str = Interface.GetLastMessageText(SummaryLangchain)
-    _Logger.Log(f"Finished generating summary of generated work.", 6) # Tambahkan log ini
+    _Logger.Log(
+        f"Finished generating summary of generated work.", 6
+    )  # Tambahkan log ini
 
     # Now Summarize The Outline
     SummaryLangchain: list = []
@@ -55,12 +61,18 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
         )
     )
     # Tambahkan log sebelum memanggil SafeGenerateText kedua
-    _Logger.Log(f"Generating summary of reference outline for comparison.", 6) # Tambahkan log ini
-    SummaryLangchain, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
-        _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
+    _Logger.Log(
+        f"Generating summary of reference outline for comparison.", 6
+    )  # Tambahkan log ini
+    SummaryLangchain, _ = (
+        Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+            _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
+        )
     )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
     OutlineSummary: str = Interface.GetLastMessageText(SummaryLangchain)
-    _Logger.Log(f"Finished generating summary of reference outline.", 6) # Tambahkan log ini
+    _Logger.Log(
+        f"Finished generating summary of reference outline.", 6
+    )  # Tambahkan log ini
 
     # Now, generate a comparison JSON value.
     ComparisonLangchain: list = []
@@ -75,17 +87,21 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
         )
     )
     # Tambahkan log sebelum memanggil SafeGenerateJSON
-    _Logger.Log(f"Comparing generated work summary vs reference outline summary.", 6) # Tambahkan log ini
+    _Logger.Log(
+        f"Comparing generated work summary vs reference outline summary.", 6
+    )  # Tambahkan log ini
     # Menggunakan SafeGenerateJSON dengan skema
     # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = Interface.SafeGenerateJSON( # Unpack 3 values, ignore messages and tokens
-    # ComparisonLangchain, JSONResponse = Interface.SafeGenerateJSON( # Baris lama
-        _Logger,
-        ComparisonLangchain,
-        Writer.Config.REVISION_MODEL,
-        _FormatSchema=SummaryComparisonSchema.model_json_schema(),
+    _, JSONResponse, _ = (
+        Interface.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
+            # ComparisonLangchain, JSONResponse = Interface.SafeGenerateJSON( # Baris lama
+            _Logger,
+            ComparisonLangchain,
+            Writer.Config.REVISION_MODEL,
+            _FormatSchema=SummaryComparisonSchema.model_json_schema(),
+        )
     )
-    _Logger.Log(f"Finished comparing summaries.", 6) # Tambahkan log ini
+    _Logger.Log(f"Finished comparing summaries.", 6)  # Tambahkan log ini
     return (
         JSONResponse["DidFollowOutline"],
         "### Extra Suggestions:\n" + JSONResponse["Suggestions"],

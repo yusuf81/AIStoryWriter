@@ -6,8 +6,14 @@ import Writer.Prompts
 
 
 def ChapterOutlineToScenes(
-    Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _ThisChapterOutline: str, _Outline: str, _BaseContext: str = ""
-): # Added _ChapterNum, _TotalChapters, renamed _ThisChapter
+    Interface,
+    _Logger,
+    _ChapterNum: int,
+    _TotalChapters: int,
+    _ThisChapterOutline: str,
+    _Outline: str,
+    _BaseContext: str = "",
+):  # Added _ChapterNum, _TotalChapters, renamed _ThisChapter
 
     # We're now going to convert the chapter outline into a more detailed outline for each scene.
     # The scene by scene outline will be returned, JSONified, and then later converted into fully written scenes
@@ -21,17 +27,20 @@ def ChapterOutlineToScenes(
     MesssageHistory.append(
         Interface.BuildUserQuery(
             Writer.Prompts.CHAPTER_TO_SCENES.format(
-                _ThisChapter=_ThisChapterOutline, _Outline=_Outline # Use renamed variable
+                _ThisChapter=_ThisChapterOutline,
+                _Outline=_Outline,  # Use renamed variable
             )
         )
     )
 
-    Response, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
+    Response, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
         _Logger,
         MesssageHistory,
         Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL,
         _MinWordCount=Writer.Config.MIN_WORDS_SCENE_OUTLINE,  # Menggunakan Config
     )
-    _Logger.Log(f"Finished Splitting Chapter {_ChapterNum}/{_TotalChapters} Into Scenes", 5)
+    _Logger.Log(
+        f"Finished Splitting Chapter {_ChapterNum}/{_TotalChapters} Into Scenes", 5
+    )
 
     return Interface.GetLastMessageText(Response)

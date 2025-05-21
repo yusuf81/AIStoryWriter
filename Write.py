@@ -531,7 +531,8 @@ def main():
         # Translate prompt jika perlu (sebelum save state awal)
         if Writer.Config.TRANSLATE_PROMPT_LANGUAGE != "":
             SysLogger.Log(
-                f"Translating prompt from {Writer.Config.TRANSLATE_PROMPT_LANGUAGE} to English...", 4 # Pesan log diperbaiki
+                f"Translating prompt from {Writer.Config.TRANSLATE_PROMPT_LANGUAGE} to English...",
+                4,  # Pesan log diperbaiki
             )
             Prompt = Writer.Translator.TranslatePrompt(
                 Interface, SysLogger, Prompt, Writer.Config.TRANSLATE_PROMPT_LANGUAGE
@@ -639,23 +640,25 @@ def main():
 
             # --- AWAL BLOK BARU: Penyempurnaan Outline Tingkat Tinggi ---
             SysLogger.Log("Starting High-Level Chapter Outline Refinement...", 3)
-            if not Outline: # Pastikan Outline ada
-                 SysLogger.Log("FATAL: Cannot refine chapters, Outline is missing.", 7)
-                 sys.exit(1)
+            if not Outline:  # Pastikan Outline ada
+                SysLogger.Log("FATAL: Cannot refine chapters, Outline is missing.", 7)
+                sys.exit(1)
 
             # Panggil prompt baru untuk penyempurnaan
             RefinementMessages = [
                 Interface.BuildUserQuery(
                     Writer.Prompts.EXPAND_OUTLINE_CHAPTER_BY_CHAPTER.format(
-                        _Outline=Outline # Gunakan outline global asli
+                        _Outline=Outline  # Gunakan outline global asli
                     )
                 )
             ]
-            RefinementMessages, _ = Interface.SafeGenerateText( # Unpack tuple, ignore token usage
-                 _Logger=SysLogger,
-                 _Messages=RefinementMessages,
-                 _Model=Writer.Config.INITIAL_OUTLINE_WRITER_MODEL, # Atau model outline lain yang sesuai
-                 _MinWordCount=Writer.Config.MIN_WORDS_INITIAL_OUTLINE # Sesuaikan min words jika perlu
+            RefinementMessages, _ = (
+                Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+                    _Logger=SysLogger,
+                    _Messages=RefinementMessages,
+                    _Model=Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,  # Atau model outline lain yang sesuai
+                    _MinWordCount=Writer.Config.MIN_WORDS_INITIAL_OUTLINE,  # Sesuaikan min words jika perlu
+                )
             )
             RefinedOutline = Interface.GetLastMessageText(RefinementMessages)
 
@@ -663,30 +666,32 @@ def main():
             current_state["refined_global_outline"] = RefinedOutline
             # Timpa variabel Outline lokal dengan versi yang sudah disempurnakan
             Outline = RefinedOutline
-            current_state["full_outline"] = Outline # Simpan Outline yang sudah di-refine ke state
+            current_state["full_outline"] = (
+                Outline  # Simpan Outline yang sudah di-refine ke state
+            )
 
             # Update state untuk menandai langkah baru ini selesai
-            current_state["last_completed_step"] = "refine_chapters" # Langkah baru
+            current_state["last_completed_step"] = "refine_chapters"  # Langkah baru
             save_state(current_state, state_filepath)
-            SysLogger.Log("High-Level Chapter Outline Refinement Complete. State Saved.", 4)
-            last_completed_step = "refine_chapters" # Update status lokal
+            SysLogger.Log(
+                "High-Level Chapter Outline Refinement Complete. State Saved.", 4
+            )
+            last_completed_step = "refine_chapters"  # Update status lokal
             # --- AKHIR BLOK BARU ---
 
             # Loop for ChapterIdx dimulai setelah ini...
             # Inisialisasi Messages dihapus dari sini
-            ChapterOutlines = [] # Pastikan ini diinisialisasi sebelum loop
+            ChapterOutlines = []  # Pastikan ini diinisialisasi sebelum loop
             for ChapterIdx in range(1, NumChapters + 1):
                 # GeneratePerChapterOutline akan menggunakan variabel 'Outline' yang sudah di-refine
                 # Hanya tangkap ChapterOutline, Messages (riwayat) tidak lagi diteruskan atau dikembalikan
-                ChapterOutline = (
-                    Writer.OutlineGenerator.GeneratePerChapterOutline(
-                        Interface,
-                        SysLogger,
-                        ChapterIdx,
-                        NumChapters,
-                        Outline,
-                        # Argumen Messages (untuk _History) dihapus dari pemanggilan
-                    )
+                ChapterOutline = Writer.OutlineGenerator.GeneratePerChapterOutline(
+                    Interface,
+                    SysLogger,
+                    ChapterIdx,
+                    NumChapters,
+                    Outline,
+                    # Argumen Messages (untuk _History) dihapus dari pemanggilan
                 )
                 ChapterOutlines.append(ChapterOutline)
             # Save state setelah ekspansi outline
@@ -694,9 +699,9 @@ def main():
             current_state["last_completed_step"] = "expand_chapters"
             save_state(current_state, state_filepath)
             SysLogger.Log("Per-Chapter Outline Expansion Complete. State Saved.", 4)
-            last_completed_step = "expand_chapters" # Update status lokal
+            last_completed_step = "expand_chapters"  # Update status lokal
         elif last_completed_step not in [
-            "refine_chapters", # Tambahkan state baru
+            "refine_chapters",  # Tambahkan state baru
             "expand_chapters",
             "chapter_generation",
             "chapter_generation_complete",
@@ -737,11 +742,13 @@ def main():
 
     # Write the chapters (Mulai dari start_chapter)
     # Tentukan langkah terakhir sebelum generasi bab, tergantung pada EXPAND_OUTLINE
-    step_before_chapters = "expand_chapters" if Writer.Config.EXPAND_OUTLINE else "detect_chapters"
+    step_before_chapters = (
+        "expand_chapters" if Writer.Config.EXPAND_OUTLINE else "detect_chapters"
+    )
 
     if last_completed_step in [
-        step_before_chapters, # Mulai jika langkah sebelumnya selesai
-        "chapter_generation", # Atau jika resume di tengah bab
+        step_before_chapters,  # Mulai jika langkah sebelumnya selesai
+        "chapter_generation",  # Atau jika resume di tengah bab
     ]:
         SysLogger.Log(f"Starting Chapter Writing from chapter {start_chapter}...", 5)
         # Pastikan Chapters adalah list (penting untuk resume)
@@ -842,8 +849,8 @@ def main():
         )  # Simpan bab asli sebelum diproses
 
         # --- Mulai Langkah Pasca-Pemrosesan dengan Penanganan Error ---
-        processed_chapters = Chapters[:] # Salin list bab awal
-        post_processing_successful = True # Flag untuk melacak keberhasilan
+        processed_chapters = Chapters[:]  # Salin list bab awal
+        post_processing_successful = True  # Flag untuk melacak keberhasilan
 
         # 1. Edit Novel (jika diaktifkan)
         if Writer.Config.ENABLE_FINAL_EDIT_PASS:
@@ -855,17 +862,29 @@ def main():
                     edited_chapters_result = Writer.NovelEditor.EditNovel(
                         Interface, SysLogger, processed_chapters, Outline, NumChapters
                     )
-                    processed_chapters = edited_chapters_result # Perbarui bab yang diproses
-                    current_state["EditedChapters"] = processed_chapters # Simpan ke state
-                    StoryInfoJSON["EditedChapters"] = processed_chapters[:] # Simpan SALINAN ke JSON info
-                    current_state["last_completed_step"] = "post_processing_edit_complete"
-                    save_state(current_state, state_filepath) # Simpan state segera
+                    processed_chapters = (
+                        edited_chapters_result  # Perbarui bab yang diproses
+                    )
+                    current_state["EditedChapters"] = (
+                        processed_chapters  # Simpan ke state
+                    )
+                    StoryInfoJSON["EditedChapters"] = processed_chapters[
+                        :
+                    ]  # Simpan SALINAN ke JSON info
+                    current_state["last_completed_step"] = (
+                        "post_processing_edit_complete"
+                    )
+                    save_state(current_state, state_filepath)  # Simpan state segera
                     SysLogger.Log("Final Edit Pass Complete. State Saved.", 4)
                 except Exception as e:
                     post_processing_successful = False
-                    SysLogger.Log(f"ERROR during Final Edit Pass: {e}. Skipping further edits on this version.", 7)
+                    SysLogger.Log(
+                        f"ERROR during Final Edit Pass: {e}. Skipping further edits on this version.",
+                        7,
+                    )
                     import traceback
-                    traceback.print_exc() # Cetak traceback untuk debug
+
+                    traceback.print_exc()  # Cetak traceback untuk debug
                     # Jangan perbarui processed_chapters, gunakan versi sebelumnya
         else:
             SysLogger.Log("Skipping Final Edit Pass (disabled).", 4)
@@ -880,16 +899,28 @@ def main():
                     scrubbed_chapters_result = Writer.Scrubber.ScrubNovel(
                         Interface, SysLogger, processed_chapters, NumChapters
                     )
-                    processed_chapters = scrubbed_chapters_result # Perbarui bab yang diproses
-                    current_state["ScrubbedChapters"] = processed_chapters # Simpan ke state (Gunakan plural)
-                    StoryInfoJSON["ScrubbedChapters"] = processed_chapters[:] # Simpan SALINAN ke JSON info (Gunakan plural)
-                    current_state["last_completed_step"] = "post_processing_scrub_complete"
-                    save_state(current_state, state_filepath) # Simpan state segera
+                    processed_chapters = (
+                        scrubbed_chapters_result  # Perbarui bab yang diproses
+                    )
+                    current_state["ScrubbedChapters"] = (
+                        processed_chapters  # Simpan ke state (Gunakan plural)
+                    )
+                    StoryInfoJSON["ScrubbedChapters"] = processed_chapters[
+                        :
+                    ]  # Simpan SALINAN ke JSON info (Gunakan plural)
+                    current_state["last_completed_step"] = (
+                        "post_processing_scrub_complete"
+                    )
+                    save_state(current_state, state_filepath)  # Simpan state segera
                     SysLogger.Log("Scrubbing Pass Complete. State Saved.", 4)
                 except Exception as e:
                     post_processing_successful = False
-                    SysLogger.Log(f"ERROR during Scrubbing Pass: {e}. Skipping further scrubbing on this version.", 7)
+                    SysLogger.Log(
+                        f"ERROR during Scrubbing Pass: {e}. Skipping further scrubbing on this version.",
+                        7,
+                    )
                     import traceback
+
                     traceback.print_exc()
                     # Jangan perbarui processed_chapters
         else:
@@ -911,16 +942,27 @@ def main():
                         NumChapters,
                         Writer.Config.TRANSLATE_LANGUAGE,
                     )
-                    processed_chapters = translated_chapters_result # Perbarui bab yang diproses
-                    current_state["TranslatedChapters"] = processed_chapters # Simpan ke state
-                    StoryInfoJSON["TranslatedChapters"] = processed_chapters[:] # Simpan SALINAN ke JSON info
-                    current_state["last_completed_step"] = "post_processing_translate_complete"
-                    save_state(current_state, state_filepath) # Simpan state segera
+                    processed_chapters = (
+                        translated_chapters_result  # Perbarui bab yang diproses
+                    )
+                    current_state["TranslatedChapters"] = (
+                        processed_chapters  # Simpan ke state
+                    )
+                    StoryInfoJSON["TranslatedChapters"] = processed_chapters[
+                        :
+                    ]  # Simpan SALINAN ke JSON info
+                    current_state["last_completed_step"] = (
+                        "post_processing_translate_complete"
+                    )
+                    save_state(current_state, state_filepath)  # Simpan state segera
                     SysLogger.Log("Translation Complete. State Saved.", 4)
                 except Exception as e:
                     post_processing_successful = False
-                    SysLogger.Log(f"ERROR during Translation: {e}. Translation failed.", 7)
+                    SysLogger.Log(
+                        f"ERROR during Translation: {e}. Translation failed.", 7
+                    )
                     import traceback
+
                     traceback.print_exc()
                     # Jangan perbarui processed_chapters
         else:
@@ -933,14 +975,15 @@ def main():
         # Simpan versi final bab yang berhasil diproses ke state dan JSON info
         current_state["FinalProcessedChapters"] = processed_chapters
         StoryInfoJSON["FinalProcessedChapters"] = processed_chapters
-        current_state["last_completed_step"] = "post_processing_complete" # Tandai semua pasca-proses selesai (atau sejauh mana berhasil)
-        save_state(current_state, state_filepath) # Simpan state akhir pasca-proses
+        current_state["last_completed_step"] = (
+            "post_processing_complete"  # Tandai semua pasca-proses selesai (atau sejauh mana berhasil)
+        )
+        save_state(current_state, state_filepath)  # Simpan state akhir pasca-proses
         SysLogger.Log("Post-Processing Steps Finished. Final State Saved.", 4)
-
 
         # Compile The Final Story Text (gunakan processed_chapters)
         StoryBodyText = ""
-        for Chapter in processed_chapters: # Gunakan versi final yang berhasil diproses
+        for Chapter in processed_chapters:  # Gunakan versi final yang berhasil diproses
             StoryBodyText += Chapter + "\n\n\n"
 
         # Generate Info (gunakan Outline Detail atau Outline Dasar sebagai konteks)
@@ -950,13 +993,19 @@ def main():
         InfoQueryContent = ""
         info_source = "N/A"
         # Prioritaskan outline per bab yang diperluas jika ekspansi diaktifkan dan hasilnya ada
-        if Writer.Config.EXPAND_OUTLINE and current_state.get("expanded_chapter_outlines"):
+        if Writer.Config.EXPAND_OUTLINE and current_state.get(
+            "expanded_chapter_outlines"
+        ):
             expanded_outlines = current_state["expanded_chapter_outlines"]
             # Pastikan itu list dan tidak kosong
             if isinstance(expanded_outlines, list) and expanded_outlines:
-                InfoQueryContent = "\n\n---\n\n".join(expanded_outlines) # Gabungkan dengan pemisah
+                InfoQueryContent = "\n\n---\n\n".join(
+                    expanded_outlines
+                )  # Gabungkan dengan pemisah
                 info_source = "expanded_chapter_outlines"
-                SysLogger.Log(f"Using joined expanded chapter outlines for GetStoryInfo.", 6)
+                SysLogger.Log(
+                    f"Using joined expanded chapter outlines for GetStoryInfo.", 6
+                )
 
         # Fallback ke outline global jika outline per bab tidak digunakan atau tidak valid
         if not InfoQueryContent:
@@ -965,10 +1014,13 @@ def main():
                 InfoQueryContent = full_outline_content
                 info_source = "full_outline"
                 SysLogger.Log(f"Using full_outline for GetStoryInfo.", 6)
-            else: # Pilihan terakhir jika outline global juga tidak ada
+            else:  # Pilihan terakhir jika outline global juga tidak ada
                 InfoQueryContent = "No outline information available."
                 info_source = "fallback_string"
-                SysLogger.Log(f"Warning: No outline found for GetStoryInfo, using fallback string.", 6)
+                SysLogger.Log(
+                    f"Warning: No outline found for GetStoryInfo, using fallback string.",
+                    6,
+                )
 
         SysLogger.Log(f"Final content source for GetStoryInfo: {info_source}", 6)
         # Buat pesan awal HANYA dengan konten outline yang dipilih
@@ -980,11 +1032,15 @@ def main():
             # Modify this line:
             # Info = Writer.StoryInfo.GetStoryInfo(...)
             # To unpack two values, ignoring the second one:
-            Info, _ = Writer.StoryInfo.GetStoryInfo( # Unpack 2 values, ignore token usage
-                Interface, SysLogger, StoryInfoMessages
+            Info, _ = (
+                Writer.StoryInfo.GetStoryInfo(  # Unpack 2 values, ignore token usage
+                    Interface, SysLogger, StoryInfoMessages
+                )
             )
             # The rest of the block remains the same
-            Title = Info.get("Title", "Untitled Story") # This line should now work correctly
+            Title = Info.get(
+                "Title", "Untitled Story"
+            )  # This line should now work correctly
             StoryInfoJSON.update({"Title": Title})
             Summary = Info.get("Summary", "No summary generated.")
             StoryInfoJSON.update({"Summary": Summary})
@@ -1140,8 +1196,11 @@ Please scroll to the bottom if you wish to read that.
         try:
             # Pastikan FinalProcessedChapters ada sebelum menyimpan
             if "FinalProcessedChapters" not in StoryInfoJSON:
-                 SysLogger.Log("Warning: 'FinalProcessedChapters' key missing from StoryInfoJSON before final save. Adding current processed_chapters.", 6)
-                 StoryInfoJSON["FinalProcessedChapters"] = processed_chapters # Fallback
+                SysLogger.Log(
+                    "Warning: 'FinalProcessedChapters' key missing from StoryInfoJSON before final save. Adding current processed_chapters.",
+                    6,
+                )
+                StoryInfoJSON["FinalProcessedChapters"] = processed_chapters  # Fallback
 
             with open(FinalJSONPath, "w", encoding="utf-8") as F:
                 # Tambahkan statistik ke JSON jika diinginkan
@@ -1172,31 +1231,47 @@ Please scroll to the bottom if you wish to read that.
         current_state["last_completed_step"] = "complete"
 
         # --- DEBUG LOGGING START ---
-        SysLogger.Log(f"DEBUG: Keys in current_state before final save: {list(current_state.keys())}", 6)
+        SysLogger.Log(
+            f"DEBUG: Keys in current_state before final save: {list(current_state.keys())}",
+            6,
+        )
         # Check for the key used to store the final chapters after all processing
         final_chapters_key = None
         if "TranslatedChapters" in current_state:
             final_chapters_key = "TranslatedChapters"
-        elif "ScrubbedChapter" in current_state: # Note: Should likely be ScrubbedChapters if it's a list
-             final_chapters_key = "ScrubbedChapter"
+        elif (
+            "ScrubbedChapter" in current_state
+        ):  # Note: Should likely be ScrubbedChapters if it's a list
+            final_chapters_key = "ScrubbedChapter"
         elif "EditedChapters" in current_state:
-             final_chapters_key = "EditedChapters"
-        elif "completed_chapters" in current_state: # Fallback to completed if no post-processing happened
-             final_chapters_key = "completed_chapters"
+            final_chapters_key = "EditedChapters"
+        elif (
+            "completed_chapters" in current_state
+        ):  # Fallback to completed if no post-processing happened
+            final_chapters_key = "completed_chapters"
 
         if final_chapters_key and final_chapters_key in current_state:
-             SysLogger.Log(f"DEBUG: Final chapters key '{final_chapters_key}' IS present before final save.", 6)
-             # Optionally log the type or length
-             # SysLogger.Log(f"DEBUG: Type of '{final_chapters_key}': {type(current_state[final_chapters_key])}", 6)
-             # if isinstance(current_state[final_chapters_key], list):
-             #    SysLogger.Log(f"DEBUG: Length of '{final_chapters_key}': {len(current_state[final_chapters_key])}", 6)
+            SysLogger.Log(
+                f"DEBUG: Final chapters key '{final_chapters_key}' IS present before final save.",
+                6,
+            )
+            # Optionally log the type or length
+            # SysLogger.Log(f"DEBUG: Type of '{final_chapters_key}': {type(current_state[final_chapters_key])}", 6)
+            # if isinstance(current_state[final_chapters_key], list):
+            #    SysLogger.Log(f"DEBUG: Length of '{final_chapters_key}': {len(current_state[final_chapters_key])}", 6)
         elif final_chapters_key:
-             SysLogger.Log(f"DEBUG: Final chapters key '{final_chapters_key}' IS MISSING before final save!", 7)
+            SysLogger.Log(
+                f"DEBUG: Final chapters key '{final_chapters_key}' IS MISSING before final save!",
+                7,
+            )
         else:
-             SysLogger.Log(f"DEBUG: Could not determine the final chapters key to check before final save!", 7)
+            SysLogger.Log(
+                f"DEBUG: Could not determine the final chapters key to check before final save!",
+                7,
+            )
         # --- DEBUG LOGGING END ---
 
-        save_state(current_state, state_filepath) # Simpan state setelah debug log
+        save_state(current_state, state_filepath)  # Simpan state setelah debug log
         SysLogger.Log("Run completed successfully and state marked as completed.", 5)
 
     elif last_completed_step == "complete":
