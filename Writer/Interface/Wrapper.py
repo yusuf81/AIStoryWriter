@@ -778,11 +778,36 @@ class Interface:
             Client.set_params(**final_params_for_openrouter)
             # --- END MODIFICATION ---
 
-            Response = Client.chat(messages=_Messages, seed=Seed)
-            _Messages.append({"role": "assistant", "content": Response})
-            # TODO: OpenRouter token usage - The current OpenRouter client doesn't easily expose this.
-            # We'll return None for now. This would require modifying the OpenRouter class.
-            LastTokenUsage = None  # Placeholder
+            # --- START MODIFICATION FOR TOKEN USAGE ---
+            ResponseContent, UsageInfo = Client.chat(messages=_Messages, seed=Seed)
+
+            if ResponseContent is not None:
+                _Messages.append({"role": "assistant", "content": ResponseContent})
+                if UsageInfo:
+                    prompt_tokens = UsageInfo.get("prompt_tokens", 0)
+                    completion_tokens = UsageInfo.get("completion_tokens", 0) # OpenRouter menggunakan 'completion_tokens'
+                    LastTokenUsage = {
+                        "prompt_tokens": prompt_tokens,
+                        "completion_tokens": completion_tokens,
+                    }
+                    _Logger.Log(
+                        f"OpenRouter Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}",
+                        6,
+                    )
+                else:
+                    _Logger.Log(
+                        "Could not extract OpenRouter token usage from response.", 6
+                    )
+                    LastTokenUsage = None
+            else:
+                # Handle kasus di mana Client.chat mengembalikan None (misalnya, semua retry gagal)
+                _Logger.Log("OpenRouter client did not return a valid response.", 7)
+                # Tambahkan pesan error ke _Messages atau raise exception jika diperlukan
+                # Untuk saat ini, kita akan membiarkan _Messages tidak berubah dan LastTokenUsage tetap None
+                # atau Anda bisa menambahkan pesan error dummy:
+                # _Messages.append({"role": "assistant", "content": "Error: No response from OpenRouter."})
+                LastTokenUsage = None
+            # --- END MODIFICATION FOR TOKEN USAGE ---
 
         elif Provider == "Anthropic":
             raise NotImplementedError("Anthropic API not supported")

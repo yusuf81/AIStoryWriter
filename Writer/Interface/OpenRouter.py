@@ -216,12 +216,16 @@ class OpenRouter:
                     stream=False,
                 )
                 response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an unsuccessful status code
-                if "choices" in response.json():
-                    # Return result from request
-                    return response.json()["choices"][0]["message"]["content"]
-                elif "error" in response.json():
+                response_json = response.json() # Simpan JSON respons untuk penggunaan ganda
+                if "choices" in response_json:
+                    # --- START MODIFICATION ---
+                    content = response_json["choices"][0]["message"]["content"]
+                    usage_info = response_json.get("usage") # Dapatkan objek 'usage' jika ada
+                    return content, usage_info # Kembalikan konten dan info penggunaan
+                    # --- END MODIFICATION ---
+                elif "error" in response_json: # Gunakan response_json di sini
                     print(
-                        f"Openrouter returns error '{response.json()['error']['code']}' with message '{response.json()['error']['message']}', retry attempt {retries + 1}."
+                        f"Openrouter returns error '{response_json['error']['code']}' with message '{response_json['error']['message']}', retry attempt {retries + 1}."
                     )
                     if response.json()["error"]["code"] == 400:
                         print("Bad Request (invalid or missing params, CORS)")
@@ -284,3 +288,5 @@ class OpenRouter:
                     f"An unexpected error occurred: '{e}', retry attempt {retries + 1}."
                 )
             retries += 1
+        # Jika loop selesai tanpa return (semua retry gagal)
+        return None, None # Kembalikan None untuk konten dan usage jika semua retry gagal
