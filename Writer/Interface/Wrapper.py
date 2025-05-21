@@ -632,27 +632,49 @@ class Interface:
                 if "role" in m and m["role"] == "system":
                     m["role"] = "user"
 
-            MaxRetries = 3
-            LastTokenUsage = None  # Initialize token usage variable
-            GeneratedContentResponse = None  # Variable to store the response object
+            MaxRetries = 3 # Anda mungkin ingin memindahkan ini ke Writer.Config.MAX_GOOGLE_RETRIES
+            LastTokenUsage = None
+            GeneratedContentResponse = None
 
-            while True:  # Keep the retry loop structure
+            # --- START MODIFICATION FOR STRUCTURED OUTPUT AND CONFIG ---
+            # ModelOptions sudah tersedia dari self.GetModelAndProvider(_Model)
+
+            safety_settings_val = {
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            }
+
+            # Inisialisasi generation_config_dict dengan ModelOptions jika ada
+            generation_config_dict = ModelOptions.copy() if ModelOptions is not None else {}
+            
+            # Tambahkan/Timpa safety_settings
+            generation_config_dict["safety_settings"] = safety_settings_val
+
+            if _FormatSchema is not None:
+                generation_config_dict["response_mime_type"] = "application/json"
+                generation_config_dict["response_schema"] = _FormatSchema
+                _Logger.Log(f"Using Google Structured Output with schema", 4)
+                # Atur temperature ke 0 untuk output terstruktur yang deterministik jika belum diatur
+                if "temperature" not in generation_config_dict: # Periksa apakah sudah ada dari ModelOptions
+                    generation_config_dict["temperature"] = 0.0
+            
+            _Logger.Log(f"Using Google Generation Config: {generation_config_dict}", 4) # Log config yang digunakan
+
+            # --- END MODIFICATION FOR STRUCTURED OUTPUT AND CONFIG ---
+
+            while True:
                 try:
-                    # Store the response object returned by generate_content
                     GeneratedContentResponse = self.Clients[_Model].generate_content(
                         contents=_Messages,
                         stream=True,
-                        safety_settings={
-                            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                        },
+                        # Hapus safety_settings dari sini
+                        generation_config=generation_config_dict # Tambahkan generation_config
                     )
-                    # Capture both return values, but ignore the second one (LastChunk)
                     AssistantMessage, _ = self.StreamResponse(
                         GeneratedContentResponse, Provider
-                    )  # Use _ to ignore LastChunk
+                    )
                     _Messages.append(AssistantMessage)
 
                     # --- Keep existing Google token extraction logic ---
