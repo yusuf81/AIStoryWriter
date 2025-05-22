@@ -25,7 +25,7 @@ import Writer.Chapter.ChapterGenerator
 import Writer.StoryInfo
 import Writer.NovelEditor
 import Writer.Translator
-import Writer.Prompts
+# import Writer.Prompts # Dihapus karena kita akan menggunakan ActivePrompts yang dimuat secara dinamis
 import Writer.Statistics  # Pastikan ini ada
 
 
