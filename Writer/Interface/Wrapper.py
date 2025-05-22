@@ -465,6 +465,39 @@ class Interface:
             )
         # --- AKHIR PERHITUNGAN INPUT ---
 
+        # --- AWAL DEBUG LOGGING UNTUK KONTEN PROMPT ---
+        if Writer.Config.DEBUG:
+            _Logger.Log("--------- PROMPT CONTENT SENT TO LLM START ---------", 6)
+            for i, msg in enumerate(_Messages):
+                role = msg.get("role", "unknown")
+                content = msg.get("content", "")
+                if isinstance(content, list): # Handle kasus Google Gemini dengan 'parts'
+                    try:
+                        # Coba gabungkan 'parts' jika itu adalah list of strings atau dicts dengan 'text'
+                        if all(isinstance(part, str) for part in content):
+                            content_snippet = "".join(content)
+                        elif all(isinstance(part, dict) and "text" in part for part in content):
+                            content_snippet = "".join(part.get("text","") for part in content)
+                        else: # Fallback jika struktur 'parts' tidak terduga
+                            content_snippet = str(content)
+                    except Exception:
+                        content_snippet = str(content) # Fallback jika ada error saat memproses 'parts'
+                elif isinstance(content, str):
+                    content_snippet = content
+                else: # Fallback jika content bukan string atau list yang dikenal
+                    content_snippet = str(content)
+
+                snippet_limit = 150  # Batas karakter untuk snippet
+                if len(content_snippet) > snippet_limit:
+                    snippet_display = content_snippet[:snippet_limit] + "..."
+                else:
+                    snippet_display = content_snippet
+                # Ganti newline dengan spasi untuk tampilan log yang lebih ringkas
+                snippet_display = snippet_display.replace("\n", " ") 
+                _Logger.Log(f"Message {i} - Role: {role}, Snippet: \"{snippet_display}\"", 6)
+            _Logger.Log("--------- PROMPT CONTENT SENT TO LLM END -----------", 6)
+        # --- AKHIR DEBUG LOGGING UNTUK KONTEN PROMPT ---
+
         # --- Sisa kode fungsi dimulai di sini ---
         Provider, ProviderModel, ModelHost, ModelOptions = self.GetModelAndProvider(
             _Model
