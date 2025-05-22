@@ -346,7 +346,14 @@ def main():
         Writer.Config.ENABLE_FINAL_EDIT_PASS = Args.EnableFinalEditPass
         Writer.Config.OPTIONAL_OUTPUT_NAME = Args.Output
         Writer.Config.SCENE_GENERATION_PIPELINE = Args.SceneGenerationPipeline
-        Writer.Config.DEBUG = Args.Debug
+        
+        # Atur Writer.Config.DEBUG berdasarkan nilai dari Config.py dan flag Args.Debug
+        # Jika Args.Debug adalah True (flag -Debug diberikan), maka Writer.Config.DEBUG akan True.
+        # Jika Args.Debug adalah False (flag -Debug tidak diberikan),
+        # maka Writer.Config.DEBUG akan mempertahankan nilainya dari Config.py.
+        current_debug_setting_from_config_file = Writer.Config.DEBUG
+        Writer.Config.DEBUG = current_debug_setting_from_config_file or Args.Debug
+        
         # Jika Anda menambahkan argumen -NativeLanguage, proses di sini:
         # Writer.Config.NATIVE_LANGUAGE = getattr(Args, 'NativeLanguage', Writer.Config.NATIVE_LANGUAGE)
     # --- AKHIR BLOK SETUP CONFIG ---
