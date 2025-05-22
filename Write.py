@@ -412,16 +412,20 @@ def main():
             
             # --- PEMUATAN PROMPT DINAMIS (BAGIAN INTI SETELAH CONFIG DARI STATE) ---
             native_lang_config_resume = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en').lower()
-            _early_print(f"DEBUG: NATIVE_LANGUAGE for resumed run, before dynamic prompt load: '{native_lang_config_resume}'") # Tambahan log diagnostik
+            _early_print(f"DEBUG: NATIVE_LANGUAGE for resumed run, before dynamic prompt load: '{native_lang_config_resume}'")
+
+            ActivePrompts = None # Inisialisasi ActivePrompts ke None
+
             if native_lang_config_resume == 'en':
                 try:
+                    # Hanya impor dan set Prompts_en jika NATIVE_LANGUAGE adalah 'en'
                     import Writer.Prompts as Prompts_en
                     ActivePrompts = Prompts_en
                     _early_print(f"Using English prompts (Writer.Prompts) as NATIVE_LANGUAGE is '{native_lang_config_resume}'.")
                 except ImportError as e:
                     _early_error(f"Failed to import Writer.Prompts (English default): {e}. This is critical.")
                     sys.exit(1)
-            else:
+            else: # Ini akan dieksekusi jika native_lang_config_resume BUKAN 'en' (misalnya 'id')
                 try:
                     module_name = f"Writer.Prompts_{native_lang_config_resume}"
                     ActivePrompts = importlib.import_module(module_name)
@@ -429,7 +433,7 @@ def main():
                 except ImportError:
                     _early_warn(f"Prompt module for NATIVE_LANGUAGE '{native_lang_config_resume}' ('{module_name}') not found. Falling back to English prompts (Writer.Prompts).")
                     try:
-                        import Writer.Prompts as Prompts_en
+                        import Writer.Prompts as Prompts_en # Fallback ke English
                         ActivePrompts = Prompts_en
                     except ImportError as e:
                         _early_error(f"Failed to import fallback Writer.Prompts (English default) after failing to load '{module_name}': {e}.")
@@ -437,15 +441,16 @@ def main():
                 except Exception as e:
                     _early_error(f"Unexpected error loading prompt module for NATIVE_LANGUAGE '{native_lang_config_resume}': {e}. Falling back to English prompts.")
                     try:
-                        import Writer.Prompts as Prompts_en
+                        import Writer.Prompts as Prompts_en # Fallback ke English
                         ActivePrompts = Prompts_en
                     except ImportError as ie:
                         _early_error(f"Failed to import fallback Writer.Prompts (English default) after unexpected error: {ie}.")
                         sys.exit(1)
 
-            if ActivePrompts is None:
+            if ActivePrompts is None: # Pemeriksaan ini sekarang lebih krusial
                 _early_error(f"CRITICAL: ActivePrompts is None after attempting to load for NATIVE_LANGUAGE '{native_lang_config_resume}'. Cannot continue.")
                 sys.exit(1)
+
             sys.modules['Writer.Prompts'] = ActivePrompts
             _early_print(f"Dynamically set sys.modules['Writer.Prompts'] to '{ActivePrompts.__name__}'.")
             # --- AKHIR PEMUATAN PROMPT DINAMIS (BAGIAN INTI) ---
@@ -524,16 +529,20 @@ def main():
     
         # --- PEMUATAN PROMPT DINAMIS (BAGIAN INTI UNTUK RUN BARU) ---
         native_lang_config_new = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en').lower()
-        _early_print(f"DEBUG: NATIVE_LANGUAGE for new run, before dynamic prompt load: '{native_lang_config_new}'") # Tambahan log diagnostik
+        _early_print(f"DEBUG: NATIVE_LANGUAGE for new run, before dynamic prompt load: '{native_lang_config_new}'")
+
+        ActivePrompts = None # Inisialisasi ActivePrompts ke None
+
         if native_lang_config_new == 'en':
             try:
-                import Writer.Prompts as Prompts_en
+                # Hanya impor dan set Prompts_en jika NATIVE_LANGUAGE adalah 'en'
+                import Writer.Prompts as Prompts_en 
                 ActivePrompts = Prompts_en
                 _early_print(f"Using English prompts (Writer.Prompts) as NATIVE_LANGUAGE is '{native_lang_config_new}'.")
             except ImportError as e:
                 _early_error(f"Failed to import Writer.Prompts (English default): {e}. This is critical.")
                 sys.exit(1)
-        else:
+        else: # Ini akan dieksekusi jika native_lang_config_new BUKAN 'en' (misalnya 'id')
             try:
                 module_name = f"Writer.Prompts_{native_lang_config_new}"
                 ActivePrompts = importlib.import_module(module_name)
@@ -541,7 +550,7 @@ def main():
             except ImportError:
                 _early_warn(f"Prompt module for NATIVE_LANGUAGE '{native_lang_config_new}' ('{module_name}') not found. Falling back to English prompts (Writer.Prompts).")
                 try:
-                    import Writer.Prompts as Prompts_en
+                    import Writer.Prompts as Prompts_en # Fallback ke English
                     ActivePrompts = Prompts_en
                 except ImportError as e:
                     _early_error(f"Failed to import fallback Writer.Prompts (English default) after failing to load '{module_name}': {e}.")
@@ -549,15 +558,16 @@ def main():
             except Exception as e:
                 _early_error(f"Unexpected error loading prompt module for NATIVE_LANGUAGE '{native_lang_config_new}': {e}. Falling back to English prompts.")
                 try:
-                    import Writer.Prompts as Prompts_en
+                    import Writer.Prompts as Prompts_en # Fallback ke English
                     ActivePrompts = Prompts_en
                 except ImportError as ie:
                     _early_error(f"Failed to import fallback Writer.Prompts (English default) after unexpected error: {ie}.")
                     sys.exit(1)
 
-        if ActivePrompts is None:
+        if ActivePrompts is None: # Pemeriksaan ini sekarang lebih krusial
             _early_error(f"CRITICAL: ActivePrompts is None after attempting to load for NATIVE_LANGUAGE '{native_lang_config_new}'. Cannot continue.")
             sys.exit(1)
+            
         sys.modules['Writer.Prompts'] = ActivePrompts
         _early_print(f"Dynamically set sys.modules['Writer.Prompts'] to '{ActivePrompts.__name__}'.")
         # --- AKHIR PEMUATAN PROMPT DINAMIS (BAGIAN INTI) ---
