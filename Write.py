@@ -769,7 +769,7 @@ def main():
             # Panggil prompt baru untuk penyempurnaan
             RefinementMessages = [
                 Interface.BuildUserQuery(
-                    Writer.Prompts.EXPAND_OUTLINE_CHAPTER_BY_CHAPTER.format(
+                    ActivePrompts.EXPAND_OUTLINE_CHAPTER_BY_CHAPTER.format(
                         _Outline=Outline  # Gunakan outline global asli
                     )
                 )
