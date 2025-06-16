@@ -273,6 +273,226 @@ class Interface:
         # Return the final, validated message list AND token usage
         return NewMsg, TokenUsage
 
+    # --- START OF NEW PRIVATE HELPER METHODS ---
+    def _ollama_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
+        # Logic for Ollama will be moved here
+        # Ensure 'import ollama' is available
+        import ollama
+
+        _Logger.Log(f"Executing _ollama_chat for {_Model_key}", 6)
+        ProviderModel = ProviderModel_name # Already stripped of host by GetModelAndProvider
+
+        ValidParameters = [
+            "mirostat", "mirostat_eta", "mirostat_tau", "num_ctx", "repeat_last_n",
+            "repeat_penalty", "temperature", "seed", "tfs_z", "num_predict", "top_k", "top_p",
+        ]
+        CurrentModelOptions = ModelOptions_dict.copy() if ModelOptions_dict is not None else {}
+
+        for key in CurrentModelOptions:
+            if key not in ValidParameters:
+                # Log a warning instead of raising an error for flexibility, or make it strict
+                _Logger.Log(f"Warning: Invalid Ollama parameter '{key}' found in ModelOptions for {_Model_key}.", 6)
+                # raise ValueError(f"Invalid parameter: {key}")
+
+        if "num_ctx" not in CurrentModelOptions:
+            CurrentModelOptions["num_ctx"] = Writer.Config.OLLAMA_CTX
+
+        CurrentModelOptions["seed"] = Seed_int # Ensure seed is passed to ollama options
+
+        _Logger.Log(f"Using Ollama Model Options for {_Model_key}: {CurrentModelOptions}", 4)
+
+        if _FormatSchema_dict is not None:
+            CurrentModelOptions["format"] = "json" # Ollama uses "json" string for format when a schema is implied by usage
+            if "temperature" not in CurrentModelOptions : # More deterministic for JSON
+                CurrentModelOptions["temperature"] = 0.0
+            _Logger.Log(f"Using Ollama Structured Output (format: json) for {_Model_key}", 4)
+
+        MaxRetries = getattr(Writer.Config, "MAX_OLLAMA_RETRIES", 3)
+        LastTokenUsage = None
+        Messages_updated = _Messages_list[:] # Work on a copy
+
+        while MaxRetries > 0:
+            try:
+                Stream = self.Clients[_Model_key].chat(
+                    model=ProviderModel,
+                    messages=Messages_updated,
+                    stream=True,
+                    options=CurrentModelOptions,
+                )
+                AssistantMessage, LastChunk = self.StreamResponse(Stream, "ollama")
+                Messages_updated.append(AssistantMessage)
+
+                if LastChunk and LastChunk.get("done"):
+                    prompt_tokens = LastChunk.get("prompt_eval_count", 0)
+                    completion_tokens = LastChunk.get("eval_count", 0)
+                    LastTokenUsage = {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}
+                    _Logger.Log(f"Ollama Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}", 6)
+                else:
+                    _Logger.Log("Could not extract Ollama token usage from last chunk.", 6)
+                    LastTokenUsage = None
+                break
+            except ollama.ResponseError as e:
+                MaxRetries -= 1
+                _Logger.Log(f"Exception During Ollama Generation/Stream for {_Model_key}: '{e}', {MaxRetries} Retries Remaining", 7)
+                if MaxRetries <= 0:
+                    _Logger.Log(f"Max Retries Exceeded During Ollama Generation for {_Model_key}, Aborting!", 7)
+                    raise Exception(f"Ollama StreamResponse failed after retries for {_Model_key}: {e}")
+                time.sleep(2)
+            except Exception as e:
+                _Logger.Log(f"Unexpected Exception During Ollama Stream Handling for {_Model_key}: '{e}'", 7)
+                raise Exception(f"Ollama Stream Handling failed for {_Model_key}: {e}")
+
+        return Messages_updated, LastTokenUsage
+
+    def _google_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
+        # Logic for Google will be moved here
+        from google.generativeai.types import HarmCategory, HarmBlockThreshold # Specific import
+
+        _Logger.Log(f"Executing _google_chat for {_Model_key}", 6)
+        Messages_transformed = [{"role": m["role"], "parts": [m["content"]]} if isinstance(m["content"], str) else {"role": m["role"], "parts": m["content"]} for m in _Messages_list]
+
+        for m in Messages_transformed:
+            if "role" in m and m["role"] == "assistant":
+                m["role"] = "model"
+            if "role" in m and m["role"] == "system": # System messages become user messages for Google
+                m["role"] = "user"
+
+        MaxRetries = getattr(Writer.Config, "MAX_GOOGLE_RETRIES", 3)
+        LastTokenUsage = None
+        GeneratedContentResponse = None
+        Messages_updated = Messages_transformed[:] # Work on the transformed copy
+
+        safety_settings_val = {
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+        }
+
+        generation_config_dict = ModelOptions_dict.copy() if ModelOptions_dict is not None else {}
+        generation_config_dict["safety_settings"] = safety_settings_val
+        # Google's 'seed' parameter is part of the GenerationConfig.
+        # However, google-genai python SDK currently doesn't directly support 'seed' in GenerationConfig object.
+        # It might be supported for specific models or future SDK versions at API level.
+        # For now, we acknowledge Seed_int but cannot directly pass it via documented SDK means.
+        if Seed_int is not None:
+             _Logger.Log(f"Google API does not directly support 'seed' via Python SDK's GenerationConfig for {_Model_key}. Seed {Seed_int} ignored.", 6)
+
+
+        if _FormatSchema_dict is not None:
+            generation_config_dict["response_mime_type"] = "application/json"
+            generation_config_dict["response_schema"] = _FormatSchema_dict
+            if "temperature" not in generation_config_dict:
+                generation_config_dict["temperature"] = 0.0
+            _Logger.Log(f"Using Google Structured Output with schema for {_Model_key}", 4)
+
+        _Logger.Log(f"Using Google Generation Config for {_Model_key}: {generation_config_dict}", 4)
+
+        retry_count = 0
+        while True: # Original loop was `while True`, implies retries are handled by SDK or not explicitly here beyond first attempt.
+                    # Let's stick to MaxRetries for consistency.
+            try:
+                GeneratedContentResponse = self.Clients[_Model_key].generate_content(
+                    contents=Messages_updated, # Use the transformed list
+                    stream=True,
+                    generation_config=generation_config_dict,
+                )
+                AssistantMessage, _ = self.StreamResponse(GeneratedContentResponse, "google")
+                Messages_updated.append(AssistantMessage)
+
+                try:
+                    if hasattr(GeneratedContentResponse, "usage_metadata"):
+                        metadata = GeneratedContentResponse.usage_metadata
+                        prompt_tokens = metadata.prompt_token_count
+                        completion_tokens = metadata.candidates_token_count
+                        LastTokenUsage = {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}
+                        _Logger.Log(f"Google Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}", 6)
+                    else:
+                        _Logger.Log("Google usage_metadata not found on response object.", 6)
+                except Exception as meta_e:
+                    _Logger.Log(f"Error accessing Google usage_metadata: {meta_e}", 7)
+
+                break # Success
+            except Exception as e:
+                retry_count +=1
+                if retry_count > MaxRetries:
+                    _Logger.Log(f"Max Retries Exceeded During Google Generation for {_Model_key}, Aborting! Error: {e}", 7)
+                    raise Exception(f"Google Generation Failed for {_Model_key} after retries: {e}")
+                _Logger.Log(f"Exception During Google Generation for {_Model_key}: '{e}', {MaxRetries - retry_count} Retries Remaining", 7)
+                time.sleep(2)
+
+        # Transform messages back
+        FinalMessages = []
+        for m in Messages_updated:
+            role = m["role"]
+            if role == "model":
+                role = "assistant"
+            # Assuming 'parts' is always a list and we want its string content
+            content = "".join(m["parts"]) if isinstance(m["parts"], list) else m["parts"]
+            FinalMessages.append({"role": role, "content": content})
+
+        return FinalMessages, LastTokenUsage
+
+    def _openrouter_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
+        # Logic for OpenRouter will be moved here
+        _Logger.Log(f"Executing _openrouter_chat for {_Model_key}", 6)
+
+        Client = self.Clients[_Model_key]
+        Client.model = ProviderModel_name # ProviderModel_name is already just the model name
+
+        CurrentModelOptions = ModelOptions_dict.copy() if ModelOptions_dict is not None else {}
+        CurrentModelOptions["seed"] = Seed_int # Add seed to options
+
+        openrouter_response_format = None
+        if _FormatSchema_dict is not None:
+            openrouter_response_format = {
+                "type": "json_schema",
+                "json_schema": {
+                    "strict": True,
+                    "schema": _FormatSchema_dict,
+                },
+            }
+            _Logger.Log(f"Using OpenRouter Structured Output with schema for {_Model_key}", 4)
+            if "temperature" not in CurrentModelOptions:
+                CurrentModelOptions["temperature"] = 0.0
+
+        if openrouter_response_format:
+            CurrentModelOptions["response_format"] = openrouter_response_format
+
+        # Parameter validation (example, can be expanded)
+        # ValidParametersOpenRouter = ["max_tokens", "temperature", "top_p", "seed", "response_format", ...]
+        # for key in CurrentModelOptions:
+        #     if key not in ValidParametersOpenRouter:
+        #         _Logger.Log(f"Warning: Potentially unsupported OpenRouter parameter '{key}' for {_Model_key}", 6)
+
+        Client.set_params(**CurrentModelOptions)
+        _Logger.Log(f"Using OpenRouter Model Options for {_Model_key}: {CurrentModelOptions}", 4)
+
+        LastTokenUsage = None
+        Messages_updated = _Messages_list[:] # Work on a copy
+
+        try:
+            Stream = Client.chat(messages=Messages_updated, stream=True) # Seed is set via set_params
+            AssistantMessage, LastChunk = self.StreamResponse(Stream, "openrouter")
+            Messages_updated.append(AssistantMessage)
+
+            if LastChunk and isinstance(LastChunk, dict) and "usage" in LastChunk:
+                usage_data = LastChunk["usage"]
+                prompt_tokens = usage_data.get("prompt_tokens", 0)
+                completion_tokens = usage_data.get("completion_tokens", 0)
+                LastTokenUsage = {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}
+                _Logger.Log(f"OpenRouter Token Usage (from stream) - Prompt: {prompt_tokens}, Completion: {completion_tokens}", 6)
+            else:
+                _Logger.Log("OpenRouter Token Usage: Not found in the last stream chunk.", 6)
+        except Exception as e:
+            _Logger.Log(f"Error during OpenRouter streaming for {_Model_key}: {e}", 7)
+            Messages_updated.append({"role": "assistant", "content": f"Error: OpenRouter stream failed for {_Model_key}. {e}"})
+            # raise # Optionally re-raise
+
+        return Messages_updated, LastTokenUsage
+
+    # --- END OF NEW PRIVATE HELPER METHODS ---
+
     def SafeGenerateJSON(
         self,
         _Logger,
@@ -446,477 +666,110 @@ class Interface:
         _SeedOverride: int = -1,
         _FormatSchema: dict = None,
     ):
-        # --- AWAL PERHITUNGAN INPUT ---
+        # --- COMMON INITIAL TASKS ---
         TotalInputChars = 0
-        EstimatedInputTokens = 0  # Tambahkan ini
+        EstimatedInputTokens = 0
         try:
             for msg in _Messages:
-                if isinstance(msg.get("content"), str):
+                if isinstance(msg.get("content"), str): # Ensure content is a string
                     TotalInputChars += len(msg["content"])
-            # Hitung estimasi token (gunakan pembagi 5 seperti log estimasi lainnya)
+                elif isinstance(msg.get("content"), list): # Handle Google's 'parts' list
+                    for part in msg.get("content"):
+                        if isinstance(part, str):
+                            TotalInputChars += len(part)
+                        elif isinstance(part, dict) and isinstance(part.get("text"), str):
+                            TotalInputChars += len(part.get("text"))
             EstimatedInputTokens = round(TotalInputChars / 5)
-            # --- HAPUS LOG INI ---
-            # _Logger.Log(f"Input Content Length (chars): {TotalInputChars} being sent to {_Model}", 6)
-            # --- AKHIR HAPUS LOG INI ---
         except Exception as e:
-            _Logger.Log(
-                f"Warning: Could not calculate input character/token count. Error: {e}",
-                7,
-            )
-        # --- AKHIR PERHITUNGAN INPUT ---
+            _Logger.Log(f"Warning: Could not calculate input character/token count for {_Model}. Error: {e}", 6)
 
-        # --- AWAL DEBUG LOGGING UNTUK KONTEN PROMPT ---
         if Writer.Config.DEBUG:
             _Logger.Log("--------- PROMPT CONTENT SENT TO LLM START ---------", 6)
             for i, msg in enumerate(_Messages):
                 role = msg.get("role", "unknown")
                 content = msg.get("content", "")
-                if isinstance(content, list): # Handle kasus Google Gemini dengan 'parts'
-                    try:
-                        # Coba gabungkan 'parts' jika itu adalah list of strings atau dicts dengan 'text'
-                        if all(isinstance(part, str) for part in content):
-                            content_snippet = "".join(content)
-                        elif all(isinstance(part, dict) and "text" in part for part in content):
-                            content_snippet = "".join(part.get("text","") for part in content)
-                        else: # Fallback jika struktur 'parts' tidak terduga
-                            content_snippet = str(content)
-                    except Exception:
-                        content_snippet = str(content) # Fallback jika ada error saat memproses 'parts'
+                content_snippet_display = ""
+                if isinstance(content, list):
+                    parts_content = []
+                    for item in content:
+                        if isinstance(item, str):
+                            parts_content.append(item)
+                        elif isinstance(item, dict) and "text" in item: # Google structure
+                            parts_content.append(item["text"])
+                    content_snippet = "".join(parts_content)
                 elif isinstance(content, str):
                     content_snippet = content
-                else: # Fallback jika content bukan string atau list yang dikenal
-                    content_snippet = str(content)
-
-                snippet_limit = 150  # Batas karakter untuk snippet
-                if len(content_snippet) > snippet_limit:
-                    snippet_display = content_snippet[:snippet_limit] + "..."
                 else:
-                    snippet_display = content_snippet
-                # Ganti newline dengan spasi untuk tampilan log yang lebih ringkas
-                snippet_display = snippet_display.replace("\n", " ") 
-                _Logger.Log(f"Message {i} - Role: {role}, Snippet: \"{snippet_display}\"", 6)
+                    content_snippet = str(content) # Fallback for other types
+
+                snippet_limit = 150
+                if len(content_snippet) > snippet_limit:
+                    content_snippet_display = content_snippet[:snippet_limit] + "..."
+                else:
+                    content_snippet_display = content_snippet
+                content_snippet_display = content_snippet_display.replace("\n", " ")
+                _Logger.Log(f"Message {i} - Role: {role}, Snippet: \"{content_snippet_display}\"", 6)
             _Logger.Log("--------- PROMPT CONTENT SENT TO LLM END -----------", 6)
-        # --- AKHIR DEBUG LOGGING UNTUK KONTEN PROMPT ---
 
-        # --- Sisa kode fungsi dimulai di sini ---
-        Provider, ProviderModel, ModelHost, ModelOptions = self.GetModelAndProvider(
-            _Model
-        )
-
-        # Calculate Seed Information
+        Provider, ProviderModelName, ModelHost, ModelOptionsDict = self.GetModelAndProvider(_Model)
         Seed = Writer.Config.SEED if _SeedOverride == -1 else _SeedOverride
 
-        # Log message history if DEBUG is enabled
-        if Writer.Config.DEBUG:
-            print("--------- Message History START ---------")
-            print("[")
-            for Message in _Messages:
-                print(f"{Message},\n----\n")
-            print("]")
-            print("--------- Message History END --------")
+        if Writer.Config.DEBUG and _Messages: # Simplified debug log for message history
+             _Logger.Log(f"Message History (Count: {len(_Messages)}) being sent to {ProviderModelName} via {Provider}", 6)
 
         StartGeneration = time.time()
+        # Log estimated tokens before the call
+        _Logger.Log(f"Using Model '{ProviderModelName}' from '{Provider}@{ModelHost}' | Input Chars: {TotalInputChars} (Est. ~{EstimatedInputTokens}tok Context Length)", 4)
+        if EstimatedInputTokens > 24000:
+            _Logger.Log(f"Warning, Detected High Token Context Length of est. ~{EstimatedInputTokens}tok for {_Model}", 6)
 
-        # Calculate estimated tokens
-        TotalChars = len(str(_Messages))
-        AvgCharsPerToken = 5  # estimated average chars per token
-        EstimatedTokens = TotalChars / AvgCharsPerToken
-        _Logger.Log(
-            f"Using Model '{ProviderModel}' from '{Provider}@{ModelHost}' | (Est. ~{EstimatedTokens}tok Context Length)",
-            4,
-        )
+        # --- DISPATCH TO PROVIDER-SPECIFIC HELPER ---
+        LastTokenUsage = None
+        # _Model is the original model key string e.g. "ollama://llama3"
+        # ProviderModelName is just the model name e.g. "llama3"
 
-        # Log if there's a large estimated tokens of context history
-        if EstimatedTokens > 24000:
-            _Logger.Log(
-                f"Warning, Detected High Token Context Length of est. ~{EstimatedTokens}tok",
-                6,
-            )
+        # Helpers expect _Messages to be in the standard format [{"role": ..., "content": ...}]
+        # _google_chat will handle its own transformations.
+        CurrentMessages = [m.copy() for m in _Messages] # Pass a shallow copy to helpers
 
         if Provider == "ollama":
-
-            # remove host
-            if "@" in ProviderModel:
-                ProviderModel = ProviderModel.split("@")[0]
-
-            # https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values
-            ValidParameters = [
-                "mirostat",
-                "mirostat_eta",
-                "mirostat_tau",
-                "num_ctx",
-                "repeat_last_n",
-                "repeat_penalty",
-                "temperature",
-                "seed",
-                "tfs_z",
-                "num_predict",
-                "top_k",
-                "top_p",
-            ]
-            ModelOptions = ModelOptions if ModelOptions is not None else {}
-
-            # Check if the parameters are valid
-            for key in ModelOptions:
-                if key not in ValidParameters:
-                    raise ValueError(f"Invalid parameter: {key}")
-
-            # Set the default num_ctx if not set by args
-            if "num_ctx" not in ModelOptions:
-                ModelOptions["num_ctx"] = Writer.Config.OLLAMA_CTX
-
-            _Logger.Log(f"Using Ollama Model Options: {ModelOptions}", 4)
-
-            # Menggunakan structured output jika skema disediakan
-            if _FormatSchema is not None:
-                ModelOptions["format"] = _FormatSchema
-                # Set temperature to 0 for more deterministic structured output
-                if "temperature" not in ModelOptions:
-                    ModelOptions["temperature"] = 0
-                _Logger.Log(f"Using Ollama Structured Output with schema", 4)
-            # Hapus logika _Format == "json"
-
-            # Tambahkan loop retry untuk Ollama
-            import ollama  # Pastikan ollama diimpor
-
-            # Gunakan konstanta dari Config jika ada, jika tidak gunakan default 3
-            MaxRetries = getattr(Writer.Config, "MAX_OLLAMA_RETRIES", 3)
-            LastTokenUsage = None  # Initialize token usage variable
-            while MaxRetries > 0:
-                try:
-                    Stream = self.Clients[_Model].chat(
-                        model=ProviderModel,
-                        messages=_Messages,
-                        stream=True,
-                        options=ModelOptions,
-                    )
-
-                    # Capture both return values from StreamResponse
-                    AssistantMessage, LastChunk = self.StreamResponse(
-                        Stream, Provider
-                    )  # Capture LastChunk
-                    _Messages.append(AssistantMessage)
-
-                    # --- RE-ADD OLLAMA TOKEN EXTRACTION LOGIC ---
-                    if LastChunk and LastChunk.get("done"):
-                        prompt_tokens = LastChunk.get("prompt_eval_count", 0)
-                        completion_tokens = LastChunk.get("eval_count", 0)
-                        LastTokenUsage = {
-                            "prompt_tokens": prompt_tokens,
-                            "completion_tokens": completion_tokens,
-                        }
-                        _Logger.Log(
-                            f"Ollama Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}",
-                            6,
-                        )
-                    else:
-                        _Logger.Log(
-                            "Could not extract Ollama token usage from last chunk.", 6
-                        )
-                        LastTokenUsage = None  # Set to None if extraction fails
-                    # --- END OLLAMA TOKEN EXTRACTION LOGIC ---
-
-                    break  # Exit loop on success
-
-                except ollama.ResponseError as e:  # Tangkap error spesifik Ollama
-                    MaxRetries -= 1
-                    _Logger.Log(
-                        f"Exception During Ollama Generation/Stream: '{e}', {MaxRetries} Retries Remaining",
-                        7,
-                    )
-                    if MaxRetries <= 0:
-                        _Logger.Log(
-                            f"Max Retries Exceeded During Ollama Generation, Aborting!",
-                            7,
-                        )
-                        # Naikkan exception jika retry habis
-                        raise Exception(
-                            f"Ollama StreamResponse failed after retries: {e}"
-                        )
-                    else:
-                        # import time # Pastikan 'import time' ada di awal file
-                        time.sleep(2)  # Jeda singkat sebelum mencoba lagi
-                        continue  # Lanjutkan ke iterasi retry berikutnya
-                except Exception as e:
-                    # Tangani exception lain yang mungkin terjadi selama streaming (misal: koneksi)
-                    # dan tidak terkait langsung dengan respons Ollama
-                    _Logger.Log(
-                        f"Unexpected Exception During Ollama Stream Handling: '{e}'", 7
-                    )
-                    # Langsung naikkan exception non-ResponseError
-                    raise Exception(f"Ollama Stream Handling failed: {e}")
-
+            CurrentMessages, LastTokenUsage = self._ollama_chat(_Logger, _Model, ProviderModelName, CurrentMessages, ModelOptionsDict, Seed, _FormatSchema)
         elif Provider == "google":
-
-            from google.generativeai.types import (
-                HarmCategory,
-                HarmBlockThreshold,
-            )
-
-            # replace "content" with "parts" for google
-            _Messages = [{"role": m["role"], "parts": m["content"]} for m in _Messages]
-            for m in _Messages:
-                if "content" in m:
-                    m["parts"] = m["content"]
-                    del m["content"]
-                if "role" in m and m["role"] == "assistant":
-                    m["role"] = "model"
-                    # Google doesn't support "system" role while generating content (only while instantiating the model)
-                if "role" in m and m["role"] == "system":
-                    m["role"] = "user"
-
-            MaxRetries = 3  # Anda mungkin ingin memindahkan ini ke Writer.Config.MAX_GOOGLE_RETRIES
-            LastTokenUsage = None
-            GeneratedContentResponse = None
-
-            # --- START MODIFICATION FOR STRUCTURED OUTPUT AND CONFIG ---
-            # ModelOptions sudah tersedia dari self.GetModelAndProvider(_Model)
-
-            safety_settings_val = {
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-            }
-
-            # Inisialisasi generation_config_dict dengan ModelOptions jika ada
-            generation_config_dict = (
-                ModelOptions.copy() if ModelOptions is not None else {}
-            )
-
-            # Tambahkan/Timpa safety_settings
-            generation_config_dict["safety_settings"] = safety_settings_val
-
-            if _FormatSchema is not None:
-                generation_config_dict["response_mime_type"] = "application/json"
-                generation_config_dict["response_schema"] = _FormatSchema
-                _Logger.Log(f"Using Google Structured Output with schema", 4)
-                # Atur temperature ke 0 untuk output terstruktur yang deterministik jika belum diatur
-                if (
-                    "temperature" not in generation_config_dict
-                ):  # Periksa apakah sudah ada dari ModelOptions
-                    generation_config_dict["temperature"] = 0.0
-
-            _Logger.Log(
-                f"Using Google Generation Config: {generation_config_dict}", 4
-            )  # Log config yang digunakan
-
-            # --- END MODIFICATION FOR STRUCTURED OUTPUT AND CONFIG ---
-
-            while True:
-                try:
-                    GeneratedContentResponse = self.Clients[_Model].generate_content(
-                        contents=_Messages,
-                        stream=True,
-                        # Hapus safety_settings dari sini
-                        generation_config=generation_config_dict,  # Tambahkan generation_config
-                    )
-                    AssistantMessage, _ = self.StreamResponse(
-                        GeneratedContentResponse, Provider
-                    )
-                    _Messages.append(AssistantMessage)
-
-                    # --- Keep existing Google token extraction logic ---
-                    try:
-                        # Access usage_metadata after the stream is consumed
-                        if hasattr(GeneratedContentResponse, "usage_metadata"):
-                            metadata = GeneratedContentResponse.usage_metadata
-                            prompt_tokens = metadata.prompt_token_count
-                            completion_tokens = (
-                                metadata.candidates_token_count
-                            )  # Use candidates_token_count for completion
-                            LastTokenUsage = {
-                                "prompt_tokens": prompt_tokens,
-                                "completion_tokens": completion_tokens,
-                            }
-                            _Logger.Log(
-                                f"Google Token Usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}",
-                                6,
-                            )
-                        else:
-                            _Logger.Log(
-                                "Google usage_metadata not found on response object.", 6
-                            )
-                            LastTokenUsage = None  # Set to None if metadata not found
-                    except Exception as meta_e:
-                        _Logger.Log(
-                            f"Error accessing Google usage_metadata: {meta_e}", 7
-                        )
-                        LastTokenUsage = None  # Set to None on error
-                    # --- AKHIR LOGIKA EKSTRAKSI TOKEN ---
-
-                    break  # Exit loop on success
-                except Exception as e:
-                    # Make sure the exception is raised if retries are exceeded
-                    # ... (keep existing retry logic) ...
-                    if MaxRetries > 0:
-                        _Logger.Log(
-                            f"Exception During Generation '{e}', {MaxRetries} Retries Remaining",
-                            7,
-                        )
-                        MaxRetries -= 1
-                    else:
-                        _Logger.Log(
-                            f"Max Retries Exceeded During Generation, Aborting!", 7
-                        )
-                        raise Exception(
-                            "Generation Failed, Max Retries Exceeded, Aborting"
-                        )  # Ensure exception is raised
-
-            # Replace "parts" back to "content" and "model" back to "assistant" for ALL messages
-            # before logging or returning, to maintain consistent internal format.
-            for m in _Messages:
-                if "parts" in m:
-                    m["content"] = m["parts"]
-                    del m["parts"]
-                if "role" in m and m["role"] == "model":
-                    m["role"] = "assistant"
-                # Juga konversi kembali 'user' yang mungkin berasal dari 'system' jika perlu
-                # (Namun, ini mungkin tidak diperlukan jika 'system' tidak digunakan lagi setelah konversi awal)
-                # Jika Anda ingin mempertahankan peran 'system' secara internal:
-                # Anda perlu menyimpan peran asli sebelum konversi ke Google
-                # atau menandainya dengan cara lain. Untuk saat ini, kita biarkan 'system' menjadi 'user'.
-
-        elif Provider == "openai":
-            raise NotImplementedError("OpenAI API not supported")
-
+            CurrentMessages, LastTokenUsage = self._google_chat(_Logger, _Model, ProviderModelName, CurrentMessages, ModelOptionsDict, Seed, _FormatSchema)
         elif Provider == "openrouter":
-
-            # https://openrouter.ai/docs/parameters
-            # Be aware that parameters depend on models and providers.
-            ValidParameters = [
-                "max_token",
-                "presence_penalty",
-                "frequency_penalty",
-                "repetition_penalty",
-                "response_format",
-                "temperature",
-                "seed",
-                "top_k",
-                "top_p",
-                "top_a",
-                "min_p",
-            ]
-            ModelOptions = ModelOptions if ModelOptions is not None else {}
-
-            Client = self.Clients[_Model]
-            # Client.set_params(**ModelOptions) # ModelOptions might conflict with structured output, handle carefully
-            Client.model = ProviderModel
-            print(ProviderModel)
-
-            # --- START MODIFICATION ---
-            openrouter_response_format = None
-            if _FormatSchema is not None:
-                # Construct the response_format payload for OpenRouter
-                # The schema itself is expected to be in _FormatSchema
-                # We need to wrap it as per OpenRouter's documentation
-                openrouter_response_format = {
-                    "type": "json_schema",
-                    "json_schema": {
-                        # "name": "your_schema_name", # Name is optional, can be omitted or derived
-                        "strict": True,  # Recommended by OpenRouter docs
-                        "schema": _FormatSchema,  # This is the Pydantic schema
-                    },
-                }
-                _Logger.Log(f"Using OpenRouter Structured Output with schema", 4)
-                # Ensure temperature is low for deterministic structured output, if not already set by ModelOptions
-                if "temperature" not in ModelOptions:  # Check ModelOptions first
-                    ModelOptions["temperature"] = 0.0  # Set to float
-
-            # Apply ModelOptions and the constructed response_format
-            # We need to be careful not to overwrite response_format if it's part of ModelOptions
-            # and _FormatSchema was not provided.
-            # A safer way is to merge them, giving priority to the structured output if _FormatSchema is present.
-
-            final_params_for_openrouter = (
-                ModelOptions.copy() if ModelOptions is not None else {}
-            )
-
-            if openrouter_response_format:
-                final_params_for_openrouter["response_format"] = (
-                    openrouter_response_format
-                )
-            elif (
-                "response_format" not in final_params_for_openrouter
-            ):  # If not set by ModelOptions and no _FormatSchema
-                final_params_for_openrouter["response_format"] = None
-
-            Client.set_params(**final_params_for_openrouter)
-            # --- END MODIFICATION ---
-
-            # --- START MODIFICATION FOR STREAMING ---
-            try:
-                # Panggil chat dengan stream=True
-                Stream = Client.chat(messages=_Messages, seed=Seed, stream=True)
-
-                # Proses stream menggunakan self.StreamResponse
-                AssistantMessage, LastChunk = self.StreamResponse(
-                    Stream, Provider
-                )  # Provider adalah "openrouter"
-
-                _Messages.append(AssistantMessage)
-
-                # Ekstrak token usage dari LastChunk jika tersedia
-                LastTokenUsage = None # Default ke None
-                if LastChunk and isinstance(LastChunk, dict) and "usage" in LastChunk:
-                    usage_data = LastChunk["usage"]
-                    prompt_tokens = usage_data.get("prompt_tokens", 0)
-                    completion_tokens = usage_data.get("completion_tokens", 0)
-                    LastTokenUsage = {
-                        "prompt_tokens": prompt_tokens,
-                        "completion_tokens": completion_tokens,
-                    }
-                    _Logger.Log(
-                        f"OpenRouter Token Usage (from stream) - Prompt: {prompt_tokens}, Completion: {completion_tokens}",
-                        6,
-                    )
-                    # Anda juga bisa log 'cost' jika mau: cost = usage_data.get("cost")
-                else:
-                    _Logger.Log(
-                        "OpenRouter Token Usage: Not found in the last stream chunk.", 6
-                    )
-
-            except Exception as e:
-                _Logger.Log(f"Error during OpenRouter streaming: {e}", 7)
-                # Tambahkan pesan error dummy atau naikkan exception jika diperlukan
-                _Messages.append(
-                    {
-                        "role": "assistant",
-                        "content": f"Error: OpenRouter stream failed. {e}",
-                    }
-                )
-                LastTokenUsage = None
-                # Pertimbangkan untuk menaikkan kembali exception jika ini adalah error fatal
-                # raise
-            # --- END MODIFICATION FOR STREAMING ---
-
+            CurrentMessages, LastTokenUsage = self._openrouter_chat(_Logger, _Model, ProviderModelName, CurrentMessages, ModelOptionsDict, Seed, _FormatSchema)
         elif Provider == "Anthropic":
-            raise NotImplementedError("Anthropic API not supported")
-
+            _Logger.Log(f"Anthropic API not supported in this version for model {_Model}.", 7)
+            raise NotImplementedError(f"Anthropic API not supported for model {_Model}")
         else:
+            _Logger.Log(f"Model Provider {Provider} for {_Model} not found.", 7)
             raise Exception(f"Model Provider {Provider} for {_Model} not found")
 
-        # Log the time taken to generate the response
+        _Messages = CurrentMessages # Update _Messages with the list returned by the helper
+
+        # --- FINAL COMMON TASKS ---
         EndGeneration = time.time()
-        _Logger.Log(
-            f"Generated Response in {round(EndGeneration - StartGeneration, 2)}s (~{round(EstimatedTokens / (EndGeneration - StartGeneration), 2)}tok/s)",
-            4,
-        )
+        GenerationTime = round(EndGeneration - StartGeneration, 2)
+
+        # Calculate actual tokens per second if possible
+        completion_tokens_for_tps = LastTokenUsage.get("completion_tokens", 0) if LastTokenUsage else 0
+        tokens_per_second_str = "N/A"
+        if completion_tokens_for_tps > 0 and GenerationTime > 0:
+            tokens_per_second = round(completion_tokens_for_tps / GenerationTime, 2)
+            tokens_per_second_str = f"~{tokens_per_second}tok/s"
+
+        _Logger.Log(f"Generated Response for {_Model} in {GenerationTime}s ({tokens_per_second_str})", 4)
 
         CallStack: str = ""
-        for Frame in inspect.stack()[1:]:
-            CallStack += f"{Frame.function}."
-        CallStack = CallStack[:-1].replace("<module>", "Main")
-        _Logger.SaveLangchain(CallStack, _Messages)
-        # --- MODIFIKASI RETURN STATEMENT ---
-        # Kembalikan juga TotalInputChars dan EstimatedInputTokens
-        # return _Messages, LastTokenUsage # Baris lama
-        return (
-            _Messages,
-            LastTokenUsage,
-            TotalInputChars,
-            EstimatedInputTokens,
-        )  # Baris baru
+        try:
+            for Frame in inspect.stack()[1:]:
+                CallStack += f"{Frame.function}."
+            CallStack = CallStack[:-1].replace("<module>", "Main")
+            _Logger.SaveLangchain(CallStack, _Messages) # _Messages is now the updated list
+        except Exception as e:
+            _Logger.Log(f"Error saving langchain history for {_Model}: {e}", 6)
+
+        return _Messages, LastTokenUsage, TotalInputChars, EstimatedInputTokens
 
     def StreamResponse(self, _Stream, _Provider: str):
         Response: str = ""
