@@ -15,19 +15,24 @@ import importlib # Tambahkan importlib
 
 import Writer.Config
 
+# Core utilities needed by main
 import Writer.Interface.Wrapper
 import Writer.PrintUtils
-import Writer.Chapter.ChapterDetector
-import Writer.Scrubber
-import Writer.Statistics
-import Writer.OutlineGenerator
-import Writer.Chapter.ChapterGenerator
-import Writer.StoryInfo
-import Writer.NovelEditor
-import Writer.Translator
-# import Writer.Prompts # Dihapus karena kita akan menggunakan ActivePrompts yang dimuat secara dinamis
-import Writer.Statistics  # Pastikan ini ada
-import types # Untuk type hinting modul
+import Writer.Translator # Still needed for TranslatePrompt in main
+# import Writer.Statistics # No longer directly needed in main() functions after pipeline refactor. Pipeline handles its own stats.
+
+# Modules that are now primarily used by StoryPipeline and not directly in main:
+# import Writer.Chapter.ChapterDetector
+# import Writer.Scrubber
+# import Writer.OutlineGenerator
+# import Writer.Chapter.ChapterGenerator
+# import Writer.StoryInfo
+# import Writer.NovelEditor
+
+# import Writer.Prompts # This is correctly commented out, ActivePrompts is used.
+# import Writer.Statistics  # Redundant import
+
+import types # For type hinting module
 from Writer.Pipeline import StoryPipeline # Import StoryPipeline
 
 
@@ -428,17 +433,15 @@ def main():
                 SysLogger.Log("FATAL: Could not find prompt content in state file.", 7)
                 sys.exit(1)
             # BasePrompt = current_state.get("input_prompt_content") # Removed unused variable
-            Outline = current_state.get("full_outline")
-            Elements = current_state.get("story_elements")
-            RoughChapterOutline = current_state.get("rough_chapter_outline")
-            BaseContext = current_state.get("base_context")
-            NumChapters = current_state.get("total_chapters")
-            ChapterOutlines = current_state.get("expanded_chapter_outlines", [])
-            Chapters = current_state.get(
-                "completed_chapters", []
-            )  # List bab yang sudah jadi
-            start_chapter = current_state.get("next_chapter_index", 1)
-            last_completed_step = current_state.get("last_completed_step", "init")
+            # Outline = current_state.get("full_outline") # Not directly used in main after this point
+            # Elements = current_state.get("story_elements") # Not directly used in main
+            # RoughChapterOutline = current_state.get("rough_chapter_outline") # Not directly used in main
+            # BaseContext = current_state.get("base_context") # Not directly used in main
+            # NumChapters = current_state.get("total_chapters") # Not directly used in main
+            # ChapterOutlines = current_state.get("expanded_chapter_outlines", []) # Not directly used in main
+            # Chapters = current_state.get("completed_chapters", [])  # Not directly used in main
+            # start_chapter = current_state.get("next_chapter_index", 1) # Not directly used in main
+            # last_completed_step = current_state.get("last_completed_step", "init") # Not directly used in main after this point
 
             # Inisialisasi Interface (model sudah diatur di Writer.Config)
             Models = list(
@@ -593,21 +596,16 @@ def main():
         # 'Prompt' sekarang berisi versi yang akan digunakan untuk generasi (asli atau terjemahan ke native)
         # --- AKHIR BLOK TERJEMAHAN PROMPT INPUT ---
 
-        # Inisialisasi variabel lain untuk run baru
-        Outline, Elements, RoughChapterOutline, BaseContext = (
-            None,
-            None,
-            None,
-            None,
-        )  # Gunakan None untuk menandakan belum dibuat
-        NumChapters = None
-        ChapterOutlines = []
-        Chapters = []
-        start_chapter = 1
-        last_completed_step = "init"
+        # Inisialisasi variabel lain untuk run baru (those directly needed by main before pipeline call)
+        # Outline, Elements, RoughChapterOutline, BaseContext are handled by pipeline
+        # NumChapters, ChapterOutlines, Chapters, start_chapter are handled by pipeline
+        last_completed_step = "init" # This is the starting point for a new run.
         current_state["last_completed_step"] = last_completed_step
-        current_state["completed_chapters"] = []
+        # Ensure these keys exist for pipeline's expectations, even if empty for a new run.
+        current_state["expanded_chapter_outlines"] = []
+        current_state["completed_chapters_data"] = [] # Pipeline expects 'completed_chapters_data'
         current_state["next_chapter_index"] = 1
+
 
         # Save state awal
         SysLogger.Log(f"Saving initial state to {state_filepath}", 6)
@@ -617,8 +615,22 @@ def main():
     # --- AKHIR LOGIKA RESUME ---
 
     # Ukur waktu mulai (setelah setup)
-    StartTime = time.time()  # Pindahkan ini setelah setup resume/baru
-    current_state["start_time"] = StartTime # Store StartTime in state for potential use by pipeline post-processing
+    StartTime = time.time()
+    # For new runs, current_state is initialized just before this. For resumed runs, it's loaded.
+    # Store StartTime in state for potential use by pipeline post-processing, especially if resuming.
+    # If resuming, this StartTime is for the current session, not the original StartTime unless that's restored.
+    # The pipeline's post-processing stage should ideally use the StartTime from the *initial* run.
+    # So, if resuming, we should fetch the original StartTime from state if available.
+    if Args.Resume and "original_start_time" in current_state:
+        pipeline_start_time = current_state["original_start_time"]
+        SysLogger.Log(f"Using original StartTime from state for pipeline: {datetime.datetime.fromtimestamp(pipeline_start_time).strftime('%Y-%m-%d %H:%M:%S')}", 5)
+    else:
+        pipeline_start_time = StartTime # For new run, or if original_start_time not in resumed state
+        current_state["original_start_time"] = pipeline_start_time # Save for future resumes
+        SysLogger.Log(f"Using current session StartTime for pipeline: {datetime.datetime.fromtimestamp(pipeline_start_time).strftime('%Y-%m-%d %H:%M:%S')}", 5)
+        if Args.Resume:
+             SysLogger.Log(f"Warning: 'original_start_time' not found in resumed state. Total elapsed time in stats might only reflect current session.", 6)
+
 
     # --- Mulai logika utama ---
     # Instantiate and run the pipeline
@@ -626,143 +638,67 @@ def main():
         pipeline = StoryPipeline(Interface, SysLogger, Writer.Config, ActivePrompts)
 
         # Determine initial_prompt_for_outline based on new/resume and translation
-        # This prompt is what gets passed to the outline generation stage
         initial_prompt_for_outline_gen = ""
         if Args.Resume:
-            # For resume, the prompt for outline generation would have been the one used initially.
-            # It's either translated_to_native_prompt_content or input_prompt_content
             initial_prompt_for_outline_gen = current_state.get("translated_to_native_prompt_content") or \
                                            current_state.get("input_prompt_content")
             if not initial_prompt_for_outline_gen:
                 SysLogger.Log("FATAL: Could not find prompt content in state file for pipeline (resumed run).", 7)
                 sys.exit(1)
-        else:
-            # For new run, 'Prompt' variable (which might be translated to native) holds the content for outline.
-            initial_prompt_for_outline_gen = Prompt
+        else: # New run
+            initial_prompt_for_outline_gen = Prompt # 'Prompt' is already translated_to_native if that was done
             if not initial_prompt_for_outline_gen :
                  SysLogger.Log("FATAL: Prompt content for pipeline is empty (new run).", 7)
                  sys.exit(1)
         
-        # Pass necessary original prompt details for post-processing if needed by the pipeline later
-        original_prompt_content_for_pp = current_state.get("input_prompt_content")
-        translated_prompt_content_for_pp = current_state.get("translated_to_native_prompt_content")
-        input_prompt_file_for_pp = current_state.get("input_prompt_file")
-
+        # The pipeline's _perform_post_processing_stage will retrieve these from current_state directly if needed.
+        # No need to pass them as separate parameters to run_pipeline.
+        # original_prompt_content_for_pp = current_state.get("input_prompt_content")
+        # translated_prompt_content_for_pp = current_state.get("translated_to_native_prompt_content")
+        # input_prompt_file_for_pp = current_state.get("input_prompt_file")
 
         current_state = pipeline.run_pipeline(
             current_state,
             state_filepath,
             initial_prompt_for_outline_gen,
-            Args=Args, # Pass Args for potential use in pipeline stages
-            original_prompt_content_for_post_processing=original_prompt_content_for_pp,
-            translated_prompt_content_for_post_processing=translated_prompt_content_for_pp,
-            start_time_for_post_processing=StartTime, # Pass StartTime
-            log_directory_for_post_processing=log_directory,
-            input_prompt_file_for_post_processing=input_prompt_file_for_pp
+            Args=Args, # Pass Args for output filename, other direct CLI controls if any
+            StartTime=pipeline_start_time # Pass the determined start time (original or current session)
         )
 
         # After pipeline.run_pipeline finishes, current_state is the final state.
         final_step = current_state.get("last_completed_step")
-        if final_step == "complete" or final_step == "complete_through_outline": # Adjust as pipeline grows
-            SysLogger.Log(f"Main: Story generation pipeline ended successfully at step: {final_step}.", 5)
+        if final_step == "complete":
+            SysLogger.Log(f"Main: Story generation pipeline completed successfully.", 5)
+            final_md = current_state.get("final_story_path", "N/A")
+            final_json = current_state.get("final_json_path", "N/A")
+            SysLogger.Log(f"Main: Final MD output: {final_md}", 5)
+            SysLogger.Log(f"Main: Final JSON output: {final_json}", 5)
+        elif current_state.get("status") == "error":
+            SysLogger.Log(f"Main: Pipeline reported an error: {current_state.get('error', 'Unknown error')}", 7)
+            SysLogger.Log(f"Main: Check pipeline logs and state file ({state_filepath}) for details. Last known step before error: {current_state.get('last_known_step_before_error', 'N/A')}", 7)
         else:
-            SysLogger.Log(f"Main: Story generation pipeline ended at step: {final_step}. Check logs.", 6)
+            SysLogger.Log(f"Main: Story generation pipeline ended at step: {final_step}. This may indicate an incomplete run if not 'complete'. Check logs.", 6)
 
     except Exception as e:
-        SysLogger.Log(f"FATAL error during pipeline execution: {e}", 7)
+        SysLogger.Log(f"FATAL error during main pipeline setup or invocation: {e}", 7)
         import traceback
-        traceback.print_exc()
+        SysLogger.Log(f"Traceback:\n{traceback.format_exc()}", 1) # Log stack trace at debug level
         # Ensure state is saved even on catastrophic pipeline failure, if possible
-        try:
-            current_state["status"] = "error"
-            current_state["error_message"] = str(e)
-            save_state(current_state, state_filepath if state_filepath else "error_state.json")
-            SysLogger.Log(f"Saved error state to {state_filepath if state_filepath else 'error_state.json'}",6)
-        except Exception as se:
-            SysLogger.Log(f"CRITICAL: Could not save error state: {se}",7)
+        # The pipeline itself should try to save state on error, but this is a fallback.
+        if current_state and state_filepath: # Check if these are defined
+            try:
+                current_state["status"] = "error_in_main" # More specific error status
+                current_state["error_message_main"] = str(e)
+                current_state["error_traceback_main"] = traceback.format_exc()
+                save_state(current_state, state_filepath)
+                SysLogger.Log(f"Saved error state (from main exception handler) to {state_filepath}",6)
+            except Exception as se:
+                SysLogger.Log(f"CRITICAL: Could not save error state from main: {se}",7)
         sys.exit(1)
 
-    # --- Old logic below this point will be progressively removed or moved into the pipeline ---
-
-    # Retrieve potentially updated values from current_state if they were handled by the pipeline
-    # For now, Outline and NumChapters are examples.
-    Outline = current_state.get("full_outline")
-    NumChapters = current_state.get("total_chapters")
-    # last_completed_step needs to be read back if main loop continues to depend on it here
-    last_completed_step = current_state.get("last_completed_step")
-
-
-    # Detect the number of chapters is now handled by the pipeline.
-    # The old logic below is removed.
-    # if last_completed_step == "outline":
-    #    ...
-    # elif NumChapters is None:
-    #    ...
-    # else:
-    #    ...
-
-    # Update local variables that might have been changed by the pipeline and are needed by subsequent old code
-    # NumChapters is crucial for the next block (Per-Chapter Outline) if it's still here.
-    NumChapters = current_state.get("total_chapters")
-    Outline = current_state.get("full_outline") # Potentially refined by pipeline steps later
-    # Elements, RoughChapterOutline, BaseContext might also be updated by pipeline.
-    Elements = current_state.get("story_elements")
-    RoughChapterOutline = current_state.get("rough_chapter_outline")
-    BaseContext = current_state.get("base_context")
-    ChapterOutlines = current_state.get("expanded_chapter_outlines", []) # This will be populated by a pipeline stage
-    Chapters = current_state.get("completed_chapters", [])
-    start_chapter = current_state.get("next_chapter_index", 1)
-    # last_completed_step is already up-to-date from pipeline return
-
-    # Ensure NumChapters is available if the next block (Per-Chapter Outline) is still to be executed from main
-    # This check becomes less critical as more logic moves to the pipeline.
-    if last_completed_step == "detect_chapters" and NumChapters is None:
-        SysLogger.Log(
-            "FATAL: Pipeline completed 'detect_chapters' but NumChapters is still None in main.", 7
-        )
-        sys.exit(1)
-
-
-    # Write Per-Chapter Outline is now handled by the pipeline.
-    # The old logic below is removed.
-    # if Writer.Config.EXPAND_OUTLINE:
-    #    if last_completed_step == "detect_chapters" or last_completed_step == "refine_chapters": # refine_chapters is new state from pipeline
-    #        ...
-    #    elif last_completed_step not in [...]: (this complex condition is handled by pipeline)
-    #        ...
-    #    else:
-    #        ...
-    # else:
-    #    ...
-
-    # Update local variables that might have been changed by the pipeline.
-    Outline = current_state.get("full_outline")
-    ChapterOutlines = current_state.get("expanded_chapter_outlines", [])
-    # last_completed_step is already up-to-date.
-
-    # The step_before_chapters logic, MegaOutline creation, and the chapter writing loop
-    # are now handled by the StoryPipeline._write_chapters_stage or its helpers.
-    # Old logic is removed from here.
-
-    # Update local variables that might have been changed by the pipeline.
-    Chapters = current_state.get("completed_chapters", [])
-    # last_completed_step is already up-to-date from the pipeline's return.
-    # The entire post-processing block, including saving files and final state updates,
-    # is now handled by the StoryPipeline._perform_post_processing_stage.
-
-    # Final check on the status from the pipeline.
-    if current_state.get("last_completed_step") == "complete":
-        SysLogger.Log("Main: Pipeline confirmed run completion.", 5)
-        # Potentially print final file paths from current_state if desired
-        final_md = current_state.get("final_story_path", "N/A")
-        final_json = current_state.get("final_json_path", "N/A")
-        SysLogger.Log(f"Main: Final MD output: {final_md}", 5)
-        SysLogger.Log(f"Main: Final JSON output: {final_json}", 5)
-    elif current_state.get("status") == "error":
-        SysLogger.Log(f"Main: Pipeline reported an error: {current_state.get('error_message', 'Unknown error')}", 7)
-    else:
-        SysLogger.Log(f"Main: Pipeline ended with step: {current_state.get('last_completed_step')}. This might indicate an incomplete run if not 'complete'.", 6)
-
+    # All logic previously below this point (sequential step execution, post-processing)
+    # has been moved into the StoryPipeline.
+    # The main function now concludes after the pipeline call and its outcome logging.
 
 if __name__ == "__main__":
     main()

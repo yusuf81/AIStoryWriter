@@ -323,16 +323,11 @@ def GenerateChapter(
             _BaseContext, DetailedChapterOutlineForCheck, Config, ChapterGenSummaryCheck # Pass Config and ChapterGenSummaryCheck modules
         )
 
-            _BaseContext, DetailedChapterOutlineForCheck, Config, ChapterGenSummaryCheck # Pass Config and ChapterGenSummaryCheck modules
-        )
-
     # Stage 2: Add Character Development
     Stage2Chapter = _generate_stage2_character_dev(
         Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, MessageHistory,
         ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary,
         Stage1Chapter, _BaseContext, DetailedChapterOutlineForCheck, Config, ChapterGenSummaryCheck
-    )
-
     )
 
     # Stage 3: Add Dialogue

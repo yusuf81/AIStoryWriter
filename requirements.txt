@@ -4,3 +4,5 @@ google.generativeai
 python-dotenv
 pydantic
 json-repair==0.* # Add this line
+pytest
+pytest-mock

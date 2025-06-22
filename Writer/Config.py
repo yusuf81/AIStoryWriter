@@ -13,6 +13,7 @@ INFO_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridde
 SCRUB_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
 CHECKER_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Model used to check results
 TRANSLATOR_MODEL = "ollama://qwen2.5:32b@10.23.82.116"
+FAST_MODEL_NAME = "ollama://qwen2:7b@10.23.82.116" # Default fast model for tasks like titling
 
 # OLLAMA_CTX = 8192
 OLLAMA_CTX = 16384
@@ -74,6 +75,12 @@ MAX_JSON_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateJSON
 
 # Maximum retries for SafeGenerateText (whitespace/short response)
 MAX_TEXT_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateText
+
+# Added based on test_pipeline.py AttributeErrors
+CHAPTER_HEADER_FORMAT = "### Chapter {chapter_num}: {chapter_title}"
+CHAPTER_MEMORY_WORDS = 250
+GENERATE_CHAPTER_TITLES = True
+TITLE_MAX_TOKENS = 50
 
 
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"
