@@ -15,18 +15,70 @@ import importlib # Tambahkan importlib
 
 import Writer.Config
 
+# Core utilities needed by main
 import Writer.Interface.Wrapper
 import Writer.PrintUtils
-import Writer.Chapter.ChapterDetector
-import Writer.Scrubber
-import Writer.Statistics
-import Writer.OutlineGenerator
-import Writer.Chapter.ChapterGenerator
-import Writer.StoryInfo
-import Writer.NovelEditor
-import Writer.Translator
-# import Writer.Prompts # Dihapus karena kita akan menggunakan ActivePrompts yang dimuat secara dinamis
-import Writer.Statistics  # Pastikan ini ada
+import Writer.Translator # Still needed for TranslatePrompt in main
+# import Writer.Statistics # No longer directly needed in main() functions after pipeline refactor. Pipeline handles its own stats.
+
+# Modules that are now primarily used by StoryPipeline and not directly in main:
+# import Writer.Chapter.ChapterDetector
+# import Writer.Scrubber
+# import Writer.OutlineGenerator
+# import Writer.Chapter.ChapterGenerator
+# import Writer.StoryInfo
+# import Writer.NovelEditor
+
+# import Writer.Prompts # This is correctly commented out, ActivePrompts is used.
+# import Writer.Statistics  # Redundant import
+
+import types # For type hinting module
+from Writer.Pipeline import StoryPipeline # Import StoryPipeline
+
+
+# Fungsi untuk memuat modul prompt secara dinamis
+def load_active_prompts(native_language_code: str, logger_func_print, logger_func_warn, logger_func_error) -> types.ModuleType | None:
+    """
+    Loads the appropriate prompt module based on the native_language_code.
+    Falls back to English if the specified language module is not found.
+    Returns the loaded module or None if a critical error occurs.
+    """
+    active_prompts_module = None
+    effective_language_code = native_language_code.lower() if native_language_code else 'en'
+
+    if effective_language_code == 'en':
+        try:
+            import Writer.Prompts as Prompts_en
+            active_prompts_module = Prompts_en
+            logger_func_print(f"Using English prompts (Writer.Prompts) as NATIVE_LANGUAGE is '{effective_language_code}'.")
+        except ImportError as e:
+            logger_func_error(f"CRITICAL: Failed to import Writer.Prompts (English default): {e}.")
+            return None
+    else:
+        try:
+            module_name = f"Writer.Prompts_{effective_language_code}"
+            active_prompts_module = importlib.import_module(module_name)
+            logger_func_print(f"Successfully loaded prompt module '{module_name}' for NATIVE_LANGUAGE '{effective_language_code}'.")
+        except ImportError:
+            logger_func_warn(f"Prompt module for NATIVE_LANGUAGE '{effective_language_code}' ('{module_name}') not found. Falling back to English prompts (Writer.Prompts).")
+            try:
+                import Writer.Prompts as Prompts_en  # Fallback ke English
+                active_prompts_module = Prompts_en
+            except ImportError as e:
+                logger_func_error(f"CRITICAL: Failed to import fallback Writer.Prompts (English default) after failing to load '{module_name}': {e}.")
+                return None
+        except Exception as e:
+            logger_func_error(f"CRITICAL: Unexpected error loading prompt module for NATIVE_LANGUAGE '{effective_language_code}': {e}. Attempting fallback to English.")
+            try:
+                import Writer.Prompts as Prompts_en  # Fallback ke English
+                active_prompts_module = Prompts_en
+            except ImportError as ie:
+                logger_func_error(f"CRITICAL: Failed to import fallback Writer.Prompts (English default) after unexpected error: {ie}.")
+                return None
+
+    if active_prompts_module is None:
+        logger_func_error(f"CRITICAL: ActivePrompts module is None after attempting to load for NATIVE_LANGUAGE '{effective_language_code}'. This should not happen if fallbacks are working.")
+    return active_prompts_module
 
 
 # Setup Argparser
@@ -238,81 +290,15 @@ def load_state(filepath):
 
 
 # Fungsi Helper Baru untuk Membangun MegaOutline
-def _build_mega_outline(current_state):
-    """Builds the MegaOutline string from the current state."""
-    Elements = current_state.get("story_elements", "")
-    ChapterOutlines = current_state.get("expanded_chapter_outlines", [])
-    DetailedOutline = ""
-    if Writer.Config.EXPAND_OUTLINE and ChapterOutlines:
-        for Chapter in ChapterOutlines:
-            DetailedOutline += Chapter + "\n\n"
-    MegaOutline = f"""
-# Base Outline
-{Elements if Elements else "N/A"}
+# _build_mega_outline and _get_outline_for_chapter are no longer used in main()
+# as this logic is now part of StoryPipeline.
+# def _build_mega_outline(current_state):
+#    ... (removed) ...
+# def _get_outline_for_chapter(SysLogger, current_state, chapter_index):
+#    ... (removed) ...
 
-# Detailed Outline
-{DetailedOutline if DetailedOutline else "N/A"}
-"""
-    return MegaOutline
-
-
-# Fungsi Helper Baru untuk Mendapatkan Outline Bab dengan Fallback
-def _get_outline_for_chapter(SysLogger, current_state, chapter_index):
-    """Determines the best outline to use for a specific chapter, with fallback."""
-    Outline = current_state.get("full_outline", "")
-    ChapterOutlines = current_state.get("expanded_chapter_outlines", [])
-    MegaOutline = _build_mega_outline(current_state)  # Bangun untuk potensi penggunaan
-
-    # Default ke MegaOutline jika ekspansi aktif & berhasil, jika tidak, ke base outline
-    UsedOutline = (
-        MegaOutline if Writer.Config.EXPAND_OUTLINE and ChapterOutlines else Outline
-    )
-
-    # Jika ekspansi aktif dan outline bab spesifik ada, coba validasi dan gunakan
-    if (
-        Writer.Config.EXPAND_OUTLINE
-        and ChapterOutlines
-        and len(ChapterOutlines) >= chapter_index
-    ):
-        potential_expanded_outline = ChapterOutlines[chapter_index - 1]
-        # --- AWAL BLOK VALIDASI ---
-        min_len_threshold = (
-            Writer.Config.MIN_WORDS_PER_CHAPTER_OUTLINE
-        )  # Ambil batas minimal dari config
-        word_count = Writer.Statistics.GetWordCount(potential_expanded_outline)
-
-        if word_count >= min_len_threshold:
-            # Outline yang diperluas valid, gunakan ini
-            SysLogger.Log(
-                f"Using valid expanded outline for Chapter {chapter_index} from state.",
-                6,
-            )
-            return potential_expanded_outline
-        else:
-            # Outline yang diperluas tidak valid/terlalu pendek, log peringatan dan biarkan fallback terjadi
-            SysLogger.Log(
-                f"Warning: Expanded outline for Chapter {chapter_index} from state is too short ({word_count} words, min {min_len_threshold}). Falling back to general outline.",
-                6,
-            )
-        # --- AKHIR BLOK VALIDASI ---
-        # Jika validasi gagal, kita tidak return di sini, biarkan fungsi melanjutkan ke fallback di bawah
-
-    # Fallback jika ekspansi tidak aktif, atau outline bab spesifik tidak ada/tidak valid
-    if not UsedOutline:  # Fallback terakhir jika UsedOutline juga kosong
-        SysLogger.Log(
-            f"Warning: No valid outline found for Chapter {chapter_index}, using base outline as last resort.",
-            6,
-        )
-        return (
-            Outline if Outline else ""
-        )  # Kembalikan Outline dasar atau string kosong jika tidak ada
-    else:
-        SysLogger.Log(
-            f"Using general outline (MegaOutline or Base) for Chapter {chapter_index}.",
-            6,
-        )
-        return UsedOutline  # Return Mega atau Base outline
-
+# The definitions of _build_mega_outline and _get_outline_for_chapter that were previously here
+# (even if commented out or misplaced inside a dummy main) are now fully removed.
 
 def main():
     """Parses arguments, manages state (new run or resume), and orchestrates the story generation pipeline."""
@@ -376,6 +362,7 @@ def main():
     # Jadi, kita akan memindahkan bagian inti dari pemuatan prompt dinamis ke *setelah* konfigurasi dari state (jika resume).
 
     # Placeholder untuk ActivePrompts, akan diisi setelah konfigurasi NATIVE_LANGUAGE final.
+    ActivePrompts = None # Default initialization
     # --- AKHIR PEMUATAN PROMPT DINAMIS (BAGIAN AWAL) ---
 
     # --- AWAL LOGIKA RESUME ---
@@ -411,44 +398,12 @@ def main():
                 # print(f"  Skipping restore for {key}") # Debugging
             
             # --- PEMUATAN PROMPT DINAMIS (BAGIAN INTI SETELAH CONFIG DARI STATE) ---
-            native_lang_config_resume = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en').lower()
-            _early_print(f"DEBUG: NATIVE_LANGUAGE for resumed run, before dynamic prompt load: '{native_lang_config_resume}'")
+            native_lang_config_resume = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en') # No lower() here, load_active_prompts handles it
+            _early_print(f"NATIVE_LANGUAGE for resumed run, before dynamic prompt load: '{native_lang_config_resume}'")
 
-            ActivePrompts = None # Inisialisasi ActivePrompts ke None
-
-            if native_lang_config_resume == 'en':
-                try:
-                    # Hanya impor dan set Prompts_en jika NATIVE_LANGUAGE adalah 'en'
-                    import Writer.Prompts as Prompts_en
-                    ActivePrompts = Prompts_en
-                    _early_print(f"Using English prompts (Writer.Prompts) as NATIVE_LANGUAGE is '{native_lang_config_resume}'.")
-                except ImportError as e:
-                    _early_error(f"Failed to import Writer.Prompts (English default): {e}. This is critical.")
-                    sys.exit(1)
-            else: # Ini akan dieksekusi jika native_lang_config_resume BUKAN 'en' (misalnya 'id')
-                try:
-                    module_name = f"Writer.Prompts_{native_lang_config_resume}"
-                    ActivePrompts = importlib.import_module(module_name)
-                    _early_print(f"Successfully loaded prompt module '{module_name}' for NATIVE_LANGUAGE '{native_lang_config_resume}'.")
-                except ImportError:
-                    _early_warn(f"Prompt module for NATIVE_LANGUAGE '{native_lang_config_resume}' ('{module_name}') not found. Falling back to English prompts (Writer.Prompts).")
-                    try:
-                        import Writer.Prompts as Prompts_en # Fallback ke English
-                        ActivePrompts = Prompts_en
-                    except ImportError as e:
-                        _early_error(f"Failed to import fallback Writer.Prompts (English default) after failing to load '{module_name}': {e}.")
-                        sys.exit(1)
-                except Exception as e:
-                    _early_error(f"Unexpected error loading prompt module for NATIVE_LANGUAGE '{native_lang_config_resume}': {e}. Falling back to English prompts.")
-                    try:
-                        import Writer.Prompts as Prompts_en # Fallback ke English
-                        ActivePrompts = Prompts_en
-                    except ImportError as ie:
-                        _early_error(f"Failed to import fallback Writer.Prompts (English default) after unexpected error: {ie}.")
-                        sys.exit(1)
-
-            if ActivePrompts is None: # Pemeriksaan ini sekarang lebih krusial
-                _early_error(f"CRITICAL: ActivePrompts is None after attempting to load for NATIVE_LANGUAGE '{native_lang_config_resume}'. Cannot continue.")
+            ActivePrompts = load_active_prompts(native_lang_config_resume, _early_print, _early_warn, _early_error)
+            if ActivePrompts is None:
+                _early_error(f"CRITICAL: Failed to load ActivePrompts for NATIVE_LANGUAGE '{native_lang_config_resume}'. Cannot continue.")
                 sys.exit(1)
 
             sys.modules['Writer.Prompts'] = ActivePrompts
@@ -478,17 +433,15 @@ def main():
                 SysLogger.Log("FATAL: Could not find prompt content in state file.", 7)
                 sys.exit(1)
             # BasePrompt = current_state.get("input_prompt_content") # Removed unused variable
-            Outline = current_state.get("full_outline")
-            Elements = current_state.get("story_elements")
-            RoughChapterOutline = current_state.get("rough_chapter_outline")
-            BaseContext = current_state.get("base_context")
-            NumChapters = current_state.get("total_chapters")
-            ChapterOutlines = current_state.get("expanded_chapter_outlines", [])
-            Chapters = current_state.get(
-                "completed_chapters", []
-            )  # List bab yang sudah jadi
-            start_chapter = current_state.get("next_chapter_index", 1)
-            last_completed_step = current_state.get("last_completed_step", "init")
+            # Outline = current_state.get("full_outline") # Not directly used in main after this point
+            # Elements = current_state.get("story_elements") # Not directly used in main
+            # RoughChapterOutline = current_state.get("rough_chapter_outline") # Not directly used in main
+            # BaseContext = current_state.get("base_context") # Not directly used in main
+            # NumChapters = current_state.get("total_chapters") # Not directly used in main
+            # ChapterOutlines = current_state.get("expanded_chapter_outlines", []) # Not directly used in main
+            # Chapters = current_state.get("completed_chapters", [])  # Not directly used in main
+            # start_chapter = current_state.get("next_chapter_index", 1) # Not directly used in main
+            # last_completed_step = current_state.get("last_completed_step", "init") # Not directly used in main after this point
 
             # Inisialisasi Interface (model sudah diatur di Writer.Config)
             Models = list(
@@ -528,44 +481,13 @@ def main():
         # Config sudah di-set dari Args di awal fungsi main() jika bukan resume.
     
         # --- PEMUATAN PROMPT DINAMIS (BAGIAN INTI UNTUK RUN BARU) ---
-        native_lang_config_new = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en').lower()
-        _early_print(f"DEBUG: NATIVE_LANGUAGE for new run, before dynamic prompt load: '{native_lang_config_new}'")
+        # NATIVE_LANGUAGE sudah final di Writer.Config pada titik ini (dari Args atau default Config)
+        native_lang_config_new = getattr(Writer.Config, 'NATIVE_LANGUAGE', 'en') # No lower() here
+        _early_print(f"NATIVE_LANGUAGE for new run, before dynamic prompt load: '{native_lang_config_new}'")
 
-        ActivePrompts = None # Inisialisasi ActivePrompts ke None
-
-        if native_lang_config_new == 'en':
-            try:
-                # Hanya impor dan set Prompts_en jika NATIVE_LANGUAGE adalah 'en'
-                import Writer.Prompts as Prompts_en 
-                ActivePrompts = Prompts_en
-                _early_print(f"Using English prompts (Writer.Prompts) as NATIVE_LANGUAGE is '{native_lang_config_new}'.")
-            except ImportError as e:
-                _early_error(f"Failed to import Writer.Prompts (English default): {e}. This is critical.")
-                sys.exit(1)
-        else: # Ini akan dieksekusi jika native_lang_config_new BUKAN 'en' (misalnya 'id')
-            try:
-                module_name = f"Writer.Prompts_{native_lang_config_new}"
-                ActivePrompts = importlib.import_module(module_name)
-                _early_print(f"Successfully loaded prompt module '{module_name}' for NATIVE_LANGUAGE '{native_lang_config_new}'.")
-            except ImportError:
-                _early_warn(f"Prompt module for NATIVE_LANGUAGE '{native_lang_config_new}' ('{module_name}') not found. Falling back to English prompts (Writer.Prompts).")
-                try:
-                    import Writer.Prompts as Prompts_en # Fallback ke English
-                    ActivePrompts = Prompts_en
-                except ImportError as e:
-                    _early_error(f"Failed to import fallback Writer.Prompts (English default) after failing to load '{module_name}': {e}.")
-                    sys.exit(1)
-            except Exception as e:
-                _early_error(f"Unexpected error loading prompt module for NATIVE_LANGUAGE '{native_lang_config_new}': {e}. Falling back to English prompts.")
-                try:
-                    import Writer.Prompts as Prompts_en # Fallback ke English
-                    ActivePrompts = Prompts_en
-                except ImportError as ie:
-                    _early_error(f"Failed to import fallback Writer.Prompts (English default) after unexpected error: {ie}.")
-                    sys.exit(1)
-
-        if ActivePrompts is None: # Pemeriksaan ini sekarang lebih krusial
-            _early_error(f"CRITICAL: ActivePrompts is None after attempting to load for NATIVE_LANGUAGE '{native_lang_config_new}'. Cannot continue.")
+        ActivePrompts = load_active_prompts(native_lang_config_new, _early_print, _early_warn, _early_error)
+        if ActivePrompts is None:
+            _early_error(f"CRITICAL: Failed to load ActivePrompts for NATIVE_LANGUAGE '{native_lang_config_new}'. Cannot continue.")
             sys.exit(1)
             
         sys.modules['Writer.Prompts'] = ActivePrompts
@@ -674,21 +596,16 @@ def main():
         # 'Prompt' sekarang berisi versi yang akan digunakan untuk generasi (asli atau terjemahan ke native)
         # --- AKHIR BLOK TERJEMAHAN PROMPT INPUT ---
 
-        # Inisialisasi variabel lain untuk run baru
-        Outline, Elements, RoughChapterOutline, BaseContext = (
-            None,
-            None,
-            None,
-            None,
-        )  # Gunakan None untuk menandakan belum dibuat
-        NumChapters = None
-        ChapterOutlines = []
-        Chapters = []
-        start_chapter = 1
-        last_completed_step = "init"
+        # Inisialisasi variabel lain untuk run baru (those directly needed by main before pipeline call)
+        # Outline, Elements, RoughChapterOutline, BaseContext are handled by pipeline
+        # NumChapters, ChapterOutlines, Chapters, start_chapter are handled by pipeline
+        last_completed_step = "init" # This is the starting point for a new run.
         current_state["last_completed_step"] = last_completed_step
-        current_state["completed_chapters"] = []
+        # Ensure these keys exist for pipeline's expectations, even if empty for a new run.
+        current_state["expanded_chapter_outlines"] = []
+        current_state["completed_chapters_data"] = [] # Pipeline expects 'completed_chapters_data'
         current_state["next_chapter_index"] = 1
+
 
         # Save state awal
         SysLogger.Log(f"Saving initial state to {state_filepath}", 6)
@@ -698,727 +615,90 @@ def main():
     # --- AKHIR LOGIKA RESUME ---
 
     # Ukur waktu mulai (setelah setup)
-    StartTime = time.time()  # Pindahkan ini setelah setup resume/baru
-
-    # --- Mulai logika utama, gunakan variabel yang sudah di-restore/diinisialisasi ---
-
-    # Generate the Outline (Hanya jika belum selesai)
-    if last_completed_step == "init":
-        SysLogger.Log("Starting Outline Generation...", 3)
-        Outline, Elements, RoughChapterOutline, BaseContext = (
-            Writer.OutlineGenerator.GenerateOutline(
-                Interface,
-                SysLogger,
-                Prompt,
-                Writer.Config.OUTLINE_QUALITY,  # Gunakan Prompt (mungkin sudah diterjemahkan)
-            )
-        )
-        # Save state setelah outline
-        current_state["full_outline"] = Outline
-        current_state["story_elements"] = Elements
-        current_state["rough_chapter_outline"] = RoughChapterOutline
-        current_state["base_context"] = BaseContext
-        current_state["last_completed_step"] = "outline"
-        save_state(current_state, state_filepath)
-        SysLogger.Log("Outline Generation Complete. State Saved.", 4)
-        last_completed_step = "outline"  # Update status lokal
-    elif Outline is None:  # Jika resume tapi outline belum ada
-        SysLogger.Log(
-            "FATAL: Resuming after 'init' but outline data is missing in state.", 7
-        )
-        sys.exit(1)
+    StartTime = time.time()
+    # For new runs, current_state is initialized just before this. For resumed runs, it's loaded.
+    # Store StartTime in state for potential use by pipeline post-processing, especially if resuming.
+    # If resuming, this StartTime is for the current session, not the original StartTime unless that's restored.
+    # The pipeline's post-processing stage should ideally use the StartTime from the *initial* run.
+    # So, if resuming, we should fetch the original StartTime from state if available.
+    if Args.Resume and "original_start_time" in current_state:
+        pipeline_start_time = current_state["original_start_time"]
+        SysLogger.Log(f"Using original StartTime from state for pipeline: {datetime.datetime.fromtimestamp(pipeline_start_time).strftime('%Y-%m-%d %H:%M:%S')}", 5)
     else:
-        SysLogger.Log("Skipping Outline Generation (already completed).", 4)
+        pipeline_start_time = StartTime # For new run, or if original_start_time not in resumed state
+        current_state["original_start_time"] = pipeline_start_time # Save for future resumes
+        SysLogger.Log(f"Using current session StartTime for pipeline: {datetime.datetime.fromtimestamp(pipeline_start_time).strftime('%Y-%m-%d %H:%M:%S')}", 5)
+        if Args.Resume:
+             SysLogger.Log(f"Warning: 'original_start_time' not found in resumed state. Total elapsed time in stats might only reflect current session.", 6)
 
-    # Detect the number of chapters (Hanya jika belum selesai)
-    if last_completed_step == "outline":
-        SysLogger.Log("Detecting Chapters...", 5)
-        # Gunakan Outline yang sudah ada/dimuat
-        if not Outline:
-            SysLogger.Log("FATAL: Cannot detect chapters, Outline is missing.", 7)
-            sys.exit(1)
-        Messages = [Interface.BuildUserQuery(Outline)]
-        NumChapters = Writer.Chapter.ChapterDetector.LLMCountChapters(
-            Interface, SysLogger, Interface.GetLastMessageText(Messages)
-        )
-        # Save state setelah deteksi chapter
-        current_state["total_chapters"] = NumChapters
-        current_state["last_completed_step"] = "detect_chapters"
-        save_state(current_state, state_filepath)
-        SysLogger.Log(f"Found {NumChapters} Chapter(s). State Saved.", 5)
-        last_completed_step = "detect_chapters"
-    elif NumChapters is None:  # Handle jika resume tapi NumChapters belum ada di state
-        SysLogger.Log(
-            "FATAL: Resuming after 'outline' but total_chapters data is missing in state.",
-            7,
-        )
-        sys.exit(1)
-    else:
-        SysLogger.Log(
-            f"Skipping Chapter Detection ({NumChapters} chapters already known).", 4
-        )
 
-    # Write Per-Chapter Outline (Hanya jika diaktifkan dan belum selesai)
-    if Writer.Config.EXPAND_OUTLINE:
-        if last_completed_step == "detect_chapters":
-            SysLogger.Log("Starting Per-Chapter Outline Expansion...", 3)
-            # Gunakan Outline dan NumChapters yang sudah ada/dimuat
-            if not Outline or not NumChapters:
-                SysLogger.Log(
-                    "FATAL: Cannot expand chapters, Outline or NumChapters is missing.",
-                    7,
-                )
+    # --- Mulai logika utama ---
+    # Instantiate and run the pipeline
+    try:
+        pipeline = StoryPipeline(Interface, SysLogger, Writer.Config, ActivePrompts)
+
+        # Determine initial_prompt_for_outline based on new/resume and translation
+        initial_prompt_for_outline_gen = ""
+        if Args.Resume:
+            initial_prompt_for_outline_gen = current_state.get("translated_to_native_prompt_content") or \
+                                           current_state.get("input_prompt_content")
+            if not initial_prompt_for_outline_gen:
+                SysLogger.Log("FATAL: Could not find prompt content in state file for pipeline (resumed run).", 7)
                 sys.exit(1)
-
-            # --- AWAL BLOK BARU: Penyempurnaan Outline Tingkat Tinggi ---
-            SysLogger.Log("Starting High-Level Chapter Outline Refinement...", 3)
-            if not Outline:  # Pastikan Outline ada
-                SysLogger.Log("FATAL: Cannot refine chapters, Outline is missing.", 7)
-                sys.exit(1)
-
-            # Panggil prompt baru untuk penyempurnaan
-            RefinementMessages = [
-                Interface.BuildUserQuery(
-                    ActivePrompts.EXPAND_OUTLINE_CHAPTER_BY_CHAPTER.format(
-                        _Outline=Outline  # Gunakan outline global asli
-                    )
-                )
-            ]
-            RefinementMessages, _ = (
-                Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
-                    _Logger=SysLogger,
-                    _Messages=RefinementMessages,
-                    _Model=Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,  # Atau model outline lain yang sesuai
-                    _MinWordCount=Writer.Config.MIN_WORDS_INITIAL_OUTLINE,  # Sesuaikan min words jika perlu
-                )
-            )
-            RefinedOutline = Interface.GetLastMessageText(RefinementMessages)
-
-            # Simpan hasil refine ke state (opsional tapi bagus)
-            current_state["refined_global_outline"] = RefinedOutline
-            # Timpa variabel Outline lokal dengan versi yang sudah disempurnakan
-            Outline = RefinedOutline
-            current_state["full_outline"] = (
-                Outline  # Simpan Outline yang sudah di-refine ke state
-            )
-
-            # Update state untuk menandai langkah baru ini selesai
-            current_state["last_completed_step"] = "refine_chapters"  # Langkah baru
-            save_state(current_state, state_filepath)
-            SysLogger.Log(
-                "High-Level Chapter Outline Refinement Complete. State Saved.", 4
-            )
-            last_completed_step = "refine_chapters"  # Update status lokal
-            # --- AKHIR BLOK BARU ---
-
-            # Loop for ChapterIdx dimulai setelah ini...
-            # Inisialisasi Messages dihapus dari sini
-            ChapterOutlines = []  # Pastikan ini diinisialisasi sebelum loop
-            for ChapterIdx in range(1, NumChapters + 1):
-                # GeneratePerChapterOutline akan menggunakan variabel 'Outline' yang sudah di-refine
-                # Hanya tangkap ChapterOutline, Messages (riwayat) tidak lagi diteruskan atau dikembalikan
-                ChapterOutline = Writer.OutlineGenerator.GeneratePerChapterOutline(
-                    Interface,
-                    SysLogger,
-                    ChapterIdx,
-                    NumChapters,
-                    Outline,
-                    # Argumen Messages (untuk _History) dihapus dari pemanggilan
-                )
-                ChapterOutlines.append(ChapterOutline)
-            # Save state setelah ekspansi outline
-            current_state["expanded_chapter_outlines"] = ChapterOutlines
-            current_state["last_completed_step"] = "expand_chapters"
-            save_state(current_state, state_filepath)
-            SysLogger.Log("Per-Chapter Outline Expansion Complete. State Saved.", 4)
-            last_completed_step = "expand_chapters"  # Update status lokal
-        elif last_completed_step not in [
-            "refine_chapters",  # Tambahkan state baru
-            "expand_chapters",
-            "chapter_generation",
-            "chapter_generation_complete",
-            "post_processing",
-            "complete",
-        ]:
-            SysLogger.Log(
-                f"FATAL: Resuming after '{last_completed_step}' but per-chapter outlines are missing.",
-                7,
-            )
-            sys.exit(1)
-        else:
-            SysLogger.Log(
-                "Skipping Per-Chapter Outline Expansion (already completed or disabled).",
-                4,
-            )
-    else:
-        SysLogger.Log("Skipping Per-Chapter Outline Expansion (disabled in config).", 4)
-
-    # Create MegaOutline (selalu hitung ulang dari state/variabel saat ini)
-    DetailedOutline = ""
-    if Writer.Config.EXPAND_OUTLINE and ChapterOutlines:  # Pastikan ChapterOutlines ada
-        for Chapter in ChapterOutlines:
-            DetailedOutline += Chapter + "\n\n"  # Tambah newline antar outline bab
-    MegaOutline = f"""
-# Base Outline
-{Elements if Elements else "N/A"}
-
-# Detailed Outline
-{DetailedOutline if DetailedOutline else "N/A"}
-"""
-    # Setup Base Outline For Per-Chapter Generation
-    UsedOutline = Outline if Outline else ""  # Pastikan Outline ada
-    if (
-        Writer.Config.EXPAND_OUTLINE and DetailedOutline
-    ):  # Gunakan MegaOutline jika ekspansi aktif DAN berhasil
-        UsedOutline = MegaOutline
-
-    # Write the chapters (Mulai dari start_chapter)
-    # Tentukan langkah terakhir sebelum generasi bab, tergantung pada EXPAND_OUTLINE
-    step_before_chapters = (
-        "expand_chapters" if Writer.Config.EXPAND_OUTLINE else "detect_chapters"
-    )
-
-    if last_completed_step in [
-        step_before_chapters,  # Mulai jika langkah sebelumnya selesai
-        "chapter_generation",  # Atau jika resume di tengah bab
-    ]:
-        SysLogger.Log(f"Starting Chapter Writing from chapter {start_chapter}...", 5)
-        # Pastikan Chapters adalah list (penting untuk resume)
-        if not isinstance(Chapters, list):
-            Chapters = []
-        if NumChapters is None:
-            SysLogger.Log(
-                "FATAL: Cannot start chapter generation, NumChapters is unknown.", 7
-            )
-            sys.exit(1)
-
-        for i in range(start_chapter, NumChapters + 1):
-            SysLogger.Log(f"--- Generating Chapter {i}/{NumChapters} ---", 3)
-            # Panggil helper untuk mendapatkan outline bab dengan fallback
-            CurrentChapterOutlineTarget = _get_outline_for_chapter(
-                SysLogger, current_state, i
-            )
-
-            if (
-                not CurrentChapterOutlineTarget
-            ):  # Periksa apakah helper mengembalikan sesuatu yang valid
-                SysLogger.Log(
-                    f"FATAL: No outline could be determined for generating Chapter {i}.",
-                    7,
-                )
-                sys.exit(1)
-
-            ChapterContent = Writer.Chapter.ChapterGenerator.GenerateChapter(
-                Interface,
-                SysLogger,
-                i,
-                NumChapters,
-                CurrentChapterOutlineTarget,  # Berikan outline yang relevan
-                Chapters,  # Berikan bab yang *sudah* selesai
-                Writer.Config.OUTLINE_QUALITY,  # Kualitas outline tidak digunakan lagi di generator? Periksa.
-                BaseContext if BaseContext else "",  # Pastikan BaseContext string
-            )
-
-            FormattedChapter = f"### Chapter {i}\n\n{ChapterContent}"
-            # Jika melanjutkan dan bab ini sudah ada, ganti. Jika baru, tambahkan.
-            if len(Chapters) >= i:
-                Chapters[i - 1] = FormattedChapter  # Ganti bab yang ada (index i-1)
-                SysLogger.Log(
-                    f"Overwriting existing Chapter {i} data during resume.", 6
-                )
-            else:
-                Chapters.append(FormattedChapter)  # Tambahkan bab baru
-
-            # --- SAVE POINT KRUSIAL ---
-            current_state["completed_chapters"] = Chapters
-            current_state["next_chapter_index"] = i + 1  # Bab berikutnya
-            current_state["last_completed_step"] = "chapter_generation"
-            save_state(current_state, state_filepath)
-            SysLogger.Log(f"--- Chapter {i} Generation Complete. State Saved. ---", 4)
-            # --- AKHIR SAVE POINT ---
-
-            ChapterWordCount = Writer.Statistics.GetWordCount(ChapterContent)
-            SysLogger.Log(f"Chapter {i} Word Count: {ChapterWordCount}", 2)
-
-        # Setelah loop selesai, tandai langkah ini selesai
-        last_completed_step = "chapter_generation_complete"
-        current_state["last_completed_step"] = last_completed_step
-        save_state(current_state, state_filepath)  # Simpan status akhir loop bab
-        SysLogger.Log("All Chapters Generated. State Saved.", 5)
-
-    elif last_completed_step not in [
-        "chapter_generation_complete",
-        "post_processing",
-        "complete",
-    ]:
-        SysLogger.Log(
-            f"FATAL: Resuming after '{last_completed_step}' but chapter generation was not completed.",
-            7,
-        )
-        sys.exit(1)
-    else:
-        SysLogger.Log("Skipping Chapter Generation (already completed).", 4)
-
-    # --- Langkah Pasca-Pemrosesan (Edit, Scrub, Translate) ---
-    # Tandai awal pasca-pemrosesan
-    if last_completed_step == "chapter_generation_complete":
-        current_state["last_completed_step"] = "post_processing"
-        save_state(current_state, state_filepath)
-        last_completed_step = "post_processing"
-        SysLogger.Log("Starting Post-Processing Steps. State Saved.", 4)
-
-    if last_completed_step == "post_processing":
-
-        # Siapkan StoryInfoJSON dasar (akan diperbarui setelah setiap langkah)
-        StoryInfoJSON = {"Outline": Outline if Outline else ""}
-        StoryInfoJSON.update({"StoryElements": Elements if Elements else ""})
-        StoryInfoJSON.update(
-            {"RoughChapterOutline": RoughChapterOutline if RoughChapterOutline else ""}
-        )
-        StoryInfoJSON.update({"BaseContext": BaseContext if BaseContext else ""})
-        StoryInfoJSON.update(
-            {"UnscrubbedChapters": Chapters}
-        )  # Simpan bab asli sebelum diproses
-
-        # --- Mulai Langkah Pasca-Pemrosesan dengan Penanganan Error ---
-        processed_chapters = Chapters[:]  # Salin list bab awal
-        post_processing_successful = True  # Flag untuk melacak keberhasilan
-
-        # 1. Edit Novel (jika diaktifkan)
-        if Writer.Config.ENABLE_FINAL_EDIT_PASS:
-            SysLogger.Log("Starting Final Edit Pass...", 3)
-            if not processed_chapters:
-                SysLogger.Log("Warning: No chapters available for final edit pass.", 6)
-            else:
-                try:
-                    edited_chapters_result = Writer.NovelEditor.EditNovel(
-                        Interface, SysLogger, processed_chapters, Outline, NumChapters
-                    )
-                    processed_chapters = (
-                        edited_chapters_result  # Perbarui bab yang diproses
-                    )
-                    current_state["EditedChapters"] = (
-                        processed_chapters  # Simpan ke state
-                    )
-                    StoryInfoJSON["EditedChapters"] = processed_chapters[
-                        :
-                    ]  # Simpan SALINAN ke JSON info
-                    current_state["last_completed_step"] = (
-                        "post_processing_edit_complete"
-                    )
-                    save_state(current_state, state_filepath)  # Simpan state segera
-                    SysLogger.Log("Final Edit Pass Complete. State Saved.", 4)
-                except Exception as e:
-                    post_processing_successful = False
-                    SysLogger.Log(
-                        f"ERROR during Final Edit Pass: {e}. Skipping further edits on this version.",
-                        7,
-                    )
-                    import traceback
-
-                    traceback.print_exc()  # Cetak traceback untuk debug
-                    # Jangan perbarui processed_chapters, gunakan versi sebelumnya
-                current_state["last_completed_step"] = "post_processing_edit_complete" # Tandai selesai atau dilewati
-                save_state(current_state, state_filepath)
-        else:
-            SysLogger.Log("Skipping Final Edit Pass (disabled).", 4)
-            current_state["last_completed_step"] = "post_processing_edit_complete" # Tandai dilewati
-            save_state(current_state, state_filepath)
-
-
-        # 2. Scrub Novel (jika diaktifkan)
-        if not Writer.Config.SCRUB_NO_SCRUB:
-            SysLogger.Log("Starting Scrubbing Pass...", 3)
-            if not processed_chapters:
-                SysLogger.Log("Warning: No chapters available for scrubbing pass.", 6)
-            else:
-                try:
-                    scrubbed_chapters_result = Writer.Scrubber.ScrubNovel(
-                        Interface, SysLogger, processed_chapters, NumChapters
-                    )
-                    processed_chapters = (
-                        scrubbed_chapters_result  # Perbarui bab yang diproses
-                    )
-                    current_state["ScrubbedChapters"] = (
-                        processed_chapters  # Simpan ke state (Gunakan plural)
-                    )
-                    StoryInfoJSON["ScrubbedChapters"] = processed_chapters[
-                        :
-                    ]  # Simpan SALINAN ke JSON info (Gunakan plural)
-                    current_state["last_completed_step"] = (
-                        "post_processing_scrub_complete"
-                    )
-                    save_state(current_state, state_filepath)  # Simpan state segera
-                    SysLogger.Log("Scrubbing Pass Complete. State Saved.", 4)
-                except Exception as e:
-                    post_processing_successful = False
-                    SysLogger.Log(
-                        f"ERROR during Scrubbing Pass: {e}. Skipping further scrubbing on this version.",
-                        7,
-                    )
-                    import traceback
-
-                    traceback.print_exc()
-                    # Jangan perbarui processed_chapters
-                current_state["last_completed_step"] = "post_processing_scrub_complete" # Tandai selesai atau dilewati
-                save_state(current_state, state_filepath)
-        else:
-            SysLogger.Log(f"Skipping Scrubbing Due To Config", 4)
-            current_state["last_completed_step"] = "post_processing_scrub_complete" # Tandai dilewati
-            save_state(current_state, state_filepath)
-
-        # 3. Translate Novel (jika diaktifkan) - Ini adalah terjemahan AKHIR
-        # processed_chapters saat ini dalam NATIVE_LANGUAGE
-        if post_processing_successful and \
-           Writer.Config.TRANSLATE_LANGUAGE and \
-           Writer.Config.TRANSLATE_LANGUAGE.lower() != Writer.Config.NATIVE_LANGUAGE.lower():
-            SysLogger.Log(
-                f"Starting Final Translation of story from native '{Writer.Config.NATIVE_LANGUAGE}' to '{Writer.Config.TRANSLATE_LANGUAGE}'...", 3
-            )
-            if not processed_chapters:
-                SysLogger.Log("Warning: No chapters available for final translation.", 6)
-            else:
-                try:
-                    translated_final_chapters = Writer.Translator.TranslateNovel(
-                        Interface,
-                        SysLogger,
-                        processed_chapters, # Ini adalah bab dalam NATIVE_LANGUAGE
-                        NumChapters,
-                        _TargetLanguage=Writer.Config.TRANSLATE_LANGUAGE,
-                        _SourceLanguage=Writer.Config.NATIVE_LANGUAGE # Tentukan bahasa sumber
-                    )
-                    processed_chapters = translated_final_chapters # Timpa dengan versi terjemahan
-                    current_state["TranslatedFinalChapters"] = processed_chapters 
-                    StoryInfoJSON["TranslatedFinalChapters"] = processed_chapters[:] 
-                    SysLogger.Log(f"Final story translation to '{Writer.Config.TRANSLATE_LANGUAGE}' complete.", 4)
-                except Exception as e:
-                    # post_processing_successful tetap true, tapi terjemahan akhir gagal
-                    SysLogger.Log(
-                        f"ERROR during final story translation: {e}. Using chapters in native language '{Writer.Config.NATIVE_LANGUAGE}'.", 7
-                    )
-                    import traceback
-                    traceback.print_exc()
-        else:
-            if not (Writer.Config.TRANSLATE_LANGUAGE and Writer.Config.TRANSLATE_LANGUAGE.lower() != Writer.Config.NATIVE_LANGUAGE.lower()):
-                 SysLogger.Log(f"Skipping final story translation (not requested or target is same as native).", 4)
-            elif not post_processing_successful:
-                 SysLogger.Log(f"Skipping final story translation due to earlier post-processing errors.", 6)
+        else: # New run
+            initial_prompt_for_outline_gen = Prompt # 'Prompt' is already translated_to_native if that was done
+            if not initial_prompt_for_outline_gen :
+                 SysLogger.Log("FATAL: Prompt content for pipeline is empty (new run).", 7)
+                 sys.exit(1)
         
-        current_state["last_completed_step"] = "post_processing_final_translate_complete" # Tandai selesai atau dilewati
-        save_state(current_state, state_filepath)
-        # --- Akhir Langkah Pasca-Pemrosesan ---
+        # The pipeline's _perform_post_processing_stage will retrieve these from current_state directly if needed.
+        # No need to pass them as separate parameters to run_pipeline.
+        # original_prompt_content_for_pp = current_state.get("input_prompt_content")
+        # translated_prompt_content_for_pp = current_state.get("translated_to_native_prompt_content")
+        # input_prompt_file_for_pp = current_state.get("input_prompt_file")
 
-        # Simpan versi final bab yang berhasil diproses ke state dan JSON info
-        current_state["FinalProcessedChapters"] = processed_chapters
-        StoryInfoJSON["FinalProcessedChapters"] = processed_chapters
-        current_state["last_completed_step"] = (
-            "post_processing_complete"  # Tandai semua pasca-proses selesai (atau sejauh mana berhasil)
-        )
-        save_state(current_state, state_filepath)  # Simpan state akhir pasca-proses
-        SysLogger.Log("Post-Processing Steps Finished. Final State Saved.", 4)
-
-        # Compile The Final Story Text (gunakan processed_chapters)
-        StoryBodyText = ""
-        for Chapter in processed_chapters:  # Gunakan versi final yang berhasil diproses
-            StoryBodyText += Chapter + "\n\n\n"
-
-        # Generate Info (gunakan Outline Detail atau Outline Dasar sebagai konteks)
-        SysLogger.Log("Generating Story Info...", 5)
-
-        # --- Determine Content for GetStoryInfo (Solution 1: Use Outline) ---
-        InfoQueryContent = ""
-        info_source = "N/A"
-        # Prioritaskan outline per bab yang diperluas jika ekspansi diaktifkan dan hasilnya ada
-        if Writer.Config.EXPAND_OUTLINE and current_state.get(
-            "expanded_chapter_outlines"
-        ):
-            expanded_outlines = current_state["expanded_chapter_outlines"]
-            # Pastikan itu list dan tidak kosong
-            if isinstance(expanded_outlines, list) and expanded_outlines:
-                InfoQueryContent = "\n\n---\n\n".join(
-                    expanded_outlines
-                )  # Gabungkan dengan pemisah
-                info_source = "expanded_chapter_outlines"
-                SysLogger.Log(
-                    f"Using joined expanded chapter outlines for GetStoryInfo.", 6
-                )
-
-        # Fallback ke outline global jika outline per bab tidak digunakan atau tidak valid
-        if not InfoQueryContent:
-            full_outline_content = current_state.get("full_outline")
-            if full_outline_content:
-                InfoQueryContent = full_outline_content
-                info_source = "full_outline"
-                SysLogger.Log(f"Using full_outline for GetStoryInfo.", 6)
-            else:  # Pilihan terakhir jika outline global juga tidak ada
-                InfoQueryContent = "No outline information available."
-                info_source = "fallback_string"
-                SysLogger.Log(
-                    f"Warning: No outline found for GetStoryInfo, using fallback string.",
-                    6,
-                )
-
-        SysLogger.Log(f"Final content source for GetStoryInfo: {info_source}", 6)
-        # Buat pesan awal HANYA dengan konten outline yang dipilih
-        StoryInfoMessages = [Interface.BuildUserQuery(InfoQueryContent)]
-        # --- End Determine Content ---
-
-        try:
-            # Panggil GetStoryInfo dengan pesan yang hanya berisi outline
-            # Modify this line:
-            # Info = Writer.StoryInfo.GetStoryInfo(...)
-            # To unpack two values, ignoring the second one:
-            Info, _ = (
-                Writer.StoryInfo.GetStoryInfo(  # Unpack 2 values, ignore token usage
-                    Interface, SysLogger, StoryInfoMessages
-                )
-            )
-            # The rest of the block remains the same
-            Title = Info.get(
-                "Title", "Untitled Story"
-            )  # This line should now work correctly
-            StoryInfoJSON.update({"Title": Title})
-            Summary = Info.get("Summary", "No summary generated.")
-            StoryInfoJSON.update({"Summary": Summary})
-            Tags = Info.get("Tags", "")
-            StoryInfoJSON.update({"Tags": Tags})
-            SysLogger.Log("Story Info Generation Complete.", 5)
-        except Exception as e:
-            SysLogger.Log(f"Error generating story info: {e}. Using defaults.", 7)
-            Title = "Untitled Story"
-            Summary = "Error generating summary."
-            Tags = ""
-            StoryInfoJSON.update({"Title": Title, "Summary": Summary, "Tags": Tags})
-
-        # Cetak Info
-        print("---------------------------------------------")
-        print(f"Story Title: {Title}")
-        print(f"Summary: {Summary}")
-        print(f"Tags: {Tags}")
-        print("---------------------------------------------")
-
-        # Hitung Waktu Total
-        ElapsedTime = time.time() - StartTime
-
-        # Hitung Total Kata
-        TotalWords = Writer.Statistics.GetWordCount(StoryBodyText)
-        SysLogger.Log(f"Story Total Word Count: {TotalWords}", 4)
-
-        # Buat String Statistik (gunakan nilai dari Writer.Config yang mungkin dimuat dari state)
-        StatsString = "Work Statistics:  \n"
-        StatsString += " - Total Words: " + str(TotalWords) + "  \n"
-        StatsString += f" - Title: {Title}  \n"
-        StatsString += f" - Summary: {Summary}  \n"
-        StatsString += f" - Tags: {Tags}  \n"
-        # Gunakan waktu dari state jika ada, atau hitung ulang
-        gen_start_time_str = current_state.get(
-            "generation_start_time",
-            datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
-        )
-        StatsString += f" - Generation Start Date: {gen_start_time_str}\n"  # Removed trailing space
-        StatsString += f" - Generation Total Time: {ElapsedTime:.2f}s  \n"
-        StatsString += (
-            f" - Generation Average WPM: {60 * (TotalWords/ElapsedTime):.2f}  \n"
-            if ElapsedTime > 0
-            else "N/A"
+        current_state = pipeline.run_pipeline(
+            current_state,
+            state_filepath,
+            initial_prompt_for_outline_gen,
+            Args=Args, # Pass Args for output filename, other direct CLI controls if any
+            StartTime=pipeline_start_time # Pass the determined start time (original or current session)
         )
 
-        StatsString += "\n\nUser Settings:  \n"
-        StatsString += f" - Base Prompt File: {current_state.get('input_prompt_file', 'N/A')}  \n"  # Ambil dari state
-        # Tampilkan prompt asli jika ada terjemahan
-        if "translated_prompt_content" in current_state:
-            StatsString += f" - Original Prompt Content: {current_state.get('input_prompt_content', 'N/A')} \n"
-            StatsString += f" - Translated Prompt Content ({Writer.Config.TRANSLATE_PROMPT_LANGUAGE}): {current_state.get('translated_prompt_content', 'N/A')} \n"
+        # After pipeline.run_pipeline finishes, current_state is the final state.
+        final_step = current_state.get("last_completed_step")
+        if final_step == "complete":
+            SysLogger.Log(f"Main: Story generation pipeline completed successfully.", 5)
+            final_md = current_state.get("final_story_path", "N/A")
+            final_json = current_state.get("final_json_path", "N/A")
+            SysLogger.Log(f"Main: Final MD output: {final_md}", 5)
+            SysLogger.Log(f"Main: Final JSON output: {final_json}", 5)
+        elif current_state.get("status") == "error":
+            SysLogger.Log(f"Main: Pipeline reported an error: {current_state.get('error', 'Unknown error')}", 7)
+            SysLogger.Log(f"Main: Check pipeline logs and state file ({state_filepath}) for details. Last known step before error: {current_state.get('last_known_step_before_error', 'N/A')}", 7)
         else:
-            StatsString += f" - Prompt Content: {current_state.get('input_prompt_content', 'N/A')} \n"
+            SysLogger.Log(f"Main: Story generation pipeline ended at step: {final_step}. This may indicate an incomplete run if not 'complete'. Check logs.", 6)
 
-        StatsString += "\n\nGeneration Settings:  \n"
-        StatsString += " - Generator: AIStoryGenerator_2024-06-27  \n"  # Versi bisa ditambahkan ke state
-        # Ambil nama model dari Writer.Config
-        StatsString += f" - Native Language for Generation: {Writer.Config.NATIVE_LANGUAGE} \n"
-        StatsString += f" - Base Outline Writer Model: {Writer.Config.INITIAL_OUTLINE_WRITER_MODEL}  \n"
-        StatsString += f" - Chapter Outline Writer Model: {Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL}  \n"
-        StatsString += f" - Chapter Writer (Stage 1: Plot) Model: {Writer.Config.CHAPTER_STAGE1_WRITER_MODEL}  \n"
-        StatsString += f" - Chapter Writer (Stage 2: Char Development) Model: {Writer.Config.CHAPTER_STAGE2_WRITER_MODEL}  \n"
-        StatsString += f" - Chapter Writer (Stage 3: Dialogue) Model: {Writer.Config.CHAPTER_STAGE3_WRITER_MODEL}  \n"
-        StatsString += f" - Final Novel Editor Model: {Writer.Config.FINAL_NOVEL_EDITOR_MODEL}  \n"  # Gunakan nama variabel config baru dan label yang sesuai
-        StatsString += f" - Chapter Writer (Revision) Model: {Writer.Config.CHAPTER_REVISION_WRITER_MODEL}  \n"
-        StatsString += f" - Revision Model: {Writer.Config.REVISION_MODEL}  \n"
-        StatsString += f" - Eval Model: {Writer.Config.EVAL_MODEL}  \n"
-        StatsString += f" - Info Model: {Writer.Config.INFO_MODEL}  \n"
-        StatsString += f" - Scrub Model: {Writer.Config.SCRUB_MODEL}  \n"
-        StatsString += f" - Checker Model: {Writer.Config.CHECKER_MODEL}  \n"
-        StatsString += f" - Translator Model: {Writer.Config.TRANSLATOR_MODEL}  \n"
-        StatsString += f" - Seed: {Writer.Config.SEED}  \n"
-        StatsString += (
-            f" - Outline Min Revisions: {Writer.Config.OUTLINE_MIN_REVISIONS}  \n"
-        )
-        StatsString += (
-            f" - Outline Max Revisions: {Writer.Config.OUTLINE_MAX_REVISIONS}  \n"
-        )
-        StatsString += (
-            f" - Chapter Min Revisions: {Writer.Config.CHAPTER_MIN_REVISIONS}  \n"
-        )
-        StatsString += (
-            f" - Chapter Max Revisions: {Writer.Config.CHAPTER_MAX_REVISIONS}  \n"
-        )
-        StatsString += (
-            f" - Chapter Disable Revisions: {Writer.Config.CHAPTER_NO_REVISIONS}  \n"
-        )
-        StatsString += f" - Disable Scrubbing: {Writer.Config.SCRUB_NO_SCRUB}  \n"
-        StatsString += f" - Expand Outline: {Writer.Config.EXPAND_OUTLINE}  \n"
-        StatsString += (
-            f" - Enable Final Edit Pass: {Writer.Config.ENABLE_FINAL_EDIT_PASS}  \n"
-        )
-        StatsString += f" - Scene Generation Pipeline: {Writer.Config.SCENE_GENERATION_PIPELINE}  \n"
-        StatsString += f" - Debug Mode: {Writer.Config.DEBUG}  \n"
-        StatsString += f" - Translate Novel To: {Writer.Config.TRANSLATE_LANGUAGE if Writer.Config.TRANSLATE_LANGUAGE else 'None'}  \n"
+    except Exception as e:
+        SysLogger.Log(f"FATAL error during main pipeline setup or invocation: {e}", 7)
+        import traceback
+        SysLogger.Log(f"Traceback:\n{traceback.format_exc()}", 1) # Log stack trace at debug level
+        # Ensure state is saved even on catastrophic pipeline failure, if possible
+        # The pipeline itself should try to save state on error, but this is a fallback.
+        if current_state and state_filepath: # Check if these are defined
+            try:
+                current_state["status"] = "error_in_main" # More specific error status
+                current_state["error_message_main"] = str(e)
+                current_state["error_traceback_main"] = traceback.format_exc()
+                save_state(current_state, state_filepath)
+                SysLogger.Log(f"Saved error state (from main exception handler) to {state_filepath}",6)
+            except Exception as se:
+                SysLogger.Log(f"CRITICAL: Could not save error state from main: {se}",7)
+        sys.exit(1)
 
-        # Save The Story To Disk
-        SysLogger.Log("Saving Final Story To Disk", 3)
-        os.makedirs("Stories", exist_ok=True)  # Pastikan direktori ada
-        # Gunakan judul dari Info, bersihkan untuk nama file
-        safe_title = "".join(
-            c for c in Title if c.isalnum() or c in (" ", "_")
-        ).rstrip()
-        # Gunakan timestamp dari awal run jika ada di state, jika tidak gunakan waktu sekarang
-        run_timestamp = (
-            datetime.datetime.strptime(
-                gen_start_time_str, "%Y/%m/%d %H:%M:%S"
-            ).strftime("%Y%m%d%H%M%S")
-            if gen_start_time_str
-            else datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        )
-        FNameBase = f"Stories/Story_{safe_title.replace(' ', '_') if safe_title else 'Untitled'}_{run_timestamp}"
-        # Gunakan output name dari config jika ada
-        if Writer.Config.OPTIONAL_OUTPUT_NAME:
-            # Coba buat direktori jika output name mengandung path
-            output_dir = os.path.dirname(Writer.Config.OPTIONAL_OUTPUT_NAME)
-            if output_dir:
-                os.makedirs(output_dir, exist_ok=True)
-            FNameBase = Writer.Config.OPTIONAL_OUTPUT_NAME
-
-        FinalMDPath = f"{FNameBase}.md"
-        FinalJSONPath = f"{FNameBase}.json"
-
-        try:
-            with open(FinalMDPath, "w", encoding="utf-8") as F:
-                Out = f"""
-{StatsString}
-
----
-
-Note: An outline of the story is available at the bottom of this document.
-Please scroll to the bottom if you wish to read that.
-
----
-# {Title}
-
-{StoryBodyText}
-
-
----
-# Outline
-```
-{Outline if Outline else "No outline generated."}
-```
-"""
-                # SysLogger.SaveStory(Out) # SaveStory sekarang hanya mencatat path, bukan menulis
-                F.write(Out)
-            SysLogger.Log(f"Final story saved to {FinalMDPath}", 5)  # Log path aktual
-        except Exception as e:
-            SysLogger.Log(f"Error writing final story file {FinalMDPath}: {e}", 7)
-
-        # Save JSON Info
-        try:
-            # Pastikan FinalProcessedChapters ada sebelum menyimpan
-            if "FinalProcessedChapters" not in StoryInfoJSON:
-                SysLogger.Log(
-                    "Warning: 'FinalProcessedChapters' key missing from StoryInfoJSON before final save. Adding current processed_chapters.",
-                    6,
-                )
-                StoryInfoJSON["FinalProcessedChapters"] = processed_chapters  # Fallback
-
-            with open(FinalJSONPath, "w", encoding="utf-8") as F:
-                # Tambahkan statistik ke JSON jika diinginkan
-                StoryInfoJSON["Stats"] = {
-                    "TotalWords": TotalWords,
-                    "GenerationTimeSeconds": ElapsedTime,
-                    "AverageWPM": (
-                        60 * (TotalWords / ElapsedTime) if ElapsedTime > 0 else 0
-                    ),
-                    "GenerationStartDate": gen_start_time_str,
-                }
-                # Tambahkan path file output ke JSON
-                StoryInfoJSON["OutputFiles"] = {
-                    "Markdown": FinalMDPath,
-                    "JSONInfo": FinalJSONPath,
-                    "StateFile": state_filepath,
-                    "LogDirectory": log_directory,
-                }
-                F.write(json.dumps(StoryInfoJSON, indent=4))
-            SysLogger.Log(f"Story info JSON saved to {FinalJSONPath}", 5)
-        except Exception as e:
-            SysLogger.Log(f"Error writing story info JSON file {FinalJSONPath}: {e}", 7)
-
-        # Tandai run sebagai selesai di state file
-        current_state["status"] = "completed"
-        current_state["final_story_path"] = FinalMDPath
-        current_state["final_json_path"] = FinalJSONPath
-        current_state["last_completed_step"] = "complete"
-
-        # --- DEBUG LOGGING START ---
-        SysLogger.Log(
-            f"DEBUG: Keys in current_state before final save: {list(current_state.keys())}",
-            6,
-        )
-        # Check for the key used to store the final chapters after all processing
-        final_chapters_key = None
-        if "TranslatedChapters" in current_state:
-            final_chapters_key = "TranslatedChapters"
-        elif (
-            "ScrubbedChapter" in current_state
-        ):  # Note: Should likely be ScrubbedChapters if it's a list
-            final_chapters_key = "ScrubbedChapter"
-        elif "EditedChapters" in current_state:
-            final_chapters_key = "EditedChapters"
-        elif (
-            "completed_chapters" in current_state
-        ):  # Fallback to completed if no post-processing happened
-            final_chapters_key = "completed_chapters"
-
-        if final_chapters_key and final_chapters_key in current_state:
-            SysLogger.Log(
-                f"DEBUG: Final chapters key '{final_chapters_key}' IS present before final save.",
-                6,
-            )
-            # Optionally log the type or length
-            # SysLogger.Log(f"DEBUG: Type of '{final_chapters_key}': {type(current_state[final_chapters_key])}", 6)
-            # if isinstance(current_state[final_chapters_key], list):
-            #    SysLogger.Log(f"DEBUG: Length of '{final_chapters_key}': {len(current_state[final_chapters_key])}", 6)
-        elif final_chapters_key:
-            SysLogger.Log(
-                f"DEBUG: Final chapters key '{final_chapters_key}' IS MISSING before final save!",
-                7,
-            )
-        else:
-            SysLogger.Log(
-                f"DEBUG: Could not determine the final chapters key to check before final save!",
-                7,
-            )
-        # --- DEBUG LOGGING END ---
-
-        save_state(current_state, state_filepath)  # Simpan state setelah debug log
-        SysLogger.Log("Run completed successfully and state marked as completed.", 5)
-
-    elif last_completed_step == "complete":
-        SysLogger.Log("Run already marked as complete. Nothing to do.", 5)
-    else:
-        SysLogger.Log(
-            f"Warning: Reached end of script with unexpected state '{last_completed_step}'.",
-            6,
-        )
-
+    # All logic previously below this point (sequential step execution, post-processing)
+    # has been moved into the StoryPipeline.
+    # The main function now concludes after the pipeline call and its outcome logging.
 
 if __name__ == "__main__":
     main()
