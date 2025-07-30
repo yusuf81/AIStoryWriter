@@ -1,18 +1,38 @@
-INITIAL_OUTLINE_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-CHAPTER_OUTLINE_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-CHAPTER_STAGE1_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-CHAPTER_STAGE2_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-CHAPTER_STAGE3_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-FINAL_NOVEL_EDITOR_MODEL = "ollama://qwen2.5:32b@10.23.82.116"
+INITIAL_OUTLINE_WRITER_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHAPTER_OUTLINE_WRITER_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE1_WRITER_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE2_WRITER_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHAPTER_STAGE3_WRITER_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+FINAL_NOVEL_EDITOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
 
 # Model for the final novel-wide edit pass (used by NovelEditor.py) # Note this value is overridden by the argparser
-CHAPTER_REVISION_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-REVISION_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-EVAL_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-INFO_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-SCRUB_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Note this value is overridden by the argparser
-CHECKER_MODEL = "ollama://qwen2.5:32b@10.23.82.116"  # Model used to check results
-TRANSLATOR_MODEL = "ollama://qwen2.5:32b@10.23.82.116"
+CHAPTER_REVISION_WRITER_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+REVISION_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+EVAL_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+INFO_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+SCRUB_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+)
+CHECKER_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Model used to check results
+TRANSLATOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
 
 # OLLAMA_CTX = 8192
 OLLAMA_CTX = 16384
@@ -30,11 +50,11 @@ TRANSLATE_LANGUAGE = ""  # If the user wants to translate, this'll be changed fr
 TRANSLATE_PROMPT_LANGUAGE = ""  # If the user wants to translate their prompt, this'll be changed from empty to a language e.g 'French' or 'Russian'
 
 OUTLINE_QUALITY = 87  # Note this value is overridden by the argparser
-OUTLINE_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
+OUTLINE_MIN_REVISIONS = 0  # Note this value is overridden by the argparser
 OUTLINE_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
 CHAPTER_NO_REVISIONS = False  # Note this value is overridden by the argparser # disables all revision checks for the chapter, overriding any other chapter quality/revision settings
 CHAPTER_QUALITY = 85  # Note this value is overridden by the argparser
-CHAPTER_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
+CHAPTER_MIN_REVISIONS = 0  # Note this value is overridden by the argparser
 CHAPTER_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
 
 # Minimum Word Counts for SafeGenerateText calls
