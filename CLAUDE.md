@@ -1,0 +1,141 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Common Development Commands
+
+### Running the Story Generator
+```bash
+# Basic story generation
+python Write.py -Prompt Prompts/YourChosenPrompt.txt
+
+# Resume interrupted generation
+python Write.py -Resume Logs/Generation_YYYY-MM-DD_HH-MM-SS/run.state.json
+
+# Generate with custom models
+python Write.py -Prompt Prompts/YourChosenPrompt.txt -InitialOutlineModel "google://gemini-1.5-pro" -ChapterOutlineModel "ollama://llama3:70b"
+
+# Generate with translation
+python Write.py -Prompt Prompts/YourChosenPrompt.txt -Translate French
+
+# Generate without chapter revisions (faster)
+python Write.py -Prompt Prompts/YourChosenPrompt.txt -NoChapterRevision
+```
+
+### Testing
+```bash
+# Run all tests
+pytest
+
+# Run specific test file
+pytest tests/test_write.py
+
+# Run tests with verbose output
+pytest -v
+
+# Run specific test method
+pytest tests/writer/chapter/test_chapter_generator.py::test_specific_function
+```
+
+### Story Evaluation
+```bash
+# Compare two generated stories
+python Evaluate.py -StoryA path/to/story1.md -StoryB path/to/story2.md -Model "ollama://llama3:70b"
+```
+
+## Project Architecture
+
+### Core Pipeline Flow
+The story generation follows a multi-stage pipeline orchestrated by `Writer/Pipeline.py`:
+
+1. **Outline Generation** (`Writer/OutlineGenerator.py`)
+   - Creates initial story outline from prompt
+   - Generates story elements and character details
+   - Supports revision loops based on quality evaluation
+
+2. **Chapter Detection** (`Writer/Chapter/ChapterDetector.py`)
+   - Analyzes outline to determine chapter count and structure
+
+3. **Chapter Expansion** (optional, enabled by `-ExpandOutline`)
+   - Expands main outline into detailed per-chapter outlines
+   - Provides more structured guidance for chapter writing
+
+4. **Chapter Generation** (`Writer/Chapter/ChapterGenerator.py`)
+   - Three-stage process per chapter:
+     - Stage 1: Plot and scene writing
+     - Stage 2: Character development
+     - Stage 3: Dialogue refinement
+   - Optional scene-by-scene pipeline (`Writer/Scene/`)
+   - Built-in revision system with quality evaluation
+
+5. **Post-Processing**
+   - Final novel editing (`Writer/NovelEditor.py`)
+   - Scrubbing pass to remove AI artifacts (`Writer/Scrubber.py`)
+   - Translation support (`Writer/Translator.py`)
+   - Story metadata extraction (`Writer/StoryInfo.py`)
+
+### Model Provider System
+The project supports multiple AI model providers through a unified interface:
+
+- **Ollama**: Local models (default: `127.0.0.1:11434`)
+- **Google**: Gemini models via API
+- **OpenRouter**: Various models via API
+
+Model format: `{provider}://{model}@{host}?parameter=value`
+
+### Configuration System
+- `Writer/Config.py`: Default model assignments and generation parameters
+- `.env`: API keys for cloud providers
+- Command-line arguments override config defaults
+- State persistence in `run.state.json` for resumable generation
+
+### Multi-Language Support
+- `Writer/Prompts.py`: English prompts (default)
+- `Writer/Prompts_id.py`: Indonesian prompts
+- Dynamic prompt loading based on `NATIVE_LANGUAGE` config
+- Translation capabilities for both input prompts and output stories
+
+### Key Modules
+- `Writer/Interface/Wrapper.py`: Core LLM interface abstraction
+- `Writer/PrintUtils.py`: Logging and output formatting
+- `Writer/Statistics.py`: Generation metrics and timing
+- `Writer/LLMEditor.py`: Text editing and refinement utilities
+
+### State Management
+The system automatically saves progress at key checkpoints:
+- `init`: Run initialization
+- `outline`: Story outline completion
+- `detect_chapters`: Chapter structure analysis
+- `expand_chapters`: Chapter outline expansion
+- `chapter_generation`: After each chapter (allows mid-process resume)
+- `post_processing`: Before final editing/translation
+- `complete`: Full generation finished
+
+State files are saved in `Logs/Generation_YYYY-MM-DD_HH-MM-SS/run.state.json`
+
+### Testing Structure
+- Unit tests for core components in `tests/writer/`
+- Integration tests for main workflow in `tests/test_write.py`
+- Mock-based testing for LLM interfaces
+- Test configuration in `tests/conftest.py`
+
+## Development Notes
+
+### Quality Control
+The system includes multiple quality gates:
+- Outline quality evaluation with configurable thresholds
+- Chapter quality assessment with revision loops
+- Word count minimums for generated content
+- JSON structure validation with repair attempts
+
+### Performance Considerations
+- Parallel processing capabilities where possible
+- Configurable retry limits for failed generations
+- Memory management for long-running generations
+- Context window optimization for different models
+
+### Debugging
+- Set `DEBUG = True` in `Writer/Config.py` for verbose logging
+- Check `Logs/` directory for detailed generation logs
+- Use `-NoChapterRevision` flag to speed up testing
+- Monitor model-specific parameters in config

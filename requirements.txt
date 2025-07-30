@@ -1,8 +1,9 @@
 ollama
 termcolor
-google.generativeai
+google-generativeai
 python-dotenv
 pydantic
-json-repair==0.* # Add this line
+json-repair
+requests
 pytest
 pytest-mock
