@@ -652,9 +652,9 @@ class StoryPipeline:
                 if NumChapters is None:
                     self.SysLogger.Log("PIPELINE run_pipeline FATAL: Total number of chapters (NumChapters) is None before chapter writing stage.", 7)
                     raise ValueError("NumChapters is None before chapter writing.")
-                if BaseContext is None: # BaseContext comes from _generate_outline_stage
-                    self.SysLogger.Log("PIPELINE run_pipeline FATAL: BaseContext is None before chapter writing stage.", 7)
-                    raise ValueError("BaseContext is None before chapter writing.")
+                if BaseContext is None: # BaseContext comes from _generate_outline_stage, should be in state
+                    self.SysLogger.Log("PIPELINE run_pipeline FATAL: BaseContext is None before chapter writing stage. State may be corrupted.", 7)
+                    raise ValueError("BaseContext is None before chapter writing. Check if base_context exists in state file.")
                 self.SysLogger.Log(f"Pipeline: '{last_completed_step}' step complete. Executing Chapter Writing.", 4)
                 self._write_chapters_stage(current_state, state_filepath, NumChapters, BaseContext)
                 last_completed_step = current_state.get("last_completed_step")

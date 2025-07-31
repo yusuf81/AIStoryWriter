@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(pytest:*)",
+      "Bash(python3:*)",
+      "Bash(grep:*)",
+      "Bash(python -m pytest tests/test_write.py -v)",
+      "Bash(python -m pytest --tb=short)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(pyright:*)",
+      "Bash(flake8:*)"
     ],
     "deny": []
   }

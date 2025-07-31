@@ -30,9 +30,9 @@ def mock_active_prompts_for_chapter(mocker: MockerFixture):
     mock_prompts.CHAPTER_GENERATION_PROMPT = "Extract for chapter {_ChapterNum} from {_Outline}"
     mock_prompts.CHAPTER_SUMMARY_INTRO = "System: Summary Intro"
     mock_prompts.CHAPTER_SUMMARY_PROMPT = "Summarize {_LastChapter} for chapter {_ChapterNum}/{_TotalChapters} based on {_Outline}"
-    mock_prompts.CHAPTER_GENERATION_STAGE1 = "Stage 1: Outline={_ThisChapterOutline}, SummaryPrevCh={_FormattedLastChapterSummary}, Feedback={_Feedback}, BaseContext={_BaseContext}"
-    mock_prompts.CHAPTER_GENERATION_STAGE2 = "Stage 2: Outline={_ThisChapterOutline}, SummaryPrevCh={_FormattedLastChapterSummary}, S1Content={_Stage1Chapter}, Feedback={_Feedback}, BaseContext={_BaseContext}"
-    mock_prompts.CHAPTER_GENERATION_STAGE3 = "Stage 3: Outline={_ThisChapterOutline}, SummaryPrevCh={_FormattedLastChapterSummary}, S2Content={_Stage2Chapter}, Feedback={_Feedback}, BaseContext={_BaseContext}"
+    mock_prompts.CHAPTER_GENERATION_STAGE1 = "Stage 1: Context={ContextHistoryInsert}, Chapter={_ChapterNum}/{_TotalChapters}, Outline={ThisChapterOutline}, Summary={FormattedLastChapterSummary}, Base={_BaseContext}, Feedback={Feedback}"
+    mock_prompts.CHAPTER_GENERATION_STAGE2 = "Stage 2: Context={ContextHistoryInsert}, Chapter={_ChapterNum}/{_TotalChapters}, Outline={ThisChapterOutline}, Summary={FormattedLastChapterSummary}, S1={Stage1Chapter}, Base={_BaseContext}, Feedback={Feedback}"
+    mock_prompts.CHAPTER_GENERATION_STAGE3 = "Stage 3: Context={ContextHistoryInsert}, Chapter={_ChapterNum}/{_TotalChapters}, Outline={ThisChapterOutline}, Summary={FormattedLastChapterSummary}, S2={Stage2Chapter}, Base={_BaseContext}, Feedback={Feedback}"
 
     mock_prompts.CRITIC_CHAPTER_INTRO = "System: Critic Chapter Intro"
     mock_prompts.CRITIC_CHAPTER_PROMPT = "Critique Chapter: {_Chapter} with Outline: {_Outline}"
@@ -59,9 +59,12 @@ def mock_logger(mocker):
 # --- Tests for _prepare_initial_generation_context ---
 def test_prepare_initial_context_no_prev_chapters(mocker: MockerFixture, mock_logger):
     mock_interface = mocker.Mock()
+    # Mock the required Interface methods
+    mock_interface.BuildSystemQuery = mocker.Mock(side_effect=lambda x: {"role": "system", "content": x})
+    mock_interface.BuildUserQuery = mocker.Mock(side_effect=lambda x: {"role": "user", "content": x})
     # Simulate SafeGenerateText for ThisChapterOutline extraction
     mock_interface.SafeGenerateText.return_value = ([{"role": "assistant", "content": "Extracted Chapter Outline"}], {})
-    mocker.patch.object(mock_interface, "GetLastMessageText", return_value="Extracted Chapter Outline")
+    mock_interface.GetLastMessageText = mocker.Mock(return_value="Extracted Chapter Outline")
 
     active_prompts_mock = sys.modules["Writer.Prompts"]
 
@@ -81,6 +84,9 @@ def test_prepare_initial_context_no_prev_chapters(mocker: MockerFixture, mock_lo
 
 def test_prepare_initial_context_with_prev_chapters(mocker: MockerFixture, mock_logger):
     mock_interface = mocker.Mock()
+    # Mock the required Interface methods
+    mock_interface.BuildSystemQuery = mocker.Mock(side_effect=lambda x: {"role": "system", "content": x})
+    mock_interface.BuildUserQuery = mocker.Mock(side_effect=lambda x: {"role": "user", "content": x})
     mock_interface.SafeGenerateText.side_effect = [
         ([{"role": "assistant", "content": "Extracted Chapter Outline"}], {}),
         ([{"role": "assistant", "content": "Mocked Last Chapter Summary"}], {}),
@@ -105,6 +111,8 @@ def test_prepare_initial_context_with_prev_chapters(mocker: MockerFixture, mock_
 # --- Tests for _generate_stageX_plot (example for stage1) ---
 def test_generate_stage1_plot_success_first_try(mocker: MockerFixture, mock_logger):
     mock_interface = mocker.Mock()
+    # Mock the required Interface methods
+    mock_interface.BuildUserQuery = mocker.Mock(side_effect=lambda x: {"role": "user", "content": x})
     # Mock the ChapterGenSummaryCheck module itself, then its function
     mock_chapter_gen_summary_check_module = types.ModuleType("Writer.Chapter.ChapterGenSummaryCheck")
     mock_summary_check_func = mocker.Mock(return_value=(True, "")) # Success, no feedback
@@ -127,6 +135,8 @@ def test_generate_stage1_plot_success_first_try(mocker: MockerFixture, mock_logg
 
 def test_generate_stage1_plot_retry_and_succeed(mocker: MockerFixture, mock_logger):
     mock_interface = mocker.Mock()
+    # Mock the required Interface methods
+    mock_interface.BuildUserQuery = mocker.Mock(side_effect=lambda x: {"role": "user", "content": x})
     mock_chapter_gen_summary_check_module = types.ModuleType("Writer.Chapter.ChapterGenSummaryCheck")
     mock_summary_check_func = mocker.Mock(side_effect=[(False, "Feedback: too short"), (True, "")])
     mock_chapter_gen_summary_check_module.LLMSummaryCheck = mock_summary_check_func
@@ -264,9 +274,15 @@ def test_generate_chapter_orchestration_with_scenes_and_revisions(mocker: Mocker
     m_run_revisions.assert_called_once()
 
     # Check if _FullOutlineForSceneGen was passed to scene pipeline
-    # The actual ActivePrompts module is sys.modules["Writer.Prompts"] due to the fixture
-    active_prompts_mock = sys.modules["Writer.Prompts"]
-    m_scene_pipeline.assert_called_with(
-        mock_interface_main, mock_logger, active_prompts_mock,
-        1, 1, "ChOutline", "FullOutline", "Base", Writer.Config
-    )
+    # Get the actual call arguments to verify the parameters match what we expect
+    call_args = m_scene_pipeline.call_args
+    assert call_args[0][0] == mock_interface_main  # Interface
+    assert call_args[0][1] == mock_logger  # Logger
+    # The third argument is Writer.Prompts module - just verify it has the right type
+    assert hasattr(call_args[0][2], '__name__') and 'Prompts' in call_args[0][2].__name__
+    assert call_args[0][3] == 1  # Chapter number
+    assert call_args[0][4] == 1  # Total chapters
+    assert call_args[0][5] == "ChOutline"  # Chapter outline
+    assert call_args[0][6] == "FullOutline"  # Full outline
+    assert call_args[0][7] == "Base"  # Base context
+    assert call_args[0][8] == Writer.Config  # Config

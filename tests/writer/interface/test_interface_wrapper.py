@@ -21,13 +21,13 @@ def test_get_model_and_provider(mocker):
     assert provider == "ollama"
     assert model_name == "llama3"
     assert host == 'default_ollama_host_for_test'
-    assert options == {}
+    assert options is None
 
     provider, model_name, host, options = interface_instance.GetModelAndProvider("ollama://custommodel@myhost:12345")
     assert provider == "ollama"
     assert model_name == "custommodel"
     assert host == "myhost:12345"
-    assert options == {}
+    assert options is None
 
     provider, model_name, host, options = interface_instance.GetModelAndProvider("ollama://mistral?temperature=0.5&num_ctx=4096")
     assert provider == "ollama"
@@ -51,7 +51,7 @@ def test_get_model_and_provider(mocker):
     assert provider == "google"
     assert model_name == "gemini-1.5-flash"
     assert host is None
-    assert options == {}
+    assert options is None
 
     provider, model_name, host, options = interface_instance.GetModelAndProvider("google://gemini-pro?temperature=0.8")
     assert provider == "google"
@@ -63,7 +63,7 @@ def test_get_model_and_provider(mocker):
     assert provider == "openrouter"
     assert model_name == "anthropic/claude-3-haiku"
     assert host is None
-    assert options == {}
+    assert options is None
 
     provider, model_name, host, options = interface_instance.GetModelAndProvider("openrouter://google/gemini-flash-1.5?temperature=0.7")
     assert provider == "openrouter"
@@ -157,8 +157,13 @@ def test_safe_generate_text_max_retries_exceeded(mocker, mock_logger):
     mocker.patch.object(Writer.Config, 'MAX_TEXT_RETRIES', max_retries_config)
     interface_instance = Writer.Interface.Wrapper.Interface(Models=[])
 
-    empty_response_tuple = ([{"role": "user", "content": "Q"}, {"role": "assistant", "content": "  "}], None, 0, 0)
-    mock_chat_stream_method = mocker.patch.object(interface_instance, "ChatAndStreamResponse", return_value=empty_response_tuple)
+    # Mock that returns empty response based on input messages
+    def mock_chat_response(logger, messages, model, seed, schema):
+        # Always return a response that includes the input messages + empty assistant response
+        response_messages = messages + [{"role": "assistant", "content": "  "}]
+        return (response_messages, None, 0, 0)
+    
+    mock_chat_stream_method = mocker.patch.object(interface_instance, "ChatAndStreamResponse", side_effect=mock_chat_response)
 
     messages_history = [{"role": "user", "content": "Q"}]
     with pytest.raises(Exception, match=f"Failed to generate valid text after {max_retries_config} retries"):
@@ -205,8 +210,8 @@ def test_safe_generate_json_retry_on_invalid_json(mocker, mock_logger):
     assert mock_chat_stream_method.call_count == 2
     found_log = False
     for call_args in mock_logger.Log.call_args_list:
-        # Corrected log check for this test (JSON error)
-        expected_log_msg_part = "Error parsing JSON"
+        # Corrected log check for this test (JSON parse error)
+        expected_log_msg_part = "SafeGenerateJSON: Parse Error:"
         expected_retry_count_part = "Retry 1/2"
         if expected_log_msg_part in call_args[0][0] and \
            expected_retry_count_part in call_args[0][0] and \

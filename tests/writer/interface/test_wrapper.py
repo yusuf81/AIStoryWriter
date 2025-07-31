@@ -116,7 +116,7 @@ class TestSafeGenerateText:
         original_max_text_retries = Writer.Config.MAX_TEXT_RETRIES
         Writer.Config.MAX_TEXT_RETRIES = 2 # Lower for test
 
-        responses = [([{"role": "user", "content": "Q"}, {"role": "assistant", "content": " "}], {}, 0, 0)] * Writer.Config.MAX_TEXT_RETRIES
+        responses = [([{"role": "user", "content": "Q"}, {"role": "assistant", "content": " "}], {}, 0, 0) for _ in range(Writer.Config.MAX_TEXT_RETRIES)]
         mock_chat_response.side_effect = responses
 
         messages_in = [{"role": "user", "content": "Q"}]
@@ -176,15 +176,16 @@ class TestSafeGenerateJSON:
     def test_safegen_json_retry_on_persistent_invalid(self, mocker: MockerFixture):
         mock_chat_response = mocker.patch.object(self.interface, "ChatAndStreamResponse")
         # Make json_repair.loads raise an error each time it's called
-        mock_json_repair_loads = mocker.patch("json_repair.loads", side_effect=json_repair.JSONRepairError("parse error", "", 0))
+        mock_json_repair_loads = mocker.patch("json_repair.loads", side_effect=ValueError("parse error"))
 
         original_max_json_retries = Writer.Config.MAX_JSON_RETRIES
         Writer.Config.MAX_JSON_RETRIES = 2 # Lower for test
 
         # Prepare responses for ChatAndStreamResponse for each retry attempt
         invalid_json_responses = [
-            ([{"role": "user", "content": "Q"}, {"role": "assistant", "content": "invalid json"}], {}, 0, 0)
-        ] * Writer.Config.MAX_JSON_RETRIES # This will be 2 responses
+            ([{"role": "user", "content": "Q"}, {"role": "assistant", "content": "{invalid json}"}], {}, 0, 0) 
+            for _ in range(Writer.Config.MAX_JSON_RETRIES)
+        ]
         mock_chat_response.side_effect = invalid_json_responses
 
         messages_in = [{"role": "user", "content": "Q"}]

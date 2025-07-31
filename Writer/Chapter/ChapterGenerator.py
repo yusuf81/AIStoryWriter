@@ -275,8 +275,6 @@ def _run_scene_generation_pipeline_for_initial_plot(Interface, _Logger, ActivePr
     return Stage1Chapter
 
 
-def _run_final_chapter_revision_loop(Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, ChapterToRevise, OverallOutline, MessageHistoryForRevision, Config_module, LLMEditor_module, ReviseChapter_func_local):
-    pass # Placeholder
 
 
 def GenerateChapter(

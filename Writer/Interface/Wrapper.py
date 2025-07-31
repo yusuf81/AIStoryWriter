@@ -87,13 +87,14 @@ class Interface:
             word_count = len(last_response_text.split())
             is_too_short = word_count < _MinWordCount
 
+
             if not is_empty and not is_too_short: # Valid response
                 _Logger.Log(f"Text Call Stats: Input Chars={InputChars}, Est. Input Tokens={EstInputTokens} | Actual Tokens: Prompt={TokenUsage.get('prompt_tokens', 'N/A') if TokenUsage else 'N/A'}, Completion={TokenUsage.get('completion_tokens', 'N/A') if TokenUsage else 'N/A'}",6)
                 return ResponseMessagesList, TokenUsage
 
             log_retry_reason = "Empty Response" if is_empty else f"Short Response ({word_count} words, min {_MinWordCount})"
             # Log with Retries as 0-indexed for "attempt number", so Retries+1 for "retry number"
-            _Logger.Log(f"SafeGenerateText: Failed Due To {log_retry_reason}. Retry Attempt {Retries + 1}/{max_r}", 7)
+            _Logger.Log(f"SafeGenerateText: Generation Failed Due To {log_retry_reason}. Retry {Retries + 1}/{max_r}", 7)
 
             Retries += 1 # Crucially, increment after checking the current attempt but before next iteration
 
@@ -160,7 +161,7 @@ class Interface:
                 return ResponseMessagesList, JSONResponse, TokenUsage # Success
 
             except Exception as e:
-                _Logger.Log(f"SafeGenerateJSON: Parse Error: '{e}'. Raw: '{RawResponseText[:100]}...'. Cleaned: '{CleanedResponseText[:100]}...'. Retry Attempt {Retries + 1}/{max_r}", 7)
+                _Logger.Log(f"SafeGenerateJSON: Parse Error: '{e}'. Raw: '{RawResponseText[:100]}...'. Cleaned: '{CleanedResponseText[:100]}...'. Retry {Retries + 1}/{max_r}", 7)
                 Retries += 1
                 CurrentMessages = ResponseMessagesList # Use history from the failed attempt
                 if CurrentMessages and CurrentMessages[-1]["role"] == "assistant": del CurrentMessages[-1]
@@ -301,13 +302,22 @@ class Interface:
         print("" if not Writer.Config.DEBUG else "\n\n\n", flush=True)
         return {"role": "assistant", "content": Content}, LastChunk
 
+    def BuildUserQuery(self, _Query: str):
+        return {"role": "user", "content": _Query}
+
+    def BuildSystemQuery(self, _Query: str):
+        return {"role": "system", "content": _Query}
+
+    def BuildAssistantQuery(self, _Query: str):
+        return {"role": "assistant", "content": _Query}
+
     def GetLastMessageText(self, _Messages: list):
         if not _Messages or not isinstance(_Messages, list): return ""
         return str(_Messages[-1].get("content", "")) if isinstance(_Messages[-1], dict) else ""
 
     def GetModelAndProvider(self, _Model: str):
         if "://" not in _Model:
-            return "ollama", _Model, getattr(Writer.Config, 'OLLAMA_HOST', None), {}
+            return "ollama", _Model, getattr(Writer.Config, 'OLLAMA_HOST', None), None
 
         parsed = urlparse(_Model)
         Provider, Netloc, Path, Query = parsed.scheme, parsed.netloc, parsed.path.strip('/'), parsed.query
@@ -333,4 +343,4 @@ class Interface:
             if Host is None: Host = getattr(Writer.Config, 'OLLAMA_HOST', None)
 
         Options = {k: (float(v[0]) if v[0].replace('.','',1).isdigit() else v[0]) for k,v in parse_qs(Query).items()}
-        return Provider, ModelName.strip('/'), Host, Options
+        return Provider, ModelName.strip('/'), Host, Options if Options else None
