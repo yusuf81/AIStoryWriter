@@ -93,12 +93,22 @@ CHAPTER_HEADER_FORMAT = "### Chapter {chapter_num}: {chapter_title}"
 CHAPTER_MEMORY_WORDS = 250
 GENERATE_CHAPTER_TITLES = True
 TITLE_MAX_TOKENS = 50
+MAX_WORDS_FOR_CHAPTER_TITLE_PROMPT = 500  # Maximum words of chapter content to use for title generation
+MIN_WORDS_FOR_CHAPTER_TITLE = 5  # Minimum words for chapter title
+MAX_LENGTH_CHAPTER_TITLE = 100  # Maximum character length for chapter title
+MAX_RETRIES_CHAPTER_TITLE = 3  # Maximum retries for chapter title generation
 ENABLE_GLOBAL_OUTLINE_REFINEMENT = False  # Flag to enable global outline refinement
 AUTO_CHAPTER_TITLES = True  # Flag to enable automatic chapter title generation
 DEFAULT_CHAPTER_TITLE_PREFIX = "Chapter"  # Default prefix for chapter titles
 ADD_CHAPTER_TITLES_TO_NOVEL_BODY_TEXT = True  # Add chapter titles to final novel text
 STORIES_DIR = "Stories"  # Directory for generated stories
 LOG_DIRECTORY = "Logs"  # Directory for log files
+
+# Markdown output configuration
+INCLUDE_OUTLINE_IN_MD = True  # Include outline in final markdown output
+INCLUDE_STATS_IN_MD = True  # Include statistics in final markdown output
+INCLUDE_SUMMARY_IN_MD = True  # Include summary in final markdown output
+INCLUDE_TAGS_IN_MD = True  # Include tags in final markdown output
 
 
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"

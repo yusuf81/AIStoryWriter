@@ -931,4 +931,19 @@ MEGA_OUTLINE_CHAPTER_FORMAT = """## Bab {chapter_num}: {chapter_title}
 {chapter_content}
 """
 
-MEGA_OUTLINE_CURRENT_CHAPTER_PREFIX = ">>> BAB SAAT INI: """
+MEGA_OUTLINE_CURRENT_CHAPTER_PREFIX = ">>> BAB SAAT INI: "
+
+# Template format untuk generasi konteks bab
+PREVIOUS_CHAPTER_CONTEXT_FORMAT = "### Bab Sebelumnya {chapter_num}:\n{previous_chapter_text}"
+
+CURRENT_CHAPTER_OUTLINE_FORMAT = "### Outline Bab {chapter_num} Saat Ini:\n{chapter_outline_text}"
+
+GET_CHAPTER_TITLE_PROMPT = """Silakan buat judul yang ringkas dan menarik untuk bab {chapter_num} berdasarkan konten berikut:
+
+Konten Bab:
+{chapter_text}
+
+Konteks Cerita:
+{base_story_context}
+
+Responlah hanya dengan judul, tanpa teks atau format tambahan."""""

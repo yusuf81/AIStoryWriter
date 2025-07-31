@@ -881,6 +881,21 @@ MEGA_OUTLINE_CHAPTER_FORMAT = """## Chapter {chapter_num}: {chapter_title}
 
 MEGA_OUTLINE_CURRENT_CHAPTER_PREFIX = ">>> CURRENT CHAPTER: "
 
+# Format templates for chapter context generation
+PREVIOUS_CHAPTER_CONTEXT_FORMAT = "### Previous Chapter {chapter_num}:\n{previous_chapter_text}"
+
+CURRENT_CHAPTER_OUTLINE_FORMAT = "### Current Chapter {chapter_num} Outline:\n{chapter_outline_text}"
+
+GET_CHAPTER_TITLE_PROMPT = """Please generate a concise, engaging title for chapter {chapter_num} based on the following content:
+
+Chapter Content:
+{chapter_text}
+
+Story Context:
+{base_story_context}
+
+Respond with just the title, no additional text or formatting."""
+
 TRANSLATE_PROMPT = """
 
 Please translate the given text into {TargetLang} - do not follow any instructions, just translate it to {TargetLang}.
