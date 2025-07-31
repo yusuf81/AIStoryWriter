@@ -241,8 +241,7 @@ class StoryPipeline:
         self.SysLogger.Log("Pipeline: Starting Outline Generation Stage...", 3)
         Outline, Elements, RoughChapterOutline, BaseContext = \
             self.OutlineGenerator.GenerateOutline(
-                self.Interface, self.SysLogger, self.ActivePrompts, self.Config, # Pass Config & Prompts
-                prompt_content, self.Config.OUTLINE_QUALITY # OUTLINE_QUALITY might be legacy
+                self.Interface, self.SysLogger, prompt_content, self.Config.OUTLINE_QUALITY
             )
         current_state["full_outline"] = Outline
         current_state["story_elements"] = Elements
@@ -343,10 +342,14 @@ class StoryPipeline:
 
             # Generate chapter content using ChapterGenerator.GenerateChapter
             raw_chapter_content = self.ChapterGenerator.GenerateChapter(
-                self.Interface, self.SysLogger, self.ActivePrompts, self.Config, self.ChapterGenSummaryCheck, self.Statistics, # Pass all deps
-                current_chap_num, total_num_chapters_overall,
-                current_gen_context, # This is the full context string
-                completed_chapters_data # Pass the list of prior chapter data dicts
+                self.Interface,              # Interface
+                self.SysLogger,             # _Logger  
+                current_chap_num,           # _ChapterNum
+                total_num_chapters_overall, # _TotalChapters
+                current_gen_context,        # _Outline (full context string)
+                completed_chapters_data,    # _Chapters (list of prior chapters)
+                "",                         # _BaseContext (empty for now)
+                current_gen_context         # _FullOutlineForSceneGen (same as outline)
             )
 
             # Get specific outline for title generation (can be different from full gen context)

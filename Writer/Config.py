@@ -93,6 +93,12 @@ CHAPTER_HEADER_FORMAT = "### Chapter {chapter_num}: {chapter_title}"
 CHAPTER_MEMORY_WORDS = 250
 GENERATE_CHAPTER_TITLES = True
 TITLE_MAX_TOKENS = 50
+ENABLE_GLOBAL_OUTLINE_REFINEMENT = False  # Flag to enable global outline refinement
+AUTO_CHAPTER_TITLES = True  # Flag to enable automatic chapter title generation
+DEFAULT_CHAPTER_TITLE_PREFIX = "Chapter"  # Default prefix for chapter titles
+ADD_CHAPTER_TITLES_TO_NOVEL_BODY_TEXT = True  # Add chapter titles to final novel text
+STORIES_DIR = "Stories"  # Directory for generated stories
+LOG_DIRECTORY = "Logs"  # Directory for log files
 
 
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"

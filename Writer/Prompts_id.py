@@ -922,5 +922,13 @@ CHAPTER_TRANSLATE_PROMPT = """
 Terjemahkan seluruh teks di dalam tag <CHAPTER> di atas ke Bahasa {_Language}.
 Respons Anda HARUS HANYA berisi teks terjemahan dari bab tersebut.
 JANGAN sertakan frasa pengantar, penjelasan, komentar, permintaan maaf, format markdown, atau teks apa pun selain terjemahan langsung itu sendiri.
-Jika ada komunikasi tambahan yang mutlak diperlukan di luar terjemahan, pastikan itu dalam Bahasa Indonesia, namun idealnya, respons Anda hanya berisi teks terjemahan.
+Jika ada komunikasi tambahan yang mutlak diperlukan di luar terjemahan, pastiken itu dalam Bahasa Indonesia, namun idealnya, respons Anda hanya berisi teks terjemahan.
 """
+
+MEGA_OUTLINE_PREAMBLE = """Ini adalah konteks cerita lengkap untuk generasi bab."""
+
+MEGA_OUTLINE_CHAPTER_FORMAT = """## Bab {chapter_num}: {chapter_title}
+{chapter_content}
+"""
+
+MEGA_OUTLINE_CURRENT_CHAPTER_PREFIX = ">>> BAB SAAT INI: """
