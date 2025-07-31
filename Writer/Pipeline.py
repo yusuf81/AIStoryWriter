@@ -259,8 +259,7 @@ class StoryPipeline:
             raise ValueError("Outline is missing, cannot detect chapters.")
 
         NumChapters = self.ChapterDetector.LLMCountChapters(
-            self.Interface, self.SysLogger, self.ActivePrompts, self.Config, # Pass Config & Prompts
-            Outline # Just pass the outline string
+            self.Interface, self.SysLogger, Outline
         )
         current_state["total_chapters"] = NumChapters
         current_state["last_completed_step"] = "detect_chapters"
@@ -281,9 +280,8 @@ class StoryPipeline:
                 raise ValueError("Base outline missing for global refinement.")
 
             # Assuming RefineOutline is a function in OutlineGenerator now
-            refined_global_outline = self.OutlineGenerator.RefineOutline( # Call RefineOutline
-                self.Interface, self.SysLogger, self.ActivePrompts, self.Config, # Pass Config & Prompts
-                base_outline_for_expansion, "global_chapter_structure" # Purpose hint
+            refined_global_outline, _ = self.OutlineGenerator.ReviseOutline(
+                self.Interface, self.SysLogger, base_outline_for_expansion, "global_chapter_structure"
             )
             current_state["refined_global_outline"] = refined_global_outline
             current_state["last_completed_step"] = "refine_global_outline" # Intermediate step
@@ -299,8 +297,7 @@ class StoryPipeline:
             for ChapterIdx in range(1, num_chapters + 1):
                 self.SysLogger.Log(f"Pipeline: Generating outline for chapter {ChapterIdx}/{num_chapters}...", 6)
                 ChapterOutlineText = self.OutlineGenerator.GeneratePerChapterOutline(
-                    self.Interface, self.SysLogger, self.ActivePrompts, self.Config, # Pass Config & Prompts
-                    ChapterIdx, num_chapters, refined_global_outline # Use the refined outline
+                    self.Interface, self.SysLogger, ChapterIdx, num_chapters, refined_global_outline
                 )
                 GeneratedChapterOutlines.append(ChapterOutlineText)
             self.SysLogger.Log(f"Pipeline: Generated {len(GeneratedChapterOutlines)} per-chapter outlines.", 4)
@@ -428,12 +425,20 @@ class StoryPipeline:
             else:
                 try:
                     # NovelEditor.EditNovel now expects list of chapter data dicts
-                    edited_chapters_data = self.NovelEditor.EditNovel(
-                        self.Interface, self.SysLogger, self.ActivePrompts, self.Config, self.Statistics,
-                        current_working_chapters_data, # list of dicts
-                        FullOutlineForInfo, # Full outline for context
+                    # Extract text content from chapter data dicts
+                    chapter_texts = [ch.get("text", "") for ch in current_working_chapters_data]
+                    edited_chapter_texts = self.NovelEditor.EditNovel(
+                        self.Interface, self.SysLogger,
+                        chapter_texts,
+                        FullOutlineForInfo,
                         NumChaptersActual
                     )
+                    # Convert back to chapter data format
+                    edited_chapters_data = []
+                    for i, text in enumerate(edited_chapter_texts):
+                        chapter_data = current_working_chapters_data[i].copy()
+                        chapter_data["text"] = text
+                        edited_chapters_data.append(chapter_data)
                     current_working_chapters_data = edited_chapters_data
                     StoryInfoJSON["EditedChaptersData"] = [ch.copy() for ch in edited_chapters_data]
                     self.SysLogger.Log("Pipeline: Final Edit Pass Complete.", 4)
@@ -451,11 +456,19 @@ class StoryPipeline:
             else:
                 try:
                     # Scrubber.ScrubNovel now expects list of chapter data dicts
-                    scrubbed_chapters_data = self.Scrubber.ScrubNovel(
-                        self.Interface, self.SysLogger, self.ActivePrompts, self.Config,
-                        current_working_chapters_data, # list of dicts
+                    # Extract text content from chapter data dicts
+                    chapter_texts = [ch.get("text", "") for ch in current_working_chapters_data]
+                    scrubbed_chapter_texts = self.Scrubber.ScrubNovel(
+                        self.Interface, self.SysLogger,
+                        chapter_texts,
                         NumChaptersActual
                     )
+                    # Convert back to chapter data format
+                    scrubbed_chapters_data = []
+                    for i, text in enumerate(scrubbed_chapter_texts):
+                        chapter_data = current_working_chapters_data[i].copy()
+                        chapter_data["text"] = text
+                        scrubbed_chapters_data.append(chapter_data)
                     current_working_chapters_data = scrubbed_chapters_data
                     StoryInfoJSON["ScrubbedChaptersData"] = [ch.copy() for ch in scrubbed_chapters_data]
                     self.SysLogger.Log("Pipeline: Scrubbing Pass Complete.", 4)
@@ -475,12 +488,20 @@ class StoryPipeline:
             else:
                 try:
                     # Translator.TranslateNovel now expects list of chapter data dicts
-                    translated_chapters_data = self.Translator.TranslateNovel(
-                        self.Interface, self.SysLogger, self.ActivePrompts, self.Config,
-                        current_working_chapters_data, # list of dicts
+                    # Extract text content from chapter data dicts
+                    chapter_texts = [ch.get("text", "") for ch in current_working_chapters_data]
+                    translated_chapter_texts = self.Translator.TranslateNovel(
+                        self.Interface, self.SysLogger,
+                        chapter_texts,
                         NumChaptersActual,
-                        _TargetLanguage=target_translation_lang, _SourceLanguage=native_lang
+                        target_translation_lang, native_lang
                     )
+                    # Convert back to chapter data format
+                    translated_chapters_data = []
+                    for i, text in enumerate(translated_chapter_texts):
+                        chapter_data = current_working_chapters_data[i].copy()
+                        chapter_data["text"] = text
+                        translated_chapters_data.append(chapter_data)
                     current_working_chapters_data = translated_chapters_data
                     StoryInfoJSON["TranslatedFinalChaptersData"] = [ch.copy() for ch in translated_chapters_data]
                     StoryInfoJSON["FinalOutputLanguage"] = target_translation_lang
@@ -505,9 +526,10 @@ class StoryPipeline:
 
         GeneratedInfo = {}
         try:
+            # Convert info_query_text to proper message format
+            info_messages = [{"role": "user", "content": info_query_text}]
             GeneratedInfo, _ = self.StoryInfo.GetStoryInfo(
-                self.Interface, self.SysLogger, self.ActivePrompts, self.Config, self.Statistics,
-                info_query_text # Text to base the info on
+                self.Interface, self.SysLogger, info_messages
             )
             StoryInfoJSON.update(GeneratedInfo) # Add Title, Summary, Tags
             self.SysLogger.Log("Pipeline: Story Info Generation Complete.", 5)
@@ -588,7 +610,7 @@ class StoryPipeline:
         }
         current_state["StoryInfoJSON"] = StoryInfoJSON # Save updated StoryInfoJSON to state
         try:
-            with open(FinalJSONPath, "w", encoding="utf-f-8") as F: # Corrected encoding to utf-8
+            with open(FinalJSONPath, "w", encoding="utf-8") as F:
                 json.dump(StoryInfoJSON, F, indent=4, ensure_ascii=False)
             self.SysLogger.Log(f"Pipeline: Story info JSON saved to {FinalJSONPath}", 5)
         except Exception as e:
