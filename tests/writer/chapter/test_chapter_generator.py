@@ -95,7 +95,7 @@ def test_prepare_initial_context_with_prev_chapters(mocker: MockerFixture, mock_
     get_last_text_mock.side_effect = ["Extracted Chapter Outline", "Mocked Last Chapter Summary"]
 
     active_prompts_mock = sys.modules["Writer.Prompts"]
-    prev_chapters = ["Chapter 1 content"]
+    prev_chapters = [{"number": 1, "title": "Chapter 1", "text": "Chapter 1 content"}]
     history, ctx_insert, this_outline, last_summary, detail_check = _prepare_initial_generation_context(
         mock_interface, mock_logger, active_prompts_mock,
         _Outline="Main outline part for ch2", _Chapters=prev_chapters, _ChapterNum=2, _TotalChapters=5,

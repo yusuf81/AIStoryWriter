@@ -1,10 +1,9 @@
 from pydantic import BaseModel  # Ditambahkan
-import json
-
-import Writer.LLMEditor
-import Writer.PrintUtils
 import Writer.Config
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
+
+# Cache untuk outline summaries - untuk menghindari summary ulang outline yang sama
+_outline_summary_cache = {}
 
 
 # Definisikan Skema Pydantic
@@ -14,7 +13,7 @@ class SummaryComparisonSchema(BaseModel):
 
 
 def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
     """
     Generates a summary of the work provided, and compares that to the reference summary, asking if they answered the prompt correctly.
     """
@@ -39,7 +38,7 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     )
     # Tambahkan log sebelum memanggil SafeGenerateText pertama
     _Logger.Log(
-        f"Generating summary of generated work for comparison.", 6
+        "Generating summary of generated work for comparison.", 6
     )  # Tambahkan log ini
     SummaryLangchain, _ = (
         Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
@@ -48,32 +47,42 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
     WorkSummary: str = Interface.GetLastMessageText(SummaryLangchain)
     _Logger.Log(
-        f"Finished generating summary of generated work.", 6
+        "Finished generating summary of generated work.", 6
     )  # Tambahkan log ini
 
-    # Now Summarize The Outline
-    SummaryLangchain: list = []
-    SummaryLangchain.append(
-        Interface.BuildSystemQuery(ActivePrompts.SUMMARY_OUTLINE_INTRO)
-    )
-    SummaryLangchain.append(
-        Interface.BuildUserQuery(
-            ActivePrompts.SUMMARY_OUTLINE_PROMPT.format(_RefSummary=_RefSummary)
+    # Check if we already have a cached summary for this outline
+    outline_hash = hash(_RefSummary)
+    if outline_hash in _outline_summary_cache:
+        OutlineSummary = _outline_summary_cache[outline_hash]
+        _Logger.Log(
+            "Using cached summary of reference outline.", 6
         )
-    )
-    # Tambahkan log sebelum memanggil SafeGenerateText kedua
-    _Logger.Log(
-        f"Generating summary of reference outline for comparison.", 6
-    )  # Tambahkan log ini
-    SummaryLangchain, _ = (
-        Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
-            _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
+    else:
+        # Now Summarize The Outline (first time only)
+        SummaryLangchain: list = []
+        SummaryLangchain.append(
+            Interface.BuildSystemQuery(ActivePrompts.SUMMARY_OUTLINE_INTRO)
         )
-    )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
-    OutlineSummary: str = Interface.GetLastMessageText(SummaryLangchain)
-    _Logger.Log(
-        f"Finished generating summary of reference outline.", 6
-    )  # Tambahkan log ini
+        SummaryLangchain.append(
+            Interface.BuildUserQuery(
+                ActivePrompts.SUMMARY_OUTLINE_PROMPT.format(_RefSummary=_RefSummary)
+            )
+        )
+        # Tambahkan log sebelum memanggil SafeGenerateText kedua
+        _Logger.Log(
+            "Generating summary of reference outline for comparison.", 6
+        )  # Tambahkan log ini
+        SummaryLangchain, _ = (
+            Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+                _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
+            )
+        )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
+        OutlineSummary: str = Interface.GetLastMessageText(SummaryLangchain)
+        # Cache the summary for future use
+        _outline_summary_cache[outline_hash] = OutlineSummary
+        _Logger.Log(
+            "Finished generating and cached summary of reference outline.", 6
+        )  # Tambahkan log ini
 
     # Now, generate a comparison JSON value.
     ComparisonLangchain: list = []
@@ -89,7 +98,7 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     )
     # Tambahkan log sebelum memanggil SafeGenerateJSON
     _Logger.Log(
-        f"Comparing generated work summary vs reference outline summary.", 6
+        "Comparing generated work summary vs reference outline summary.", 6
     )  # Tambahkan log ini
     # Menggunakan SafeGenerateJSON dengan skema
     # Unpack 3 values, ignore messages and tokens
@@ -102,7 +111,7 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
             _FormatSchema=SummaryComparisonSchema.model_json_schema(),
         )
     )
-    _Logger.Log(f"Finished comparing summaries.", 6)  # Tambahkan log ini
+    _Logger.Log("Finished comparing summaries.", 6)  # Tambahkan log ini
     return (
         JSONResponse["DidFollowOutline"],
         "### Extra Suggestions:\n" + JSONResponse["Suggestions"],

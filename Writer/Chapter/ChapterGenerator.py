@@ -45,7 +45,7 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
             Interface.BuildUserQuery(
                 ActivePrompts.CHAPTER_SUMMARY_PROMPT.format(
                     _ChapterNum=_ChapterNum, _TotalChapters=_TotalChapters,
-                    _Outline=_Outline, _LastChapter=_Chapters[-1]
+                    _Outline=_Outline, _LastChapter=_Chapters[-1].get("text", "")
                 )
             )
         ]
