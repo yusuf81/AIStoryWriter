@@ -6,39 +6,79 @@ Generate full-length novels with AI! Harness the power of large language models 
 
 ## 🚀 Features
 
-- Generate medium to full-length novels: Produce substantial stories with coherent narratives, suitable for novella or novel-length works.
-- Easy setup and use: Get started quickly with minimal configuration required.
-- Customizable prompts and models: Choose from existing prompts or create your own, and select from various language models.
-- Automatic model downloading: The system can automatically download required models via Ollama if they aren't already available.
-- Support for local models via Ollama: Run language models locally for full control and privacy.
-- Cloud provider support (currently Google): Access high-performance computing resources for those without powerful GPUs.
-- Flexible configuration options: Fine-tune the generation process through easily modifiable settings.
-- Works across all operating systems
-- Supoorts translation of the generated stories in all languages
-- Resume interrupted generation runs from the last completed step
-- Optional scene-by-scene generation pipeline for initial chapter drafts
-- Optional final editing pass over the entire novel
-- Optional scrubbing pass to remove potential AI artifacts (like leftover instructions)
-- Includes a script (`Evaluate.py`) for comparing the quality of two generated stories
+- **Generate medium to full-length novels**: Produce substantial stories with coherent narratives, suitable for novella or novel-length works
+- **Multi-language support**: Generate stories in Indonesian and English with automatic prompt/output translation capabilities
+- **Easy setup and use**: Get started quickly with minimal configuration required
+- **Modular pipeline architecture**: Clean separation of concerns with dedicated modules for outline generation, chapter writing, and post-processing
+- **Customizable prompts and models**: Choose from existing prompts or create your own, and select from various language models
+- **Automatic model downloading**: The system can automatically download required models via Ollama if they aren't already available
+- **Support for local models via Ollama**: Run language models locally for full control and privacy
+- **Cloud provider support**: Support for Google Gemini, OpenRouter, and other cloud-based AI services
+- **Flexible configuration options**: Fine-tune the generation process through easily modifiable settings
+- **Cross-platform compatibility**: Works across all operating systems
+- **Advanced story generation pipeline**:
+  - Multi-stage chapter generation (plot → character development → dialogue)
+  - Optional scene-by-scene generation for detailed chapter crafting
+  - Automatic quality evaluation and revision loops
+  - Chapter outline expansion for structured writing
+- **Resume interrupted generation**: Automatic state saving allows resuming from any point in the generation process
+- **Post-processing capabilities**:
+  - Optional final editing pass over the entire novel
+  - Automatic scrubbing to remove AI artifacts and leftover instructions
+  - Translation support for generated stories
+- **Quality assurance**: Built-in evaluation system and story comparison tools (`Evaluate.py`)
+- **Comprehensive testing**: Full test suite with pytest for reliable code quality
 
 ## 🏁 Quick Start
 
 Getting started with AI Story Generator is easy:
 
-1. Clone the repository
-2. Install [Ollama](https://ollama.com/) for local model support
-3. Run the generator:
+### Prerequisites
+1. **Python 3.8+** with pip
+2. **Install [Ollama](https://ollama.com/)** for local model support
+3. **Clone the repository**:
+   ```bash
+   git clone https://github.com/datacrystals/AIStoryWriter.git
+   cd AIStoryWriter
+   ```
 
-```sh
-./Write.py -Prompt Prompts/YourChosenPrompt.txt
+### Installation
+1. **Install Python dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Set up environment variables** (optional, for cloud providers):
+   ```bash
+   cp .env.example .env
+   # Edit .env to add your API keys for Google, OpenRouter, etc.
+   ```
+
+### Generate Your First Story
+```bash
+# Basic story generation (Indonesian prompts by default)
+python Write.py -Prompt Prompts/horor3.txt
+
+# Generate with custom models
+python Write.py -Prompt Prompts/roman1.txt -InitialOutlineModel "google://gemini-1.5-pro"
+
+# Resume interrupted generation
+python Write.py -Resume Logs/Generation_YYYY-MM-DD_HH-MM-SS/run.state.json
 ```
 
 That's it! The system will automatically download any required models and start generating your story.
 
-**Optional steps:**
+### Development & Testing
+```bash
+# Run the test suite
+pytest
 
-- Modify prompts in `Writer/Prompts.py` or create your own
-- Configure the model selection in `Writer/Config.py`
+# Run tests with verbose output
+pytest -v
+
+# Check specific functionality
+python Write.py --help
+```
 
 ## 💻 Hardware Recommendations
 
@@ -46,129 +86,260 @@ Not sure which models to use with your GPU? Check out our [Model Recommendations
 
 ## 🛠️ Usage
 
-You can customize the models used for different parts of the story generation process in two ways:
+The AI Story Generator provides flexible configuration options to customize your story generation experience.
 
-### 1. Using Command-Line Arguments (Recommended)
+### Command-Line Interface
 
-You can override the default models by specifying them as command-line arguments:
+The main interface uses `Write.py` with various command-line arguments:
 
-```sh
-./Write.py -Prompt Prompts/YourChosenPrompt.txt -InitialOutlineModel "ollama://llama3:70b" ...
+#### Model Configuration
+You can override the default models for different generation stages:
+
+```bash
+# Use different models for different stages
+python Write.py -Prompt Prompts/horor3.txt \
+  -InitialOutlineModel "google://gemini-1.5-pro" \
+  -ChapterS1Model "ollama://llama3:70b" \
+  -ChapterS2Model "ollama://gemma2:27b" \
+  -ChapterS3Model "ollama://qwen2.5:32b"
 ```
 
-Available command-line arguments are stated in the `Write.py` file.
+#### Key Command-Line Arguments
 
-Key arguments include:
-*   `-Resume {path/to/run.state.json}`: Resume a previous run from its state file.
-*   `-InitialOutlineModel {model_string}`: Model for initial outline generation and revision.
-*   `-ChapterOutlineModel {model_string}`: Model for per-chapter outline expansion or scene outline generation.
-*   `-ChapterS1Model {model_string}`: Model for chapter stage 1 (plot/scene writing).
-*   `-ChapterS2Model {model_string}`: Model for chapter stage 2 (character development).
-*   `-ChapterS3Model {model_string}`: Model for chapter stage 3 (dialogue).
-*   `-FinalNovelEditorModel {model_string}`: Model for the final novel-wide edit pass.
-*   `-ChapterRevisionModel {model_string}`: Model for revising chapters during the feedback loop.
-*   `-RevisionModel {model_string}`: Model for generating feedback/critique.
-*   `-EvalModel {model_string}`: Model for quality evaluation (true/false) and chapter counting.
-*   `-InfoModel {model_string}`: Model for extracting final story info (title, summary, tags).
-*   `-ScrubModel {model_string}`: Model for the final scrubbing pass.
-*   `-CheckerModel {model_string}`: Model for internal checks (e.g., scene JSON conversion).
-*   `-TranslatorModel {model_string}`: Model for translation tasks.
-*   `-ExpandOutline`: Expand the main outline into detailed per-chapter outlines before writing. (Enabled by default)
-*   `-SceneGenerationPipeline`: Use the scene-by-scene generation method for initial chapter drafts. (Enabled by default)
-*   `-EnableFinalEditPass`: Perform an additional editing pass on the *entire novel* after initial generation. (Enabled by default)
-*   `-NoScrubChapters`: Disable the final pass that cleans up potential AI artifacts. (Scrubbing enabled by default)
-*   `-NoChapterRevision`: Disable the feedback/revision loop during chapter generation. (Revisions enabled by default)
-*   `-Translate {Language}`: Translate the final story into the specified language (e.g., 'French').
-*   `-TranslatePrompt {Language}`: Translate the input prompt into the specified language before generation.
+**Core Generation:**
+- `-Prompt {file}`: Path to your story prompt file
+- `-Output {file}`: Optional output filename (auto-generated if not specified)
+- `-Resume {state_file}`: Resume from a previous generation state
 
-The model format is: `{ModelProvider}://{ModelName}@{ModelHost}?parameter=value`
+**Model Selection:**
+- `-InitialOutlineModel`: Model for outline generation and revision
+- `-ChapterOutlineModel`: Model for per-chapter outline expansion
+- `-ChapterS1Model`: Model for chapter stage 1 (plot/scene writing)
+- `-ChapterS2Model`: Model for chapter stage 2 (character development)
+- `-ChapterS3Model`: Model for chapter stage 3 (dialogue)
+- `-FinalNovelEditorModel`: Model for final novel-wide editing
+- `-ChapterRevisionModel`: Model for chapter revisions
+- `-RevisionModel`: Model for generating feedback/critique
+- `-EvalModel`: Model for quality evaluation
+- `-InfoModel`: Model for extracting story metadata
+- `-ScrubModel`: Model for final cleanup pass
+- `-TranslatorModel`: Model for translation tasks
 
-- Default host is `127.0.0.1:11434` (currently only affects ollama)
-- Default ModelProvider is `ollama`
-- Supported providers: `ollama`, `google`, `openrouter`
-- For `ollama` we support the passing of parameters (e.g. `temperature`) on a per model basis
+**Generation Options:**
+- `-ExpandOutline`: Enable per-chapter outline expansion (default: enabled)
+- `-SceneGenerationPipeline`: Use scene-by-scene generation (default: enabled)
+- `-EnableFinalEditPass`: Perform final novel editing (default: enabled)
+- `-NoChapterRevision`: Disable chapter revision loops
+- `-NoScrubChapters`: Disable final AI artifact cleanup
 
-Example:
-```sh
-./Write.py -Prompt Prompts/YourChosenPrompt.txt -InitialOutlineModel "google://gemini-1.5-pro" -ChapterOutlineModel "ollama://llama3:70b@192.168.1.100:11434" ...
+**Translation:**
+- `-Translate {Language}`: Translate final story (e.g., 'French', 'English')
+- `-TranslatePrompt {Language}`: Translate input prompt before generation
+
+**Quality Control:**
+- `-OutlineMinRevisions / -OutlineMaxRevisions`: Control outline revision loops
+- `-ChapterMinRevisions / -ChapterMaxRevisions`: Control chapter revision loops
+- `-Seed {number}`: Set random seed for reproducible generation
+
+### Model Provider Format
+
+The model format is: `{Provider}://{ModelName}@{Host}?parameter=value`
+
+**Supported Providers:**
+- `ollama`: Local models via Ollama (default)
+- `google`: Google Gemini models
+- `openrouter`: OpenRouter API models
+
+**Examples:**
+```bash
+# Local Ollama model (default host: 127.0.0.1:11434)
+ollama://llama3:70b
+
+# Ollama with custom host and parameters
+ollama://qwen2.5:32b@192.168.1.100:11434?temperature=0.7
+
+# Google Gemini model
+google://gemini-1.5-pro
+
+# OpenRouter model
+openrouter://anthropic/claude-3-opus
 ```
 
-This flexibility allows you to experiment with different models for various parts of the story generation process, helping you find the optimal combination for your needs.
+### Configuration File
 
-
-NOTE: If you're using a provider that needs an API key, please copy `.env.example` to `.env` and paste in your API keys there.
-
-
-### 2. Using Writer/Config.py
-
-
-Edit the `Writer/Config.py` file to change the default models:
+You can also modify default settings in `Writer/Config.py`:
 
 ```python
-INITIAL_OUTLINE_WRITER_MODEL = "ollama://llama3:70b"
-CHAPTER_OUTLINE_WRITER_MODEL = "ollama://gemma2:27b"
-CHAPTER_WRITER_MODEL = "google://gemini-1.5-flash"
-...
+# Default models for each generation stage
+INITIAL_OUTLINE_WRITER_MODEL = "ollama://gemma3:27b@10.23.82.116"
+CHAPTER_STAGE1_WRITER_MODEL = "ollama://gemma3:27b@10.23.82.116" 
+CHAPTER_STAGE2_WRITER_MODEL = "ollama://gemma3:27b@10.23.82.116"
+
+# Generation parameters
+OUTLINE_QUALITY = 87
+CHAPTER_QUALITY = 85
+EXPAND_OUTLINE = True
+SCENE_GENERATION_PIPELINE = True
+
+# Language settings
+NATIVE_LANGUAGE = "id"  # "en" for English, "id" for Indonesian
 ```
 
-### 3. Automatic State Saving & Resuming
+### Automatic State Saving & Resuming
 
-The application automatically saves its progress to allow resuming interrupted runs. The state is saved after each major step, indicated by the `last_completed_step` value within the state file:
+The application automatically saves its progress to allow resuming interrupted runs. This is particularly useful for long story generation sessions that might be interrupted.
 
-1.  **`init`**: Saved right after initializing a new run or loading the state for resume, before any generation begins.
-2.  **`outline`**: Saved after the main story outline is successfully generated.
-3.  **`detect_chapters`**: Saved after the total number of chapters is detected.
-4.  **`expand_chapters`**: Saved after expanding the main outline into per-chapter outlines (only if the `-ExpandOutline` feature is enabled).
-5.  **`chapter_generation`**: Saved after *each* individual chapter is generated. This allows resuming mid-way through chapter writing.
-6.  **`chapter_generation_complete`**: Saved once all chapters have been initially generated.
-7.  **`post_processing`**: Saved just before starting the final editing, scrubbing, or translation steps.
-8.  **`complete`**: Saved after the entire process finishes and the final output files are written.
+#### State Saving Points
 
-The state is saved in a JSON file named `run.state.json`. By default, this file is located within the run-specific log directory:
+The system saves state after each major pipeline step:
+
+1. **`init`**: Initial setup and configuration loaded
+2. **`outline`**: Main story outline generation completed  
+3. **`detect_chapters`**: Chapter count detection finished
+4. **`expand_chapters`**: Per-chapter outline expansion completed (if enabled)
+5. **`chapter_generation`**: Saved after *each* individual chapter (allows mid-chapter resuming)
+6. **`chapter_generation_complete`**: All chapters generated
+7. **`post_processing`**: Before final editing/scrubbing/translation
+8. **`complete`**: Full generation process finished
+
+#### State Files Location
+
+State files are automatically saved in timestamped directories:
 
 ```
-Logs/Generation_YYYY-MM-DD_HH-MM-SS/run.state.json
+Logs/Generation_YYYY-MM-DD_HH-MM-SS/
+├── run.state.json          # Resume from here
+├── Main.log                # Generation logs
+└── LangchainDebug/         # Detailed AI interaction logs
 ```
 
-Where `YYYY-MM-DD_HH-MM-SS` corresponds to the date and time the run was started.
+#### Resume Example
 
-To resume a run, use the `-Resume` command-line argument, providing the path to the specific `run.state.json` file you wish to continue from.
+```bash
+# Resume from a previous run
+python Write.py -Resume Logs/Generation_2025-07-31_21-53-05/run.state.json
+
+# The system will continue from where it left off
+```
 
 ## 🧰 Architecture Overview
 
 ![Block Diagram](Docs/BlockDiagram.drawio.svg)
 
+The AI Story Generator uses a modular pipeline architecture:
+
+### Core Components
+
+- **`Write.py`**: Main entry point and argument parsing
+- **`Writer/Pipeline.py`**: Orchestrates the entire generation process
+- **`Writer/Config.py`**: Configuration settings and model assignments  
+- **`Writer/Prompts.py`** & **`Writer/Prompts_id.py`**: Multi-language prompt templates
+
+### Generation Modules
+
+- **`Writer/OutlineGenerator.py`**: Story outline creation and refinement
+- **`Writer/Chapter/ChapterGenerator.py`**: Multi-stage chapter writing (plot → character → dialogue)
+- **`Writer/Chapter/ChapterDetector.py`**: Automatic chapter count detection
+- **`Writer/Scene/`**: Scene-by-scene generation pipeline
+- **`Writer/NovelEditor.py`**: Final novel-wide editing pass
+- **`Writer/Scrubber.py`**: AI artifact cleanup
+- **`Writer/Translator.py`**: Multi-language translation support
+
+### Infrastructure
+
+- **`Writer/Interface/Wrapper.py`**: Unified LLM provider interface
+- **`Writer/PrintUtils.py`**: Logging and output formatting
+- **`Writer/Statistics.py`**: Generation metrics and timing
+- **`tests/`**: Comprehensive test suite with pytest
+
+### Language Support
+
+The system supports both Indonesian and English generation:
+- Prompts automatically selected based on `NATIVE_LANGUAGE` config
+- Translation capabilities for both input prompts and output stories
+- Localized prompt templates maintained in parallel files
+
 ## 🛠️ Customization
 
-- Experiment with different local models via Ollama: Try out various language models to find the best fit for your storytelling needs.
-- Test various model combinations for different story components: Mix and match models for outline generation, chapter writing, and revisions to optimize output quality.
+### Model Experimentation
+- **Mix and match models**: Use different models for different generation stages
+- **Local vs Cloud**: Combine local Ollama models with cloud providers for optimal cost/performance
+- **Quality tuning**: Adjust revision loops and quality thresholds
+
+### Prompt Customization
+- **Modify existing prompts**: Edit `Writer/Prompts.py` or `Writer/Prompts_id.py`
+- **Create custom prompts**: Add new story prompts in the `Prompts/` directory
+- **Multi-language support**: Ensure changes are reflected in both language files
+
+### Pipeline Configuration
+- **Enable/disable features**: Control outline expansion, scene generation, final editing
+- **Quality parameters**: Adjust minimum word counts, revision limits, quality scores
+- **Performance tuning**: Optimize for speed vs quality based on your needs
 
 ## 💪 What's Working Well
 
-- Generating decent-length stories: The system consistently produces narratives of substantial length, suitable for novella or novel-length works.
-- Character consistency: AI models maintain coherent character traits and development throughout the generated stories.
-- Interesting story outlines: The initial outline generation creates compelling story structures that serve as strong foundations for the full narratives.
+- **Robust story generation**: Consistently produces substantial narratives suitable for novella or novel-length works
+- **Character consistency**: AI models maintain coherent character traits and development throughout the generated stories
+- **Compelling story outlines**: Initial outline generation creates strong story structures that serve as solid foundations
+- **Multi-stage chapter development**: The plot → character → dialogue approach produces well-rounded chapters
+- **Reliable resuming**: State saving system allows seamless continuation of interrupted generations
+- **Multi-language support**: Indonesian and English generation with translation capabilities
+- **Quality assurance**: Built-in revision loops and evaluation systems ensure story quality
+- **Comprehensive testing**: Full test coverage ensures reliable functionality and catches regressions
 
 ## 🔧 Areas for Improvement
 
-- Reducing repetitive phrases: We're working on enhancing the language variety to create more natural-sounding prose.
-- Improving chapter flow and connections: Efforts are ongoing to create smoother transitions between chapters and maintain narrative cohesion.
-- Addressing pacing issues: Refinements are being made to ensure proper story pacing and focus on crucial plot points.
-- Optimizing generation speed: We're continuously working on improving performance to reduce generation times without sacrificing quality.
+- **Language variety**: Enhancing vocabulary diversity to reduce repetitive phrases and create more natural-sounding prose
+- **Chapter transitions**: Improving flow and connections between chapters for better narrative cohesion
+- **Pacing optimization**: Fine-tuning story pacing to focus appropriately on crucial plot points
+- **Generation speed**: Optimizing performance to reduce generation times while maintaining quality
+- **Advanced scene control**: More granular control over scene-by-scene generation and editing
+- **Interactive feedback**: Potential for user interaction during the generation process
 
 ## 🤝 Contributing
 
-We're excited to hear from you! Your feedback and contributions are crucial to improving the AI Story Generator. Here's how you can get involved:
+We're excited to hear from you! Your feedback and contributions are crucial to improving the AI Story Generator.
 
-1. 🐛 **Open Issues**: Encountered a bug or have a feature request? [Open an issue](https://github.com/datacrystals/AIStoryWriter/issues) and let us know!
+### How to Contribute
 
-2. 💡 **Start Discussions**: Have ideas or want to brainstorm? [Start a discussion](https://github.com/datacrystals/AIStoryWriter/discussions) in our GitHub Discussions forum.
+1. **🐛 Report Issues**: Found a bug or have a feature request? [Open an issue](https://github.com/datacrystals/AIStoryWriter/issues)
 
-3. 🔬 **Experiment and Share**: Try different model combinations and share your results. Your experiments can help improve the system for everyone!
+2. **🔧 Submit Pull Requests**: Ready to contribute code? We welcome PRs for:
+   - Bug fixes and improvements
+   - New features and enhancements
+   - Test coverage improvements
+   - Documentation updates
 
-4. 🖊️ **Submit Pull Requests**: Ready to contribute code? We welcome pull requests for improvements and new features.
+3. **💡 Join Discussions**: Have ideas or want to brainstorm? [Start a discussion](https://github.com/datacrystals/AIStoryWriter/discussions)
 
-5. 💬 **Join our Discord**: For real-time chat, support, and community engagement, [join our Discord server](https://discord.gg/R2SySWDr2s).
+4. **🔬 Experiment and Share**: Try different model combinations and share your results
+
+5. **💬 Join our Community**: [Discord Server](https://discord.gg/R2SySWDr2s) for real-time chat and support
+
+### Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/datacrystals/AIStoryWriter.git
+cd AIStoryWriter
+pip install -r requirements.txt
+
+# Run tests before making changes
+pytest -v
+
+# Make your changes, then run tests again
+pytest -v
+
+# Run specific tests for the area you're working on
+pytest tests/writer/test_pipeline.py -v
+```
+
+### Code Standards
+
+- Follow the existing code structure and naming conventions
+- Add tests for new functionality
+- Update both `Prompts.py` and `Prompts_id.py` for multi-language support
+- Ensure all tests pass before submitting PRs
 
 Don't hesitate to reach out – your input is valuable, and we're here to help!
 
