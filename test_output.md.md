@@ -33,7 +33,7 @@ Work Statistics:
  - Total Chapters: 3
  - Total Words: 21
  - Generation Start Date: 1970/01/01 07:00:00
- - Generation Total Time: 1754042669.79s
+ - Generation Total Time: 1754053176.78s
  - Generation Average WPM: 0.00
  - Output Language: en
 
@@ -58,10 +58,10 @@ Generation Configuration:
  - DEBUG: False
  - DEFAULT_CHAPTER_TITLE_PREFIX: Chapter
  - ENABLE_FINAL_EDIT_PASS: True
- - ENABLE_GLOBAL_OUTLINE_REFINEMENT: False
+ - ENABLE_GLOBAL_OUTLINE_REFINEMENT: True
  - EVAL_MODEL: ollama://qwen2.5:32b@10.23.147.239
  - EXPAND_OUTLINE: False
- - FAST_MODEL_NAME: ollama://qwen2:7b@10.23.82.116
+ - FAST_MODEL_NAME: ollama://qwen2.5:7b@10.23.82.116
  - FINAL_NOVEL_EDITOR_MODEL: ollama://gemma3:27b@10.23.82.116
  - GENERATE_CHAPTER_TITLES: True
  - INCLUDE_OUTLINE_IN_MD: True

@@ -1,6 +1,7 @@
 flowchart TD
     Start([User starts story generation]) --> LoadConfig[Load Configuration & Language]
-    LoadConfig --> CheckResume{Resume from state file?}
+    LoadConfig --> ValidateSystem[🔍 Validate system integrity<br/>Config attributes, Prompt attributes<br/>Function signatures, Imports]
+    ValidateSystem --> CheckResume{Resume from state file?}
     
     CheckResume -->|Yes| LoadState[Load existing state from JSON]
     CheckResume -->|No| InitState[Initialize new state]
@@ -53,21 +54,21 @@ flowchart TD
     %% Direct generation path
     CheckScenePipeline -->|No| Stage1Plot[Stage 1: Plot Generation]
     Stage1Plot --> PlotRevision{Plot revision loop}
-    PlotRevision -->|LLMSummaryCheck fails| PlotFeedback[Generate feedback for plot]
+    PlotRevision -->|LLMSummaryCheck fails| PlotFeedback[Generate feedback for plot<br/>🔄 Cache outline summary]
     PlotFeedback --> RevisePlot[Revise plot based on feedback]
     RevisePlot --> PlotRevision
     PlotRevision -->|LLMSummaryCheck passes| Stage2Character
     
     %% Character Development Stage
     Stage2Character --> CharacterRevision{Character revision loop}
-    CharacterRevision -->|LLMSummaryCheck fails| CharacterFeedback[Generate feedback for characters]
+    CharacterRevision -->|LLMSummaryCheck fails| CharacterFeedback[Generate feedback for characters<br/>✅ Use cached outline summary]
     CharacterFeedback --> ReviseCharacter[Revise character development]
     ReviseCharacter --> CharacterRevision
     CharacterRevision -->|LLMSummaryCheck passes| Stage3Dialogue
     
     %% Dialogue Stage
     Stage3Dialogue --> DialogueRevision{Dialogue revision loop}
-    DialogueRevision -->|LLMSummaryCheck fails| DialogueFeedback[Generate feedback for dialogue]
+    DialogueRevision -->|LLMSummaryCheck fails| DialogueFeedback[Generate feedback for dialogue<br/>✅ Use cached outline summary]
     DialogueFeedback --> ReviseDialogue[Revise dialogue]
     ReviseDialogue --> DialogueRevision
     DialogueRevision -->|LLMSummaryCheck passes| CheckChapterRevision{CHAPTER_NO_REVISIONS?}

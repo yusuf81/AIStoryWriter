@@ -24,7 +24,7 @@ SCRUB_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overrid
 CHECKER_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Model used to check results
 TRANSLATOR_MODEL = "ollama://qwen2.5:32b@10.23.147.239"
 FAST_MODEL_NAME = (
-    "ollama://qwen2:7b@10.23.82.116"  # Default fast model for tasks like titling
+    "ollama://qwen2.5:7b@10.23.82.116"  # Default fast model for tasks like titling
 )
 
 # OLLAMA_CTX = 8192
@@ -97,7 +97,7 @@ MAX_WORDS_FOR_CHAPTER_TITLE_PROMPT = 500  # Maximum words of chapter content to 
 MIN_WORDS_FOR_CHAPTER_TITLE = 5  # Minimum words for chapter title
 MAX_LENGTH_CHAPTER_TITLE = 100  # Maximum character length for chapter title
 MAX_RETRIES_CHAPTER_TITLE = 3  # Maximum retries for chapter title generation
-ENABLE_GLOBAL_OUTLINE_REFINEMENT = False  # Flag to enable global outline refinement
+ENABLE_GLOBAL_OUTLINE_REFINEMENT = True  # Flag to enable global outline refinement
 AUTO_CHAPTER_TITLES = True  # Flag to enable automatic chapter title generation
 DEFAULT_CHAPTER_TITLE_PREFIX = "Chapter"  # Default prefix for chapter titles
 ADD_CHAPTER_TITLES_TO_NOVEL_BODY_TEXT = True  # Add chapter titles to final novel text

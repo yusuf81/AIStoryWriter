@@ -169,8 +169,7 @@ def _handle_chapter_title_generation_pipeline_version(SysLogger, Interface, Conf
             _Messages=title_messages,
             _Model=Config.FAST_MODEL_NAME,
             _MinWordCount=Config.MIN_WORDS_FOR_CHAPTER_TITLE,
-            _MaxRetries=Config.MAX_RETRIES_CHAPTER_TITLE,
-            _PurposeForLog="chapter title generation"
+            _max_retries_override=Config.MAX_RETRIES_CHAPTER_TITLE
         )
         ChapterTitle = Interface.GetLastMessageText(title_response_messages)
         ChapterTitle = ChapterTitle.strip().replace('"',"")

@@ -47,6 +47,7 @@ def mock_pipeline_dependencies(mocker: MockerFixture):
     # Mock only the external dependencies, NOT the internal pipeline methods
     mocks = {
         'OutlineGenerator.GenerateOutline': mocker.patch('Writer.OutlineGenerator.GenerateOutline'),
+        'OutlineGenerator.ReviseOutline': mocker.patch('Writer.OutlineGenerator.ReviseOutline'),
         'ChapterDetector.LLMCountChapters': mocker.patch('Writer.Chapter.ChapterDetector.LLMCountChapters'),
         'OutlineGenerator.GeneratePerChapterOutline': mocker.patch('Writer.OutlineGenerator.GeneratePerChapterOutline'),
         'ChapterGenerator.GenerateChapter': mocker.patch('Writer.Chapter.ChapterGenerator.GenerateChapter'),
@@ -56,6 +57,9 @@ def mock_pipeline_dependencies(mocker: MockerFixture):
     # Set up mocks for external dependencies
     mocks['OutlineGenerator.GenerateOutline'].return_value = (
         "Mocked Outline", "Mocked Elements", "Mocked Rough Outline", "Mocked Base Context"
+    )
+    mocks['OutlineGenerator.ReviseOutline'].return_value = (
+        "Mocked Revised Outline", []  # (SummaryText, Messages)
     )
     mocks['ChapterDetector.LLMCountChapters'].return_value = 3
     mocks['OutlineGenerator.GeneratePerChapterOutline'].return_value = "Mocked Chapter Outline"
