@@ -33,9 +33,9 @@ Work Statistics:
  - Total Chapters: 3
  - Total Words: 21
  - Generation Start Date: 1970/01/01 07:00:00
- - Generation Total Time: 1753997777.08s
+ - Generation Total Time: 1754042669.79s
  - Generation Average WPM: 0.00
- - Output Language: id
+ - Output Language: en
 
 User Settings:
  - Base Prompt File: N/A
@@ -91,7 +91,7 @@ Generation Configuration:
  - MIN_WORDS_SCRUB_CHAPTER: 100
  - MIN_WORDS_STORY_ELEMENTS: 150
  - MIN_WORDS_TRANSLATE_PROMPT: 10
- - NATIVE_LANGUAGE: id
+ - NATIVE_LANGUAGE: en
  - OLLAMA_CTX: 16384
  - OLLAMA_HOST: 10.23.82.116:11434
  - OPTIONAL_OUTPUT_NAME: 

@@ -889,7 +889,7 @@ CURRENT_CHAPTER_OUTLINE_FORMAT = "### Current Chapter {chapter_num} Outline:\n{c
 GET_CHAPTER_TITLE_PROMPT = """Please generate a concise, engaging title for chapter {chapter_num} based on the following content:
 
 Chapter Content:
-{chapter_text}
+{chapter_text_segment}
 
 Story Context:
 {base_story_context}

@@ -1,0 +1,156 @@
+flowchart TD
+    Start([User starts story generation]) --> LoadConfig[Load Configuration & Language]
+    LoadConfig --> CheckResume{Resume from state file?}
+    
+    CheckResume -->|Yes| LoadState[Load existing state from JSON]
+    CheckResume -->|No| InitState[Initialize new state]
+    
+    LoadState --> DetermineStep{Determine last completed step}
+    InitState --> InitStage[Stage: Initialize]
+    
+    %% Initialize Stage
+    InitStage --> ExtractContext[Extract important base context from prompt]
+    ExtractContext --> GenerateElements[Generate story elements<br/>Genre, Theme, Characters, etc.]
+    GenerateElements --> GenerateOutline[Generate initial outline]
+    GenerateOutline --> OutlineRevision{Outline revision loop}
+    
+    OutlineRevision -->|Quality < threshold| CritiqueOutline[Critique outline]
+    CritiqueOutline --> ReviseOutline[Revise outline based on feedback]
+    ReviseOutline --> OutlineRevision
+    OutlineRevision -->|Quality >= threshold| SaveOutlineState[Save state: outline complete]
+    
+    %% Chapter Detection Stage
+    SaveOutlineState --> DetectChapters[Stage: Detect Chapters]
+    DetermineStep -->|outline| DetectChapters
+    DetectChapters --> CountChapters[Count chapters in outline using LLM]
+    CountChapters --> SaveDetectState[Save state: detect_chapters complete]
+    
+    %% Global Outline Refinement (Optional)
+    SaveDetectState --> CheckExpandOutline{EXPAND_OUTLINE enabled?}
+    DetermineStep -->|detect_chapters| CheckExpandOutline
+    
+    CheckExpandOutline -->|Yes| RefineGlobal[Refine global outline structure]
+    CheckExpandOutline -->|No| SkipExpansion[Skip expansion, mark expand_chapters complete]
+    
+    RefineGlobal --> ExpandChapterOutlines[Generate detailed per-chapter outlines]
+    ExpandChapterOutlines --> SaveExpandState[Save state: expand_chapters complete]
+    SkipExpansion --> SaveExpandState
+    
+    %% Chapter Writing Stage
+    SaveExpandState --> ChapterWriting[Stage: Chapter Writing]
+    DetermineStep -->|expand_chapters| ChapterWriting
+    DetermineStep -->|chapter_generation| ChapterWriting
+    
+    ChapterWriting --> ChapterLoop{For each chapter}
+    ChapterLoop -->|Next chapter| PrepareChapterContext[Prepare chapter context & outline]
+    
+    PrepareChapterContext --> CheckScenePipeline{SCENE_GENERATION_PIPELINE?}
+    
+    %% Scene-based generation path
+    CheckScenePipeline -->|Yes| SceneGeneration[Scene-by-scene generation]
+    SceneGeneration --> Stage2Character[Stage 2: Character Development]
+    
+    %% Direct generation path
+    CheckScenePipeline -->|No| Stage1Plot[Stage 1: Plot Generation]
+    Stage1Plot --> PlotRevision{Plot revision loop}
+    PlotRevision -->|LLMSummaryCheck fails| PlotFeedback[Generate feedback for plot]
+    PlotFeedback --> RevisePlot[Revise plot based on feedback]
+    RevisePlot --> PlotRevision
+    PlotRevision -->|LLMSummaryCheck passes| Stage2Character
+    
+    %% Character Development Stage
+    Stage2Character --> CharacterRevision{Character revision loop}
+    CharacterRevision -->|LLMSummaryCheck fails| CharacterFeedback[Generate feedback for characters]
+    CharacterFeedback --> ReviseCharacter[Revise character development]
+    ReviseCharacter --> CharacterRevision
+    CharacterRevision -->|LLMSummaryCheck passes| Stage3Dialogue
+    
+    %% Dialogue Stage
+    Stage3Dialogue --> DialogueRevision{Dialogue revision loop}
+    DialogueRevision -->|LLMSummaryCheck fails| DialogueFeedback[Generate feedback for dialogue]
+    DialogueFeedback --> ReviseDialogue[Revise dialogue]
+    ReviseDialogue --> DialogueRevision
+    DialogueRevision -->|LLMSummaryCheck passes| CheckChapterRevision{CHAPTER_NO_REVISIONS?}
+    
+    %% Chapter-level revision
+    CheckChapterRevision -->|No| ChapterRevisionLoop[Chapter-level revision loop]
+    CheckChapterRevision -->|Yes| ChapterComplete[Chapter complete]
+    
+    ChapterRevisionLoop --> GetChapterFeedback[Get feedback on full chapter]
+    GetChapterFeedback --> GetChapterRating[Rate chapter quality]
+    GetChapterRating --> CheckChapterQuality{Quality good & min revisions met?}
+    CheckChapterQuality -->|No| ReviseFullChapter[Revise full chapter]
+    ReviseFullChapter --> ChapterRevisionLoop
+    CheckChapterQuality -->|Yes| ChapterComplete
+    
+    ChapterComplete --> GenerateChapterTitle{AUTO_CHAPTER_TITLES?}
+    GenerateChapterTitle -->|Yes| CreateTitle[Generate chapter title]
+    GenerateChapterTitle -->|No| DefaultTitle[Use default title]
+    CreateTitle --> SaveChapterState[Save chapter to state]
+    DefaultTitle --> SaveChapterState
+    
+    SaveChapterState --> ChapterLoop
+    ChapterLoop -->|All chapters done| PostProcessing[Stage: Post-Processing]
+    
+    %% Post-Processing Stage
+    DetermineStep -->|chapter_generation_complete| PostProcessing
+    DetermineStep -->|post_processing_*| PostProcessing
+    
+    PostProcessing --> CheckFinalEdit{ENABLE_FINAL_EDIT_PASS?}
+    CheckFinalEdit -->|Yes| FinalEdit[Edit full novel for coherence]
+    CheckFinalEdit -->|No| CheckScrub{SCRUB_NO_SCRUB?}
+    
+    FinalEdit --> CheckScrub
+    CheckScrub -->|No| ScrubChapters[Scrub chapters - remove AI artifacts]
+    CheckScrub -->|Yes| CheckTranslate{Translation requested?}
+    
+    ScrubChapters --> CheckTranslate
+    CheckTranslate -->|Yes| TranslateStory[Translate story to target language]
+    CheckTranslate -->|No| GenerateStats[Generate story statistics & metadata]
+    
+    TranslateStory --> GenerateStats
+    GenerateStats --> CompileNovel[Compile final novel with optional elements]
+    
+    CompileNovel --> CheckIncludeElements{Include additional elements?}
+    CheckIncludeElements -->|INCLUDE_OUTLINE_IN_MD| AddOutline[Add outline to final output]
+    CheckIncludeElements -->|INCLUDE_STATS_IN_MD| AddStats[Add statistics to final output]
+    CheckIncludeElements -->|INCLUDE_SUMMARY_IN_MD| AddSummary[Add summary to final output]
+    CheckIncludeElements -->|INCLUDE_TAGS_IN_MD| AddTags[Add tags to final output]
+    
+    AddOutline --> SaveFinalNovel[Save final novel file]
+    AddStats --> SaveFinalNovel
+    AddSummary --> SaveFinalNovel
+    AddTags --> SaveFinalNovel
+    CheckIncludeElements -->|None selected| SaveFinalNovel
+    
+    SaveFinalNovel --> SaveCompleteState[Save state: complete]
+    SaveCompleteState --> End([Story generation complete])
+    
+    %% Error handling
+    OutlineRevision -->|Max revisions reached| ForceOutlineAccept[Force accept outline]
+    ForceOutlineAccept --> SaveOutlineState
+    
+    PlotRevision -->|Max revisions reached| ForceAcceptPlot[Force accept plot]
+    ForceAcceptPlot --> Stage2Character
+    
+    CharacterRevision -->|Max revisions reached| ForceAcceptCharacter[Force accept character development]
+    ForceAcceptCharacter --> Stage3Dialogue
+    
+    DialogueRevision -->|Max revisions reached| ForceAcceptDialogue[Force accept dialogue]
+    ForceAcceptDialogue --> CheckChapterRevision
+    
+    ChapterRevisionLoop -->|Max revisions reached| ForceAcceptChapter[Force accept chapter]
+    ForceAcceptChapter --> ChapterComplete
+    
+    %% Style the diagram
+    classDef stageClass fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef revisionClass fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef decisionClass fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef completeClass fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef errorClass fill:#ffebee,stroke:#c62828,stroke-width:2px
+    
+    class InitStage,DetectChapters,ChapterWriting,PostProcessing stageClass
+    class OutlineRevision,PlotRevision,CharacterRevision,DialogueRevision,ChapterRevisionLoop revisionClass
+    class CheckResume,DetermineStep,CheckExpandOutline,CheckScenePipeline,CheckChapterRevision,GenerateChapterTitle,CheckFinalEdit,CheckScrub,CheckTranslate,CheckIncludeElements decisionClass
+    class End,SaveCompleteState completeClass
+    class ForceOutlineAccept,ForceAcceptPlot,ForceAcceptCharacter,ForceAcceptDialogue,ForceAcceptChapter errorClass

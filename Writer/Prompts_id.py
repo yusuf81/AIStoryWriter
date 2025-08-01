@@ -941,7 +941,7 @@ CURRENT_CHAPTER_OUTLINE_FORMAT = "### Outline Bab {chapter_num} Saat Ini:\n{chap
 GET_CHAPTER_TITLE_PROMPT = """Silakan buat judul yang ringkas dan menarik untuk bab {chapter_num} berdasarkan konten berikut:
 
 Konten Bab:
-{chapter_text}
+{chapter_text_segment}
 
 Konteks Cerita:
 {base_story_context}
