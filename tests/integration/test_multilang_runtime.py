@@ -129,51 +129,6 @@ class TestMultiLanguageDynamicLoading:
         except AttributeError as e:
             pytest.fail(f"AttributeError in OutlineGenerator.ReviseOutline with Indonesian prompts: {e}")
     
-    @pytest.mark.skip(reason="Complex integration test - Pipeline module import issues in test environment")
-    def test_pipeline_context_generation_with_indonesian(self):
-        """Test the specific Pipeline function that caused the original error."""
-        Writer.Config.NATIVE_LANGUAGE = "id"
-        
-        # Import Pipeline after setting language
-        import Writer.Pipeline as Pipeline
-        
-        # Create mock objects
-        mock_interface = Mock()
-        mock_logger = Mock()
-        mock_config = Writer.Config
-        mock_statistics = Mock()
-        
-        # Mock the dynamic import to use Indonesian prompts
-        with patch('sys.modules') as mock_modules:
-            # Load Indonesian prompts
-            def mock_logger_func(msg): pass
-            id_prompts = Write.load_active_prompts("id", mock_logger_func, mock_logger_func, mock_logger_func)
-            mock_modules.__getitem__.return_value = id_prompts
-            
-            # Create pipeline instance
-            pipeline = Pipeline.StoryPipeline(mock_interface, mock_logger, mock_config, id_prompts)
-            
-            # Test the specific function that caused AttributeError
-            try:
-                # Mock the required state and parameters
-                current_state = {
-                    "expanded_chapter_outlines": ["Test outline for chapter 1"],
-                    "completed_chapters_data": []
-                }
-                chapter_num = 1
-                
-                # This function call caused the original AttributeError
-                result = Pipeline._get_current_context_for_chapter_gen_pipeline_version(
-                    mock_interface, mock_logger, mock_config, mock_statistics, 
-                    id_prompts, current_state, chapter_num
-                )
-                
-                # Should return a string context
-                assert isinstance(result, str)
-                
-            except AttributeError as e:
-                pytest.fail(f"AttributeError in Pipeline context generation with Indonesian prompts: {e}")
-    
     def test_all_prompt_attributes_compatibility(self):
         """Comprehensive test of all prompt attributes used in the codebase."""
         # Find all ActivePrompts usage in the codebase
@@ -250,6 +205,7 @@ class TestMultiLanguageDynamicLoading:
                 assert num_chapters > 0
             except Exception as e:
                 pytest.fail(f"Chapter detection failed with Indonesian prompts: {e}")
+            
                 
         finally:
             # Restore original language
