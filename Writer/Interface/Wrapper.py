@@ -157,7 +157,8 @@ class Interface:
                     # else, we might have a truncated JSON or other issues, let json_repair try
 
                 JSONResponse = json_repair.loads(CleanedResponseText)
-                _Logger.Log(f"JSON Call Stats: ... Tokens: {TokenUsage}", 6)
+                token_info = TokenUsage if TokenUsage else "N/A (streaming incomplete)"
+                _Logger.Log(f"JSON Call Stats: ... Tokens: {token_info}", 6)
                 return ResponseMessagesList, JSONResponse, TokenUsage # Success
 
             except Exception as e:
@@ -189,8 +190,22 @@ class Interface:
                 AssistantMessage, LastChunk = self.StreamResponse(Stream, "ollama")
                 FullResponseMessages = _Messages_list + [AssistantMessage]
                 TokenUsage = None
-                if LastChunk and LastChunk.get("done"):
-                    TokenUsage = {"prompt_tokens": LastChunk.get("prompt_eval_count", 0), "completion_tokens": LastChunk.get("eval_count", 0)}
+                if LastChunk:
+                    if Writer.Config.DEBUG:
+                        _Logger.Log(f"LastChunk keys: {list(LastChunk.keys()) if isinstance(LastChunk, dict) else 'Not a dict'}", 6)
+                        _Logger.Log(f"LastChunk 'done' status: {LastChunk.get('done', 'missing')}", 6)
+                    
+                    if LastChunk.get("done"):
+                        prompt_tokens = LastChunk.get("prompt_eval_count", 0)
+                        completion_tokens = LastChunk.get("eval_count", 0)
+                        TokenUsage = {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}
+                        
+                        if Writer.Config.DEBUG:
+                            _Logger.Log(f"Token usage extracted: prompt={prompt_tokens}, completion={completion_tokens}", 6)
+                    else:
+                        _Logger.Log(f"Warning: LastChunk exists but 'done' is not True. Keys: {list(LastChunk.keys()) if isinstance(LastChunk, dict) else 'Not a dict'}", 6)
+                else:
+                    _Logger.Log("Warning: LastChunk is None - streaming may have been interrupted", 6)
                 return FullResponseMessages, TokenUsage
             except Exception as e:
                 _Logger.Log(f"Ollama API Error ({_Model_key}, Attempt {attempt+1}/{MaxRetries}): {e}", 7)
