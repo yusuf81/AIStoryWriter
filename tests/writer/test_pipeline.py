@@ -81,7 +81,7 @@ def test_run_pipeline_new_run_full_flow(mocker: MockerFixture, mock_logger, mock
 
     # Create proper Args mock with required attributes
     mock_args = mocker.Mock()
-    mock_args.output = "test_output.md"
+    mock_args.Output = "test_output.md"
     final_state = pipeline.run_pipeline(initial_state, state_filepath, prompt, mock_args, 0.0)
 
     # Verify external dependencies were called correctly
@@ -112,7 +112,7 @@ def test_run_pipeline_resume_from_detect_chapters(mocker: MockerFixture, mock_lo
 
     # Create proper Args mock with required attributes
     mock_args = mocker.Mock()
-    mock_args.output = "test_output.md"
+    mock_args.Output = "test_output.md"
     final_state = pipeline.run_pipeline(initial_state, state_filepath, prompt, mock_args, 0.0)
 
     # Since we start after detect_chapters, outline generation should not be called
@@ -140,7 +140,7 @@ def test_run_pipeline_skip_expand_outline_if_disabled(mocker: MockerFixture, moc
 
     # Create proper Args mock with required attributes
     mock_args = mocker.Mock()
-    mock_args.output = "test_output.md"
+    mock_args.Output = "test_output.md"
     final_state = pipeline.run_pipeline(initial_state, state_filepath, prompt, mock_args, 0.0)
 
     # Since we start after detect_chapters, outline generation should not be called

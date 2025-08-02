@@ -167,7 +167,7 @@ def _handle_chapter_title_generation_pipeline_version(SysLogger, Interface, Conf
         title_response_messages, _ = Interface.SafeGenerateText(
             _Logger=SysLogger,
             _Messages=title_messages,
-            _Model=Config.FAST_MODEL_NAME,
+            _Model=Config.FAST_MODEL,
             _MinWordCount=Config.MIN_WORDS_FOR_CHAPTER_TITLE,
             _max_retries_override=Config.MAX_RETRIES_CHAPTER_TITLE
         )
@@ -195,7 +195,7 @@ def _get_full_story_text_pipeline_version(chapters_data_list, Config, add_titles
         text = chapter_info.get("text", "")
         if add_titles_to_body: # Use the passed boolean
             # Use CHAPTER_HEADER_FORMAT from Config for consistency
-            FullStory += f"{Config.CHAPTER_HEADER_FORMAT.replace('{title}', title).replace('{number}', str(chapter_info.get('number', 'N/A')))}\n{text}\n\n"
+            FullStory += f"{Config.CHAPTER_HEADER_FORMAT.replace('{chapter_title}', title).replace('{chapter_num}', str(chapter_info.get('number', 'N/A')))}\n{text}\n\n"
         else:
             FullStory += f"{text}\n\n" # Just text and newlines if not adding titles
     return FullStory.strip()
@@ -578,8 +578,8 @@ class StoryPipeline:
         run_timestamp_str = datetime.datetime.fromtimestamp(StartTime).strftime("%Y%m%d%H%M%S")
 
         FNameBase = os.path.join(self.Config.STORIES_DIR, f"Story_{safe_title if safe_title else 'Untitled'}_{run_timestamp_str}")
-        if Args and Args.output: # Use command-line arg for output name if provided
-             base_output_path = Args.output
+        if Args and Args.Output: # Use command-line arg for output name if provided
+             base_output_path = Args.Output
              # Ensure directory exists for custom output path
              output_dir = os.path.dirname(base_output_path)
              if output_dir:

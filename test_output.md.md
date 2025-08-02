@@ -7,13 +7,13 @@ Error generating summary.
 
 ---
 
-### Chapter {chapter_num}: {chapter_title}
+### Chapter 1: Chapter1
 Mocked Chapter Content
 
-### Chapter {chapter_num}: {chapter_title}
+### Chapter 2: Chapter2
 Mocked Chapter Content
 
-### Chapter {chapter_num}: {chapter_title}
+### Chapter 3: Chapter3
 Mocked Chapter Content
 
 ---
@@ -33,9 +33,9 @@ Work Statistics:
  - Total Chapters: 3
  - Total Words: 21
  - Generation Start Date: 1970/01/01 07:00:00
- - Generation Total Time: 1754053176.78s
+ - Generation Total Time: 1754137325.45s
  - Generation Average WPM: 0.00
- - Output Language: en
+ - Output Language: id
 
 User Settings:
  - Base Prompt File: N/A
@@ -50,25 +50,25 @@ Generation Configuration:
  - CHAPTER_NO_REVISIONS: False
  - CHAPTER_OUTLINE_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
  - CHAPTER_QUALITY: 85
- - CHAPTER_REVISION_WRITER_MODEL: ollama://qwen2.5:32b@10.23.147.239
+ - CHAPTER_REVISION_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
  - CHAPTER_STAGE1_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
  - CHAPTER_STAGE2_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
  - CHAPTER_STAGE3_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
- - CHECKER_MODEL: ollama://qwen2.5:32b@10.23.147.239
+ - CHECKER_MODEL: ollama://gemma3:27b@10.23.82.116
  - DEBUG: False
  - DEFAULT_CHAPTER_TITLE_PREFIX: Chapter
  - ENABLE_FINAL_EDIT_PASS: True
  - ENABLE_GLOBAL_OUTLINE_REFINEMENT: True
- - EVAL_MODEL: ollama://qwen2.5:32b@10.23.147.239
+ - EVAL_MODEL: ollama://gemma3:27b@10.23.82.116
  - EXPAND_OUTLINE: False
- - FAST_MODEL_NAME: ollama://qwen2.5:7b@10.23.82.116
+ - FAST_MODEL: ollama://gemma3:27b@10.23.82.116
  - FINAL_NOVEL_EDITOR_MODEL: ollama://gemma3:27b@10.23.82.116
  - GENERATE_CHAPTER_TITLES: True
  - INCLUDE_OUTLINE_IN_MD: True
  - INCLUDE_STATS_IN_MD: True
  - INCLUDE_SUMMARY_IN_MD: True
  - INCLUDE_TAGS_IN_MD: True
- - INFO_MODEL: ollama://qwen2.5:32b@10.23.147.239
+ - INFO_MODEL: ollama://gemma3:27b@10.23.82.116
  - INITIAL_OUTLINE_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
  - LOG_DIRECTORY: Logs
  - MAX_JSON_RETRIES: 5
@@ -91,22 +91,22 @@ Generation Configuration:
  - MIN_WORDS_SCRUB_CHAPTER: 100
  - MIN_WORDS_STORY_ELEMENTS: 150
  - MIN_WORDS_TRANSLATE_PROMPT: 10
- - NATIVE_LANGUAGE: en
+ - NATIVE_LANGUAGE: id
  - OLLAMA_CTX: 16384
  - OLLAMA_HOST: 10.23.82.116:11434
  - OPTIONAL_OUTPUT_NAME: 
  - OUTLINE_MAX_REVISIONS: 3
  - OUTLINE_MIN_REVISIONS: 0
  - OUTLINE_QUALITY: 87
- - REVISION_MODEL: ollama://qwen2.5:32b@10.23.147.239
+ - REVISION_MODEL: ollama://gemma3:27b@10.23.82.116
  - SCENE_GENERATION_PIPELINE: True
- - SCRUB_MODEL: ollama://qwen2.5:32b@10.23.147.239
+ - SCRUB_MODEL: ollama://gemma3:27b@10.23.82.116
  - SCRUB_NO_SCRUB: False
  - SEED: 12
  - STORIES_DIR: Stories
  - TITLE_MAX_TOKENS: 50
  - TRANSLATE_LANGUAGE: 
  - TRANSLATE_PROMPT_LANGUAGE: 
- - TRANSLATOR_MODEL: ollama://qwen2.5:32b@10.23.147.239
+ - TRANSLATOR_MODEL: ollama://gemma3:27b@10.23.82.116
 
 ```

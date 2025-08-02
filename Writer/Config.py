@@ -16,15 +16,16 @@ CHAPTER_STAGE3_WRITER_MODEL = (
 FINAL_NOVEL_EDITOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
 
 # Model for the final novel-wide edit pass (used by NovelEditor.py) # Note this value is overridden by the argparser
-CHAPTER_REVISION_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
-REVISION_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
-EVAL_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
-INFO_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
-SCRUB_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
-CHECKER_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Model used to check results
-TRANSLATOR_MODEL = "ollama://qwen2.5:32b@10.23.147.239"
-FAST_MODEL_NAME = (
-    "ollama://qwen2.5:7b@10.23.82.116"  # Default fast model for tasks like titling
+#CHAPTER_REVISION_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
+CHAPTER_REVISION_WRITER_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+REVISION_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+EVAL_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+INFO_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+SCRUB_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+CHECKER_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Model used to check results
+TRANSLATOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
+FAST_MODEL = (
+    "ollama://gemma3:27b@10.23.82.116"  # Default fast model for tasks like titling
 )
 
 # OLLAMA_CTX = 8192
