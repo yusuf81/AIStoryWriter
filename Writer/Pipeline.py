@@ -591,7 +591,19 @@ class StoryPipeline:
 
         try:
             with open(FinalMDPath, "w", encoding="utf-8") as F:
-                OutMD = f"# {Title}\n\n"
+                # Create valid YAML front matter for pandoc compatibility
+                OutMD = "---\n"
+                # Escape quotes for YAML
+                escaped_title = Title.replace('"', '\\"')
+                OutMD += f"title: \"{escaped_title}\"\n"
+                if self.Config.INCLUDE_SUMMARY_IN_MD: 
+                    escaped_summary = StoryInfoJSON.get('Summary', 'N/A').replace('"', '\\"').replace('\n', ' ')
+                    OutMD += f"summary: \"{escaped_summary}\"\n"
+                if self.Config.INCLUDE_TAGS_IN_MD: 
+                    escaped_tags = StoryInfoJSON.get('Tags', 'N/A').replace('"', '\\"')
+                    OutMD += f"tags: \"{escaped_tags}\"\n"
+                OutMD += "---\n\n"
+                OutMD += f"# {Title}\n\n"
                 if self.Config.INCLUDE_SUMMARY_IN_MD: OutMD += f"## Summary\n{StoryInfoJSON.get('Summary', 'N/A')}\n\n"
                 if self.Config.INCLUDE_TAGS_IN_MD: OutMD += f"**Tags:** {StoryInfoJSON.get('Tags', 'N/A')}\n\n"
                 OutMD += "---\n\n"

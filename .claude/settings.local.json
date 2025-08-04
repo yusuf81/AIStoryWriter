@@ -10,7 +10,8 @@
       "Bash(pip install:*)",
       "Bash(python:*)",
       "Bash(pyright:*)",
-      "Bash(flake8:*)"
+      "Bash(flake8:*)",
+      "Bash(pandoc:*)"
     ],
     "deny": []
   }

@@ -1,3 +1,9 @@
+---
+title: "Untitled Story"
+summary: "Error generating summary."
+tags: ""
+---
+
 # Untitled Story
 
 ## Summary
@@ -33,9 +39,9 @@ Work Statistics:
  - Total Chapters: 3
  - Total Words: 21
  - Generation Start Date: 1970/01/01 07:00:00
- - Generation Total Time: 1754172484.37s
+ - Generation Total Time: 1754310369.86s
  - Generation Average WPM: 0.00
- - Output Language: en
+ - Output Language: id
 
 User Settings:
  - Base Prompt File: N/A
@@ -91,7 +97,7 @@ Generation Configuration:
  - MIN_WORDS_SCRUB_CHAPTER: 100
  - MIN_WORDS_STORY_ELEMENTS: 150
  - MIN_WORDS_TRANSLATE_PROMPT: 10
- - NATIVE_LANGUAGE: en
+ - NATIVE_LANGUAGE: id
  - OLLAMA_CTX: 16384
  - OLLAMA_HOST: 10.23.82.116:11434
  - OPTIONAL_OUTPUT_NAME: 
