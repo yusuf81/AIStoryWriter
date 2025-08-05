@@ -12,7 +12,8 @@ import os
 import json
 
 # Add project root to path
-sys.path.insert(0, '/var/www/AIStoryWriter')
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 
 from Writer.Pipeline import StoryPipeline
 import Writer.Config

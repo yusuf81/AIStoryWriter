@@ -136,9 +136,10 @@ class TestMultiLanguageDynamicLoading:
         
         # Get all ActivePrompts attribute usage
         try:
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
             result = subprocess.run(
                 ['grep', '-r', 'ActivePrompts\\.', 'Writer/'],
-                capture_output=True, text=True, cwd='/var/www/AIStoryWriter'
+                capture_output=True, text=True, cwd=project_root
             )
             
             if result.returncode == 0:

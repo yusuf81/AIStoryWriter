@@ -12,7 +12,8 @@ import sys
 from datetime import datetime
 
 # Add project root to path
-sys.path.insert(0, '/var/www/AIStoryWriter')
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 
 from Write import save_state, load_state
 
