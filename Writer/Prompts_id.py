@@ -744,21 +744,30 @@ CHAPTER_EDIT_PROMPT = """
 {_Outline}
 </OUTLINE>
 
-<ADJACENT_CHAPTERS_CONTEXT>
+<CHAPTER_CONTEXT>
 {NovelText}
-</ADJACENT_CHAPTERS_CONTEXT>
+</CHAPTER_CONTEXT>
 
 # Tugas: Edit Bab {i} untuk Koherensi Lokal
 
-Anda diberikan outline cerita keseluruhan dan cuplikan konteks yang berisi bab tepat sebelum bab {i} (jika ada), bab {i} itu sendiri (sebelum diedit), dan bab tepat setelah bab {i} (jika ada).
+Anda diberikan outline cerita keseluruhan dan konteks bab dengan markup eksplisit. Konteks berisi:
+- <PREVIOUS_CHAPTER>: Bab sebelum bab {i} (jika ada)
+- <CHAPTER_TO_EDIT number="{i}">: Bab {i} yang perlu Anda edit
+- <NEXT_CHAPTER>: Bab setelah bab {i} (jika ada)
 
-Tujuan Anda adalah mengedit konten bab {i} (ditemukan dalam <ADJACENT_CHAPTERS_CONTEXT>) untuk memastikan alurnya lancar dari bab sebelumnya, mengarah secara efektif ke bab berikutnya, dan selaras dengan <OUTLINE> cerita yang disediakan.
+INSTRUKSI PENTING:
+1. Edit HANYA konten yang ada dalam tag <CHAPTER_TO_EDIT number="{i}">
+2. Kembalikan HANYA konten bab {i} yang telah diedit, tidak ada yang lain
+3. JANGAN sertakan konten dari <PREVIOUS_CHAPTER> atau <NEXT_CHAPTER>
+4. JANGAN sertakan tag XML dalam respons Anda
+5. Jaga kontinuitas cerita dan alur dengan bab-bab yang berdekatan
 
-Fokus pada:
-- Menjaga konsistensi dalam plot, karakterisasi, dan nada dengan bab-bab yang berdekatan.
-- Memastikan peristiwa dalam bab {i} secara logis menghubungkan bab sebelumnya dan berikutnya.
-- Menyempurnakan prosa untuk kejelasan dan dampak dalam konteks lokal ini.
-- Memperbaiki referensi yang salah ke nomor bab dalam teks bab {i} itu sendiri (pastikan secara konsisten merujuk sebagai bab {i}).
+Tujuan Anda adalah mengedit bab {i} untuk memastikan:
+- Alur lancar dari bab sebelumnya dan menuju bab berikutnya
+- Konsistensi dalam plot, karakterisasi, dan nada
+- Selaras dengan <OUTLINE> cerita yang disediakan
+- Prosa yang disempurnakan untuk kejelasan dan dampak
+- Referensi yang benar ke dirinya sebagai bab {i}
 
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 Kembalikan hanya teks lengkap yang telah diedit untuk bab {i}.

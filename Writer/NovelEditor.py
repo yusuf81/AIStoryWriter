@@ -1,39 +1,41 @@
-import Writer.PrintUtils
 import Writer.Config
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 import Writer.Statistics  # Add this import
+import copy
 
 
 def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters: int):
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
 
-    EditedChapters = _Chapters
+    # Create deep copy to prevent contamination and preserve original for context
+    EditedChapters = copy.deepcopy(_Chapters)
+    OriginalChapters = copy.deepcopy(_Chapters)  # Keep original for context isolation
 
     for i in range(1, _TotalChapters + 1):
 
         current_chapter_index = i - 1
 
-        # Build the context snippet using only adjacent chapters
-        context_parts = []
-        # Previous Chapter (if it exists)
+        # Build explicit chapter markup context to prevent confusion
+        context_sections = []
+        # Previous Chapter (if it exists) - use ORIGINAL to prevent contamination
         if i > 1:
-            prev_chapter_text = EditedChapters[current_chapter_index - 1]
-            context_parts.append(prev_chapter_text)
-        # Current Chapter (the one being edited, before this edit)
-        current_chapter_text = EditedChapters[current_chapter_index]
-        context_parts.append(current_chapter_text)
-        # Next Chapter (if it exists)
+            prev_chapter_text = OriginalChapters[current_chapter_index - 1]
+            context_sections.append(f"<PREVIOUS_CHAPTER>\n{prev_chapter_text}\n</PREVIOUS_CHAPTER>")
+        # Current Chapter (target for editing) - use ORIGINAL
+        current_chapter_text = OriginalChapters[current_chapter_index]
+        context_sections.append(f"<CHAPTER_TO_EDIT number=\"{i}\">\n{current_chapter_text}\n</CHAPTER_TO_EDIT>")
+        # Next Chapter (if it exists) - use ORIGINAL
         if i < _TotalChapters:
-            next_chapter_text = EditedChapters[current_chapter_index + 1]
-            context_parts.append(next_chapter_text)
+            next_chapter_text = OriginalChapters[current_chapter_index + 1]
+            context_sections.append(f"<NEXT_CHAPTER>\n{next_chapter_text}\n</NEXT_CHAPTER>")
 
-        # Join the parts with a separator to form the limited context
-        NovelText = "\n\n---\n\n".join(context_parts)
+        # Join with clear section breaks
+        NovelText = "\n\n".join(context_sections)
 
         # Get original word count before editing
         OriginalWordCount = Writer.Statistics.GetWordCount(
-            EditedChapters[current_chapter_index]
-        )  # Pastikan menggunakan current_chapter_index
+            OriginalChapters[current_chapter_index]
+        )
 
         Prompt: str = ActivePrompts.CHAPTER_EDIT_PROMPT.format(
             _Outline=_Outline, NovelText=NovelText, i=i

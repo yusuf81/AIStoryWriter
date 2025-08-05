@@ -720,23 +720,32 @@ CHAPTER_EDIT_PROMPT = """
 {_Outline}
 </OUTLINE>
 
-<ADJACENT_CHAPTERS_CONTEXT>
+<CHAPTER_CONTEXT>
 {NovelText}
-</ADJACENT_CHAPTERS_CONTEXT>
+</CHAPTER_CONTEXT>
 
 # Task: Edit Chapter {i} for Local Coherence
 
-You are provided with the overall story outline and a context snippet containing the chapter immediately before chapter {i} (if it exists), chapter {i} itself (before editing), and the chapter immediately after chapter {i} (if it exists).
+You are provided with the overall story outline and chapter context with explicit markup. The context contains:
+- <PREVIOUS_CHAPTER>: The chapter before chapter {i} (if it exists)
+- <CHAPTER_TO_EDIT number="{i}">: Chapter {i} that you need to edit
+- <NEXT_CHAPTER>: The chapter after chapter {i} (if it exists)
 
-Your goal is to edit the content of chapter {i} (found within the <ADJACENT_CHAPTERS_CONTEXT>) to ensure it flows smoothly from the previous chapter, leads effectively into the next chapter, and aligns with the provided story <OUTLINE>.
+CRITICAL INSTRUCTIONS:
+1. Edit ONLY the content within <CHAPTER_TO_EDIT number="{i}"> tags
+2. Return ONLY the edited content of chapter {i}, nothing else
+3. Do NOT include content from <PREVIOUS_CHAPTER> or <NEXT_CHAPTER>
+4. Do NOT include the XML tags in your response
+5. Maintain story continuity and flow with adjacent chapters
 
-Focus on:
-- Maintaining consistency in plot, characterization, and tone with the adjacent chapters.
-- Ensuring events within chapter {i} logically connect the previous and next chapters.
-- Refining prose for clarity and impact within this local context.
-- Correcting any incorrect references to the chapter number within the text of chapter {i} itself (ensure it consistently refers to being chapter {i}).
+Your goal is to edit chapter {i} to ensure it:
+- Flows smoothly from the previous chapter and into the next chapter
+- Maintains consistency in plot, characterization, and tone
+- Aligns with the provided story <OUTLINE>
+- Has refined prose for clarity and impact
+- Correctly references itself as chapter {i}
 
-Return only the full, edited text for chapter {i}.
+Return only the complete edited text for chapter {i}.
 """
 
 CHAPTER_SCRUB_PROMPT = """
