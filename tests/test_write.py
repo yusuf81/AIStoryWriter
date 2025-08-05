@@ -1,7 +1,5 @@
 import pytest
 from pytest_mock import MockerFixture
-import importlib
-import sys
 import types # For ModuleType
 
 # Attempt to import the function to be tested.
@@ -9,13 +7,15 @@ import types # For ModuleType
 # or PYTHONPATH is adjusted accordingly in the test execution environment.
 try:
     from Write import load_active_prompts
-except ImportError as e:
+except ImportError as import_error:
     # If Write.py is in the root and not installed, this might fail without PYTHONPATH adjustment.
     # For this subtask, we'll proceed assuming it can be resolved by the environment.
-    print(f"Note: ImportError during 'from Write import load_active_prompts': {e}. Ensure PYTHONPATH is set if Write.py is in repo root.")
+    print(f"Note: ImportError during 'from Write import load_active_prompts': {import_error}. Ensure PYTHONPATH is set if Write.py is in repo root.")
+    # Store the error for later use
+    _import_error = import_error
     # Define a dummy function to allow tests to be defined, though they will likely fail if the import truly fails.
     def load_active_prompts(native_language_code, logger_func_print, logger_func_warn, logger_func_error):
-        raise e
+        raise _import_error
 
 # Mock Logger Utilities
 mock_log_entries = []
