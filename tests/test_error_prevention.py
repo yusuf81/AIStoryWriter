@@ -16,7 +16,8 @@ import subprocess
 from unittest.mock import Mock, patch
 
 # Add project root to path
-sys.path.insert(0, '/var/www/AIStoryWriter')
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 
 class TestErrorPrevention:
     """Test suite untuk mencegah error runtime."""
@@ -57,7 +58,7 @@ class TestErrorPrevention:
         # Get all ActivePrompts usage from codebase
         result = subprocess.run(
             ['grep', '-r', '-n', 'ActivePrompts\\..*\\.format(', 'Writer/'],
-            capture_output=True, text=True, cwd='/var/www/AIStoryWriter'
+            capture_output=True, text=True, cwd=project_root
         )
         
         if result.returncode != 0:
@@ -107,7 +108,7 @@ class TestErrorPrevention:
                 errors.append(f"Error parsing line: {line} - {e}")
                 
         if errors:
-            pytest.fail(f"Template format errors found:\\n" + "\\n".join(errors))
+            pytest.fail("Template format errors found:\n" + "\n".join(errors))
     
     def test_function_signature_compatibility(self):
         """Test function signature compatibility."""
@@ -152,14 +153,14 @@ class TestErrorPrevention:
                 errors.append(f"Error checking {test_case['module']}.{test_case['function']}: {e}")
                 
         if errors:
-            pytest.fail(f"Function signature errors:\\n" + "\\n".join(errors))
+            pytest.fail("Function signature errors:\n" + "\n".join(errors))
     
     def test_all_config_attributes_exist(self):
         """Test semua Config attributes yang digunakan benar-benar ada."""
         # Get all Config usage
         result = subprocess.run(
             ['grep', '-r', '-n', 'Config\\.', 'Writer/'],
-            capture_output=True, text=True, cwd='/var/www/AIStoryWriter'
+            capture_output=True, text=True, cwd=project_root
         )
         
         if result.returncode != 0:
@@ -191,7 +192,7 @@ class TestErrorPrevention:
             # Get all ActivePrompts usage
             result = subprocess.run(
                 ['grep', '-r', '-n', 'ActivePrompts\\.', 'Writer/'],
-                capture_output=True, text=True, cwd='/var/www/AIStoryWriter'
+                capture_output=True, text=True, cwd=project_root
             )
             
             if result.returncode == 0:
@@ -205,7 +206,7 @@ class TestErrorPrevention:
                         missing_attrs.append(f"Indonesian prompts missing: {attr}")
                         
                 if missing_attrs:
-                    pytest.fail(f"Missing prompt attributes:\\n" + "\\n".join(missing_attrs))
+                    pytest.fail("Missing prompt attributes:\n" + "\n".join(missing_attrs))
                     
         except Exception as e:
             pytest.fail(f"Error checking prompt attributes: {e}")
@@ -251,7 +252,7 @@ class TestErrorPrevention:
                 import_errors.append(f"Cannot import {module_name}: {e}")
                 
         if import_errors:
-            pytest.fail(f"Import errors:\\n" + "\\n".join(import_errors))
+            pytest.fail("Import errors:\n" + "\n".join(import_errors))
     
     def test_pipeline_chapter_title_generation_parameters(self):
         """Test khusus untuk parameter chapter title generation di Pipeline.py."""
@@ -282,7 +283,7 @@ class TestErrorPrevention:
         # Check for incorrect SafeGenerateText parameter usage
         result = subprocess.run(
             ['grep', '-r', '-n', 'SafeGenerateText(', 'Writer/'],
-            capture_output=True, text=True, cwd='/var/www/AIStoryWriter'
+            capture_output=True, text=True, cwd=project_root
         )
         
         if result.returncode != 0:
@@ -306,7 +307,7 @@ class TestErrorPrevention:
                     errors.append(f"{parts[0]}:{parts[1]} - Uses unsupported '_PurposeForLog' parameter")
                     
         if errors:
-            pytest.fail(f"SafeGenerateText parameter errors found:\\n" + "\\n".join(errors))
+            pytest.fail("SafeGenerateText parameter errors found:\n" + "\n".join(errors))
     
     def test_mock_return_values_match_function_signatures(self):
         """Test bahwa mock return values sesuai dengan function signatures."""
