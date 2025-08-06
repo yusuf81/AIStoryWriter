@@ -39,7 +39,7 @@ Work Statistics:
  - Total Chapters: 3
  - Total Words: 21
  - Generation Start Date: 1970/01/01 07:00:00
- - Generation Total Time: 1754393345.17s
+ - Generation Total Time: 1754471907.50s
  - Generation Average WPM: 0.00
  - Output Language: en
 
@@ -86,7 +86,7 @@ Generation Configuration:
  - MIN_WORDS_CHAPTER_SEGMENT_EXTRACT: 120
  - MIN_WORDS_CHAPTER_SUMMARY: 100
  - MIN_WORDS_EDIT_NOVEL: 150
- - MIN_WORDS_FOR_CHAPTER_TITLE: 5
+ - MIN_WORDS_FOR_CHAPTER_TITLE: 3
  - MIN_WORDS_INITIAL_OUTLINE: 250
  - MIN_WORDS_OUTLINE_FEEDBACK: 70
  - MIN_WORDS_PER_CHAPTER_OUTLINE: 50

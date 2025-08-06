@@ -731,21 +731,40 @@ You are provided with the overall story outline and chapter context with explici
 - <CHAPTER_TO_EDIT number="{i}">: Chapter {i} that you need to edit
 - <NEXT_CHAPTER>: The chapter after chapter {i} (if it exists)
 
-CRITICAL INSTRUCTIONS:
-1. Edit ONLY the content within <CHAPTER_TO_EDIT number="{i}"> tags
-2. Return ONLY the edited content of chapter {i}, nothing else
-3. Do NOT include content from <PREVIOUS_CHAPTER> or <NEXT_CHAPTER>
-4. Do NOT include the XML tags in your response
-5. Maintain story continuity and flow with adjacent chapters
+## CRITICAL INSTRUCTIONS - MUST BE FOLLOWED:
 
-Your goal is to edit chapter {i} to ensure it:
-- Flows smoothly from the previous chapter and into the next chapter
-- Maintains consistency in plot, characterization, and tone
-- Aligns with the provided story <OUTLINE>
-- Has refined prose for clarity and impact
-- Correctly references itself as chapter {i}
+### CONTENT PRESERVATION REQUIREMENTS:
+1. **MANDATORY**: Preserve ALL main scenes/sequences that exist in the original
+2. **FORBIDDEN**: Change setting/location names (e.g., "Pasar Sukorejo" must remain "Pasar Sukorejo")
+3. **FORBIDDEN**: Replace or remove major characters (e.g., if "Kyai Saleh" appears, he must remain)
+4. **FORBIDDEN**: Alter the main plot progression of the chapter
+5. **FORBIDDEN**: Create new scenes or storylines not present in the original
+6. **ONLY ALLOWED**: Improve grammar, sentence flow, transitions, and prose quality
 
-Return only the complete edited text for chapter {i}.
+### RESPONSE FORMAT REQUIREMENTS:
+- Your response MUST begin with the same or similar opening sentence
+- Your response MUST use the same setting/location as the original
+- Your response MUST maintain the same character interactions
+- Your response MUST preserve all key dialogue and plot points
+- Your response may ONLY refine language, improve transitions, and enhance readability
+
+### EDITING SCOPE:
+- **Grammar and syntax**: Fix errors, improve clarity
+- **Flow and transitions**: Smooth connections between paragraphs
+- **Prose quality**: Enhance descriptive language while preserving meaning
+- **Consistency**: Ensure alignment with adjacent chapters
+
+## WARNING:
+If you replace the original content with a different story, the system will automatically detect content replacement through similarity analysis and reject your editing results. The original content will be restored.
+
+Your goal is to edit chapter {i} to ensure:
+- Smooth flow from the previous chapter and into the next chapter
+- Consistency in plot, characterization, and tone
+- Alignment with the provided story <OUTLINE>
+- Refined prose for clarity and impact
+- Correct self-reference as chapter {i}
+
+Return ONLY the complete edited text for chapter {i}. Do not include XML tags or any explanatory text.
 """
 
 CHAPTER_SCRUB_PROMPT = """

@@ -1,0 +1,1 @@
+git add . && git commit -am "$(git diff HEAD | ollama run qwen2.5-coder:32b "Buatkan git commit message dalam bahasa Indonesia yang deskriptif berdasarkan perubahan berikut:, kembalikan hanya message nya saja tanpa kalimat awalan atau akhiran apapun")"

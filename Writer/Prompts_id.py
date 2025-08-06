@@ -755,22 +755,42 @@ Anda diberikan outline cerita keseluruhan dan konteks bab dengan markup eksplisi
 - <CHAPTER_TO_EDIT number="{i}">: Bab {i} yang perlu Anda edit
 - <NEXT_CHAPTER>: Bab setelah bab {i} (jika ada)
 
-INSTRUKSI PENTING:
-1. Edit HANYA konten yang ada dalam tag <CHAPTER_TO_EDIT number="{i}">
-2. Kembalikan HANYA konten bab {i} yang telah diedit, tidak ada yang lain
-3. JANGAN sertakan konten dari <PREVIOUS_CHAPTER> atau <NEXT_CHAPTER>
-4. JANGAN sertakan tag XML dalam respons Anda
-5. Jaga kontinuitas cerita dan alur dengan bab-bab yang berdekatan
+## INSTRUKSI KRITIS - WAJIB DIIKUTI:
+
+### PERSYARATAN PRESERVASI KONTEN:
+1. **WAJIB**: Pertahankan SEMUA adegan/sekuen utama yang ada dalam original
+2. **DILARANG**: Mengganti nama setting/lokasi (mis: "Pasar Sukorejo" harus tetap "Pasar Sukorejo")
+3. **DILARANG**: Mengganti atau menghilangkan tokoh utama (mis: jika "Kyai Saleh" muncul, harus tetap ada)
+4. **DILARANG**: Mengubah alur plot utama bab tersebut
+5. **DILARANG**: Menciptakan adegan atau alur cerita baru yang tidak ada dalam original
+6. **HANYA DIIZINKAN**: Memperbaiki tata bahasa, alur kalimat, transisi, dan kualitas prosa
+
+### PERSYARATAN FORMAT RESPONS:
+- Respons Anda HARUS dimulai dengan kalimat pembuka yang sama atau serupa
+- Respons Anda HARUS menggunakan setting/lokasi yang sama dengan original
+- Respons Anda HARUS mempertahankan interaksi karakter yang sama
+- Respons Anda HARUS melestarikan semua dialog dan poin plot kunci
+- Respons Anda HANYA boleh memperhalus bahasa, memperbaiki transisi, dan meningkatkan keterbacaan
+
+### RUANG LINGKUP EDITING:
+- **Tata bahasa dan sintaks**: Perbaiki kesalahan, tingkatkan kejelasan
+- **Alur dan transisi**: Kelancaran koneksi antar paragraf
+- **Kualitas prosa**: Tingkatkan bahasa deskriptif sambil mempertahankan makna
+- **Konsistensi**: Pastikan keselarasan dengan bab-bab yang bersebelahan
+
+## PERINGATAN:
+Jika Anda mengganti konten original dengan cerita yang berbeda, sistem akan secara otomatis mendeteksi penggantian konten melalui analisis kemiripan dan menolak hasil editing Anda. Konten original akan dipulihkan.
 
 Tujuan Anda adalah mengedit bab {i} untuk memastikan:
 - Alur lancar dari bab sebelumnya dan menuju bab berikutnya
 - Konsistensi dalam plot, karakterisasi, dan nada
-- Selaras dengan <OUTLINE> cerita yang disediakan
+- Keselarasan dengan <OUTLINE> cerita yang disediakan
 - Prosa yang disempurnakan untuk kejelasan dan dampak
-- Referensi yang benar ke dirinya sebagai bab {i}
+- Referensi diri yang benar sebagai bab {i}
+
+Kembalikan HANYA teks lengkap yang telah diedit untuk bab {i}. Jangan sertakan tag XML atau teks penjelasan apa pun.
 
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
-Kembalikan hanya teks lengkap yang telah diedit untuk bab {i}.
 """
 
 CHAPTER_SCRUB_PROMPT = """
