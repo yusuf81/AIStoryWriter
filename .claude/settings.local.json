@@ -12,7 +12,9 @@
       "Bash(pyright:*)",
       "Bash(flake8:*)",
       "Bash(pandoc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(sed:*)",
+      "Bash(jq:*)"
     ],
     "deny": []
   }
