@@ -7,3 +7,5 @@ json-repair
 requests
 pytest
 pytest-mock
+scikit-learn>=1.0.0
+numpy>=1.22.0
