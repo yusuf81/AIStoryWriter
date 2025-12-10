@@ -170,3 +170,4 @@ SimulateLogs/*
 .env
 .aider*
 .vscode/
+.claude/settings.local.json

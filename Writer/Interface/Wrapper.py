@@ -182,11 +182,23 @@ class Interface:
         CurrentModelOptions["seed"] = Seed_int
         if _FormatSchema_dict: CurrentModelOptions.update({"format": "json", "temperature": CurrentModelOptions.get("temperature", 0.0)})
 
+        # Prepare chat parameters
+        chat_params = {
+            "model": ProviderModel_name,
+            "messages": _Messages_list,
+            "stream": True,
+            "options": CurrentModelOptions
+        }
+
+        # Disable thinking for Qwen models to prevent infinite loops
+        if "qwen" in ProviderModel_name.lower():
+            chat_params["think"] = False
+
         MaxRetries = getattr(Writer.Config, "MAX_OLLAMA_RETRIES", 2)
         for attempt in range(MaxRetries):
             try:
                 client = self.Clients[_Model_key]
-                Stream = client.chat(model=ProviderModel_name, messages=_Messages_list, stream=True, options=CurrentModelOptions)
+                Stream = client.chat(**chat_params)
                 AssistantMessage, LastChunk = self.StreamResponse(Stream, "ollama")
                 FullResponseMessages = _Messages_list + [AssistantMessage]
                 TokenUsage = None
@@ -366,7 +378,8 @@ class Interface:
                     # For unpaired tag, remove everything from <thinking> to the end
                     # since we can't reliably determine thinking section boundaries
                     cleaned_content = re.sub(r'<thinking>.*', '', cleaned_content, flags=re.DOTALL)
-                # Clean up any extra whitespace at start
+                # Clean up any extra whitespace at start and multiple newlines
+                cleaned_content = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned_content)
                 cleaned_content = cleaned_content.lstrip('\n\r ')
                 cleaned_msg["content"] = cleaned_content
 

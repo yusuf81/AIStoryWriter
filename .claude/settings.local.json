@@ -15,7 +15,8 @@
       "Bash(ls:*)",
       "Bash(sed:*)",
       "Bash(jq:*)",
-      "WebFetch(domain:qwenlm.github.io)"
+      "WebFetch(domain:qwenlm.github.io)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": []
   }
