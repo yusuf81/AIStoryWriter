@@ -9,7 +9,7 @@ import importlib
 import importlib.metadata
 import subprocess
 import sys
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, unquote
 import json_repair
 
 dotenv.load_dotenv()
@@ -66,7 +66,7 @@ class Interface:
             else: raise NotImplementedError(f"Provider {Provider} not supported")
 
     def SafeGenerateText(self, _Logger, _Messages, _Model: str, _SeedOverride: int = -1, _FormatSchema: dict = None, _MinWordCount: int = 1, _max_retries_override: int = None):
-        CurrentMessages = [m.copy() for m in _Messages]
+        CurrentMessages = self.RemoveThinkTagFromAssistantMessages([m.copy() for m in _Messages])
         # Strip initial empty messages from the end of the copied list
         while CurrentMessages and not CurrentMessages[-1]["content"].strip(): del CurrentMessages[-1]
         if not CurrentMessages: # If all messages were empty or became empty
@@ -110,7 +110,7 @@ class Interface:
         raise Exception(f"Failed to generate valid text after {max_r} retries")
 
     def SafeGenerateJSON(self, _Logger, _Messages, _Model: str, _SeedOverride: int = -1, _FormatSchema: dict = None, _max_retries_override: int = None):
-        CurrentMessages = [m.copy() for m in _Messages]
+        CurrentMessages = self.RemoveThinkTagFromAssistantMessages([m.copy() for m in _Messages])
         Retries = 0
         max_r = _max_retries_override if _max_retries_override is not None else Writer.Config.MAX_JSON_RETRIES
 
@@ -330,6 +330,50 @@ class Interface:
         if not _Messages or not isinstance(_Messages, list): return ""
         return str(_Messages[-1].get("content", "")) if isinstance(_Messages[-1], dict) else ""
 
+    def RemoveThinkTagFromAssistantMessages(self, _Messages: list):
+        """
+        Remove <thinking> tags and their content from assistant messages.
+        Handles both paired and unpaired thinking tags.
+
+        Args:
+            _Messages: List of message dictionaries with 'role' and 'content' keys
+
+        Returns:
+            List of messages with thinking tags removed from assistant messages
+        """
+        if not _Messages or not isinstance(_Messages, list):
+            return _Messages
+
+        result = []
+        for message in _Messages:
+            if not isinstance(message, dict):
+                result.append(message)
+                continue
+
+            # Create a copy to avoid modifying original
+            cleaned_msg = message.copy()
+
+            # Only process assistant messages
+            if cleaned_msg.get("role") == "assistant" and "content" in cleaned_msg:
+                content = str(cleaned_msg["content"])
+                # Use regex to remove thinking tags and everything between them
+                import re
+                # Remove paired thinking tags first
+                pattern = r'<thinking>.*?</thinking>'
+                cleaned_content = re.sub(pattern, '', content, flags=re.DOTALL)
+                # Also handle unclosed thinking tags (edge case)
+                if "<thinking>" in cleaned_content:
+                    # For unpaired tag, remove everything from <thinking> to the end
+                    # since we can't reliably determine thinking section boundaries
+                    cleaned_content = re.sub(r'<thinking>.*', '', cleaned_content, flags=re.DOTALL)
+                # Clean up any extra whitespace at start
+                cleaned_content = cleaned_content.lstrip('\n\r ')
+                cleaned_msg["content"] = cleaned_content
+
+            result.append(cleaned_msg)
+
+        return result
+
     def GetModelAndProvider(self, _Model: str):
         if "://" not in _Model:
             return "ollama", _Model, getattr(Writer.Config, 'OLLAMA_HOST', None), None
@@ -341,6 +385,7 @@ class Interface:
         if "@" in Netloc: ModelName, Host = Netloc.split("@", 1)
 
         ModelName = ModelName.strip('/') # Ensure no leading/trailing slashes from netloc part
+        ModelName = unquote(ModelName)  # Decode URL encoded characters like %2F
 
         if Provider == "openrouter":
             ModelName = f"{ModelName}/{Path}" if Path and ModelName else (ModelName or Path)
