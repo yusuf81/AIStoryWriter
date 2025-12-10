@@ -14,7 +14,8 @@
       "Bash(pandoc:*)",
       "Bash(ls:*)",
       "Bash(sed:*)",
-      "Bash(jq:*)"
+      "Bash(jq:*)",
+      "WebFetch(domain:qwenlm.github.io)"
     ],
     "deny": []
   }
