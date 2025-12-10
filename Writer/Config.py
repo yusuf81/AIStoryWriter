@@ -111,6 +111,13 @@ INCLUDE_STATS_IN_MD = True  # Include statistics in final markdown output
 INCLUDE_SUMMARY_IN_MD = True  # Include summary in final markdown output
 INCLUDE_TAGS_IN_MD = True  # Include tags in final markdown output
 
+# PDF generation configuration
+ENABLE_PDF_GENERATION = False  # Enable PDF generation as post-processing step
+PDF_FONT_FAMILY = "Georgia"  # Font family for PDF text
+PDF_FONT_SIZE = 12  # Font size for regular text
+PDF_TITLE_SIZE = 24  # Font size for title
+PDF_CHAPTER_SIZE = 18  # Font size for chapter headings
+
 
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"
 "google://gemini-1.5-pro"

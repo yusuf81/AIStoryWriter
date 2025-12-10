@@ -242,6 +242,11 @@ Parser.add_argument(
     type=str,
     help="Path to a .state.json file to resume a previous run.",
 )
+Parser.add_argument(
+    "-GeneratePDF",
+    action="store_true",
+    help="Generate PDF output with story content only (title and chapters)",
+)
 # Args = Parser.parse_args() # Pindahkan parsing argumen ke dalam main()
 
 
@@ -332,7 +337,8 @@ def main():
         Writer.Config.ENABLE_FINAL_EDIT_PASS = Args.EnableFinalEditPass
         Writer.Config.OPTIONAL_OUTPUT_NAME = Args.Output
         Writer.Config.SCENE_GENERATION_PIPELINE = Args.SceneGenerationPipeline
-        
+        Writer.Config.ENABLE_PDF_GENERATION = Args.GeneratePDF
+
         # Atur Writer.Config.DEBUG berdasarkan nilai dari Config.py dan flag Args.Debug
         # Jika Args.Debug adalah True (flag -Debug diberikan), maka Writer.Config.DEBUG akan True.
         # Jika Args.Debug adalah False (flag -Debug tidak diberikan),

@@ -627,6 +627,25 @@ class StoryPipeline:
         except Exception as e:
             self.SysLogger.Log(f"PIPELINE _perform_post_processing_stage FATAL: Error writing story info JSON file {FinalJSONPath}: {e}", 7)
 
+        # PDF Generation (if enabled)
+        if self.Config.ENABLE_PDF_GENERATION:
+            try:
+                self.SysLogger.Log("Pipeline: Starting PDF generation...", 5)
+                pdf_path = f"{FNameBase}.pdf"
+
+                from Writer import PDFGenerator
+                success, message = PDFGenerator.GeneratePDF(
+                    self.Interface, self.SysLogger, OutMD, pdf_path, Title
+                )
+
+                if success:
+                    StoryInfoJSON["OutputFiles"]["PDF"] = pdf_path
+                    self.SysLogger.Log(f"Pipeline: PDF generated successfully at {pdf_path}", 5)
+                else:
+                    self.SysLogger.Log(f"Pipeline: PDF generation failed: {message}", 6)
+            except Exception as e:
+                self.SysLogger.Log(f"Pipeline: PDF generation error: {e}", 6)
+
         current_state["status"] = "completed"
         current_state["final_story_path"] = FinalMDPath
         current_state["final_json_path"] = FinalJSONPath
