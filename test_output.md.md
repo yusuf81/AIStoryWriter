@@ -39,7 +39,7 @@ Work Statistics:
  - Total Chapters: 3
  - Total Words: 21
  - Generation Start Date: 1970/01/01 07:00:00
- - Generation Total Time: 1765370628.34s
+ - Generation Total Time: 1765395337.24s
  - Generation Average WPM: 0.00
  - Output Language: en
 
@@ -54,29 +54,29 @@ Generation Configuration:
  - CHAPTER_MEMORY_WORDS: 250
  - CHAPTER_MIN_REVISIONS: 0
  - CHAPTER_NO_REVISIONS: False
- - CHAPTER_OUTLINE_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
+ - CHAPTER_OUTLINE_WRITER_MODEL: huihui_ai/qwen2.5-abliterate:32b
  - CHAPTER_QUALITY: 85
- - CHAPTER_REVISION_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
- - CHAPTER_STAGE1_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
- - CHAPTER_STAGE2_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
- - CHAPTER_STAGE3_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
- - CHECKER_MODEL: ollama://gemma3:27b@10.23.82.116
+ - CHAPTER_REVISION_WRITER_MODEL: huihui_ai/qwen2.5-abliterate:32b
+ - CHAPTER_STAGE1_WRITER_MODEL: huihui_ai/qwen2.5-abliterate:32b
+ - CHAPTER_STAGE2_WRITER_MODEL: huihui_ai/qwen2.5-abliterate:32b
+ - CHAPTER_STAGE3_WRITER_MODEL: huihui_ai/qwen2.5-abliterate:32b
+ - CHECKER_MODEL: huihui_ai/qwen2.5-abliterate:32b
  - DEBUG: False
  - DEFAULT_CHAPTER_TITLE_PREFIX: Chapter
  - ENABLE_FINAL_EDIT_PASS: True
  - ENABLE_GLOBAL_OUTLINE_REFINEMENT: True
  - ENABLE_PDF_GENERATION: True
- - EVAL_MODEL: ollama://gemma3:27b@10.23.82.116
+ - EVAL_MODEL: huihui_ai/qwen2.5-abliterate:32b
  - EXPAND_OUTLINE: False
- - FAST_MODEL: ollama://gemma3:27b@10.23.82.116
- - FINAL_NOVEL_EDITOR_MODEL: ollama://gemma3:27b@10.23.82.116
+ - FAST_MODEL: huihui_ai/qwen2.5-abliterate:32b
+ - FINAL_NOVEL_EDITOR_MODEL: huihui_ai/qwen2.5-abliterate:32b
  - GENERATE_CHAPTER_TITLES: True
  - INCLUDE_OUTLINE_IN_MD: True
  - INCLUDE_STATS_IN_MD: True
  - INCLUDE_SUMMARY_IN_MD: True
  - INCLUDE_TAGS_IN_MD: True
- - INFO_MODEL: ollama://gemma3:27b@10.23.82.116
- - INITIAL_OUTLINE_WRITER_MODEL: ollama://gemma3:27b@10.23.82.116
+ - INFO_MODEL: huihui_ai/qwen2.5-abliterate:32b
+ - INITIAL_OUTLINE_WRITER_MODEL: huihui_ai/qwen2.5-abliterate:32b
  - LOG_DIRECTORY: Logs
  - MAX_JSON_RETRIES: 5
  - MAX_LENGTH_CHAPTER_TITLE: 100
@@ -109,15 +109,15 @@ Generation Configuration:
  - PDF_FONT_FAMILY: Georgia
  - PDF_FONT_SIZE: 12
  - PDF_TITLE_SIZE: 24
- - REVISION_MODEL: ollama://gemma3:27b@10.23.82.116
+ - REVISION_MODEL: huihui_ai/qwen2.5-abliterate:32b
  - SCENE_GENERATION_PIPELINE: True
- - SCRUB_MODEL: ollama://gemma3:27b@10.23.82.116
+ - SCRUB_MODEL: huihui_ai/qwen2.5-abliterate:32b
  - SCRUB_NO_SCRUB: False
  - SEED: 12
  - STORIES_DIR: Stories
  - TITLE_MAX_TOKENS: 50
  - TRANSLATE_LANGUAGE: 
  - TRANSLATE_PROMPT_LANGUAGE: 
- - TRANSLATOR_MODEL: ollama://gemma3:27b@10.23.82.116
+ - TRANSLATOR_MODEL: huihui_ai/qwen2.5-abliterate:32b
 
 ```

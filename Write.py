@@ -331,13 +331,21 @@ def main():
         Writer.Config.OUTLINE_MAX_REVISIONS = Args.OutlineMaxRevisions
         Writer.Config.CHAPTER_MIN_REVISIONS = Args.ChapterMinRevisions
         Writer.Config.CHAPTER_MAX_REVISIONS = Args.ChapterMaxRevisions
-        Writer.Config.CHAPTER_NO_REVISIONS = Args.NoChapterRevision
-        Writer.Config.SCRUB_NO_SCRUB = Args.NoScrubChapters
-        Writer.Config.EXPAND_OUTLINE = Args.ExpandOutline
-        Writer.Config.ENABLE_FINAL_EDIT_PASS = Args.EnableFinalEditPass
+        # Boolean flags - only override if explicitly set (not False by default)
+        if Args.NoChapterRevision:
+            Writer.Config.CHAPTER_NO_REVISIONS = True
+        if Args.NoScrubChapters:
+            Writer.Config.SCRUB_NO_SCRUB = True
+        if Args.ExpandOutline:
+            Writer.Config.EXPAND_OUTLINE = True
+        if Args.EnableFinalEditPass:
+            Writer.Config.ENABLE_FINAL_EDIT_PASS = True
         Writer.Config.OPTIONAL_OUTPUT_NAME = Args.Output
-        Writer.Config.SCENE_GENERATION_PIPELINE = Args.SceneGenerationPipeline
-        Writer.Config.ENABLE_PDF_GENERATION = Args.GeneratePDF
+        if Args.SceneGenerationPipeline:
+            Writer.Config.SCENE_GENERATION_PIPELINE = True
+        # Only override PDF config if flag is explicitly provided
+        if Args.GeneratePDF:
+            Writer.Config.ENABLE_PDF_GENERATION = True
 
         # Atur Writer.Config.DEBUG berdasarkan nilai dari Config.py dan flag Args.Debug
         # Jika Args.Debug adalah True (flag -Debug diberikan), maka Writer.Config.DEBUG akan True.
