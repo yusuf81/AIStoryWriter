@@ -216,13 +216,11 @@ Parser.add_argument(
 Parser.add_argument(
     "-ExpandOutline",
     action="store_true",
-    default=True,
     help="Disables the system from expanding the outline for the story chapter by chapter prior to writing the story's chapter content",
 )
 Parser.add_argument(
     "-EnableFinalEditPass",
     action="store_true",
-    default=True,
     help="Enable a final edit pass of the whole story prior to scrubbing",
 )
 Parser.add_argument(
@@ -233,7 +231,6 @@ Parser.add_argument(
 Parser.add_argument(
     "-SceneGenerationPipeline",
     action="store_true",
-    default=True,
     help="Use the new scene-by-scene generation pipeline as an initial starting point for chapter writing",
 )
 Parser.add_argument(

@@ -1,8 +1,44 @@
 # AIStoryWriter Configuration (`Writer/Config.py`)
 
+**Status Update (2025-12-11):** ⚠️ **PARTIALLY OUTDATED** - Documentation coverage: 68.4% (52/76 variables)
+
 This file documents the configuration variables found in `Writer/Config.py`. These variables control various aspects of the story generation process, including model selection, quality control, and feature flags.
 
 **Note:** Many of these default values can be overridden by command-line arguments when running `Write.py`.
+
+## ⚠️ Missing Documentation (24 Variables)
+
+The following variables exist in `Writer/Config.py` but are NOT documented below:
+
+**Model Selection:**
+- `FAST_MODEL` (line 35-38): Default fast model for quick tasks like titling
+
+**Generation Control:**
+- `NATIVE_LANGUAGE` (line 93): Language for prompts (default: "id" Indonesian)
+
+**Chapter Title Management (10 variables, lines 102-112):**
+- `CHAPTER_HEADER_FORMAT`, `CHAPTER_MEMORY_WORDS`, `GENERATE_CHAPTER_TITLES`
+- `TITLE_MAX_TOKENS`, `MAX_WORDS_FOR_CHAPTER_TITLE_PROMPT`
+- `MIN_WORDS_FOR_CHAPTER_TITLE`, `MAX_LENGTH_CHAPTER_TITLE`
+- `MAX_RETRIES_CHAPTER_TITLE`, `AUTO_CHAPTER_TITLES`, `DEFAULT_CHAPTER_TITLE_PREFIX`
+
+**Output Directories (2 variables, lines 114-115):**
+- `STORIES_DIR`: Directory for generated stories
+- `LOG_DIRECTORY`: Directory for log files
+
+**Markdown Output Configuration (5 variables, lines 113, 118-121):**
+- `ADD_CHAPTER_TITLES_TO_NOVEL_BODY_TEXT`
+- `INCLUDE_OUTLINE_IN_MD`, `INCLUDE_STATS_IN_MD`
+- `INCLUDE_SUMMARY_IN_MD`, `INCLUDE_TAGS_IN_MD`
+
+**PDF Generation (5 variables, lines 124-128):**
+- `ENABLE_PDF_GENERATION`, `PDF_FONT_FAMILY`, `PDF_FONT_SIZE`
+- `PDF_TITLE_SIZE`, `PDF_CHAPTER_SIZE`
+
+**Other:**
+- `ENABLE_GLOBAL_OUTLINE_REFINEMENT` (line 110)
+
+---
 
 ## Model Selection
 

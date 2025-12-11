@@ -7,7 +7,7 @@ json-repair
 requests
 pytest
 pytest-mock
-scikit-learn>=1.0.0
-numpy>=1.22.0
-reportlab>=4.0.0
-markdown>=3.5.0
+scikit-learn
+numpy
+reportlab
+markdown

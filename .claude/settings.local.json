@@ -16,7 +16,11 @@
       "Bash(sed:*)",
       "Bash(jq:*)",
       "WebFetch(domain:qwenlm.github.io)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git add OBSOLETE_*.md)",
+      "Bash(git add flowchart.md)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nUpdate flowchart.md to match current codebase\n\nMajor changes:\n- Add Resume from State flow at the beginning\n- Add NATIVE_LANGUAGE configuration and dynamic prompt loading\n- Add state management (Save Chapter to State)\n- Add OutputFiles structure creation\n- Add PDF generation flow after JSON save\n- Clarify error handling for PDF generation\n\nFlowchart now accurately reflects the complete pipeline including\nPDF generation feature and state management.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git log --count --grep=\"EXPAND\" --all)"
     ],
     "deny": []
   }
