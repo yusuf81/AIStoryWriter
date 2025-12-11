@@ -1,3 +1,11 @@
+# ⚠️ OBSOLETE - This documentation is outdated
+
+**Reason**: Native language support feature has been implemented in the codebase
+**Date Marked**: 2025-12-11
+**Status**: Already implemented - NATIVE_LANGUAGE configuration with dynamic prompt loading is now live
+
+---
+
 # Menghasilkan Output Bahasa Asli Secara Langsung
 
 Dokumen ini membahas berbagai pendekatan untuk menghasilkan konten cerita secara native dalam bahasa target (misalnya, Bahasa Indonesia, Jepang) langsung di dalam pipeline AIStoryWriter, menghindari potensi penurunan kualitas akibat terjemahan pasca-generasi. Tujuannya adalah untuk mencapai output berkualitas tinggi yang terdengar alami dalam bahasa target sambil mempertahankan modularitas agar mudah mengganti bahasa melalui `Writer/Config.py`.

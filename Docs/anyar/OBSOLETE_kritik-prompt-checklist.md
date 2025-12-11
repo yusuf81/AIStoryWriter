@@ -1,3 +1,11 @@
+# ⚠️ OBSOLETE - This documentation is outdated
+
+**Reason**: No longer actively maintained - tracking document hasn't been updated
+**Date Marked**: 2025-12-11
+**Status**: No longer relevant for current development
+
+---
+
 # Checklist Implementasi Kritik Prompt (Docs/anyar/kritik-prompt.md)
 
 Daftar ini digunakan untuk melacak implementasi perbaikan berdasarkan kritik dan rekomendasi yang diidentifikasi dalam dokumen `Docs/anyar/kritik-prompt.md`.
