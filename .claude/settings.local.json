@@ -44,7 +44,15 @@
       "Bash(python -m pytest tests/test_lorebook_integration.py -v --disable-warnings)",
       "Bash(flake8 Writer/Lorebook.py --ignore=E501,W504,W503)",
       "Bash(git add -A)",
-      "Bash(git reset HEAD *.txt*)"
+      "Bash(git reset HEAD *.txt*)",
+      "Bash(git commit -m \"feat: Implement Lorebook system for story consistency\n\n- Add LangChain dependencies (ChromaDB, sentence-transformers)\n- Create LorebookManager class for vector-based lore storage\n- Integrate lorebook into Pipeline for chapter context\n- Add feature flags for enabling/disabling lorebook\n- Add comprehensive tests for lorebook functionality\n- Extract lore from outline automatically\n- Retrieve relevant lore during chapter generation\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(git add .gitignore)",
+      "Bash(git commit -m \"chore: Update .gitignore to exclude entire .claude/ directory\n\n.claude/ contains Claude Code system files that should not be tracked\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(python -m pytest tests/writer/test_models.py -v --disable-warnings)",
+      "Bash(python -m pytest tests/writer/test_pydantic_integration.py -v --disable-warnings)",
+      "Bash(python -m pytest tests/writer/test_pydantic_integration.py tests/writer/test_models.py -v --disable-warnings)",
+      "Bash(python -c \"\nfrom Writer.Interface.Wrapper import get_pydantic_format_instructions\nfrom Writer.Models import ChapterOutput, OutlineOutput\n\n# Test ChapterOutput format instructions\nprint(''=== ChapterOutput Format Instructions ==='')\ninstructions = get_pydantic_format_instructions(ChapterOutput)\nprint(instructions[:500] + ''...'' if len(instructions) > 500 else instructions)\n\nprint(''\\n=== OutlineOutput Format Instructions ==='')\ninstructions = get_pydantic_format_instructions(OutlineOutput)\nprint(instructions[:500] + ''...'' if len(instructions) > 500 else instructions)\n\")",
+      "Bash(python -c \"\n# Test importing the modified chapter generator\nimport Writer.Chapter.ChapterGenerator as CG\nimport Writer.Config as Config\n\nprint(''ChapterGenerator imported successfully'')\nprint(f''USE_PYDANTIC_PARSING = {Config.USE_PYDANTIC_PARSING}'')\n\n# Test the helper function\nfrom Writer.Interface.Wrapper import Interface\nfrom Writer.PrintUtils import Logger\n\ninterface = Interface()\nlogger = Logger()\nresult = CG._get_pydantic_format_instructions_if_enabled(interface, logger, Config)\nprint(f''Pydantic instructions generated: {len(result) > 0 if result else False}'')\n\")"
     ],
     "deny": []
   }

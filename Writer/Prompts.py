@@ -380,13 +380,13 @@ Here is my outline for this chapter:
 {FormattedLastChapterSummary}
 
 As you write your work, please use the following suggestions to help you write chapter {_ChapterNum} (make sure you only write this one):
-    - Pacing: 
+    - Pacing:
     - Are you skipping days at a time? Summarizing events? Don't do that, add scenes to detail them.
     - Is the story rushing over certain plot points and excessively focusing on others?
     - Flow: Does each chapter flow into the next? Does the plot make logical sense to the reader? Does it have a specific narrative structure at play? Is the narrative structure consistent throughout the story?
     - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
 
-{Feedback}"""
+{Feedback}{PydanticFormatInstructions}"""
 
 CHAPTER_GENERATION_STAGE2 = """
 {ContextHistoryInsert}
@@ -396,7 +396,7 @@ CHAPTER_GENERATION_STAGE2 = """
 Please write character development for the following chapter {_ChapterNum} of {_TotalChapters} based on the following criteria and any previous chapters.
 Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next (so try to follow the outline)!
 
-Don't take away content, instead expand upon it to make a longer and more detailed output.
+Don't take away content, instead expand upon it to make a longer and more detailed output.{PydanticFormatInstructions}"""
 
 For your reference, here is my outline for this chapter:
 <CHAPTER_OUTLINE>
@@ -442,12 +442,12 @@ Here's what I have so far for this chapter:
 </CHAPTER_CONTENT>
 
 As a reminder to keep the following criteria in mind:
-    - Dialogue: Does the dialogue make sense? Is it appropriate given the situation? Does the pacing make sense for the scene E.g: (Is it fast-paced because they're running, or slow-paced because they're having a romantic dinner)? 
-    - Disruptions: If the flow of dialogue is disrupted, what is the reason for that disruption? Is it a sense of urgency? What is causing the disruption? How does it affect the dialogue moving forwards? 
-     - Pacing: 
+    - Dialogue: Does the dialogue make sense? Is it appropriate given the situation? Does the pacing make sense for the scene E.g: (Is it fast-paced because they're running, or slow-paced because they're having a romantic dinner)?
+    - Disruptions: If the flow of dialogue is disrupted, what is the reason for that disruption? Is it a sense of urgency? What is causing the disruption? How does it affect the dialogue moving forwards?
+     - Pacing:
        - Are you skipping days at a time? Summarizing events? Don't do that, add scenes to detail them.
        - Is the story rushing over certain plot points and excessively focusing on others?
-    
+
 Don't answer these questions directly, instead make your writing implicitly answer them. (Show, don't tell)
 
 Make sure that your chapter flows into the next and from the previous (if applicable).
@@ -456,7 +456,7 @@ Also, please remove any headings from the outline that may still be present in t
 
 Remember, have fun, be creative, and add dialogue to chapter {_ChapterNum} (make sure you only write this one)!
 
-{Feedback}"""
+{Feedback}{PydanticFormatInstructions}"""
 
 CHAPTER_OUTLINE_PROMPT = """
 Please generate an outline for chapter {_Chapter} based on the provided outline.

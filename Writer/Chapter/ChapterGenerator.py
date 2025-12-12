@@ -11,6 +11,27 @@ import Writer.Scene.ChapterByScene
 
 # Helper method declarations (skeletons initially, will be filled)
 
+def _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module):
+    """
+    Get Pydantic format instructions if enabled in config.
+
+    Returns:
+        str: Format instructions or empty string
+    """
+    if not Config_module.USE_PYDANTIC_PARSING:
+        return ""
+
+    try:
+        # Import here to avoid circular imports
+        from Writer.Models import ChapterOutput
+        from Writer.Interface.Wrapper import get_pydantic_format_instructions
+
+        return get_pydantic_format_instructions(ChapterOutput)
+    except Exception as e:
+        _Logger.Log(f"Failed to generate Pydantic format instructions: {e}", 4)
+        return ""
+
+
 def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outline, _Chapters, _ChapterNum, _TotalChapters, Config_module):
     """Prepares initial context, chapter-specific outline, and last chapter summary."""
     _Logger.Log(f"Stage 0: Preparing initial generation context for Chapter {_ChapterNum}/{_TotalChapters}", 3)
@@ -96,6 +117,10 @@ def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _Total
     IterCounter = 0
     Feedback = ""
     Stage1Chapter = ""
+
+    # Get Pydantic format instructions if enabled
+    PydanticFormatInstructions = _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module)
+
     while True:
         Prompt = ActivePrompts.CHAPTER_GENERATION_STAGE1.format(
             ContextHistoryInsert=ContextHistoryInsert,
@@ -105,19 +130,30 @@ def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _Total
             FormattedLastChapterSummary=FormattedLastChapterSummary,
             Feedback=Feedback,
             _BaseContext=_BaseContext,
+            PydanticFormatInstructions=PydanticFormatInstructions,
         )
         _Logger.Log(f"Generating Initial Chapter (Stage 1: Plot) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
 
         CurrentMessages = MessageHistory[:] # Use a copy for each iteration
         CurrentMessages.append(Interface.BuildUserQuery(Prompt))
 
-        CurrentMessages, _ = Interface.SafeGenerateText(
-            _Logger, CurrentMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL,
-            _SeedOverride=IterCounter + Config_module.SEED,
-            _MinWordCount=Config_module.MIN_WORDS_CHAPTER_DRAFT
-        )
+        # Use Pydantic if enabled, otherwise use regular text generation
+        if Config_module.USE_PYDANTIC_PARSING and hasattr(Interface, 'SafeGeneratePydantic'):
+            from Writer.Models import ChapterOutput
+            CurrentMessages, pydantic_result, _ = Interface.SafeGeneratePydantic(
+                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL,
+                ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
+            )
+            Stage1Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
+        else:
+            CurrentMessages, _ = Interface.SafeGenerateText(
+                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL,
+                _SeedOverride=IterCounter + Config_module.SEED,
+                _MinWordCount=Config_module.MIN_WORDS_CHAPTER_DRAFT
+            )
+            Stage1Chapter = Interface.GetLastMessageText(CurrentMessages)
+
         IterCounter += 1
-        Stage1Chapter = Interface.GetLastMessageText(CurrentMessages)
         _Logger.Log(f"Finished Initial Generation For Initial Chapter (Stage 1: Plot)  {_ChapterNum}/{_TotalChapters}", 5)
 
         if IterCounter > Config_module.CHAPTER_MAX_REVISIONS:
@@ -137,6 +173,10 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
     IterCounter = 0
     Feedback = ""
     Stage2Chapter = ""
+
+    # Get Pydantic format instructions if enabled
+    PydanticFormatInstructions = _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module)
+
     while True:
         Prompt = ActivePrompts.CHAPTER_GENERATION_STAGE2.format(
             ContextHistoryInsert=ContextHistoryInsert,
@@ -147,19 +187,30 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
             Stage1Chapter=Stage1Chapter, # Output from previous stage
             Feedback=Feedback,
             _BaseContext=_BaseContext,
+            PydanticFormatInstructions=PydanticFormatInstructions,
         )
         _Logger.Log(f"Generating Character Development (Stage 2) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
 
         CurrentMessages = MessageHistory[:] # Use a copy
         CurrentMessages.append(Interface.BuildUserQuery(Prompt))
 
-        CurrentMessages, _ = Interface.SafeGenerateText(
-            _Logger, CurrentMessages, Config_module.CHAPTER_STAGE2_WRITER_MODEL,
-            _SeedOverride=IterCounter + Config_module.SEED,
-            _MinWordCount=Config_module.MIN_WORDS_CHAPTER_DRAFT
-        )
+        # Use Pydantic if enabled, otherwise use regular text generation
+        if Config_module.USE_PYDANTIC_PARSING and hasattr(Interface, 'SafeGeneratePydantic'):
+            from Writer.Models import ChapterOutput
+            CurrentMessages, pydantic_result, _ = Interface.SafeGeneratePydantic(
+                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE2_WRITER_MODEL,
+                ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
+            )
+            Stage2Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
+        else:
+            CurrentMessages, _ = Interface.SafeGenerateText(
+                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE2_WRITER_MODEL,
+                _SeedOverride=IterCounter + Config_module.SEED,
+                _MinWordCount=Config_module.MIN_WORDS_CHAPTER_DRAFT
+            )
+            Stage2Chapter = Interface.GetLastMessageText(CurrentMessages)
+
         IterCounter += 1
-        Stage2Chapter = Interface.GetLastMessageText(CurrentMessages)
         _Logger.Log(f"Finished Character Development Generation (Stage 2) for Chapter {_ChapterNum}/{_TotalChapters}", 5)
 
         if IterCounter > Config_module.CHAPTER_MAX_REVISIONS:
@@ -179,6 +230,10 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
     IterCounter = 0
     Feedback = ""
     Stage3Chapter = ""
+
+    # Get Pydantic format instructions if enabled
+    PydanticFormatInstructions = _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module)
+
     while True:
         Prompt = ActivePrompts.CHAPTER_GENERATION_STAGE3.format(
             ContextHistoryInsert=ContextHistoryInsert,
@@ -189,19 +244,30 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
             Stage2Chapter=Stage2Chapter, # Output from previous stage
             Feedback=Feedback,
             _BaseContext=_BaseContext,
+            PydanticFormatInstructions=PydanticFormatInstructions,
         )
         _Logger.Log(f"Generating Dialogue (Stage 3) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
 
         CurrentMessages = MessageHistory[:] # Use a copy
         CurrentMessages.append(Interface.BuildUserQuery(Prompt))
 
-        CurrentMessages, _ = Interface.SafeGenerateText(
-            _Logger, CurrentMessages, Config_module.CHAPTER_STAGE3_WRITER_MODEL,
-            _SeedOverride=IterCounter + Config_module.SEED,
-            _MinWordCount=Config_module.MIN_WORDS_CHAPTER_DRAFT
-        )
+        # Use Pydantic if enabled, otherwise use regular text generation
+        if Config_module.USE_PYDANTIC_PARSING and hasattr(Interface, 'SafeGeneratePydantic'):
+            from Writer.Models import ChapterOutput
+            CurrentMessages, pydantic_result, _ = Interface.SafeGeneratePydantic(
+                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE3_WRITER_MODEL,
+                ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
+            )
+            Stage3Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
+        else:
+            CurrentMessages, _ = Interface.SafeGenerateText(
+                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE3_WRITER_MODEL,
+                _SeedOverride=IterCounter + Config_module.SEED,
+                _MinWordCount=Config_module.MIN_WORDS_CHAPTER_DRAFT
+            )
+            Stage3Chapter = Interface.GetLastMessageText(CurrentMessages)
+
         IterCounter += 1
-        Stage3Chapter = Interface.GetLastMessageText(CurrentMessages)
         _Logger.Log(f"Finished Dialogue Generation (Stage 3) for Chapter {_ChapterNum}/{_TotalChapters}", 5)
 
         if IterCounter > Config_module.CHAPTER_MAX_REVISIONS:

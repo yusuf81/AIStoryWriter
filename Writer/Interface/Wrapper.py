@@ -12,6 +12,57 @@ import sys
 from urllib.parse import parse_qs, urlparse, unquote
 import json_repair
 
+try:
+    from pydantic import BaseModel, ValidationError
+    PYDANTIC_AVAILABLE = True
+except ImportError:
+    PYDANTIC_AVAILABLE = False
+
+
+def get_pydantic_format_instructions(model_class: type) -> str:
+    """
+    Generate format instructions for Pydantic models.
+
+    Args:
+        model_class: The Pydantic model class
+
+    Returns:
+        str: Format instructions string
+    """
+    if not PYDANTIC_AVAILABLE:
+        return ""
+
+    try:
+        if hasattr(model_class, 'model_json_schema'):
+            schema = model_class.model_json_schema()
+        else:
+            schema = model_class.schema()
+
+        # Extract field descriptions from schema
+        instructions = "\n\nPlease respond with a JSON object that follows this structure:\n"
+
+        if 'properties' in schema:
+            for field_name, field_info in schema['properties'].items():
+                field_type = field_info.get('type', 'string')
+                description = field_info.get('description', '')
+                min_length = field_info.get('minLength')
+                max_length = field_info.get('maxLength')
+
+                instructions += f"\n- {field_name}: {field_type}"
+                if description:
+                    instructions += f" - {description}"
+                if min_length is not None:
+                    instructions += f" (minimum {min_length} characters)"
+                if max_length is not None:
+                    instructions += f" (maximum {max_length} characters)"
+
+        instructions += "\n\nYour entire response must be valid JSON only. Do not include any other text or formatting."
+        return instructions
+
+    except Exception:
+        # Fallback if schema generation fails
+        return "\n\nPlease respond with valid JSON only. Do not include any other text or formatting."
+
 dotenv.load_dotenv()
 
 class Interface:
@@ -171,6 +222,118 @@ class Interface:
 
         _Logger.Log(f"SafeGenerateJSON: All {max_r} retries failed. RAISING EXCEPTION.", 7)
         raise Exception(f"Failed to generate valid JSON after {max_r} retries")
+
+    def SafeGeneratePydantic(self, _Logger, _Messages, _Model: str, _PydanticModel: type, _SeedOverride: int = -1, _max_retries_override: int = None):
+        """
+        Generate structured output using Pydantic model validation.
+
+        Args:
+            _Logger: Logger instance
+            _Messages: List of messages to send to LLM
+            _Model: Model to use for generation
+            _PydanticModel: Pydantic model class to validate against
+            _SeedOverride: Override seed for generation
+            _max_retries_override: Override max retries
+
+        Returns:
+            Tuple of (ResponseMessagesList, Validated Pydantic Model, TokenUsage)
+        """
+        if not PYDANTIC_AVAILABLE:
+            _Logger.Log("Pydantic not available, falling back to SafeGenerateJSON", 3)
+            ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
+                _Logger, _Messages, _Model, _SeedOverride, {}, _max_retries_override
+            )
+            # Return JSONResponse as dict since Pydantic not available
+            return ResponseMessagesList, JSONResponse, TokenUsage
+
+        if Writer.Config.USE_PYDANTIC_PARSING is False:
+            _Logger.Log("Pydantic parsing disabled by config, using SafeGenerateJSON", 5)
+            ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
+                _Logger, _Messages, _Model, _SeedOverride, {}, _max_retries_override
+            )
+            return ResponseMessagesList, JSONResponse, TokenUsage
+
+        from Writer.Models import get_model
+
+        # If PydanticModel is string, get model from registry
+        if isinstance(_PydanticModel, str):
+            try:
+                _PydanticModel = get_model(_PydanticModel)
+            except KeyError as e:
+                _Logger.Log(f"Pydantic model not found: {e}. Falling back to JSON.", 3)
+                ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
+                    _Logger, _Messages, _Model, _SeedOverride, {}, _max_retries_override
+                )
+                return ResponseMessagesList, JSONResponse, TokenUsage
+
+        # Get format instructions for the model
+        if hasattr(_PydanticModel, 'model_json_schema'):
+            schema = _PydanticModel.model_json_schema()
+        else:
+            # Fallback for older Pydantic versions
+            schema = _PydanticModel.schema()
+
+        # Prepare format instruction
+        format_instruction = f"\n\nPlease respond with a valid JSON object that conforms to this schema:\n{json.dumps(schema, indent=2)}"
+
+        # Add format instruction to the last user message
+        messages_for_parsing = [m.copy() for m in _Messages]
+        if messages_for_parsing and messages_for_parsing[-1]["role"] == "user":
+            messages_for_parsing[-1]["content"] += format_instruction
+        elif messages_for_parsing:
+            messages_for_parsing.append({"role": "user", "content": format_instruction})
+        else:
+            messages_for_parsing = [{"role": "user", "content": format_instruction}]
+
+        _Logger.Log(f"SafeGeneratePydantic: Using schema for {_PydanticModel.__name__}", 5)
+
+        try:
+            # First try to generate structured response using JSON format
+            ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
+                _Logger, messages_for_parsing, _Model, _SeedOverride, schema, _max_retries_override
+            )
+
+            # Validate and convert to Pydantic model
+            try:
+                validated_model = _PydanticModel(**JSONResponse)
+                _Logger.Log(f"SafeGeneratePydantic: Successfully validated {_PydanticModel.__name__}", 5)
+                return ResponseMessagesList, validated_model, TokenUsage
+
+            except ValidationError as e:
+                _Logger.Log(f"SafeGeneratePydantic: Validation failed: {e}. Attempting field extraction.", 3)
+
+                # Try to extract individual fields from JSONResponse
+                try:
+                    # For ChapterOutput, try to extract text field as fallback
+                    if _PydanticModel.__name__ == 'ChapterOutput' and isinstance(JSONResponse, dict):
+                        if 'text' in JSONResponse:
+                            _Logger.Log("SafeGeneratePydantic: Using fallback text only extraction", 5)
+                            # Create minimal valid model with available fields
+                            fallback_data = {
+                                'text': str(JSONResponse['text']),
+                                'word_count': len(str(JSONResponse['text']).split()),
+                                'scenes': JSONResponse.get('scenes', []),
+                                'characters_present': JSONResponse.get('characters_present', []),
+                                'chapter_number': JSONResponse.get('chapter_number', 1),
+                                'chapter_title': JSONResponse.get('chapter_title')
+                            }
+                            validated_model = _PydanticModel(**fallback_data)
+                            return ResponseMessagesList, validated_model, TokenUsage
+
+                except Exception as e2:
+                    _Logger.Log(f"SafeGeneratePydantic: Fallback extraction failed: {e2}", 3)
+
+                # If all else fails, return the JSON response
+                _Logger.Log("SafeGeneratePydantic: Returning raw JSON response after validation failure", 3)
+                return ResponseMessagesList, JSONResponse, TokenUsage
+
+        except Exception as e:
+            _Logger.Log(f"SafeGeneratePydantic: Generation failed: {e}. Falls back to standard JSON parsing.", 3)
+            # Fallback to standard JSON parsing
+            ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
+                _Logger, _Messages, _Model, _SeedOverride, {}, _max_retries_override
+            )
+            return ResponseMessagesList, JSONResponse, TokenUsage
 
     def _ollama_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
         import ollama
