@@ -2,6 +2,8 @@
 
 Berikut adalah analisis dan kritik terhadap basis kode AIStoryWriter yang ada, berfokus pada struktur, gaya, potensi masalah, dan area perbaikan dalam implementasi saat ini, tanpa menyarankan fitur baru.
 
+**Status Update**: Dokumen ini diperbarui pada 2025-12-11 untuk menandai isu-isu yang telah diperbaiki sejak analisis awal.
+
 ## Aspek Positif
 
 1.  **Modularitas:** Proyek ini terstruktur dengan baik ke dalam direktori (`Writer`, `Interface`, `Chapter`, `Outline`, `Scene`, `Prompts`, `Config`) yang memisahkan berbagai fungsi (interaksi LLM, generasi outline, generasi chapter, konfigurasi, prompt). Ini bagus untuk pemeliharaan.
@@ -29,12 +31,12 @@ Berikut adalah analisis dan kritik terhadap basis kode AIStoryWriter yang ada, b
     *   **Ketergantungan pada Format:** Kode sangat bergantung pada LLM yang mengikuti instruksi format spesifik dalam prompt (misalnya, format ringkasan, struktur JSON). Meskipun Pydantic membantu memvalidasi output JSON, LLM masih bisa menyimpang, membuat parsing menjadi rapuh.
     *   **Ketergantungan pada Output JSON LLM:** Kode bergantung pada LLM yang menghasilkan JSON yang valid dan terstruktur sesuai permintaan prompt. Meskipun penggunaan `json_repair` dan logika ekstraksi yang ditingkatkan di `SafeGenerateJSON` menambah ketahanan, ketergantungan inti pada output LLM yang benar tetap ada.
     *   **Potensi Overload Konteks (Risiko Tinggi):** Beberapa bagian dari alur kerja mengirimkan jumlah teks yang sangat besar sebagai konteks ke LLM, yang sangat berisiko melebihi batas token model dan menyebabkan error atau hasil yang buruk: # Add this point and the following sub-points
-        *   **Generasi Info Akhir (`GetStoryInfo`):** Mengirimkan *seluruh teks novel* yang telah diproses untuk menghasilkan judul/ringkasan/tag. Ini adalah risiko tertinggi untuk novel panjang.
+        *   **Generasi Info Akhir (`GetStoryInfo`):** ~~Mengirimkan *seluruh teks novel* yang telah diproses untuk menghasilkan judul/ringkasan/tag.~~ **✅ DIPERBAIKI**: Sekarang menggunakan `FullOutlineForInfo` atau fallback ke `StoryElementsForInfo`, bukan seluruh novel.
         *   **Generasi Bab Bertahap (`GenerateChapter` Tahap 1/2/3):** Mengirimkan *semua bab sebelumnya* (`ChapterSuperlist`) ditambah outline global sebagai konteks untuk setiap tahap generasi bab baru. Ukuran konteks tumbuh secara linear dengan jumlah bab.
         *   **Ekspansi Outline per Bab (`GeneratePerChapterOutline`):** Mengakumulasi riwayat pesan dari generasi outline bab sebelumnya ditambah dengan outline global yang mungkin sudah besar.
         *   **Evaluasi (`Evaluate.py`):** Mengirimkan dua outline atau dua bab lengkap untuk perbandingan.
     *   **Potensi Overload Konteks (Risiko Moderat):** Area lain juga berpotensi mengirim konteks besar, meskipun biasanya lebih kecil dari kasus di atas:
-        *   **Edit Novel (`EditNovel`):** Meskipun dioptimalkan untuk mengirim bab N-1, N, N+1, gabungan panjangnya masih bisa signifikan.
+        *   **Edit Novel (`EditNovel`):** ~~Meskipun dioptimalkan untuk mengirim bab N-1, N, N+1, gabungan panjangnya masih bisa signifikan.~~ **✅ DIPERBAIKI**: Sekarang benar-benar hanya mengirim bab N-1, N, N+1 tanpa seluruh novel.
         *   **Revisi/Feedback Outline/Bab:** Mengirimkan outline/bab lengkap.
         *   **Pipeline Adegan:** Menggunakan outline global dan outline bab/adegan.
         *   **Scrubbing/Translasi:** Memproses bab individual, tergantung panjang bab.
@@ -55,4 +57,19 @@ Berikut adalah analisis dan kritik terhadap basis kode AIStoryWriter yang ada, b
     *   Secara umum baik, tetapi beberapa fungsi bisa lebih pendek.
     *   Lebih banyak komentar yang menjelaskan *mengapa* suatu pendekatan diambil (terutama untuk interaksi LLM yang kompleks atau logika pemeriksaan) akan sangat membantu.
 
-Secara keseluruhan, ini adalah proyek yang ambisius dengan struktur dasar yang baik. Kritik utama berpusat pada kompleksitas yang timbul dari banyaknya langkah LLM yang saling bergantung untuk pemeriksaan kualitas, potensi kerapuhan karena ketergantungan pada format output LLM, dan manajemen konfigurasi yang bisa disederhanakan.
+## Ringkasan Status Isu (2025-12-11)
+
+### ✅ Isu yang Telah Diperbaiki:
+- Context overflow pada `GetStoryInfo` (sekarang pakai outline)
+- Context overflow pada `EditNovel` (sekarang hanya N-1, N, N+1)
+
+### ❌ Isu yang Masih Berlaku:
+- Context overflow pada chapter generation (akumulasi semua bab)
+- `LLMSummaryCheck` yang tidak efisien (3 panggilan LLM)
+- Chapter generation Stage 1/2/3 yang kaku
+- Terlalu banyak argumen baris perintah
+- Fungsi `ChatAndStreamResponse` yang panjang
+
+---
+
+Secara keseluruhan, ini adalah proyek yang ambisius dengan struktur dasar yang baik. Beberapa isu context overflow berhasil diperbaiki, tetapi kritik utama lainnya tetap relevan.

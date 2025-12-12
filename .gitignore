@@ -170,3 +170,5 @@ SimulateLogs/*
 .env
 .aider*
 .vscode/
+.claude/settings.local.json
+test_output.md*

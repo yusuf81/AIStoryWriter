@@ -1,6 +1,37 @@
 # Rencana Urutan Prompt untuk AI Story Writer
 
+**Status Update (2025-12-11):** ❌ **TIDAK TERIMPLEMENTASI** - Ini adalah proposal reorganisasi yang belum dijalankan.
+
+**Current Reality:** Writer/Prompts.py menggunakan urutan berbeda (tidak strict sesuai workflow). Prompts diorganisir secara alphabetical-ish dan berdasarkan kapan ditambahkan, bukan workflow logical order.
+
 Berikut adalah urutan yang diusulkan untuk prompt dalam file `Writer/Prompts.py` dan `Writer/Prompts_id.py`, berdasarkan alur kerja pemrosesan dari awal hingga akhir.
+
+## 📊 Status Implementasi
+
+| Prompt Kategori | Jumlah dalam Plan | Status | Notes |
+|-----------------|-------------------|--------|-------|
+| I. Sistem & Inisiasi | 3 | ✅ Ada semua | DEFAULT_SYSTEM_PROMPT, GET_IMPORTANT_BASE_PROMPT_INFO, GENERATE_STORY_ELEMENTS |
+| II. Outline Keseluruhan | 8 | ✅ Ada semua | Termasuk EXPAND_OUTLINE_CHAPTER_BY_CHAPTER (dead code) |
+| III. Per Bab | 23 | ⚠️ Sebagian | Beberapa prompt ada, tapi urutan berbeda |
+| IV. Finalisasi | 3 | ✅ Ada semua | CHAPTER_EDIT_PROMPT, CHAPTER_SCRUB_PROMPT, STATS_PROMPT |
+| V. Evaluasi | 3 | ✅ Ada semua | EVALUATE_* prompts |
+| VI. Terjemahan | 2 | ✅ Ada semua | TRANSLATE_PROMPT, CHAPTER_TRANSLATE_PROMPT |
+
+**Prompts Baru (Tidak dalam Plan):**
+- `GET_CHAPTER_TITLE_PROMPT` (line 917): Generate chapter titles
+- `MEGA_OUTLINE_PREAMBLE` (line 904): Preamble for mega outline
+- `MEGA_OUTLINE_CHAPTER_FORMAT` (line 906): Chapter format template
+- `MEGA_OUTLINE_CURRENT_CHAPTER_PREFIX` (line 910): Current chapter marker
+- `CURRENT_CHAPTER_OUTLINE_FORMAT` (line 895): Chapter outline format
+- `PREVIOUS_CHAPTER_CONTEXT_FORMAT` (line 891): Previous chapter context
+- `CHAPTER_GENERATION_STAGE1`, `STAGE2`, `STAGE3`: Tidak ada dalam prompts.py saat ini (logic berbeda)
+
+**Total Prompts:**
+- **Plan ini:** 42 prompts
+- **Aktual di Prompts.py:** 45 prompts (termasuk format templates)
+- **Match rate:** ~85% (35/42 prompts dari plan ada, plus 10 baru)
+
+---
 
 ## I. Pengaturan Sistem & Inisiasi Proyek Awal
 1.  `DEFAULT_SYSTEM_PROMPT`
@@ -98,3 +129,86 @@ Berikut adalah urutan yang diusulkan untuk prompt dalam file `Writer/Prompts.py`
     *   **Fungsi:** Prompt serbaguna untuk menerjemahkan teks apa pun ke bahasa target.
 42. `CHAPTER_TRANSLATE_PROMPT`
     *   **Fungsi:** Secara khusus menerjemahkan konten seluruh bab ke bahasa target.
+
+---
+
+## 🔍 Analisis: Apakah Reorganisasi Perlu Dilakukan?
+
+### ✅ Arguments FOR Implementation (Reorganize Prompts)
+
+1. **Better Code Readability**
+   - Developer baru lebih mudah understand workflow
+   - Jelas urutan eksekusi dari awal sampai akhir
+   - Debugging lebih intuitif (tahu prompt mana dipanggil kapan)
+
+2. **Maintenance Benefits**
+   - Modifikasi workflow lebih mudah (grouped by stage)
+   - Menambah prompt baru di tempat yang logis
+   - Code review lebih mudah (understand context)
+
+3. **Documentation Alignment**
+   - Plan ini bisa jadi "table of contents" untuk Prompts.py
+   - Easier to reference specific workflow stages
+   - Better onboarding for contributors
+
+### ❌ Arguments AGAINST Implementation (Keep Current)
+
+1. **No Functional Benefit**
+   - Order in file doesn't affect runtime execution
+   - All prompts work correctly as-is
+   - Zero performance impact
+
+2. **Risk of Breaking Changes**
+   - Git history might become harder to track
+   - Merge conflicts jika ada branches aktif
+   - Manual testing required after reorganization
+
+3. **Effort vs Value**
+   - **Estimated effort:** 2-3 hours (reorder + verify + test)
+   - **Value gained:** Purely organizational (no bug fixes, no features)
+   - Better spend time on actual improvements
+
+4. **Version Control Noise**
+   - Massive diff dari reordering
+   - Git blame jadi less useful
+   - "Who changed this?" becomes "Who reorganized?"
+
+### 🎯 Recommendation
+
+**DON'T IMPLEMENT** - Keep current order.
+
+**Reasoning:**
+1. Current file works perfectly fine
+2. Prompts are already findable (Ctrl+F, grep works)
+3. Most important: **There are actual issues to fix** (context overflow, dead code cleanup, testing)
+4. Reorganization is "nice to have", not "need to have"
+
+**Alternative Solution:**
+- Keep this document as **reference guide** for understanding workflow
+- Add comment sections in Prompts.py (Group 1: Initialization, Group 2: Outline, etc.)
+- No file reordering needed, just add 6 comment lines like:
+  ```python
+  # ===== I. SYSTEM INITIALIZATION =====
+  DEFAULT_SYSTEM_PROMPT = """..."""
+  ...
+  # ===== II. OUTLINE GENERATION =====
+  INITIAL_OUTLINE_PROMPT = """..."""
+  ```
+
+**If Reorganization Happens Anyway:**
+- Do it in a dedicated PR/commit
+- Run full test suite before and after
+- Update this document with implementation date
+- Add migration notes for developers
+
+---
+
+## 📝 Document Purpose
+
+**Current Status:** Reference guide for understanding prompt workflow, NOT an implementation task.
+
+**Use Cases:**
+1. Understand story generation pipeline flow
+2. Find which prompt handles which stage
+3. Plan new prompt additions (where to add?)
+4. Debugging workflow issues (which stage failed?)

@@ -216,13 +216,11 @@ Parser.add_argument(
 Parser.add_argument(
     "-ExpandOutline",
     action="store_true",
-    default=True,
     help="Disables the system from expanding the outline for the story chapter by chapter prior to writing the story's chapter content",
 )
 Parser.add_argument(
     "-EnableFinalEditPass",
     action="store_true",
-    default=True,
     help="Enable a final edit pass of the whole story prior to scrubbing",
 )
 Parser.add_argument(
@@ -233,7 +231,6 @@ Parser.add_argument(
 Parser.add_argument(
     "-SceneGenerationPipeline",
     action="store_true",
-    default=True,
     help="Use the new scene-by-scene generation pipeline as an initial starting point for chapter writing",
 )
 Parser.add_argument(
@@ -241,6 +238,11 @@ Parser.add_argument(
     default=None,
     type=str,
     help="Path to a .state.json file to resume a previous run.",
+)
+Parser.add_argument(
+    "-GeneratePDF",
+    action="store_true",
+    help="Generate PDF output with story content only (title and chapters)",
 )
 # Args = Parser.parse_args() # Pindahkan parsing argumen ke dalam main()
 
@@ -326,13 +328,22 @@ def main():
         Writer.Config.OUTLINE_MAX_REVISIONS = Args.OutlineMaxRevisions
         Writer.Config.CHAPTER_MIN_REVISIONS = Args.ChapterMinRevisions
         Writer.Config.CHAPTER_MAX_REVISIONS = Args.ChapterMaxRevisions
-        Writer.Config.CHAPTER_NO_REVISIONS = Args.NoChapterRevision
-        Writer.Config.SCRUB_NO_SCRUB = Args.NoScrubChapters
-        Writer.Config.EXPAND_OUTLINE = Args.ExpandOutline
-        Writer.Config.ENABLE_FINAL_EDIT_PASS = Args.EnableFinalEditPass
+        # Boolean flags - only override if explicitly set (not False by default)
+        if Args.NoChapterRevision:
+            Writer.Config.CHAPTER_NO_REVISIONS = True
+        if Args.NoScrubChapters:
+            Writer.Config.SCRUB_NO_SCRUB = True
+        if Args.ExpandOutline:
+            Writer.Config.EXPAND_OUTLINE = True
+        if Args.EnableFinalEditPass:
+            Writer.Config.ENABLE_FINAL_EDIT_PASS = True
         Writer.Config.OPTIONAL_OUTPUT_NAME = Args.Output
-        Writer.Config.SCENE_GENERATION_PIPELINE = Args.SceneGenerationPipeline
-        
+        if Args.SceneGenerationPipeline:
+            Writer.Config.SCENE_GENERATION_PIPELINE = True
+        # Only override PDF config if flag is explicitly provided
+        if Args.GeneratePDF:
+            Writer.Config.ENABLE_PDF_GENERATION = True
+
         # Atur Writer.Config.DEBUG berdasarkan nilai dari Config.py dan flag Args.Debug
         # Jika Args.Debug adalah True (flag -Debug diberikan), maka Writer.Config.DEBUG akan True.
         # Jika Args.Debug adalah False (flag -Debug tidak diberikan),

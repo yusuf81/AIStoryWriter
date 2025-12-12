@@ -60,6 +60,114 @@ class TestGetModelAndProvider:
         assert host == "localhost:11434"
         assert params is None
 
+    @pytest.mark.parametrize(
+        "model_str, expected_provider, expected_model_name, expected_host, expected_params",
+        [
+            ("ollama://microsoft%2Fphi-3", "ollama", "microsoft/phi-3", Writer.Config.OLLAMA_HOST, None),
+            ("openrouter://google%2Fgemini-flash-1.5", "openrouter", "google/gemini-flash-1.5", None, None),
+            ("openrouter://anthropic%2Fclaude-3-opus", "openrouter", "anthropic/claude-3-opus", None, None),
+            ("ollama://model%20with%20spaces", "ollama", "model with spaces", Writer.Config.OLLAMA_HOST, None),
+            ("ollama://model%20name?temperature=0.7", "ollama", "model name", Writer.Config.OLLAMA_HOST, {"temperature": 0.7}),
+            ("ollama://test%3Fmodel%3Dtrue", "ollama", "test?model=true", Writer.Config.OLLAMA_HOST, None),
+        ],
+    )
+    def test_get_model_and_provider_url_encoded(
+        self, model_str, expected_provider, expected_model_name, expected_host, expected_params
+    ):
+        """Test URL encoded characters in model names are properly decoded."""
+        provider, model_name, host, params = self.interface.GetModelAndProvider(model_str)
+        assert provider == expected_provider
+        assert model_name == expected_model_name
+        assert host == expected_host
+        assert params == expected_params
+
+class TestRemoveThinkTagFromAssistantMessages:
+    def setup_method(self):
+        self.interface = Interface(Models=[])
+
+    def test_remove_simple_thinking_tag(self):
+        """Test basic thinking tag removal with simple content."""
+        messages = [
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "<thinking>This is thinking</thinking>\n\nHello, how can I help?"}
+        ]
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages(messages)
+        assert cleaned[0]["content"] == "Hello"
+        assert cleaned[1]["content"] == "Hello, how can I help?"
+
+    def test_remove_multiline_thinking_tag(self):
+        """Test thinking tag removal with multiline content."""
+        messages = [
+            {"role": "user", "content": "Question"},
+            {"role": "assistant", "content": "<thinking>\nLet me think about this step by step.\nFirst, I should consider...\n</thinking>\n\nThe answer is 42."}
+        ]
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages(messages)
+        assert cleaned[1]["content"] == "The answer is 42."
+
+    def test_handle_unpaired_tag(self):
+        """Test removal when thinking tag is not closed."""
+        messages = [
+            {"role": "user", "content": "Ask"},
+            {"role": "assistant", "content": "<thinking>I need to think but the tag is not closed\n\nStill thinking...\nFinal answer."}
+        ]
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages(messages)
+        # Unpaired tags remove everything after the tag since we can't reliably determine boundaries
+        assert cleaned[1]["content"] == ""
+
+    def test_preserve_non_assistant_messages(self):
+        """Test that messages without thinking tags are unchanged."""
+        messages = [
+            {"role": "system", "content": "System message"},
+            {"role": "user", "content": "Normal message"},
+            {"role": "assistant", "content": "<thinking>Think</thinking>Response"},
+        ]
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages(messages)
+        # System and user messages unchanged
+        assert cleaned[0]["content"] == "System message"
+        assert cleaned[1]["content"] == "Normal message"
+        # Assistant message cleaned
+        assert cleaned[2]["content"] == "Response"
+
+    def test_handle_malformed_messages(self):
+        """Test handling of various malformed message structures."""
+        # String message
+        messages = ["just a string"]
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages(messages)
+        assert cleaned == messages
+
+        # Empty list
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages([])
+        assert cleaned == []
+
+        # None input
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages(None)
+        assert cleaned is None
+
+        # Dict without role/content
+        messages = [{"other": "data"}]
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages(messages)
+        assert cleaned == messages
+
+    def test_multiple_assistant_messages(self):
+        """Test thinking tag removal in multiple assistant messages."""
+        messages = [
+            {"role": "user", "content": "First"},
+            {"role": "assistant", "content": "<thinking>Think 1</thinking>Answer 1"},
+            {"role": "user", "content": "Second"},
+            {"role": "assistant", "content": "<thinking>Think 2</thinking>Answer 2"},
+        ]
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages(messages)
+        assert cleaned[1]["content"] == "Answer 1"
+        assert cleaned[3]["content"] == "Answer 2"
+
+    def test_no_thinking_tag_unchanged(self):
+        """Test that messages without thinking tags pass through unchanged."""
+        messages = [
+            {"role": "assistant", "content": "Just a normal response without any thinking tags."}
+        ]
+        cleaned = self.interface.RemoveThinkTagFromAssistantMessages(messages)
+        assert cleaned == messages
+
 class TestSafeGenerateText:
     def setup_method(self):
         self.interface = Interface(Models=[])

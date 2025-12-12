@@ -1,31 +1,40 @@
+#ollamasemua="ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
+ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
 INITIAL_OUTLINE_WRITER_MODEL = (
-    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    #"ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    ollamasemua
 )
 CHAPTER_OUTLINE_WRITER_MODEL = (
-    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+#    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    ollamasemua
 )
 CHAPTER_STAGE1_WRITER_MODEL = (
-    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+#    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    ollamasemua
 )
 CHAPTER_STAGE2_WRITER_MODEL = (
-    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+#    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    ollamasemua
 )
 CHAPTER_STAGE3_WRITER_MODEL = (
-    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+#    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    ollamasemua
 )
-FINAL_NOVEL_EDITOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
+#FINAL_NOVEL_EDITOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
+FINAL_NOVEL_EDITOR_MODEL = ollamasemua
 
 # Model for the final novel-wide edit pass (used by NovelEditor.py) # Note this value is overridden by the argparser
 #CHAPTER_REVISION_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_REVISION_WRITER_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-REVISION_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-EVAL_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-INFO_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-SCRUB_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-CHECKER_MODEL = "ollama://gemma3:27b@10.23.82.116"  # Model used to check results
-TRANSLATOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
+CHAPTER_REVISION_WRITER_MODEL = ollamasemua  # Note this value is overridden by the argparser
+REVISION_MODEL = ollamasemua  # Note this value is overridden by the argparser
+EVAL_MODEL = ollamasemua  # Note this value is overridden by the argparser
+INFO_MODEL = ollamasemua  # Note this value is overridden by the argparser
+SCRUB_MODEL = ollamasemua  # Note this value is overridden by the argparser
+CHECKER_MODEL = ollamasemua # Model used to check results
+TRANSLATOR_MODEL = ollamasemua
 FAST_MODEL = (
-    "ollama://gemma3:27b@10.23.82.116"  # Default fast model for tasks like titling
+#    "ollama://gemma3:27b@10.23.82.116"  # Default fast model for tasks like titling
+    ollamasemua  # Default fast model for tasks like titling
 )
 
 # OLLAMA_CTX = 8192
@@ -110,6 +119,13 @@ INCLUDE_OUTLINE_IN_MD = True  # Include outline in final markdown output
 INCLUDE_STATS_IN_MD = True  # Include statistics in final markdown output
 INCLUDE_SUMMARY_IN_MD = True  # Include summary in final markdown output
 INCLUDE_TAGS_IN_MD = True  # Include tags in final markdown output
+
+# PDF generation configuration
+ENABLE_PDF_GENERATION = True  # Enable PDF generation as post-processing step
+PDF_FONT_FAMILY = "Georgia"  # Font family for PDF text
+PDF_FONT_SIZE = 12  # Font size for regular text
+PDF_TITLE_SIZE = 24  # Font size for title
+PDF_CHAPTER_SIZE = 18  # Font size for chapter headings
 
 
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"

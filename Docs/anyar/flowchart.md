@@ -3,92 +3,110 @@
 ```mermaid
 graph TD
     A[Start Write.py] --> B(Parse Command Line Arguments);
-    B --> C(Update Writer.Config with Args);
-    C --> D(Initialize Logger);
-    D --> E(Initialize Interface - Load Models);
-    E --> F(Load User Prompt from File);
+    B --> C{Resume from State?};
+    C -- Yes --> D(Load State File);
+    C -- No --> E;
+    D --> F(Restore Configuration from State);
+    F --> G(Initialize Logger & Interface);
+    G --> H;
 
-    F --> G{Translate Prompt?};
-    G -- Yes --> H(Call Translator.TranslatePrompt);
-    G -- No --> I;
-    H --> I(Use (Translated) Prompt);
+    E --> I(Update Writer.Config with Args);
+    I --> J(Set NATIVE_LANGUAGE from Args/Config);
+    J --> K(Initialize Logger);
+    K --> L(Initialize Interface - Load Models);
+    L --> M(Dynamic Prompt Loading based on NATIVE_LANGUAGE);
+    M --> N(Load User Prompt from File);
+    N --> H;
 
-    I --> J(Call OutlineGenerator.GenerateOutline);
-    subgraph J [Outline Generation]
-        J1(Extract Base Context) --> J2;
-        J2(Generate Story Elements) --> J3;
-        J3(Generate Initial Outline) --> J4{Revision Loop};
-        J4 -- Revise --> J5(Get Feedback);
-        J5 --> J6(Get Rating);
-        J6 --> J7{Check Exit Conditions - Min/Max Revisions & Rating};
-        J7 -- No --> J8(Call ReviseOutline);
-        J8 --> J4;
-        J7 -- Yes --> J9(Combine BaseContext, Elements, Final Outline);
+    H --> O{Translate Prompt?};
+    O -- Yes --> P(Call Translator.TranslatePrompt);
+    O -- No --> Q;
+    P --> Q(Use (Translated) Prompt);
+
+    Q --> R(Call OutlineGenerator.GenerateOutline);
+    subgraph R [Outline Generation]
+        R1(Extract Base Context) --> R2;
+        R2(Generate Story Elements) --> R3;
+        R3(Generate Initial Outline) --> R4{Revision Loop};
+        R4 -- Revise --> R5(Get Feedback);
+        R5 --> R6(Get Rating);
+        R6 --> R7{Check Exit Conditions - Min/Max Revisions & Rating};
+        R7 -- No --> R8(Call ReviseOutline);
+        R8 --> R4;
+        R7 -- Yes --> R9(Combine BaseContext, Elements, Final Outline);
     end
-    J --> K(Get NumChapters - Call ChapterDetector.LLMCountChapters);
+    R --> S(Get NumChapters - Call ChapterDetector.LLMCountChapters);
 
-    K --> L{Expand Outline?};
-    L -- Yes --> M{Loop NumChapters};
-    M -- Next Chapter --> N(Call OutlineGenerator.GeneratePerChapterOutline);
-    N --> M;
-    M -- Loop Done --> O(Create MegaOutline);
-    L -- No --> P(Use Basic Outline);
-    O --> P;
+    S --> T{Expand Outline?};
+    T -- Yes --> U{Loop NumChapters};
+    U -- Next Chapter --> V(Call OutlineGenerator.GeneratePerChapterOutline);
+    V --> U;
+    U -- Loop Done --> W(Create MegaOutline);
+    T -- No --> X(Use Basic Outline);
+    W --> X;
 
-    P --> Q{Loop NumChapters - Write Chapters};
-    Q -- Next Chapter i --> R(Call ChapterGenerator.GenerateChapter);
-    subgraph R [Chapter Generation - Chapter i]
-        R1(Extract This Chapter Outline) --> R2;
-        R2(Generate Previous Chapter Summary - Optional) --> R3;
-        R3{Scene Generation Pipeline Enabled?};
-        R3 -- Yes --> R4(Call Scene.ChapterByScene);
-        subgraph R4 [Scene-by-Scene Generation]
-            R4a(Call ChapterOutlineToScenes) --> R4b;
-            R4b(Call ScenesToJSON) --> R4c{Loop Scenes};
-            R4c -- Next Scene --> R4d(Call SceneOutlineToScene);
-            R4d --> R4c;
-            R4c -- Loop Done --> R4e(Concatenate Scenes);
+    X --> Y{Loop NumChapters - Write Chapters};
+    Y -- Next Chapter i --> Z(Call ChapterGenerator.GenerateChapter);
+    subgraph Z [Chapter Generation - Chapter i]
+        Z1(Extract This Chapter Outline) --> Z2;
+        Z2(Generate Previous Chapter Summary - Optional) --> Z3;
+        Z3{Scene Generation Pipeline Enabled?};
+        Z3 -- Yes --> Z4(Call Scene.ChapterByScene);
+        subgraph Z4 [Scene-by-Scene Generation]
+            Z4a(Call ChapterOutlineToScenes) --> Z4b;
+            Z4b(Call ScenesToJSON) --> Z4c{Loop Scenes};
+            Z4c -- Next Scene --> Z4d(Call SceneOutlineToScene);
+            Z4d --> Z4c;
+            Z4c -- Loop Done --> Z4e(Concatenate Scenes);
         end
-        R3 -- No --> R5(Generate Stage 1 Plot - Loop);
-        R4 --> R6(Set Stage1Chapter);
-        R5 --> R6;
-        R6 --> R7(Generate Stage 2 Character Dev - Loop);
-        R7 --> R8(Generate Stage 3 Dialogue - Loop);
-        R8 --> R9{Revisions Enabled?};
-        R9 -- No --> R10(Return Chapter);
-        R9 -- Yes --> R11{Revision Loop};
-        R11 -- Revise --> R12(Get Feedback);
-        R12 --> R13(Get Rating);
-        R13 --> R14{Check Exit Conditions};
-        R14 -- No --> R15(Call ReviseChapter);
-        R15 --> R11;
-        R14 -- Yes --> R10;
+        Z3 -- No --> Z5(Generate Stage 1 Plot - Loop);
+        Z4 --> Z6(Set Stage1Chapter);
+        Z5 --> Z6;
+        Z6 --> Z7(Generate Stage 2 Character Dev - Loop);
+        Z7 --> Z8(Generate Stage 3 Dialogue - Loop);
+        Z8 --> Z9{Revisions Enabled?};
+        Z9 -- No --> Z10(Return Chapter);
+        Z9 -- Yes --> Z11{Revision Loop};
+        Z11 -- Revise --> Z12(Get Feedback);
+        Z12 --> Z13(Get Rating);
+        Z13 --> Z14{Check Exit Conditions};
+        Z14 -- No --> Z15(Call ReviseChapter);
+        Z15 --> Z11;
+        Z14 -- Yes --> Z10;
     end
-    R --> S(Append Chapter to List);
-    S --> Q;
-    Q -- Loop Done --> T(Chapters List Complete);
+    Z --> AA(Save Chapter to State);
+    AA --> Y;
+    Y -- Loop Done --> AB(Chapters List Complete);
 
-    T --> U{Final Edit Pass Enabled?};
-    U -- Yes --> V(Call NovelEditor.EditNovel);
-    V --> W(Update Chapters List);
-    U -- No --> W;
+    AB --> AC{Final Edit Pass Enabled?};
+    AC -- Yes --> AD(Call NovelEditor.EditNovel);
+    AD --> AE(Update Chapters List);
+    AC -- No --> AE;
 
-    W --> X{Scrubbing Enabled?};
-    X -- Yes --> Y(Call Scrubber.ScrubNovel);
-    Y --> Z(Update Chapters List);
-    X -- No --> Z;
+    AE --> AF{Scrubbing Enabled?};
+    AF -- Yes --> AG(Call Scrubber.ScrubNovel);
+    AG --> AH(Update Chapters List);
+    AF -- No --> AH;
 
-    Z --> AA{Translate Novel?};
-    AA -- Yes --> AB(Call Translator.TranslateNovel);
-    AB --> AC(Update Chapters List);
-    AA -- No --> AC;
+    AH --> AI{Translate Novel?};
+    AI -- Yes --> AJ(Call Translator.TranslateNovel);
+    AJ --> AK(Update Chapters List);
+    AI -- No --> AK;
 
-    AC --> AD(Compile Chapters into StoryBodyText);
-    AD --> AE(Call StoryInfo.GetStoryInfo);
-    AE --> AF(Extract Title, Summary, Tags);
-    AF --> AG(Calculate Stats & Format Output String);
-    AG --> AH(Save Story to .md File);
-    AH --> AI(Save Story Info to .json File);
-    AI --> AJ[End];
+    AK --> AL(Compile Chapters into StoryBodyText);
+    AL --> AM(Call StoryInfo.GetStoryInfo);
+    AM --> AN(Extract Title, Summary, Tags);
+    AN --> AO(Calculate Stats & Format Output String);
+    AO --> AP(Build OutputFiles Structure);
+    AP --> AQ(Save Story to .md File);
+    AQ --> AR(Save Story Info to .json File);
+    AR --> AS{PDF Generation Enabled?};
+    AS -- Yes --> AT(Call PDFGenerator.GeneratePDF);
+    AT --> AU{PDF Success?};
+    AU -- Yes --> AV(Add PDF Path to OutputFiles);
+    AU -- No --> AW(Log PDF Error);
+    AS -- No --> AV;
+    AV --> AX[End];
+    AW --> AX;
 
 ```
