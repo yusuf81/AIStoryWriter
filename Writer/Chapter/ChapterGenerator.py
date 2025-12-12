@@ -32,6 +32,62 @@ def _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_modu
         return ""
 
 
+def _generate_reasoning_for_stage(Interface, _Logger, Config_module, reasoning_type: str,
+                                  ThisChapterOutline: str, FormattedLastChapterSummary: str = "",
+                                  _BaseContext: str = "", _ChapterNum: int = None,
+                                  existing_content: str = "") -> str:
+    """
+    Generate reasoning for a specific chapter generation stage.
+
+    Args:
+        Interface: LLM interface
+        _Logger: Logger instance
+        Config_module: Configuration module
+        reasoning_type: Type of reasoning (plot, character, dialogue)
+        ThisChapterOutline: Current chapter outline
+        FormattedLastChapterSummary: Previous chapter summary
+        _BaseContext: Base context
+        _ChapterNum: Chapter number
+        existing_content: Existing content for enhancement stages
+
+    Returns:
+        str: Generated reasoning text
+    """
+    if not Config_module.USE_REASONING_CHAIN:
+        return ""
+
+    # Import ReasoningChain here to avoid circular imports
+    from Writer.ReasoningChain import ReasoningChain
+
+    # Create or get the reasoning chain from a global cache
+    # For now, create a new instance each time (could be optimized later)
+    reasoning_chain = ReasoningChain(Interface, Config_module, _Logger)
+
+    # Prepare context
+    context = f"""
+CHAPTER OUTLINE:
+{ThisChapterOutline}
+
+BASE CONTEXT:
+{_BaseContext}
+"""
+
+    if FormattedLastChapterSummary:
+        context += f"\nPREVIOUS CHAPTER SUMMARY:\n{FormattedLastChapterSummary}"
+
+    # Generate reasoning based on type
+    if reasoning_type == "plot":
+        reasoning = reasoning_chain.reason(context, "plot", None, _ChapterNum)
+    elif reasoning_type == "character":
+        reasoning = reasoning_chain.reason(context, "character", existing_content, _ChapterNum)
+    elif reasoning_type == "dialogue":
+        reasoning = reasoning_chain.reason(context, "dialogue", existing_content, _ChapterNum)
+    else:
+        reasoning = ""
+
+    return reasoning
+
+
 def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outline, _Chapters, _ChapterNum, _TotalChapters, Config_module):
     """Prepares initial context, chapter-specific outline, and last chapter summary."""
     _Logger.Log(f"Stage 0: Preparing initial generation context for Chapter {_ChapterNum}/{_TotalChapters}", 3)
@@ -121,7 +177,20 @@ def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _Total
     # Get Pydantic format instructions if enabled
     PydanticFormatInstructions = _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module)
 
+    # Generate reasoning if reasoning chain is enabled
+    ReasoningContent = ""
+    if Config_module.USE_REASONING_CHAIN:
+        ReasoningContent = _generate_reasoning_for_stage(
+            Interface, _Logger, Config_module, "plot",
+            ThisChapterOutline, FormattedLastChapterSummary, _BaseContext, _ChapterNum
+        )
+
     while True:
+        # Build enhanced base context with reasoning
+        EnhancedBaseContext = _BaseContext
+        if ReasoningContent:
+            EnhancedBaseContext = f"{_BaseContext}\n\n### Reasoning Guidance:\n{ReasoningContent}"
+
         Prompt = ActivePrompts.CHAPTER_GENERATION_STAGE1.format(
             ContextHistoryInsert=ContextHistoryInsert,
             _ChapterNum=_ChapterNum,
@@ -129,7 +198,7 @@ def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _Total
             ThisChapterOutline=ThisChapterOutline,
             FormattedLastChapterSummary=FormattedLastChapterSummary,
             Feedback=Feedback,
-            _BaseContext=_BaseContext,
+            _BaseContext=EnhancedBaseContext,
             PydanticFormatInstructions=PydanticFormatInstructions,
         )
         _Logger.Log(f"Generating Initial Chapter (Stage 1: Plot) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
@@ -177,7 +246,20 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
     # Get Pydantic format instructions if enabled
     PydanticFormatInstructions = _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module)
 
+    # Generate reasoning if reasoning chain is enabled
+    ReasoningContent = ""
+    if Config_module.USE_REASONING_CHAIN:
+        ReasoningContent = _generate_reasoning_for_stage(
+            Interface, _Logger, Config_module, "character",
+            ThisChapterOutline, FormattedLastChapterSummary, _BaseContext, _ChapterNum, Stage1Chapter
+        )
+
     while True:
+        # Build enhanced base context with reasoning
+        EnhancedBaseContext = _BaseContext
+        if ReasoningContent:
+            EnhancedBaseContext = f"{_BaseContext}\n\n### Character Development Reasoning:\n{ReasoningContent}"
+
         Prompt = ActivePrompts.CHAPTER_GENERATION_STAGE2.format(
             ContextHistoryInsert=ContextHistoryInsert,
             _ChapterNum=_ChapterNum,
@@ -186,7 +268,7 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
             FormattedLastChapterSummary=FormattedLastChapterSummary,
             Stage1Chapter=Stage1Chapter, # Output from previous stage
             Feedback=Feedback,
-            _BaseContext=_BaseContext,
+            _BaseContext=EnhancedBaseContext,
             PydanticFormatInstructions=PydanticFormatInstructions,
         )
         _Logger.Log(f"Generating Character Development (Stage 2) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
@@ -234,7 +316,20 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
     # Get Pydantic format instructions if enabled
     PydanticFormatInstructions = _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module)
 
+    # Generate reasoning if reasoning chain is enabled
+    ReasoningContent = ""
+    if Config_module.USE_REASONING_CHAIN:
+        ReasoningContent = _generate_reasoning_for_stage(
+            Interface, _Logger, Config_module, "dialogue",
+            ThisChapterOutline, FormattedLastChapterSummary, _BaseContext, _ChapterNum, Stage2Chapter
+        )
+
     while True:
+        # Build enhanced base context with reasoning
+        EnhancedBaseContext = _BaseContext
+        if ReasoningContent:
+            EnhancedBaseContext = f"{_BaseContext}\n\n### Dialogue Enhancement Reasoning:\n{ReasoningContent}"
+
         Prompt = ActivePrompts.CHAPTER_GENERATION_STAGE3.format(
             ContextHistoryInsert=ContextHistoryInsert,
             _ChapterNum=_ChapterNum,
@@ -243,7 +338,7 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
             FormattedLastChapterSummary=FormattedLastChapterSummary,
             Stage2Chapter=Stage2Chapter, # Output from previous stage
             Feedback=Feedback,
-            _BaseContext=_BaseContext,
+            _BaseContext=EnhancedBaseContext,
             PydanticFormatInstructions=PydanticFormatInstructions,
         )
         _Logger.Log(f"Generating Dialogue (Stage 3) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)

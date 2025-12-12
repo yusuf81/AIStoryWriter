@@ -396,7 +396,7 @@ CHAPTER_GENERATION_STAGE2 = """
 Please write character development for the following chapter {_ChapterNum} of {_TotalChapters} based on the following criteria and any previous chapters.
 Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next (so try to follow the outline)!
 
-Don't take away content, instead expand upon it to make a longer and more detailed output.{PydanticFormatInstructions}"""
+Don't take away content, instead expand upon it to make a longer and more detailed output.{PydanticFormatInstructions}
 
 For your reference, here is my outline for this chapter:
 <CHAPTER_OUTLINE>

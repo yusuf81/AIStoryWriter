@@ -138,6 +138,7 @@ PYDANTIC_STRICT_MODE = False  # Strict validation vs. attempt repair
 PYDANTIC_FALLBACK_TO_REPAIR = True  # Fall back to existing JSON repair
 
 USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning
+REASONING_MODEL = CHAPTER_STAGE1_WRITER_MODEL  # Model to use for reasoning generation
 REASONING_LOG_SEPARATE = True  # Log reasoning to separate file
 REASONING_CACHE_RESULTS = False  # Cache reasoning results
 
