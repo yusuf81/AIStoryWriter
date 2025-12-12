@@ -9,7 +9,8 @@ import Writer.Outline.StoryElements
 
 
 def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int = 85):
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    from Writer.PromptsHelper import get_prompts
+    ActivePrompts = get_prompts() # Use language-aware import
 
     # Get any important info about the base prompt to pass along
     Prompt: str = ActivePrompts.GET_IMPORTANT_BASE_PROMPT_INFO.format(
@@ -93,7 +94,8 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
 def ReviseOutline(
     Interface, _Logger, _Outline, _Feedback, _History: list = [], _Iteration: int = 0
 ):  # Tambahkan _Iteration
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    from Writer.PromptsHelper import get_prompts
+    ActivePrompts = get_prompts() # Use language-aware import
 
     RevisionPrompt: str = ActivePrompts.OUTLINE_REVISION_PROMPT.format(
         _Outline=_Outline, _Feedback=_Feedback
@@ -128,7 +130,8 @@ def GeneratePerChapterOutline(
     _Outline: str,
     # Parameter _History dihapus dari definisi fungsi
 ):  # Tambahkan _TotalChapters
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    from Writer.PromptsHelper import get_prompts
+    ActivePrompts = get_prompts() # Use language-aware import
 
     RevisionPrompt: str = ActivePrompts.CHAPTER_OUTLINE_PROMPT.format(
         _Chapter=_Chapter, _Outline=_Outline

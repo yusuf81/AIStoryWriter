@@ -518,9 +518,65 @@ class Interface:
             if _Provider == "ollama": ChunkText = chunk.get("message",{}).get("content")
             elif _Provider == "google": ChunkText = getattr(chunk, 'text', None)
             elif _Provider == "openrouter": ChunkText = chunk.get("choices",[{}])[0].get("delta",{}).get("content")
-            if ChunkText: Content += ChunkText; print(ChunkText, end="", flush=True)
+            if ChunkText:
+                Content += ChunkText
+                # Clean up chunk before printing
+                CleanChunkText = self._CleanStreamingOutput(ChunkText, Content)
+                if CleanChunkText:
+                    print(CleanChunkText, end="", flush=True)
         print("" if not Writer.Config.DEBUG else "\n\n\n", flush=True)
         return {"role": "assistant", "content": Content}, LastChunk
+
+    def _CleanStreamingOutput(self, chunk_text: str, full_content: str) -> str:
+        """
+        Clean streaming output to hide JSON responses and unwanted tags.
+
+        Returns:
+            str: Cleaned chunk text to display, or empty string to hide
+        """
+        # Don't show pure JSON responses (they're for internal parsing)
+        stripped = chunk_text.strip()
+        if stripped.startswith('{') and stripped.endswith('}') and ':' in stripped:
+            # Likely a JSON response, don't show it
+            return ""
+
+        # Remove unwanted tags that AI might generate
+        unwanted_tags = [
+            '<OUTLINE REVISI>',
+            '</OUTLINE REVISI>',
+            '<OUTLINE>',
+            '</OUTLINE>',
+            '<REVISI>',
+            '</REVISI>'
+        ]
+
+        chunk_cleaned = chunk_text
+        has_tags = False
+        for tag in unwanted_tags:
+            if tag in chunk_text:
+                chunk_cleaned = chunk_cleaned.replace(tag, '')
+                has_tags = True
+
+        # If this is the first chunk with these tags, check if there's any content
+        if has_tags and not chunk_cleaned.strip():
+            # Only tags, no content to show
+            return ""
+
+        # For chunk that's part of a JSON response
+        if full_content and ('{' in full_content or '}' in full_content):
+            # Check if we're in the middle of a JSON response
+            import json
+            try:
+                # Try to reconstruct the full content and validate as JSON
+                test_json = full_content + chunk_text if not stripped else chunk_text
+                if stripped.startswith('{') or test_json.count('{') >= test_json.count('}'):
+                    # This looks like JSON
+                    return ""
+            except:
+                pass
+
+        # Return cleaned content or original if no tags
+        return chunk_cleaned if has_tags else chunk_text
 
     def BuildUserQuery(self, _Query: str):
         return {"role": "user", "content": _Query}

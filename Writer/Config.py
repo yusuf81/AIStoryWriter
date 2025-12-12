@@ -136,6 +136,7 @@ LOREBOOK_SIMILARITY_THRESHOLD = 0.7  # Minimum similarity for lore retrieval
 USE_PYDANTIC_PARSING = True  # Enable/disable structured output
 PYDANTIC_STRICT_MODE = False  # Strict validation vs. attempt repair
 PYDANTIC_FALLBACK_TO_REPAIR = True  # Fall back to existing JSON repair
+PYDANTIC_WORD_COUNT_TOLERANCE = 50  # Tolerance for word count validation (±N words)
 
 USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning
 REASONING_MODEL = CHAPTER_STAGE1_WRITER_MODEL  # Model to use for reasoning generation

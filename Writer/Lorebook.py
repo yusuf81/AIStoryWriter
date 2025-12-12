@@ -4,7 +4,7 @@ import re
 from typing import Dict
 
 try:
-    # Try new imports first
+    # Prefer langchain_chroma (new package) over langchain_community
     from langchain_chroma import Chroma
     # Removed HuggingFaceEmbeddings - using provider-based embeddings
     try:
@@ -12,18 +12,23 @@ try:
     except ImportError:
         from langchain.docstore.document import Document
     LANGCHAIN_AVAILABLE = True
+    CHROMA_SOURCE = "langchain_chroma"
+    chroma_version = getattr(Chroma, '__version__', 'unknown')
 except ImportError:
-    # Fall back to old imports
+    # Fall back to old imports from langchain_community
     try:
         from langchain_community.vectorstores import Chroma
-        # Removed HuggingFaceEmbeddings - using provider-based embeddings
-        try:
-            from langchain_core.documents import Document
-        except ImportError:
-            from langchain.docstore.document import Document
         LANGCHAIN_AVAILABLE = True
+        CHROMA_SOURCE = "langchain_community"
+        chroma_version = getattr(Chroma, '__version__', 'unknown')
     except ImportError:
         LANGCHAIN_AVAILABLE = False
+        CHROMA_SOURCE = None
+        chroma_version = None
+    try:
+        from langchain_core.documents import Document
+    except ImportError:
+        from langchain.docstore.document import Document
 
 from Writer import Config
 from Writer import PrintUtils
@@ -89,6 +94,7 @@ class LorebookManager:
 
             self.SysLogger.Log(f"Lorebook initialized with persist directory: {persist_dir}", 5)
             self.SysLogger.Log(f"Using embedding model: {self.config.EMBEDDING_MODEL}", 5)
+            self.SysLogger.Log(f"Using Chroma from: {CHROMA_SOURCE}", 5)
         except Exception as e:
             self.SysLogger.Log(f"Failed to initialize Lorebook: {str(e)}", 3)
             if not getattr(self.config, 'EMBEDDING_FALLBACK_ENABLED', False):

@@ -449,7 +449,8 @@ def GenerateChapter(
     _BaseContext: str = "",
     _FullOutlineForSceneGen: str = "" # Added to pass the full outline if needed by scene gen
 ):
-    import Writer.Prompts as ActivePrompts # Dynamic import remains here
+    from Writer.PromptsHelper import get_prompts
+    ActivePrompts = get_prompts() # Use language-aware import
     import Writer.Config as Config # Import Config
     import Writer.Chapter.ChapterGenSummaryCheck as ChapterGenSummaryCheck # Import for helpers
     import Writer.LLMEditor as LLMEditor # Import for helpers
@@ -520,7 +521,8 @@ def ReviseChapter(
     _History: list = [],
     _Iteration: int = 0,
 ):  # Tambahkan _ChapterNum, _TotalChapters
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    from Writer.PromptsHelper import get_prompts
+    ActivePrompts = get_prompts() # Use language-aware import
 
     # Get original word count before revising
     OriginalWordCount = Writer.Statistics.GetWordCount(_Chapter)

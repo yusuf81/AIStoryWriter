@@ -1,7 +1,8 @@
 # Writer/Models.py - Pydantic data models for structured output
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import Writer.Config as Config
 
 
 class ChapterOutput(BaseModel):
@@ -16,7 +17,8 @@ class ChapterOutput(BaseModel):
     chapter_number: int = Field(ge=1, description="Chapter number in the story")
     chapter_title: Optional[str] = Field(None, max_length=100, description="Optional chapter title")
 
-    @validator('text')
+    @field_validator('text')
+    @classmethod
     def validate_content(cls, v):
         """Validate chapter text quality"""
         v = v.strip()
@@ -31,13 +33,15 @@ class ChapterOutput(BaseModel):
 
         return v
 
-    @validator('word_count')
-    def validate_word_count_consistency(cls, v, values):
+    @field_validator('word_count')
+    @classmethod
+    def validate_word_count_consistency(cls, v, info):
         """Ensure word count matches actual text"""
-        if 'text' in values:
-            actual_word_count = len(values['text'].split())
-            if abs(v - actual_word_count) > 50:  # Allow 50 word tolerance
-                raise ValueError(f"Word count {v} doesn't match actual word count {actual_word_count}")
+        if 'text' in info.data:
+            actual_word_count = len(info.data['text'].split())
+            tolerance = getattr(Config, 'PYDANTIC_WORD_COUNT_TOLERANCE', 50)
+            if abs(v - actual_word_count) > tolerance:
+                raise ValueError(f"Word count {v} doesn't match actual word count {actual_word_count} (tolerance: ±{tolerance})")
         return v
 
     class Config:
@@ -59,7 +63,8 @@ class OutlineOutput(BaseModel):
     setting: Optional[str] = Field(None, description="Story setting description")
     target_chapter_count: int = Field(gt=0, le=100, description="Target number of chapters")
 
-    @validator('chapters')
+    @field_validator('chapters')
+    @classmethod
     def validate_chapters(cls, v):
         """Ensure each chapter has meaningful content"""
         if not v:
@@ -71,7 +76,8 @@ class OutlineOutput(BaseModel):
 
         return v
 
-    @validator('character_list')
+    @field_validator('character_list')
+    @classmethod
     def validate_characters(cls, v):
         """Ensure character names are properly formatted"""
         for character in v:
@@ -129,7 +135,8 @@ class QualityMetrics(BaseModel):
     feedback: Optional[str] = Field(None, description="Qualitative feedback")
     revision_count: int = Field(default=0, ge=0, description="Number of revisions made")
 
-    @validator('coherence_score', 'relevance_score', 'completeness_score')
+    @field_validator('coherence_score', 'relevance_score', 'completeness_score')
+    @classmethod
     def validate_scores(cls, v):
         """Ensure scores are reasonable"""
         if v < 0 or v > 1:
@@ -148,7 +155,8 @@ class SceneOutline(BaseModel):
     purpose: str = Field(min_length=5, description="Purpose of this scene in the story")
     estimated_word_count: int = Field(gt=0, description="Target words for this scene")
 
-    @validator('setting')
+    @field_validator('setting')
+    @classmethod
     def validate_setting(cls, v):
         """Ensure setting is not empty"""
         if not v.strip():
