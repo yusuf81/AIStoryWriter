@@ -106,8 +106,8 @@ class Interface:
                 self.Clients[Model] = ollama.Client(host=OllamaHost)
             elif Provider == "google":
                 if not os.environ.get("GOOGLE_API_KEY"): raise Exception("GOOGLE_API_KEY missing")
-                self.ensure_package_is_installed("google-generativeai")
-                import google.generativeai as genai
+                self.ensure_package_is_installed("google-genai")
+                import google.genai as genai
                 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
                 self.Clients[Model] = genai.GenerativeModel(model_name=ProviderModelName)
             elif Provider == "openrouter":
@@ -115,6 +115,36 @@ class Interface:
                 from Writer.Interface.OpenRouter import OpenRouter
                 self.Clients[Model] = OpenRouter(api_key=os.environ["OPENROUTER_API_KEY"], model_name=ProviderModelName)
             else: raise NotImplementedError(f"Provider {Provider} not supported")
+
+    def GenerateEmbedding(self, _Logger, _Texts: list, _Model: str, _SeedOverride: int = -1):
+        """
+        Generate embeddings for a list of texts using the specified model.
+
+        Args:
+            _Logger: Logger instance
+            _Texts: List of strings to embed
+            _Model: Model string in provider://format
+            _SeedOverride: Random seed override
+
+        Returns:
+            Tuple of (list of embeddings, token usage info)
+        """
+        if not _Texts:
+            return [], {"prompt_tokens": 0, "completion_tokens": 0}
+
+        # Parse provider and initialize if needed
+        Provider, ProviderModelName, ModelHost, _ = self.GetModelAndProvider(_Model)
+
+        # Ensure model is loaded
+        if _Model not in self.Clients:
+            self.LoadModels([_Model])
+
+        # Call provider-specific method
+        handler = getattr(self, f"_{Provider}_embedding", None)
+        if not handler:
+            raise Exception(f"Embeddings not supported for provider: {Provider}")
+
+        return handler(_Logger, _Model, ProviderModelName, _Texts)
 
     def SafeGenerateText(self, _Logger, _Messages, _Model: str, _SeedOverride: int = -1, _FormatSchema: dict = None, _MinWordCount: int = 1, _max_retries_override: int = None):
         CurrentMessages = self.RemoveThinkTagFromAssistantMessages([m.copy() for m in _Messages])
@@ -389,7 +419,7 @@ class Interface:
         raise Exception(f"Ollama chat failed for {_Model_key} after {MaxRetries} attempts.")
 
     def _google_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
-        from google.generativeai.types import HarmCategory, HarmBlockThreshold
+        from google.genai.types import HarmCategory, HarmBlockThreshold
         Messages_transformed = [{"role": "user" if m["role"] == "system" else ("model" if m["role"] == "assistant" else m["role"]),
                                  "parts": [m["content"]]} for m in _Messages_list]
 
@@ -549,6 +579,94 @@ class Interface:
             result.append(cleaned_msg)
 
         return result
+
+    def _ollama_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
+        """Generate embeddings using Ollama"""
+        import ollama
+
+        client = self.Clients[_Model_key]
+        embeddings = []
+        total_tokens = 0
+
+        for text in _Texts:
+            try:
+                # Use Ollama's embeddings endpoint
+                response = client.embeddings(
+                    model=ProviderModel_name,
+                    prompt=text
+                )
+                embeddings.append(response['embedding'])
+                # Ollama doesn't provide token usage for embeddings
+                total_tokens += len(text.split())  # Rough estimate
+            except Exception as e:
+                _Logger.Log(f"Ollama embedding error: {e}", 7)
+                raise
+
+        return embeddings, {"prompt_tokens": total_tokens, "completion_tokens": 0}
+
+    def _google_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
+        """Generate embeddings using Gemini"""
+        import google.genai as genai
+
+        client = self.Clients[_Model_key]
+        embeddings = []
+        total_tokens = 0
+
+        for text in _Texts:
+            try:
+                # Use Gemini's embedding API
+                result = genai.embed_content(
+                    model=f'models/{ProviderModel_name}',
+                    content=text,
+                    task_type="retrieval_document"
+                )
+                embeddings.append(result['embedding'])
+                # Gemini doesn't provide token count, rough estimate
+                total_tokens += len(text.split())
+            except Exception as e:
+                _Logger.Log(f"Gemini embedding error: {e}", 7)
+                raise
+
+        return embeddings, {"prompt_tokens": total_tokens, "completion_tokens": 0}
+
+    def _openrouter_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
+        """Generate embeddings using OpenRouter (OpenAI-compatible)"""
+        import requests
+        import json
+
+        client = self.Clients[_Model_key]
+
+        # Prepare request for embeddings (OpenAI-compatible format)
+        headers = {
+            "Authorization": f"Bearer {client.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        all_embeddings = []
+        total_tokens = 0
+
+        for text in _Texts:
+            data = {
+                "model": ProviderModel_name,
+                "input": text
+            }
+
+            try:
+                response = requests.post(
+                    "https://openrouter.ai/api/v1/embeddings",
+                    headers=headers,
+                    json=data
+                )
+                response.raise_for_status()
+                result = response.json()
+                all_embeddings.append(result['data'][0]['embedding'])
+                # OpenRouter typically returns token usage
+                total_tokens += result.get('usage', {}).get('prompt_tokens', len(text.split()))
+            except Exception as e:
+                _Logger.Log(f"OpenRouter embedding error: {e}", 7)
+                raise
+
+        return all_embeddings, {"prompt_tokens": total_tokens, "completion_tokens": 0}
 
     def GetModelAndProvider(self, _Model: str):
         if "://" not in _Model:

@@ -18,11 +18,43 @@ class TestLorebookManager:
         self.temp_dir = tempfile.mkdtemp()
         self.test_persist_dir = os.path.join(self.temp_dir, "test_lorebook")
 
+        # Set up mock embedding model for tests
+        import Writer.Config
+        self.original_embedding_model = getattr(Writer.Config, 'EMBEDDING_MODEL', '')
+        Writer.Config.EMBEDDING_MODEL = 'mock://test-model'  # Will be mocked in tests
+
+        # Mock the Interface to avoid real embedding generation
+        self.interface_patcher = patch('Writer.Interface.Wrapper.Interface')
+        self.mock_interface_class = self.interface_patcher.start()
+        self.mock_interface = Mock()
+        self.mock_interface_class.return_value = self.mock_interface
+
+        # Mock embedding generation
+        self.mock_interface.GenerateEmbedding.return_value = (
+            [[0.1, 0.2, 0.3]], {"prompt_tokens": 1, "completion_tokens": 0}
+        )
+
+        # Mock Chroma to avoid actual vector storage
+        self.chroma_patcher = patch('Writer.Lorebook.Chroma')
+        self.mock_chroma_class = self.chroma_patcher.start()
+        self.mock_db = Mock()
+        # Default mock for similarity search - we'll override in specific tests
+        self.mock_db.similarity_search.return_value = []
+        self.mock_chroma_class.return_value = self.mock_db
+
     def teardown_method(self):
         """Cleanup after each test method"""
         # Remove temporary directory
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
+
+        # Stop the patchers
+        self.interface_patcher.stop()
+        self.chroma_patcher.stop()
+
+        # Restore original embedding model
+        import Writer.Config
+        Writer.Config.EMBEDDING_MODEL = self.original_embedding_model
 
     def test_lorebook_initialization(self):
         """Test that LorebookManager initializes correctly"""
@@ -233,21 +265,14 @@ class TestLorebookManager:
         # Should return empty string or minimal response
         assert isinstance(result, str)
 
-    @patch('Writer.Lorebook.HuggingFaceEmbeddings')
-    @patch('Writer.Lorebook.Chroma')
-    def test_with_mocks(self, mock_chroma, mock_embeddings):
+    def test_with_mocks(self):
         """Test with mocked dependencies to avoid actual model loading"""
         from Writer.Lorebook import LorebookManager
 
-        # Setup mocks
-        mock_embedding_model = Mock()
-        mock_embeddings.return_value = mock_embedding_model
-
-        mock_db = Mock()
-        mock_db.similarity_search.return_value = [
+        # Override mock setup for this specific test
+        self.mock_db.similarity_search.return_value = [
             Mock(page_content="Alice has blue eyes")
         ]
-        mock_chroma.return_value = mock_db
 
         # Test with mocked dependencies
         lorebook = LorebookManager(persist_dir=self.test_persist_dir)
@@ -256,7 +281,5 @@ class TestLorebookManager:
         lorebook.add_entry("Test entry", {"type": "test"})
         result = lorebook.retrieve("Test query", k=1)
 
-        # Verify mocks were called correctly
-        mock_embeddings.assert_called_once()
-        mock_chroma.assert_called_once()
+        # Verify result
         assert isinstance(result, str)

@@ -27,6 +27,8 @@ Generate full-length novels with AI! Harness the power of large language models 
   - Automatic scrubbing to remove AI artifacts and leftover instructions
   - Translation support for generated stories
 - **Quality assurance**: Built-in evaluation system and story comparison tools (`Evaluate.py`)
+- **Unified embedding system**: Centralized embeddings using the same provider architecture (Ollama, Google, OpenRouter)
+- **Vector-based lore management**: Automatic consistency checking with semantic search for characters, locations, and plot elements
 - **Comprehensive testing**: Full test suite with pytest for reliable code quality
 
 ## 🏁 Quick Start

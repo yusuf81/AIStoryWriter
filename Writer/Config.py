@@ -142,6 +142,12 @@ REASONING_MODEL = CHAPTER_STAGE1_WRITER_MODEL  # Model to use for reasoning gene
 REASONING_LOG_SEPARATE = True  # Log reasoning to separate file
 REASONING_CACHE_RESULTS = False  # Cache reasoning results
 
+# Embedding Model Configuration
+EMBEDDING_MODEL = "ollama://nomic-embed-text:latest@10.23.82.116"  # Embedding model string (provider://format). Must be explicitly set.
+EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for nomic-embed-text)
+EMBEDDING_CTX = 8192  # Context window for embeddings
+EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback
+
 
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"
 "google://gemini-1.5-pro"

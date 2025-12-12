@@ -6,7 +6,7 @@ from typing import Dict
 try:
     # Try new imports first
     from langchain_chroma import Chroma
-    from langchain_huggingface import HuggingFaceEmbeddings
+    # Removed HuggingFaceEmbeddings - using provider-based embeddings
     try:
         from langchain_core.documents import Document
     except ImportError:
@@ -16,7 +16,7 @@ except ImportError:
     # Fall back to old imports
     try:
         from langchain_community.vectorstores import Chroma
-        from langchain_community.embeddings import HuggingFaceEmbeddings
+        # Removed HuggingFaceEmbeddings - using provider-based embeddings
         try:
             from langchain_core.documents import Document
         except ImportError:
@@ -49,6 +49,13 @@ class LorebookManager:
         # Initialize logger
         self.SysLogger = PrintUtils.Logger()
 
+        # Check if embedding model is configured
+        if not getattr(self.config, 'EMBEDDING_MODEL', ''):
+            self.SysLogger.Log("EMBEDDING_MODEL not configured. Lorebook will be disabled.", 3)
+            self.db = None
+            self.embeddings = None
+            return
+
         if not LANGCHAIN_AVAILABLE:
             self.SysLogger.Log("LangChain not available. Lorebook will be disabled.", 3)
             self.db = None
@@ -62,10 +69,13 @@ class LorebookManager:
             return
 
         try:
-            # Initialize embeddings
-            self.embeddings = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-MiniLM-L6-v2"
-            )
+            # Initialize embedder interface
+            from Writer.Interface.Wrapper import Interface
+            self.embedding_interface = Interface([])
+            self.embedding_interface.LoadModels([self.config.EMBEDDING_MODEL])
+
+            # Create custom embedding function
+            self.embeddings = self._create_provider_embeddings(self.config.EMBEDDING_MODEL)
 
             # Ensure persist directory exists
             os.makedirs(self.persist_dir, exist_ok=True)
@@ -78,10 +88,13 @@ class LorebookManager:
             )
 
             self.SysLogger.Log(f"Lorebook initialized with persist directory: {persist_dir}", 5)
-
+            self.SysLogger.Log(f"Using embedding model: {self.config.EMBEDDING_MODEL}", 5)
         except Exception as e:
-            self.SysLogger.Log(f"Failed to initialize Lorebook: {str(e)}", 2)
-            print(f"Lorebook initialization error: {str(e)}")  # Debug output
+            self.SysLogger.Log(f"Failed to initialize Lorebook: {str(e)}", 3)
+            if not getattr(self.config, 'EMBEDDING_FALLBACK_ENABLED', False):
+                self.SysLogger.Log("EMBEDDING_FALLBACK_ENABLED is False. Lorebook will be disabled.", 3)
+            else:
+                self.SysLogger.Log("Embedding initialization failed, but fallback is DISABLED (fail-fast).", 3)
             self.db = None
             self.embeddings = None
 
@@ -295,6 +308,32 @@ class LorebookManager:
 
         except Exception as e:
             self.SysLogger.Log(f"Failed to clear lorebook: {str(e)}", 2)
+
+    def _create_provider_embeddings(self, embedding_model: str):
+        """
+        Create a LangChain-compatible embeddings wrapper for our provider system
+        """
+        from langchain_core.embeddings import Embeddings
+
+        class ProviderEmbeddings(Embeddings):
+            def __init__(self, interface, model, logger):
+                self.interface = interface
+                self.model = model
+                self.logger = logger
+
+            def embed_documents(self, texts: list[str]) -> list[list[float]]:
+                embeddings, _ = self.interface.GenerateEmbedding(
+                    self.logger, texts, self.model
+                )
+                return embeddings
+
+            def embed_query(self, text: str) -> list[float]:
+                embeddings, _ = self.interface.GenerateEmbedding(
+                    self.logger, [text], self.model
+                )
+                return embeddings[0] if embeddings else []
+
+        return ProviderEmbeddings(self.embedding_interface, embedding_model, self.SysLogger)
 
     def get_stats(self) -> Dict[str, object]:
         """

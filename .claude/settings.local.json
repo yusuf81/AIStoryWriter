@@ -61,7 +61,17 @@
       "Bash(python -c \"\nimport Writer.Prompts as Prompts\nprint(''CHAPTER_GENERATION_STAGE1 has PydanticFormatInstructions:'', ''{PydanticFormatInstructions}'' in Prompts.CHAPTER_GENERATION_STAGE1)\nprint(''CHAPTER_GENERATION_STAGE2 has PydanticFormatInstructions:'', ''{PydanticFormatInstructions}'' in Prompts.CHAPTER_GENERATION_STAGE2)\nprint(''CHAPTER_GENERATION_STAGE3 has PydanticFormatInstructions:'', ''{PydanticFormatInstructions}'' in Prompts.CHAPTER_GENERATION_STAGE3)\n\")",
       "Bash(python -m pytest tests/test_e2e_enhancements.py -v --disable-warnings)",
       "Bash(python -m pytest tests/writer/test_lorebook.py tests/writer/test_models.py tests/writer/test_pydantic_integration.py tests/writer/test_reasoning_chain.py tests/test_langchain_integration.py -v --disable-warnings -q)",
-      "Bash(python examples/enhanced_generation.py)"
+      "Bash(python examples/enhanced_generation.py)",
+      "WebSearch",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:openrouter.ai)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:pypi.org)",
+      "Bash(python -m pytest tests/writer/interface/test_wrapper_embedding.py -v)",
+      "Bash(python -m pytest tests/writer/test_lorebook.py -v --tb=short)",
+      "Bash(python -m pytest tests/writer/interface/test_wrapper_embedding.py -v --tb=short)",
+      "Bash(find Writer/ -name \"*.py\" -exec grep -h \"^import\\|^from\" {})",
+      "Bash(chmod +x /var/www/AIStoryWriter/clean_python_env.sh)"
     ],
     "deny": []
   }
