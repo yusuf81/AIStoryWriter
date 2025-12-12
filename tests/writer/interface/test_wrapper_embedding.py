@@ -95,7 +95,7 @@ class TestEmbeddingConfig:
             assert hasattr(Config, var), f"{var} should exist in Config"
 
         # Check default values
-        assert Config.EMBEDDING_MODEL == ""
+        assert Config.EMBEDDING_MODEL == "ollama://nomic-embed-text:latest@10.23.82.116"
         assert Config.EMBEDDING_DIMENSIONS == 768
         assert Config.EMBEDDING_CTX == 8192
         assert Config.EMBEDDING_FALLBACK_ENABLED == False

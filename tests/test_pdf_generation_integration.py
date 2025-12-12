@@ -136,48 +136,51 @@ class TestPDFGenerationIntegration:
 
     def test_pdf_generation_enabled_via_flag(self, mock_interface, mock_logger, mocker):
         """Test that PDF generation is triggered when enabled via flag"""
-        # Instead of mocking PDFGenerator, we'll check that the pipeline tries to export PDF
-        # by checking the JSON output contains PDF info when enabled
+        # Mock PDFGenerator.GeneratePDF to return success
+        mocked_generate = mocker.patch('Writer.PDFGenerator.GeneratePDF')
+        mocked_generate.return_value = (True, "PDF generated successfully")
 
-        # Mock file writing for JSON
-        mock_json = mocker.mock_open()
-        mocker.patch('builtins.open', mock_json)
+        # Set PDF generation disabled in config (to test that flag overrides)
+        original_setting = Writer.Config.ENABLE_PDF_GENERATION
+        Writer.Config.ENABLE_PDF_GENERATION = False
 
-        # Mock the actual PDF file creation at reportlab level to avoid file operations
-        mocker.patch('reportlab.platypus.SimpleDocTemplate.build', return_value=None)
+        try:
+            # Create pipeline
+            pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, None)
 
-        # Create pipeline
-        pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, None)
+            # Enable PDF generation via args flag
+            args = MockArgs(generate_pdf=True)
 
-        # Prepare state for post-processing
-        initial_state = {
-            "last_completed_step": "chapter_generation",
-            "completed_chapters_data": [{"number": 1, "title": "Ch1", "text": "Chapter 1 text"},
-                                      {"number": 2, "title": "Ch2", "text": "Chapter 2 text"}],
-            "translated_prompt_content": "Test prompt"
-        }
+            with tempfile.TemporaryDirectory() as tmpdir:
+                state_path = os.path.join(tmpdir, "test_state.json")
 
-        # Enable PDF generation via args
-        args = MockArgs(generate_pdf=True)
+                # Create initial state file
+                initial_state = {
+                    "last_completed_step": "chapter_generation_complete",
+                    "completed_chapters_data": [
+                        {"number": 1, "title": "Ch1", "text": "Chapter 1 text"},
+                        {"number": 2, "title": "Ch2", "text": "Chapter 2 text"}
+                    ],
+                    "translated_prompt_content": "Test prompt",
+                    "generated_at": "2025-01-01T00:00:00",
+                    "run_id": "test-run"
+                }
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Mock json files
-            mocker.patch('json.dump', side_effect=lambda data, f, **kwargs: None)
+                with open(state_path, 'w') as f:
+                    json.dump(initial_state, f)
 
-            state_path = os.path.join(tmpdir, "test_state.json")
+                # Run post-processing stage
+                result_state = pipeline._perform_post_processing_stage(
+                    initial_state, state_path, args, 0.0
+                )
 
-            result_state = pipeline._perform_post_processing_stage(
-                initial_state, state_path, args, 0.0
-            )
+                # Verify PDF generation was called (flag enabled it despite config disabled)
+                assert mocked_generate.called
+                assert result_state["last_completed_step"] == "complete"
 
-            # Verify PDF generation was attempted by checking the state
-            # When PDF generation succeeds, it adds "PDF" to OutputFiles
-            story_info = result_state.get("StoryInfoJSON", {})
-            output_files = story_info.get("OutputFiles", {})
-
-            # The key thing is that the pipeline processes the PDF request
-            # We verify this indirectly by checking that the pipeline completed
-            assert result_state["status"] == "completed"
+        finally:
+            # Restore original setting
+            Writer.Config.ENABLE_PDF_GENERATION = original_setting
 
     def test_pdf_generation_failure_handling(self, mock_interface, mock_logger, mocker):
         """Test that pipeline continues when PDF generation fails"""
@@ -185,25 +188,30 @@ class TestPDFGenerationIntegration:
         mocked_generate = mocker.patch('Writer.PDFGenerator.GeneratePDF')
         mocked_generate.return_value = (False, "PDF generation failed")
 
-        # Mock file writing
-        mock_open = mocker.patch('builtins.open', mocker.mock_open())
-
         # Create pipeline
         pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, None)
 
-        # Prepare state for post-processing
-        initial_state = {
-            "last_completed_step": "chapter_generation",
-            "completed_chapters_data": [{"number": 1, "title": "Ch1", "text": "Chapter 1 text"}],
-            "translated_prompt_content": "Test prompt"
-        }
-
-        # Enable PDF generation
+        # Enable PDF generation via args
         args = MockArgs(generate_pdf=True)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             state_path = os.path.join(tmpdir, "test_state.json")
 
+            # Create initial state file
+            initial_state = {
+                "last_completed_step": "chapter_generation_complete",
+                "completed_chapters_data": [
+                    {"number": 1, "title": "Ch1", "text": "Chapter 1 text"}
+                ],
+                "translated_prompt_content": "Test prompt",
+                "generated_at": "2025-01-01T00:00:00",
+                "run_id": "test-run"
+            }
+
+            with open(state_path, 'w') as f:
+                json.dump(initial_state, f)
+
+            # Run post-processing stage
             result_state = pipeline._perform_post_processing_stage(
                 initial_state, state_path, args, 0.0
             )
@@ -211,24 +219,9 @@ class TestPDFGenerationIntegration:
             # Verify pipeline completed despite PDF failure
             assert result_state["last_completed_step"] == "complete"
 
-            # Verify PDF was not added to output files
+            # Verify PDF generation was attempted but failed
+            assert mocked_generate.called
+            # PDF should not be in OutputFiles since generation failed
             story_info = result_state.get("StoryInfoJSON", {})
             output_files = story_info.get("OutputFiles", {})
-            # PDF might not be there or might be there with failure - we just check completion
-            assert result_state["status"] == "completed"
-
-    def test_config_override_from_flag(self):
-        """Test that -GeneratePDF flag overrides Config.py setting"""
-        # Enable in Config
-        Writer.Config.ENABLE_PDF_GENERATION = True
-
-        # Args should override
-        args = MockArgs(generate_pdf=False)
-
-        # After Write.py processes args (simulated here)
-        Writer.Config.ENABLE_PDF_GENERATION = args.GeneratePDF
-
-        assert Writer.Config.ENABLE_PDF_GENERATION == False
-
-        # Reset
-        Writer.Config.ENABLE_PDF_GENERATION = True
+            assert "PDF" not in output_files

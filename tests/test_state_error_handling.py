@@ -24,33 +24,54 @@ class TestSaveStateErrorHandling:
 
     def test_save_state_permission_denied(self, capsys):
         """Test save_state handling when file permissions are denied."""
+        import tempfile
         test_data = {"test": "data"}
-        
-        with patch('builtins.open', mock_open()) as mock_file:
-            # Simulate PermissionError
-            mock_file.side_effect = PermissionError("Permission denied")
-            
-            save_state(test_data, "/restricted/path.json")
-            
-            # Verify error message was printed
-            captured = capsys.readouterr()
-            assert "FATAL: Failed to save state" in captured.err
-            assert "Permission denied" in captured.err
+
+        # Create a temporary directory
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a subdirectory and make it read-only
+            readonly_dir = os.path.join(tmpdir, "readonly")
+            os.makedirs(readonly_dir)
+            target_file = os.path.join(readonly_dir, "state.json")
+
+            # Make directory read-only (can't create files in it)
+            os.chmod(readonly_dir, 0o555)  # Read + execute, no write
+
+            try:
+                # Try to save state to file in read-only directory - should fail
+                save_state(test_data, target_file)
+
+                # Verify error message was printed
+                captured = capsys.readouterr()
+                assert "FATAL: Failed to save state" in captured.err
+                assert target_file in captured.err
+            finally:
+                # Cleanup: restore write permission so cleanup can delete directory
+                try:
+                    os.chmod(readonly_dir, 0o755)
+                except:
+                    pass
 
     def test_save_state_disk_full(self, capsys):
-        """Test save_state handling when disk is full."""
+        """Test save_state handling when disk is full (simulated with mock)."""
+        import tempfile
         test_data = {"test": "data"}
-        
-        with patch('builtins.open', mock_open()) as mock_file:
-            # Simulate disk full error
-            mock_file.side_effect = OSError(errno.ENOSPC, "No space left on device")
-            
-            save_state(test_data, "/tmp/test.json")
-            
-            # Verify error message was printed
-            captured = capsys.readouterr()
-            assert "FATAL: Failed to save state" in captured.err
-            assert "No space left on device" in captured.err
+
+        # We mock this because we can't easily fill up disk in a test
+        # But we use a real temp path to make it more realistic
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = os.path.join(tmpdir, "test.json")
+
+            with patch('builtins.open', mock_open()) as mock_file:
+                # Simulate disk full error
+                mock_file.side_effect = OSError(errno.ENOSPC, "No space left on device")
+
+                save_state(test_data, test_file)
+
+                # Verify error message was printed
+                captured = capsys.readouterr()
+                assert "FATAL: Failed to save state" in captured.err
+                assert "No space left on device" in captured.err
 
     def test_save_state_directory_not_exists_and_cannot_create(self, capsys):
         """Test save_state when parent directory doesn't exist and can't be created."""

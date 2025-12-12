@@ -118,6 +118,15 @@ def test_generate_stage1_plot_success_first_try(mocker: MockerFixture, mock_logg
     mock_summary_check_func = mocker.Mock(return_value=(True, "")) # Success, no feedback
     mock_chapter_gen_summary_check_module.LLMSummaryCheck = mock_summary_check_func
 
+    # Mock SafeGeneratePydantic to return a tuple with 3 elements
+    mock_pydantic_result = mocker.Mock()
+    mock_pydantic_result.text = "Generated S1 Plot"
+    mock_interface.SafeGeneratePydantic.return_value = (
+        [{"role": "assistant", "content": "Generated S1 Plot"}],
+        mock_pydantic_result,
+        {"prompt_tokens": 100, "completion_tokens": 150}
+    )
+    # Also mock SafeGenerateText as fallback
     mock_interface.SafeGenerateText.return_value = ([{"role": "assistant", "content": "Generated S1 Plot"}], {})
     mocker.patch.object(mock_interface, "GetLastMessageText", return_value="Generated S1 Plot")
     active_prompts_mock = sys.modules["Writer.Prompts"]
@@ -142,10 +151,24 @@ def test_generate_stage1_plot_retry_and_succeed(mocker: MockerFixture, mock_logg
     mock_chapter_gen_summary_check_module.LLMSummaryCheck = mock_summary_check_func
 
     mock_get_last_text = mocker.patch.object(mock_interface, "GetLastMessageText")
+
+    # Mock SafeGeneratePydantic retries
+    mock_pydantic_result_1 = mocker.Mock()
+    mock_pydantic_result_1.text = "S1 Plot v1 (needs work)"
+    mock_pydantic_result_2 = mocker.Mock()
+    mock_pydantic_result_2.text = "S1 Plot v2 (good!)"
+
+    mock_interface.SafeGeneratePydantic.side_effect = [
+        ([{"role": "assistant", "content": "S1 Plot v1 (needs work)"},], mock_pydantic_result_1, {"prompt_tokens": 100, "completion_tokens": 150}),
+        ([{"role": "assistant", "content": "S1 Plot v2 (good!)"}], mock_pydantic_result_2, {"prompt_tokens": 100, "completion_tokens": 150}),
+    ]
+
+    # Also mock SafeGenerateText as fallback
     mock_interface.SafeGenerateText.side_effect = [
         ([{"role": "assistant", "content": "S1 Plot v1 (needs work)"}], {}),
         ([{"role": "assistant", "content": "S1 Plot v2 (good!)"}], {}),
     ]
+
     mock_get_last_text.side_effect = ["S1 Plot v1 (needs work)", "S1 Plot v2 (good!)"]
 
     active_prompts_mock = sys.modules["Writer.Prompts"]
@@ -159,9 +182,14 @@ def test_generate_stage1_plot_retry_and_succeed(mocker: MockerFixture, mock_logg
         Config_module=Writer.Config, ChapterGenSummaryCheck_module=mock_chapter_gen_summary_check_module
     )
     assert result == "S1 Plot v2 (good!)"
-    assert mock_interface.SafeGenerateText.call_count == 2
+    # Check which method was actually called based on the config
+    if Writer.Config.USE_PYDANTIC_PARSING:
+        assert mock_interface.SafeGeneratePydantic.call_count == 2
+        second_call_prompt = mock_interface.SafeGeneratePydantic.call_args_list[1][0][1][-1]['content']
+    else:
+        assert mock_interface.SafeGenerateText.call_count == 2
+        second_call_prompt = mock_interface.SafeGenerateText.call_args_list[1][0][1][-1]['content']
     assert mock_summary_check_func.call_count == 2
-    second_call_prompt = mock_interface.SafeGenerateText.call_args_list[1][0][1][-1]['content']
     assert "Feedback: too short" in second_call_prompt
 
 # --- Test for _run_scene_generation_pipeline_for_initial_plot ---
@@ -216,13 +244,24 @@ def test_run_final_chapter_revision_loop_success(mocker: MockerFixture, mock_log
 def test_generate_chapter_orchestration_no_scenes_no_revisions(mocker: MockerFixture, mock_logger):
     # Mock external dependencies only, NOT internal methods
     mock_interface = mocker.Mock()
+
+    # Mock SafeGeneratePydantic for enabled Pydantic
+    mock_pydantic_result = mocker.Mock()
+    mock_pydantic_result.text = "Generated chapter content"
+    mock_interface.SafeGeneratePydantic.return_value = (
+        [{"role": "assistant", "content": "Generated chapter content"}],
+        mock_pydantic_result,
+        {"prompt_tokens": 100, "completion_tokens": 150}
+    )
+
+    # Also mock SafeGenerateText as fallback
     mock_interface.SafeGenerateText.return_value = (
         [{"role": "assistant", "content": "Generated chapter content"}], {"tokens": 100}
     )
     mock_interface.GetLastMessageText.return_value = "Generated chapter content"
     mock_interface.BuildUserQuery.side_effect = lambda x: {"role": "user", "content": x}
     mock_interface.BuildSystemQuery.side_effect = lambda x: {"role": "system", "content": x}
-    
+
     # Mock config settings to disable scene generation and revisions
     mocker.patch("Writer.Config.SCENE_GENERATION_PIPELINE", False)
     mocker.patch("Writer.Config.CHAPTER_NO_REVISIONS", True)
@@ -240,6 +279,17 @@ def test_generate_chapter_orchestration_no_scenes_no_revisions(mocker: MockerFix
 def test_generate_chapter_orchestration_with_scenes_and_revisions(mocker: MockerFixture, mock_logger):
     # Mock external dependencies only
     mock_interface_main = mocker.Mock()
+
+    # Mock SafeGeneratePydantic for enabled Pydantic
+    mock_pydantic_result = mocker.Mock()
+    mock_pydantic_result.text = "Generated chapter with scenes"
+    mock_interface_main.SafeGeneratePydantic.return_value = (
+        [{"role": "assistant", "content": "Generated chapter with scenes"}],
+        mock_pydantic_result,
+        {"prompt_tokens": 150, "completion_tokens": 200}
+    )
+
+    # Also mock SafeGenerateText as fallback
     mock_interface_main.SafeGenerateText.return_value = (
         [{"role": "assistant", "content": "Generated chapter with scenes"}], {"tokens": 150}
     )

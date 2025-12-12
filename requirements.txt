@@ -8,8 +8,9 @@ requests
 pytest
 pytest-mock
 pytest-cov
-scikit-learn
-numpy
+numpy>=2.0
+scikit-learn>=1.5.0
+scipy>=1.13.0
 reportlab
 markdown
 langchain>=1.1.3

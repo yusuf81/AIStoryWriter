@@ -666,7 +666,9 @@ class StoryPipeline:
             self.SysLogger.Log(f"PIPELINE _perform_post_processing_stage FATAL: Error writing story info JSON file {FinalJSONPath}: {e}", 7)
 
         # PDF Generation (if enabled)
-        if self.Config.ENABLE_PDF_GENERATION:
+        # Early exit check - avoid heavy imports if PDF generation is disabled in args
+        if (self.Config.ENABLE_PDF_GENERATION or
+            (Args and getattr(Args, 'GeneratePDF', False))):
             try:
                 self.SysLogger.Log("Pipeline: Starting PDF generation...", 5)
                 pdf_path = f"{FNameBase}.pdf"
