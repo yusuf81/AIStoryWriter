@@ -1,5 +1,0 @@
-Requirement already satisfied: scikit-learn in /var/www/ujian-lantai7/.venv/lib/python3.11/site-packages (1.8.0)
-Requirement already satisfied: numpy in /var/www/ujian-lantai7/.venv/lib/python3.11/site-packages (2.3.5)
-Requirement already satisfied: scipy in /var/www/ujian-lantai7/.venv/lib/python3.11/site-packages (1.16.3)
-Requirement already satisfied: joblib>=1.3.0 in /var/www/ujian-lantai7/.venv/lib/python3.11/site-packages (from scikit-learn) (1.5.2)
-Requirement already satisfied: threadpoolctl>=3.2.0 in /var/www/ujian-lantai7/.venv/lib/python3.11/site-packages (from scikit-learn) (3.6.0)
