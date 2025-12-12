@@ -127,6 +127,20 @@ PDF_FONT_SIZE = 12  # Font size for regular text
 PDF_TITLE_SIZE = 24  # Font size for title
 PDF_CHAPTER_SIZE = 18  # Font size for chapter headings
 
+# LangChain Enhancement Configuration
+USE_LOREBOOK = True  # Enable/disable lorebook system
+LOREBOOK_K_RETRIEVAL = 5  # Number of lore entries to retrieve
+LOREBOOK_PERSIST_DIR = "./lorebook_db"  # Directory for lorebook persistence
+LOREBOOK_SIMILARITY_THRESHOLD = 0.7  # Minimum similarity for lore retrieval
+
+USE_PYDANTIC_PARSING = True  # Enable/disable structured output
+PYDANTIC_STRICT_MODE = False  # Strict validation vs. attempt repair
+PYDANTIC_FALLBACK_TO_REPAIR = True  # Fall back to existing JSON repair
+
+USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning
+REASONING_LOG_SEPARATE = True  # Log reasoning to separate file
+REASONING_CACHE_RESULTS = False  # Cache reasoning results
+
 
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"
 "google://gemini-1.5-pro"

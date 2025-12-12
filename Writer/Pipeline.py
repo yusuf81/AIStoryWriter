@@ -95,13 +95,27 @@ def _get_outline_for_chapter_pipeline_version(SysLogger, Config, Statistics, Act
 
 
 # Helper: Builds the context for chapter generation (base story elements, previous text, current chapter outline).
-def _get_current_context_for_chapter_gen_pipeline_version(SysLogger, Config, Statistics, ActivePrompts, current_state, chapter_num, base_context_text):
+def _get_current_context_for_chapter_gen_pipeline_version(SysLogger, Config, Statistics, ActivePrompts, current_state, chapter_num, base_context_text, lorebook=None):
     SysLogger.Log(f"Pipeline: Building generation context for Chapter {chapter_num}.", 6)
 
     # 1. Base Context (Story Elements, etc., from initial outline generation)
     context_components = [base_context_text]
 
-    # 2. Previous Chapter Text (if enabled and available)
+    # 2. Relevant Lore (if lorebook is enabled)
+    if lorebook and Config.USE_LOREBOOK:
+        # Build query from chapter outline if available
+        current_chapter_specific_outline = _get_outline_for_chapter_pipeline_version(
+            SysLogger, Config, Statistics, ActivePrompts, current_state, chapter_num
+        )
+        lore_retrieval_query = f"{base_context_text}\n\n{current_chapter_specific_outline}"
+
+        lore = lorebook.retrieve(lore_retrieval_query, k=Config.LOREBOOK_K_RETRIEVAL)
+        if lore:
+            formatted_lore = f"### Relevant Lore:\n{lore}"
+            context_components.append(formatted_lore)
+            SysLogger.Log(f"Pipeline: Added lorebook context ({len(lore)} chars) for Chapter {chapter_num}", 6)
+
+    # 3. Previous Chapter Text (if enabled and available)
     if Config.CHAPTER_MEMORY_WORDS > 0 and chapter_num > 1:
         completed_chapters_data = current_state.get("completed_chapters_data", []) # Expects list of dicts
         if len(completed_chapters_data) >= (chapter_num - 1) and chapter_num - 2 < len(completed_chapters_data): # Ensure index is valid
@@ -127,7 +141,7 @@ def _get_current_context_for_chapter_gen_pipeline_version(SysLogger, Config, Sta
         else:
             SysLogger.Log(f"Pipeline: Chapter {chapter_num -1} data not found in completed_chapters_data for context.",6)
 
-    # 3. Specific Outline for the Current Chapter
+    # 4. Specific Outline for the Current Chapter
     # This uses _get_outline_for_chapter_pipeline_version, which might return a detailed chapter outline or the MegaOutline.
     current_chapter_specific_outline = _get_outline_for_chapter_pipeline_version(
         SysLogger, Config, Statistics, ActivePrompts, current_state, chapter_num
@@ -229,6 +243,23 @@ class StoryPipeline:
             self.StoryInfo = Writer.StoryInfo
             self.Statistics = Writer.Statistics
             self.ChapterGenSummaryCheck = Writer.Chapter.ChapterGenSummaryCheck
+
+            # Initialize Lorebook if enabled
+            if self.Config.USE_LOREBOOK:
+                try:
+                    import Writer.Lorebook
+                    self.lorebook = Writer.Lorebook.LorebookManager(
+                        persist_dir=self.Config.LOREBOOK_PERSIST_DIR
+                    )
+                except ImportError as e:
+                    self.SysLogger.Log(f"Failed to import Lorebook: {e}", 6)
+                    self.lorebook = None
+                except Exception as e:
+                    self.SysLogger.Log(f"Failed to initialize Lorebook: {e}", 3)
+                    self.lorebook = None
+            else:
+                self.lorebook = None
+
         except ImportError as e:
             self.SysLogger.Log(f"PIPELINE __INIT__ FATAL: Failed to import one or more core Writer modules: {e}", 7)
             raise
@@ -246,6 +277,13 @@ class StoryPipeline:
         current_state["story_elements"] = Elements
         current_state["rough_chapter_outline"] = RoughChapterOutline
         current_state["base_context"] = BaseContext # This is crucial for subsequent steps
+
+        # Extract lore from outline if lorebook is enabled
+        if self.lorebook:
+            combined_outline = f"{Elements}\n\n{Outline}"
+            self.lorebook.extract_from_outline(combined_outline)
+            self.SysLogger.Log("Pipeline: Extracted lore from outline", 5)
+
         current_state["last_completed_step"] = "outline"
         self._save_state_wrapper(current_state, state_filepath)
         self.SysLogger.Log("Pipeline: Outline Generation Stage Complete. State Saved.", 4)
@@ -330,7 +368,7 @@ class StoryPipeline:
             # Get combined context (base, previous chapters, current chapter outline) for generation
             # This uses _get_current_context_for_chapter_gen_pipeline_version
             current_gen_context = _get_current_context_for_chapter_gen_pipeline_version(
-                self.SysLogger, self.Config, self.Statistics, self.ActivePrompts, current_state, current_chap_num, base_context_text
+                self.SysLogger, self.Config, self.Statistics, self.ActivePrompts, current_state, current_chap_num, base_context_text, lorebook=self.lorebook
             )
             if not current_gen_context:
                 self.SysLogger.Log(f"PIPELINE _write_chapters_stage FATAL: Generation context for Chapter {current_chap_num} is empty.", 7)

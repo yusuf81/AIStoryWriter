@@ -172,3 +172,4 @@ SimulateLogs/*
 .vscode/
 .claude/settings.local.json
 test_output.md*
+lorebook_db/
