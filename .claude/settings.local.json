@@ -135,7 +135,14 @@
       "Bash(python -m pytest tests/test_state_operations.py -x --tb=short)",
       "Bash(python -m pytest tests/test_state_operations.py -x --tb=short --no-header)",
       "Bash(python -m pytest tests/test_state_operations.py --tb=no)",
-      "Bash(python -m pytest tests/test_state_operations.py -x --tb=no)"
+      "Bash(python -m pytest tests/test_state_operations.py -x --tb=no)",
+      "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && tail -n 50 \"\"\"\"{}\"\"\"\" 2>/dev/null | grep -A 5 -B 5 -i \"\"\"\"schema\\|conforms to this schema\"\"\"\" || echo \"\"\"\"No schema references found\"\"\"\"')",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py -xvs)",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py::TestJSONFormatFix::test_build_format_instruction_prevents_schema_echoing -xvs)",
+      "Bash(python -m pytest tests/writer/interface/test_pydantic_non_streaming.py tests/test_state_pydantic_serialization.py tests/writer/interface/test_json_format_fix.py --tb=no -q)",
+      "Bash(python -m pytest tests/writer/interface/ --tb=no -q)",
+      "Bash(pyright Writer/Interface/Wrapper.py --skipunknown)",
+      "Bash(pyright Writer/Interface/Wrapper.py)"
     ]
   }
 }

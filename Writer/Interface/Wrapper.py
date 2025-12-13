@@ -272,8 +272,8 @@ class Interface:
             # Fallback for older Pydantic versions
             schema = _PydanticModel.schema()
 
-        # Prepare format instruction
-        format_instruction = f"\n\nPlease respond with a valid JSON object that conforms to this schema:\n{json.dumps(schema, indent=2)}"
+        # Prepare format instruction - use simplified format to prevent schema echoing
+        format_instruction = self._build_format_instruction(schema)
 
         # Add format instruction to the last user message
         messages_for_parsing = [m.copy() for m in _Messages]
@@ -286,7 +286,7 @@ class Interface:
 
         _Logger.Log(f"SafeGeneratePydantic: Using schema for {_PydanticModel.__name__}", 5)
 
-        # Smart retry loop with repair instructions
+        # Smart retry loop with better error handling
         for attempt in range(max_attempts):
             try:
                 # Generate structured response using JSON format
@@ -294,49 +294,83 @@ class Interface:
                     _Logger, messages_for_parsing, _Model, _SeedOverride, schema, _max_retries_override
                 )
 
+                # PRE-CHECK: Validate JSONResponse format before Pydantic
+                if isinstance(JSONResponse, list):
+                    # This is malformed response (multiple JSON objects)
+                    raise TypeError(f"Expected single JSON object, got list of {len(JSONResponse)} objects")
+
+                # PRE-CHECK: Ensure it's a dict
+                if not isinstance(JSONResponse, dict):
+                    raise TypeError(f"Expected JSON object/dict, got {type(JSONResponse).__name__}")
+
                 # Validate and convert to Pydantic model
                 validated_model = _PydanticModel(**JSONResponse)
                 _Logger.Log(f"SafeGeneratePydantic: Successfully validated {_PydanticModel.__name__} on attempt {attempt + 1}", 5)
                 return ResponseMessagesList, validated_model, TokenUsage
 
-            except ValidationError as e:
-                if attempt == max_attempts - 1:
-                    # Final attempt failed - raise exception (NO FALLBACK)
-                    error_details = "\n".join([
-                        f"- {'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
-                        for err in e.errors()
-                    ])
-                    raise Exception(f"Pydantic validation failed after {max_attempts} attempts:\n{error_details}")
+            except Exception as e:  # Catch ALL response format errors
+                # This triggers retry logic
+                if attempt < max_attempts - 1:
+                    _Logger.Log(f"Attempt {attempt + 1} failed: {e}. Retrying...", 5)
 
-                # Create repair instruction for next attempt
-                error_details = "\n".join([
-                    f"- {'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
-                    for err in e.errors()
-                ])
+                    # For structured responses, provide more specific retry guidance
+                    if isinstance(e, TypeError) and "list" in str(e):
+                        _Logger.Log("Hint: Ensure response is single JSON object, not multiple objects. Do NOT include schema in response.", 5)
+                    elif "missing" in str(e).lower() or "validation" in str(e).lower():
+                        _Logger.Log("Hint: Ensure all required fields are present and correct.", 5)
 
-                repair_msg = {
-                    "role": "user",
-                    "content": f"""Previous response failed Pydantic validation with errors:
+                    continue
+                else:
+                    # Final attempt failed - raise exception
+                    if isinstance(e, ValidationError):
+                        # Format Pydantic errors nicely
+                        error_details = "\n".join([
+                            f"- {'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
+                            for err in e.errors()
+                        ])
+                        raise Exception(f"Pydantic validation failed after {max_attempts} attempts:\n{error_details}")
+                    else:
+                        raise Exception(f"Failed to generate valid response after {max_attempts} attempts. Last error: {e}")
 
-{error_details}
+    def _build_format_instruction(self, schema):
+        """Build clear format instruction without showing full schema to prevent echoing"""
+        properties = schema.get('properties', {})
+        required_fields = schema.get('required', [])
 
-Please generate a response that STRICTLY follows this JSON schema:
+        instruction = "\n\n=== JSON SCHEMA (REFERENCE ONLY) ===\n"
+        instruction += "This defines the structure. DO NOT repeat the schema in your response!\n\n"
+        instruction += "=== YOUR RESPONSE (JSON ONLY) ===\n"
+        instruction += "Provide ONLY the JSON data below. Do NOT include explanations or the schema.\n\n"
+        instruction += "Required fields:\n"
 
-{json.dumps(schema, indent=2)}
+        for field in required_fields:
+            field_info = properties.get(field, {})
+            field_type = field_info.get('type', 'unknown')
+            field_desc = field_info.get('description', '')
+            if field_desc:
+                instruction += f"  - {field} ({field_type}): { field_desc}\n"
+            else:
+                instruction += f"  - {field} ({field_type})\n"
 
-Key requirements:
-- All required fields must be present
-- Field types must match exactly
-- String fields must meet min_length constraints
-- Numeric fields must meet gt/ge constraints
-- Return ONLY valid JSON matching the schema"""
-                }
-                messages_for_parsing = messages_for_parsing + [repair_msg]
+        # Add optional fields if any
+        optional_fields = [k for k in properties.keys() if k not in required_fields]
+        if optional_fields:
+            instruction += "\nOptional fields:\n"
+            for field in optional_fields[:5]:  # Limit to first 5 optional fields
+                field_info = properties.get(field, {})
+                field_type = field_info.get('type', 'unknown')
+                field_desc = field_info.get('description', '')
+                if field_desc:
+                    instruction += f"  - {field} ({field_type}, optional): { field_desc[:50]}...\n"
+                else:
+                    instruction += f"  - {field} ({field_type}, optional)\n"
+            if len(optional_fields) > 5:
+                instruction += f"  - ... and {len(optional_fields) - 5} more optional fields\n"
 
-                _Logger.Log(f"SafeGeneratePydantic: Retry attempt {attempt + 1}/{max_attempts} due to validation error", 4)
+        instruction += "\nExample format: {\"field1\": \"value\", \"field2\": 123}\n"
+        instruction += "IMPORTANT: Return ONLY the JSON data, not the schema!\n"
 
-        # This should never be reached due to raise in final attempt
-        raise Exception(f"Pydantic validation failed after {max_attempts} attempts")
+        return instruction
 
     def _ollama_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
         import ollama
