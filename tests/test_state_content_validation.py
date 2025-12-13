@@ -494,7 +494,12 @@ class TestStateSizeAndPerformance:
             
             # Verify it's valid JSON
             parsed = json.loads(file_content)
-            assert parsed == formatted_state
+
+            # After StateManager, expect container format
+            assert "pydantic_objects" in parsed
+            assert "other_data" in parsed
+            # The actual data should be in other_data since there are no Pydantic objects
+            assert parsed["other_data"] == formatted_state
             
             # Verify it's formatted (has indentation)
             assert "    " in file_content  # Should have 4-space indentation

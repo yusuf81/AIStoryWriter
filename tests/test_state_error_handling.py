@@ -221,12 +221,14 @@ class TestLoadStateErrorHandling:
         """Test load_state handling extremely large files that might cause memory issues."""
         # Create a large JSON file that might cause memory issues
         large_data = {"data": "x" * (10 * 1024 * 1024)}  # 10MB of data
-        
+
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-            json.dump(large_data, f)
             temp_path = f.name
-        
+
         try:
+            # Use save_state to create file in the current format
+            save_state(large_data, temp_path)
+
             # This should work but test that it doesn't crash
             result = load_state(temp_path)
             assert "data" in result
@@ -284,18 +286,17 @@ class TestStateOperationRecovery:
             backup_path = main_path + ".backup"
         
         try:
-            # Create a valid backup file
-            with open(backup_path, 'w', encoding='utf-8') as f:
-                json.dump(test_data, f)
-            
+            # Create a valid backup file using save_state
+            save_state(test_data, backup_path)
+
             # Create a corrupted main file
             with open(main_path, 'w', encoding='utf-8') as f:
                 f.write("corrupted json content")
-            
+
             # Test current behavior (should fail)
             with pytest.raises(ValueError):
                 load_state(main_path)
-            
+
             # But backup file should be loadable
             backup_data = load_state(backup_path)
             assert backup_data == test_data

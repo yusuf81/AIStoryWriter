@@ -1,22 +1,25 @@
 import os
 import json
-import sys
 import shutil
 import time
 import datetime
 
 # Import Pydantic model for title generation
 from Writer.Models import TitleOutput
+# Import StateManager for proper Pydantic serialization
+from Writer.StateManager import StateManager
+
 
 # Assuming Writer.Config, Writer.Statistics, and other Writer modules will be imported
 # by the consuming code or passed appropriately.
 
+
 def save_state_pipeline(state_data, filepath, logger):
-    """Saves the current state to a JSON file."""
+    """Saves the current state to a JSON file with proper Pydantic serialization."""
     temp_filepath = filepath + ".tmp"
     try:
-        with open(temp_filepath, "w", encoding="utf-8") as f:
-            json.dump(state_data, f, indent=4, ensure_ascii=False)
+        # Use StateManager to properly handle Pydantic objects
+        StateManager.save_state(state_data, temp_filepath)
         shutil.move(temp_filepath, filepath)
     except Exception as e:
         if logger:

@@ -12,6 +12,7 @@ import json
 import sys
 import shutil  # Untuk penulisan atomik
 import importlib # Tambahkan importlib
+from Writer.StateManager import StateManager  # For proper Pydantic deserialization
 
 import Writer.Config
 
@@ -249,11 +250,11 @@ Parser.add_argument(
 
 # Fungsi Helper untuk Save/Load State
 def save_state(state_data, filepath):
-    """Saves the current state to a JSON file atomically."""
+    """Saves the current state to a JSON file atomically with proper Pydantic serialization."""
     temp_filepath = filepath + ".tmp"
     try:
-        with open(temp_filepath, "w", encoding="utf-8") as f:
-            json.dump(state_data, f, indent=4)
+        # Use StateManager to properly handle Pydantic objects
+        StateManager.save_state(state_data, temp_filepath)
         # Operasi atomik: ganti file lama dengan yang baru
         shutil.move(temp_filepath, filepath)
     except (IOError, OSError) as e:  # Catch specific file errors
@@ -278,12 +279,12 @@ def save_state(state_data, filepath):
 
 
 def load_state(filepath):
-    """Loads the state from a JSON file."""
+    """Loads the state from a JSON file with proper Pydantic deserialization."""
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"State file not found: {filepath}")
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            state_data = json.load(f)
+        # Use StateManager to properly reconstruct Pydantic objects
+        state_data = StateManager.load_state(filepath)
         return state_data
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to decode state file {filepath}: {e}") from e

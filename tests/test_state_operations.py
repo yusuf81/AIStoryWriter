@@ -40,9 +40,9 @@ class TestSaveState:
             assert os.path.exists(temp_path)
             
             # Verify content is valid JSON
-            with open(temp_path, 'r', encoding='utf-8') as f:
-                loaded_data = json.load(f)
-            
+            # Use load_state to get the data in the expected format
+            loaded_data = load_state(temp_path)
+
             assert loaded_data == test_data
         finally:
             if os.path.exists(temp_path):
@@ -98,8 +98,7 @@ class TestSaveState:
             assert os.path.exists(test_file)
             
             # Verify content
-            with open(test_file, 'r', encoding='utf-8') as f:
-                loaded_data = json.load(f)
+            loaded_data = load_state(test_file)
             assert loaded_data == test_data
     
     def test_save_state_complex_data_structure(self):
@@ -127,9 +126,9 @@ class TestSaveState:
             save_state(test_data, temp_path)
             
             # Verify complex structure is preserved
-            with open(temp_path, 'r', encoding='utf-8') as f:
-                loaded_data = json.load(f)
-            
+            # Use load_state to get the data in the expected format
+            loaded_data = load_state(temp_path)
+
             assert loaded_data == test_data
             assert loaded_data["completed_chapters"][0]["title"] == "Chapter 1"
             assert loaded_data["config"]["models"]["outline"] == "ollama://model1"
@@ -150,10 +149,12 @@ class TestLoadState:
         }
         
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
-            json.dump(test_data, f, indent=2)
             temp_path = f.name
-        
+
         try:
+            # Use save_state to create file in the expected format
+            save_state(test_data, temp_path)
+
             loaded_data = load_state(temp_path)
             assert loaded_data == test_data
         finally:
@@ -206,12 +207,14 @@ class TestLoadState:
         }
         
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
-            json.dump(test_data, f)
             temp_path = f.name
-        
+
         try:
+            # Use save_state to create file in the expected format
+            save_state(test_data, temp_path)
+
             loaded_data = load_state(temp_path)
-            
+
             # Verify all data types are preserved
             assert isinstance(loaded_data["string_value"], str)
             assert isinstance(loaded_data["int_value"], int)
