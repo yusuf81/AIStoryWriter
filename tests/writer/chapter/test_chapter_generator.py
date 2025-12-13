@@ -189,15 +189,18 @@ def test_run_scene_generation_pipeline(mocker: MockerFixture, mock_logger):
     mock_chapter_by_scene_func.return_value = "Chapter content from scenes"
     active_prompts_mock = sys.modules["Writer.Prompts"]
 
+    # Create logger instance to use consistently
+    logger = mock_logger()
+
     result = _run_scene_generation_pipeline_for_initial_plot(
-        mocker.Mock(), mock_logger(), active_prompts_mock, # Interface mock can be simpler here
+        mocker.Mock(), logger, active_prompts_mock, # Interface mock can be simpler here
         _ChapterNum=1, _TotalChapters=1, ThisChapterOutline="Scene outline here",
         _FullOutlineForSceneGen="Full story outline", _BaseContext="Base",
         Config_module=Writer.Config
     )
     assert result == "Chapter content from scenes"
     mock_chapter_by_scene_func.assert_called_once_with(
-        mocker.ANY, mock_logger, 1, 1, "Scene outline here", "Full story outline", "Base" # Config is used internally by ChapterByScene
+        mocker.ANY, logger, 1, 1, "Scene outline here", "Full story outline", "Base" # Config is used internally by ChapterByScene
     )
 
 # --- Test for _run_final_chapter_revision_loop ---
@@ -215,9 +218,12 @@ def test_run_final_chapter_revision_loop_success(mocker: MockerFixture, mock_log
     mocker.patch("Writer.Config.CHAPTER_MIN_REVISIONS", 1)
     mocker.patch("Writer.Config.CHAPTER_MAX_REVISIONS", 5)
 
+    # Create logger instance to use consistently
+    logger = mock_logger()
+
     initial_chapter_content = "Initial Chapter Content v1"
     result = _run_final_chapter_revision_loop(
-        mock_interface, mock_logger(), active_prompts_mock,
+        mock_interface, logger, active_prompts_mock,
         _ChapterNum=1, _TotalChapters=1, ChapterToRevise=initial_chapter_content,
         OverallOutline="Story outline", MessageHistoryForRevision=[],
         Config_module=Writer.Config, LLMEditor_module=mock_llm_editor_module, # Pass the mocked module
@@ -227,7 +233,7 @@ def test_run_final_chapter_revision_loop_success(mocker: MockerFixture, mock_log
     assert result == "Revised Chapter Content v2"
     assert mock_llm_editor_module.GetChapterRating.call_count == 2
     mock_revise_chapter_func.assert_called_once_with(
-        mock_interface, mock_logger, 1, 1, initial_chapter_content, "Needs minor tweaks.", [], _Iteration=1
+        mock_interface, logger, 1, 1, initial_chapter_content, "Needs minor tweaks.", [], _Iteration=1
     )
 
 # --- High-level test for GenerateChapter orchestrator ---
@@ -258,7 +264,7 @@ def test_generate_chapter_orchestration_no_scenes_no_revisions(mocker: MockerFix
 
     # Test the real GenerateChapter function
     result = GenerateChapter(
-        mock_interface, mock_logger, 1, 1, "ChOutline", [], "BaseCtx", "FullOutline"
+        mock_interface, mock_logger(), 1, 1, "ChOutline", [], "BaseCtx", "FullOutline"
     )
 
     # Verify the function completed and returned content

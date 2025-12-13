@@ -40,6 +40,9 @@ def test_generate_outline_success_first_pass(mocker: MockerFixture, mock_logger)
     mock_llm_editor_get_feedback = mocker.patch("Writer.LLMEditor.GetFeedbackOnOutline")
     mock_llm_editor_get_rating = mocker.patch("Writer.LLMEditor.GetOutlineRating")
 
+    # Create logger instance to use consistently
+    logger = mock_logger()
+
     # Configure mocks
     # Call 1: GetImportantBasePromptInfo
     # Call 2: GenerateInitialOutline  
@@ -71,7 +74,7 @@ def test_generate_outline_success_first_pass(mocker: MockerFixture, mock_logger)
     mock_llm_editor_get_rating.return_value = True # Outline is good on the first try after min_revisions
 
     final_outline_str, story_elements_str, final_outline_variable, base_context_str = GenerateOutline(
-        mock_interface, mock_logger, "Test Prompt", _QualityThreshold=85 # _QualityThreshold is unused
+        mock_interface, logger, "Test Prompt", _QualityThreshold=85 # _QualityThreshold is unused
     )
 
     assert base_context_str == "Mocked Base Context"
@@ -82,16 +85,19 @@ def test_generate_outline_success_first_pass(mocker: MockerFixture, mock_logger)
     assert "Mocked Story Elements" in final_outline_str
     assert "Mocked Revised Outline" in final_outline_str
 
-    mock_story_elements_gen.assert_called_once_with(mock_interface, mock_logger, "Test Prompt")
+    mock_story_elements_gen.assert_called_once_with(mock_interface, logger, "Test Prompt")
     assert mock_interface.SafeGenerateText.call_count == 3
     assert mock_llm_editor_get_feedback.call_count == 2
     assert mock_llm_editor_get_rating.call_count == 2
     # Check the last call was with the revised outline
-    mock_llm_editor_get_feedback.assert_called_with(mock_interface, mock_logger, "Mocked Revised Outline")
-    mock_llm_editor_get_rating.assert_called_with(mock_interface, mock_logger, "Mocked Revised Outline")
+    mock_llm_editor_get_feedback.assert_called_with(mock_interface, logger, "Mocked Revised Outline")
+    mock_llm_editor_get_rating.assert_called_with(mock_interface, logger, "Mocked Revised Outline")
 
 
 def test_generate_outline_reaches_max_revisions(mocker: MockerFixture, mock_logger):
+    # Create logger instance to use consistently
+    logger = mock_logger()
+
     mock_interface = mocker.Mock()
     mocker.patch("Writer.Outline.StoryElements.GenerateStoryElements", return_value="Elements")
 
@@ -126,20 +132,23 @@ def test_generate_outline_reaches_max_revisions(mocker: MockerFixture, mock_logg
         ("Revised Outline v3", [{"role": "assistant", "content": "Revised Outline v3"}]),
     ]
 
-    _, _, outline_after_loop, _ = GenerateOutline(mock_interface, mock_logger(), "Test")
+    _, _, outline_after_loop, _ = GenerateOutline(mock_interface, logger, "Test")
 
     assert outline_after_loop == "Revised Outline v3"
     assert mock_interface.SafeGenerateText.call_count == 2
     assert mock_revise_outline.call_count == Writer.Config.OUTLINE_MAX_REVISIONS
     assert mock_llm_editor_get_rating.call_count == Writer.Config.OUTLINE_MAX_REVISIONS + 1
     assert mock_llm_editor_get_feedback.call_count == Writer.Config.OUTLINE_MAX_REVISIONS + 1
-    assert any("Max Revisions Reached" in log[1] for log in mock_logger.logs if log[0] == 4)
+    assert any("Max Revisions Reached" in log[1] for log in logger.logs if log[0] == 4)
 
     Writer.Config.OUTLINE_MIN_REVISIONS = original_min_rev
     Writer.Config.OUTLINE_MAX_REVISIONS = original_max_rev
 
 # Tests for ReviseOutline
-def test_revise_outline(mocker: MockerFixture, mock_logger):
+def test_revise_outline(mocker: MockerFixture, mock_logger, english_language_config):
+    # Create logger instance to use consistently
+    logger = mock_logger()
+
     mock_interface = mocker.Mock()
 
     # Mock Writer.Prompts to control the template used
@@ -221,7 +230,7 @@ Don't answer these questions directly, instead make your writing implicitly answ
 
     initial_history = [{"role": "system", "content": "System prompt"}]
     revised_text, history = ReviseOutline(
-        mock_interface, mock_logger, "Original Outline", "Feedback given", initial_history.copy(), _Iteration=1
+        mock_interface, logger, "Original Outline", "Feedback given", initial_history.copy(), _Iteration=1
     )
 
     assert revised_text == "Revised Outline Content"
@@ -238,7 +247,7 @@ Don't answer these questions directly, instead make your writing implicitly answ
     mock_build_user_query.assert_called_once_with(expected_prompt_str)
 
 # Tests for GeneratePerChapterOutline
-def test_generate_per_chapter_outline(mocker: MockerFixture, mock_logger):
+def test_generate_per_chapter_outline(mocker: MockerFixture, mock_logger, english_language_config):
     mock_interface = mocker.Mock()
     
     # Mock the Writer.Prompts module when imported
