@@ -99,7 +99,17 @@
       "Bash(/var/www/ujian-lantai7/.venv/bin/pytest tests/test_wrapper_config_fallback.py -v)",
       "Bash(/var/www/ujian-lantai7/.venv/bin/pytest tests/test_wrapper_config_fallback.py::TestWrapperConfigFallback::test_safe_generate_json_uses_max_pydantic_retries_as_fallback -v)",
       "Bash(/var/www/ujian-lantai7/.venv/bin/pytest tests/test_new_pydantic_models.py -v)",
-      "Bash(/var/www/ujian-lantai7/.venv/bin/pytest:*)"
+      "Bash(/var/www/ujian-lantai7/.venv/bin/pytest:*)",
+      "Bash(/var/www/ujian-lantai7/.venv/bin/pytest tests/writer/interface/test_pydantic_non_streaming.py -v)",
+      "Bash(/var/www/ujian-lantai7/.venv/bin/pytest tests/writer/interface/test_pydantic_non_streaming.py::TestPydanticNonStreaming::test_safe_generate_pydantic_displays_extracted_content -v)",
+      "Bash(/var/www/ujian-lantai7/.venv/bin/pytest tests/writer/interface/test_pydantic_non_streaming.py::TestPydanticNonStreaming::test_safe_generate_pydantic_displays_extracted_content -v -s)",
+      "Bash(python -m pytest tests/writer/interface/test_pydantic_non_streaming.py::TestPydanticNonStreaming::test_safe_generate_pydantic_displays_extracted_content -xvs)",
+      "Bash(python -m pytest tests/writer/interface/test_pydantic_non_streaming.py::TestPydanticNonStreaming::test_safe_generate_pydantic_displays_extracted_content -xvs --tb=no)",
+      "Bash(python debug_assertion.py)",
+      "Bash(python -m pytest tests/writer/interface/test_pydantic_non_streaming.py -xvs)",
+      "Bash(python -m pytest tests/test_wrapper_config_fallback.py -xvs)",
+      "Bash(python -m pytest tests/writer/interface/ tests/test_wrapper_config_fallback.py tests/test_new_pydantic_models.py -v)",
+      "Bash(python test_pydantic_display.py)"
     ]
   }
 }

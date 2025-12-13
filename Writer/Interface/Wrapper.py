@@ -172,7 +172,7 @@ class Interface:
         while Retries < max_r:
             CurrentSeed = _SeedOverride if Retries == 0 else random.randint(0, 99999)
             # ResponseMessagesList is the full history *after* the LLM call in this iteration
-            ResponseMessagesList, TokenUsage, InputChars, EstInputTokens = self.ChatAndStreamResponse(
+            ResponseMessagesList, TokenUsage, InputChars, EstInputTokens = self.ChatResponse(
                 _Logger, CurrentMessages, _Model, CurrentSeed, _FormatSchema=_FormatSchema,
             )
 
@@ -348,11 +348,11 @@ Key requirements:
         CurrentModelOptions["seed"] = Seed_int
         if _FormatSchema_dict: CurrentModelOptions.update({"format": "json", "temperature": CurrentModelOptions.get("temperature", 0.0)})
 
-        # Prepare chat parameters
+        # Prepare chat parameters - always non-streaming
         chat_params = {
             "model": ProviderModel_name,
             "messages": _Messages_list,
-            "stream": True,
+            "stream": False,
             "options": CurrentModelOptions
         }
 
@@ -364,15 +364,24 @@ Key requirements:
         for attempt in range(MaxRetries):
             try:
                 client = self.Clients[_Model_key]
-                Stream = client.chat(**chat_params)
-                AssistantMessage, LastChunk = self.StreamResponse(Stream, "ollama")
+
+                # Always use non-streaming mode (streaming removed)
+                response = client.chat(**chat_params)
+                AssistantMessage = {"role": "assistant", "content": response["message"]["content"]}
+                LastChunk = {"done": True}
+                if "prompt_eval_count" in response:
+                    LastChunk.update({
+                        "prompt_eval_count": response["prompt_eval_count"],
+                        "eval_count": response["eval_count"]
+                    })
+
                 FullResponseMessages = _Messages_list + [AssistantMessage]
                 TokenUsage = None
                 if LastChunk:
                     if Writer.Config.DEBUG:
                         _Logger.Log(f"LastChunk keys: {list(LastChunk.keys()) if isinstance(LastChunk, dict) else 'Not a dict'}", 6)
                         _Logger.Log(f"LastChunk 'done' status: {LastChunk.get('done', 'missing')}", 6)
-                    
+
                     if LastChunk.get("done"):
                         prompt_tokens = LastChunk.get("prompt_eval_count", 0)
                         completion_tokens = LastChunk.get("eval_count", 0)
@@ -405,8 +414,11 @@ Key requirements:
         for attempt in range(MaxRetries):
             try:
                 client = self.Clients[_Model_key]
-                GenResponse = client.generate_content(contents=Messages_transformed, stream=True, generation_config=gen_config)
-                AssistantMessage, _ = self.StreamResponse(GenResponse, "google")
+                GenResponse = client.generate_content(contents=Messages_transformed, stream=False, generation_config=gen_config)
+
+                # Always use non-streaming mode (streaming removed)
+                AssistantMessage = {"role": "assistant", "content": GenResponse.text}
+
                 # Append assistant message to the original _Messages_list structure for consistency
                 FinalMessages = _Messages_list + [AssistantMessage]
                 TokenUsage = None
@@ -431,8 +443,12 @@ Key requirements:
         MaxRetries = getattr(Writer.Config, "MAX_OPENROUTER_RETRIES", 2)
         for attempt in range(MaxRetries):
             try:
-                Stream = Client.chat(messages=_Messages_list, stream=True, **ReqOptions)
-                AssistantMessage, LastChunk = self.StreamResponse(Stream, "openrouter")
+                # Always use non-streaming mode (streaming removed)
+                response = Client.chat(messages=_Messages_list, stream=False, **ReqOptions)
+                AssistantMessage = response.choices[0].message.content
+                AssistantMessage = {"role": "assistant", "content": AssistantMessage}
+                LastChunk = {"usage": response.usage} if hasattr(response, 'usage') else {}
+
                 FullResponseMessages = _Messages_list + [AssistantMessage]
                 TokenUsage = None
                 if LastChunk and isinstance(LastChunk, dict) and "usage" in LastChunk:
@@ -445,7 +461,8 @@ Key requirements:
                 time.sleep(random.uniform(0.5,1.5) * (attempt + 1))
         raise Exception(f"OpenRouter chat failed for {_Model_key} after {MaxRetries} attempts.")
 
-    def ChatAndStreamResponse(self, _Logger, _Messages, _Model: str, _SeedOverride: int, _FormatSchema: dict):
+    def ChatResponse(self, _Logger, _Messages, _Model: str, _SeedOverride: int, _FormatSchema: dict = None):
+        """Non-streaming response for Pydantic generation with user-friendly display"""
         TotalInputChars, EstInputTokens = 0, 0
         try:
             for msg in _Messages: content = msg.get("content",""); TotalInputChars += len(str(content))
@@ -473,6 +490,33 @@ Key requirements:
             _Logger, _Model, ProviderModelName, _Messages, ModelOptions, SeedToUse, _FormatSchema
         )
 
+        # Display user-friendly content for Pydantic responses
+        if _FormatSchema and FullResponseMessages:
+            # Get the last assistant message content
+            if isinstance(FullResponseMessages, list) and len(FullResponseMessages) > 0:
+                # Find the last assistant message in the list
+                assistant_message = None
+                for msg in reversed(FullResponseMessages):
+                    if isinstance(msg, dict) and msg.get("role") == "assistant":
+                        assistant_message = msg
+                        break
+
+                if assistant_message:
+                    content = assistant_message.get("content", "")
+                else:
+                    content = str(FullResponseMessages[-1])  # Fallback
+            else:
+                content = str(FullResponseMessages) if FullResponseMessages else ""
+
+            if content:
+                if getattr(Writer.Config, 'DEBUG', False):
+                    print(f"[DEBUG] FullResponseMessages: {FullResponseMessages}")
+                    print(f"[DEBUG] Content extracted: {content[:100]}...")
+                self._DisplayPydanticResponse(content, _FormatSchema, _Logger)
+            else:
+                if getattr(Writer.Config, 'DEBUG', False):
+                    print(f"[DEBUG] No content extracted. FullResponseMessages: {FullResponseMessages}")
+
         gen_time = round(time.time() - start_time, 2)
         comp_tokens = TokenUsage.get("completion_tokens",0) if TokenUsage else 0
         tps = f"~{round(comp_tokens/gen_time,1)}tok/s" if comp_tokens and gen_time > 0.1 else "N/A"
@@ -484,72 +528,111 @@ Key requirements:
 
         return FullResponseMessages, TokenUsage, TotalInputChars, EstInputTokens
 
-    def StreamResponse(self, _Stream, _Provider: str):
-        Content, LastChunk = "", None
-        for chunk in _Stream:
-            LastChunk, ChunkText = chunk, None
-            if _Provider == "ollama": ChunkText = chunk.get("message",{}).get("content")
-            elif _Provider == "google": ChunkText = getattr(chunk, 'text', None)
-            elif _Provider == "openrouter": ChunkText = chunk.get("choices",[{}])[0].get("delta",{}).get("content")
-            if ChunkText:
-                Content += ChunkText
-                # Clean up chunk before printing
-                CleanChunkText = self._CleanStreamingOutput(ChunkText, Content)
-                if CleanChunkText:
-                    print(CleanChunkText, end="", flush=True)
-        print("" if not Writer.Config.DEBUG else "\n\n\n", flush=True)
-        return {"role": "assistant", "content": Content}, LastChunk
+    def ChatAndStreamResponse(self, _Logger, _Messages, _Model: str, _SeedOverride: int, _FormatSchema: dict):
+        """DEPRECATED: Use ChatResponse instead. Kept for backward compatibility."""
+        return self.ChatResponse(_Logger, _Messages, _Model, _SeedOverride, _FormatSchema)
 
-    def _CleanStreamingOutput(self, chunk_text: str, full_content: str) -> str:
-        """
-        Clean streaming output to hide JSON responses and unwanted tags.
+    def _DisplayPydanticResponse(self, full_content: str, schema: dict, _Logger):
+        """Display user-friendly extracted content from Pydantic response"""
 
-        Returns:
-            str: Cleaned chunk text to display, or empty string to hide
-        """
-        # Don't show pure JSON responses (they're for internal parsing)
-        stripped = chunk_text.strip()
-        if stripped.startswith('{') and stripped.endswith('}') and ':' in stripped:
-            # Likely a JSON response, don't show it
-            return ""
-
-        # Remove unwanted tags that AI might generate
-        unwanted_tags = [
-            '<OUTLINE REVISI>',
-            '</OUTLINE REVISI>',
-            '<OUTLINE>',
-            '</OUTLINE>',
-            '<REVISI>',
-            '</REVISI>'
-        ]
-
-        chunk_cleaned = chunk_text
-        has_tags = False
-        for tag in unwanted_tags:
-            if tag in chunk_text:
-                chunk_cleaned = chunk_cleaned.replace(tag, '')
-                has_tags = True
-
-        # If this is the first chunk with these tags, check if there's any content
-        if has_tags and not chunk_cleaned.strip():
-            # Only tags, no content to show
-            return ""
-
-        # For chunk that's part of a JSON response
-        if full_content and ('{' in full_content or '}' in full_content):
-            # Check if we're in the middle of a JSON response
+        try:
             import json
-            try:
-                # Try to reconstruct the full content and validate as JSON
-                test_json = full_content + chunk_text if not stripped else chunk_text
-                if stripped.startswith('{') or test_json.count('{') >= test_json.count('}'):
-                    # This looks like JSON
-                    return ""
-            except:
-                pass
+            response_data = json.loads(full_content)
 
-        # Return cleaned content or original if no tags
-        return chunk_cleaned if has_tags else chunk_text
+            # Get schema title for better identification
+            schema_title = schema.get('title', '').lower() if schema else ''
+
+            # Enhanced model detection and display
+            # Priority: Check for specific combinations first, then single fields
+            if "context" in response_data and len(response_data) == 1:
+                # BaseContext
+                print(f"✓ Konteks: {response_data['context']}")
+
+            elif "characters" in response_data and "locations" in response_data:
+                # StoryElements
+                char_count = len(response_data.get('characters', {}))
+                loc_count = len(response_data.get('locations', {}))
+                theme_count = len(response_data.get('themes', []))
+                print(f"✓ Elemen Cerita: {char_count} karakter, {loc_count} lokasi, {theme_count} tema")
+
+            elif "title" in response_data and "chapters" in response_data:
+                # OutlineOutput
+                print(f"✓ Judul: {response_data['title']}")
+                print(f"✓ Bab: {len(response_data['chapters'])} bab dibuat")
+
+            elif "title" in response_data and "genre" in response_data and "summary" in response_data:
+                # StoryInfoOutput
+                print(f"✓ Info Cerita: {response_data['title']} ({response_data['genre']})")
+
+            elif "text" in response_data:
+                # ChapterOutput (also covers ChapterWithScenes)
+                if isinstance(response_data['text'], str):
+                    word_count = len(response_data['text'].split())
+                    chapter_num = response_data.get('chapter_number', '')
+                    print(f"✓ Bab {chapter_num} di-generate: {word_count} kata" if chapter_num else f"✓ Bab di-generate: {word_count} kata")
+                else:
+                    print(f"✓ Response generated ({len(full_content)} chars)")
+
+            elif "reasoning" in response_data and len(response_data) == 1:
+                # ReasoningOutput
+                reasoning = response_data['reasoning']
+                word_count = len(reasoning.split())
+                print(f"✓ Reasoning dibuat: {word_count} kata")
+
+            elif "title" in response_data and len(response_data) == 1:
+                # TitleOutput
+                print(f"✓ Judul dibuat: {response_data['title']}")
+
+            elif "scene_number" in response_data and "setting" in response_data:
+                # SceneOutline
+                scene_num = response_data['scene_number']
+                setting = response_data['setting'][:50] if 'setting' in response_data and response_data['setting'] else ''
+                print(f"✓ Scene {scene_num}: {setting}..." if setting else f"✓ Scene {scene_num} dibuat")
+
+            elif "is_valid" in response_data:
+                # SceneValidationOutput
+                status = "Valid" if response_data['is_valid'] else "Invalid"
+                error_count = len(response_data.get('errors', []))
+                print(f"✓ Validasi scene: {status}" + (f" ({error_count} error)" if error_count else ""))
+
+            elif "score" in response_data and "strengths" in response_data:
+                # Evaluation outputs (OutlineEvaluationOutput, ChapterEvaluationOutput)
+                print(f"✓ Evaluasi: Score {response_data['score']}/10")
+
+            elif "feedback" in response_data and "rating" in response_data:
+                # ReviewOutput
+                print(f"✓ Review: Rating {response_data['rating']}/10")
+
+            elif "scenes" in response_data and len(response_data) == 1:
+                # SceneListSchema
+                scene_count = len(response_data['scenes'])
+                print(f"✓ Daftar {scene_count} scene dibuat")
+
+            elif "IsComplete" in response_data and len(response_data) == 1:
+                # CompleteSchema models (OutlineCompleteSchema, ChapterCompleteSchema)
+                status = "Selesai" if response_data['IsComplete'] else "Belum selesai"
+                print(f"✓ Status: {status}")
+
+            elif "suggestions" in response_data and isinstance(response_data['suggestions'], list):
+                # Legacy fallback for suggestions
+                print(f"✓ {len(response_data['suggestions'])} saran dibuat")
+
+            else:
+                # Generic fallback with better identification
+                model_name = schema_title.replace('output', '').replace('schema', '').title() if schema_title else 'Response'
+                print(f"✓ {model_name} generated ({len(str(full_content))} chars)")
+
+            # DEBUG mode: show full response
+            if getattr(Writer.Config, 'DEBUG', False):
+                print("\n--- Full Pydantic Response ---")
+                print(json.dumps(response_data, indent=2))
+
+        except Exception as e:
+            # Fallback: if parsing fails, just show basic info
+            print(f"✓ Response generated ({len(full_content)} chars)")
+            if getattr(Writer.Config, 'DEBUG', False):
+                print(f"Content: {full_content}")
+
 
     def BuildUserQuery(self, _Query: str):
         return {"role": "user", "content": _Query}

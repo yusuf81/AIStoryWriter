@@ -35,34 +35,32 @@ class TestWrapperConfigFallback:
         # Create real Interface instance (takes Models list)
         real_interface = Interface(Models=[])
 
-        # Mock the ChatAndStreamResponse to return valid JSON response
-        with patch.object(real_interface, 'ChatAndStreamResponse') as mock_chat:
+        # Mock the _ollama_chat method to return valid JSON response
+        with patch.object(real_interface, '_ollama_chat') as mock_chat:
             mock_chat.return_value = (
-                [{'role': 'assistant', 'content': '{"result": "test"}'}],  # ResponseMessagesList
-                {'prompt_tokens': 10, 'completion_tokens': 5},  # TokenUsage
-                50,  # InputChars
-                10   # EstInputTokens
+                [{'role': 'user', 'content': 'test'},
+                 {'role': 'assistant', 'content': '{"result": "test"}'}],  # ResponseMessagesList
+                {'prompt_tokens': 10, 'completion_tokens': 5}  # TokenUsage
             )
 
-            # Mock GetLastMessageText to return valid JSON
-            with patch.object(real_interface, 'GetLastMessageText', return_value='{"result": "test"}'):
-                # Act: Call SafeGenerateJSON without retry override (triggers fallback to config)
-                # RED: This will crash with AttributeError initially
-                # GREEN: After fix, this should work without crashing
-                result = real_interface.SafeGenerateJSON(
-                    mock_logger(),
-                    [{'role': 'user', 'content': 'test'}],
-                    "ollama://test",
-                    _max_retries_override=None  # Triggers config fallback
-                )
+            # Add mock client for the _ollama_chat
+            real_interface.Clients['ollama://test'] = Mock()
 
-                # Assert: Should return valid 3-tuple without crashing
-                assert result is not None
-                assert len(result) == 3  # (messages, json_response, token_usage)
-                messages, json_response, token_usage = result
-                assert isinstance(messages, list)
-                assert isinstance(json_response, dict)
-                assert isinstance(token_usage, dict)
+            # Act: Call SafeGenerateJSON without retry override (triggers config fallback)
+            result = real_interface.SafeGenerateJSON(
+                mock_logger(),
+                [{'role': 'user', 'content': 'test'}],
+                "ollama://test",
+                _max_retries_override=None  # Triggers config fallback
+            )
+
+            # Assert: Should return valid 3-tuple without crashing
+            assert result is not None
+            assert len(result) == 3  # (messages, json_response, token_usage)
+            messages, json_response, token_usage = result
+            assert isinstance(messages, list)
+            assert isinstance(json_response, dict)
+            assert isinstance(token_usage, dict)
 
     def test_safe_generate_json_respects_explicit_retry_override(self, mock_logger):
         """Verify SafeGenerateJSON uses _max_retries_override when provided"""
@@ -71,16 +69,19 @@ class TestWrapperConfigFallback:
         # Create Interface instance
         real_interface = Interface(Models=[])
 
-        with patch.object(real_interface, 'ChatAndStreamResponse') as mock_chat:
-            # Mock to fail first, succeed second
-            mock_chat.side_effect = [
-                # First attempt - invalid JSON
-                ([{'role': 'assistant', 'content': 'invalid json'}], {'prompt_tokens': 10}, 10, 10),
-                # Second attempt - valid JSON
-                ([{'role': 'assistant', 'content': '{"result": "success"}'}], {'prompt_tokens': 10}, 10, 10),
-            ]
+        # Mock the _ollama_chat method to simulate retry behavior
+        with patch.object(real_interface, '_ollama_chat') as mock_chat:
+            # First attempt - invalid JSON (handled by SafeGenerateJSON)
+            mock_chat.return_value = (
+                [{'role': 'user', 'content': 'test'},
+                 {'role': 'assistant', 'content': 'invalid json'}],  # ResponseMessagesList
+                {'prompt_tokens': 10, 'completion_tokens': 5}  # TokenUsage
+            )
 
-            # Use explicit override of 2 retries
+            # Add mock client for the _ollama_chat
+            real_interface.Clients['ollama://test'] = Mock()
+
+            # Mock GetLastMessageText to simulate JSON parsing failure then success
             with patch.object(real_interface, 'GetLastMessageText', side_effect=['invalid json', '{"result": "success"}']):
                 result = real_interface.SafeGenerateJSON(
                     mock_logger(),
@@ -89,7 +90,7 @@ class TestWrapperConfigFallback:
                     _max_retries_override=2  # Explicit override - should NOT use config
                 )
 
-                # Should succeed on second attempt
-                assert result is not None
-                messages, json_response, token_usage = result
-                assert json_response == {"result": "success"}
+            # Should succeed on second attempt
+            assert result is not None
+            messages, json_response, token_usage = result
+            assert json_response == {"result": "success"}
