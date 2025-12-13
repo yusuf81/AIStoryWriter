@@ -18,31 +18,7 @@ def mock_active_prompts_for_pdf_generator(mocker: MockerFixture):
     yield
 
 
-class MockLogger:
-    """Mock logger for testing"""
-    def __init__(self):
-        self.logs = []
-        self.log_levels = []
-
-    def Log(self, msg, lvl):
-        self.logs.append(msg)
-        self.log_levels.append(lvl)
-
-    def SaveLangchain(self, s, m):
-        pass
-
-
-@pytest.fixture
-def mock_logger():
-    return MockLogger()
-
-
-@pytest.fixture
-def mock_interface():
-    """Mock interface - not used in PDF generation but needed for signature"""
-    import types
-    mock = types.ModuleType("MockInterface")
-    return mock
+# Note: mock_logger and mock_interface fixtures are now in conftest.py
 
 
 @pytest.fixture
@@ -174,12 +150,16 @@ class TestGeneratePDF:
         mocker.patch('Writer.PDFGenerator.SimpleDocTemplate', return_value=mocked_doc)
         mocker.patch('Writer.PDFGenerator.os.makedirs')
 
+        # Create instances from factories
+        interface = mock_interface()
+        logger = mock_logger()
+
         with tempfile.TemporaryDirectory() as tmpdir:
             pdf_path = os.path.join(tmpdir, "test.pdf")
 
             success, message = GeneratePDF(
-                mock_interface,
-                mock_logger,
+                interface,
+                logger,
                 sample_markdown_content,
                 pdf_path,
                 "Test Story"
@@ -187,7 +167,7 @@ class TestGeneratePDF:
 
             assert success is True
             assert "successfully" in message.lower()
-            assert any("generated PDF" in log for log in mock_logger.logs)
+            assert any("generated PDF" in log[1] for log in logger.logs)
 
             # Verify SimpleDocTemplate was called
             mocked_doc.build.assert_called_once()
@@ -197,12 +177,16 @@ class TestGeneratePDF:
         # Force an error in PDF generation
         mocker.patch('Writer.PDFGenerator.SimpleDocTemplate', side_effect=Exception("Test error"))
 
+        # Create instances from factories
+        interface = mock_interface()
+        logger = mock_logger()
+
         with tempfile.TemporaryDirectory() as tmpdir:
             pdf_path = os.path.join(tmpdir, "test.pdf")
 
             success, message = GeneratePDF(
-                mock_interface,
-                mock_logger,
+                interface,
+                logger,
                 sample_markdown_content,
                 pdf_path,
                 "Test Story"
@@ -211,7 +195,7 @@ class TestGeneratePDF:
             assert success is False
             assert "failed" in message.lower()
             assert "Test error" in message
-            assert any("PDF generation failed" in log for log in mock_logger.logs)
+            assert any("PDF generation failed" in log[1] for log in logger.logs)
 
     def test_directory_creation(self, mock_interface, mock_logger, sample_markdown_content, mocker):
         """Test that output directory is created if it doesn't exist"""
@@ -225,8 +209,8 @@ class TestGeneratePDF:
             mock_makedirs = mocker.patch('Writer.PDFGenerator.os.makedirs')
 
             GeneratePDF(
-                mock_interface,
-                mock_logger,
+                mock_interface(),
+                mock_logger(),
                 sample_markdown_content,
                 pdf_path,
                 "Test Story"
@@ -257,8 +241,8 @@ Chapter two content."""
             pdf_path = os.path.join(tmpdir, "test.pdf")
 
             GeneratePDF(
-                mock_interface,
-                mock_logger,
+                mock_interface(),
+                mock_logger(),
                 content,
                 pdf_path,
                 "Multi Chapter Story"
@@ -308,11 +292,239 @@ Test content for integration test."""
                 pdf_path = os.path.join(tmpdir, "integration_test.pdf")
 
                 success, message = GeneratePDF(
-                    mock_interface,
-                    mock_logger,
+                    mock_interface(),
+                    mock_logger(),
                     content,
                     pdf_path,
                     "Integration Test"
                 )
 
                 assert success
+
+    def test_pdf_preserves_bold_formatting(self, mock_interface, mock_logger, mocker):
+        """Test that bold formatting is preserved in PDF"""
+        from unittest.mock import MagicMock
+        from reportlab.platypus import Paragraph
+
+        # Mock the PDF document to capture elements
+        mocked_doc = MagicMock()
+        # Make sure build returns something we can inspect
+        mock_build = MagicMock()
+        mocked_doc.build = mock_build
+        mocker.patch('Writer.PDFGenerator.SimpleDocTemplate', return_value=mocked_doc)
+        mocker.patch('Writer.PDFGenerator.os.makedirs')
+
+        content = """# Bold Test
+
+---
+
+## Chapter 1
+This text has **bold formatting** and *italic formatting*."""
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = os.path.join(tmpdir, "test.pdf")
+
+            GeneratePDF(
+                mock_interface(),
+                mock_logger(),
+                content,
+                pdf_path,
+                "Bold Test"
+            )
+
+            # Get the story elements from the build call
+            call_args = mocked_doc.build.call_args[0][0]
+
+            # Check that we have Paragraph elements with different styles
+            paragraph_texts = []
+            paragraph_styles = []
+
+            for element in call_args:
+                if isinstance(element, Paragraph):
+                    # Get the text and style from the element
+                    para_text = str(element)
+                    paragraph_texts.append(para_text)
+                    if hasattr(element, 'style'):
+                        paragraph_styles.append(element.style.name)
+
+            # Verify that content is preserved
+            assert "bold formatting" in ' '.join(paragraph_texts)
+            assert "italic formatting" in ' '.join(paragraph_texts)
+
+            # Should have multiple Paragraph elements due to formatting
+            assert len([e for e in call_args if isinstance(e, Paragraph)]) > 2
+
+    def test_pdf_preserves_italics_formatting(self, mock_interface, mock_logger, mocker):
+        """Test that italics formatting is preserved in PDF"""
+        from unittest.mock import MagicMock
+        from reportlab.platypus import Paragraph
+
+        mocked_doc = MagicMock()
+        mocker.patch('Writer.PDFGenerator.SimpleDocTemplate', return_value=mocked_doc)
+        mocker.patch('Writer.PDFGenerator.os.makedirs')
+
+        content = """# Italics Test
+
+---
+
+## Chapter 1
+This text has *italic formatting* that should be preserved."""
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = os.path.join(tmpdir, "test.pdf")
+
+            GeneratePDF(
+                mock_interface(),
+                mock_logger(),
+                content,
+                pdf_path,
+                "Italics Test"
+            )
+
+            # Get the story elements
+            call_args = mocked_doc.build.call_args[0][0]
+            paragraph_texts = [str(e) for e in call_args if isinstance(e, Paragraph)]
+
+            # Verify content is preserved
+            assert "italic formatting" in ' '.join(paragraph_texts)
+
+            # Should have multiple Paragraph elements
+            assert len([e for e in call_args if isinstance(e, Paragraph)]) > 1
+
+    def test_pdf_chapter_title_display(self, mock_interface, mock_logger, mocker):
+        """Test that chapter titles are properly displayed without duplication"""
+        from unittest.mock import MagicMock
+        from reportlab.platypus import Paragraph
+
+        mocked_doc = MagicMock()
+        mocker.patch('Writer.PDFGenerator.SimpleDocTemplate', return_value=mocked_doc)
+        mocker.patch('Writer.PDFGenerator.os.makedirs')
+
+        content = """# Chapter Title Test
+
+---
+
+## Chapter 1: The Adventure Begins
+This is the story of a great adventure.
+
+## Chapter 2: Into the Unknown
+Our hero ventures into mysterious lands."""
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = os.path.join(tmpdir, "test.pdf")
+
+            GeneratePDF(
+                mock_interface(),
+                mock_logger(),
+                content,
+                pdf_path,
+                "Chapter Title Test"
+            )
+
+            # Get the story elements
+            call_args = mocked_doc.build.call_args[0][0]
+
+            # Collect chapter titles (using PDFChapter style from PDFStyles)
+            chapter_titles = []
+            for element in call_args:
+                if isinstance(element, Paragraph) and hasattr(element, 'style'):
+                    if element.style.name == 'PDFChapter':
+                        chapter_titles.append(str(element))
+
+            # Should have proper chapter titles without duplication
+            assert "The Adventure Begins" in ' '.join(chapter_titles)
+            assert "Into the Unknown" in ' '.join(chapter_titles)
+            # Should NOT have "Chapter 1" as a separate title
+            assert chapter_titles.count("Chapter 1") == 0
+
+    def test_pdf_paragraph_breaks(self, mock_interface, mock_logger, mocker):
+        """Test that paragraph breaks are properly handled"""
+        from unittest.mock import MagicMock
+        from reportlab.platypus import Paragraph
+
+        mocked_doc = MagicMock()
+        mocker.patch('Writer.PDFGenerator.SimpleDocTemplate', return_value=mocked_doc)
+        mocker.patch('Writer.PDFGenerator.os.makedirs')
+
+        content = """# Paragraph Test
+
+---
+
+## Chapter 1
+First paragraph with some text.
+
+Second paragraph with different text.
+
+Third paragraph after a blank line.
+
+
+This should have proper spacing."""
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = os.path.join(tmpdir, "test.pdf")
+
+            GeneratePDF(
+                mock_interface(),
+                mock_logger(),
+                content,
+                pdf_path,
+                "Paragraph Test"
+            )
+
+            # Get the story elements
+            call_args = mocked_doc.build.call_args[0][0]
+
+            # Count Paragraph elements
+            paragraph_count = sum(1 for item in call_args if isinstance(item, Paragraph))
+
+            # Should have multiple Paragraph elements (at least 3 due to chapter title + content)
+            assert paragraph_count >= 3, f"Expected at least 3 paragraphs, found {paragraph_count}"
+
+    def test_pdf_section_headers(self, mock_interface, mock_logger, mocker):
+        """Test that H3 headers within chapters are formatted properly"""
+        from unittest.mock import MagicMock
+        from reportlab.platypus import Paragraph
+
+        mocked_doc = MagicMock()
+        mocker.patch('Writer.PDFGenerator.SimpleDocTemplate', return_value=mocked_doc)
+        mocker.patch('Writer.PDFGenerator.os.makedirs')
+
+        content = """# Section Header Test
+
+---
+
+## Chapter 1
+Regular chapter content.
+
+### Finding the Map
+Important plot development here.
+
+### Meeting the Dragon
+Another important section.
+
+More regular content."""
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = os.path.join(tmpdir, "test.pdf")
+
+            GeneratePDF(
+                mock_interface(),
+                mock_logger(),
+                content,
+                pdf_path,
+                "Section Header Test"
+            )
+
+            # Get the story elements
+            call_args = mocked_doc.build.call_args[0][0]
+
+            # Collect all text content
+            paragraph_texts = [str(e) for e in call_args if isinstance(e, Paragraph)]
+
+            combined_text = ' '.join(paragraph_texts)
+
+            # Section headers should be preserved
+            assert "Finding the Map" in combined_text
+            assert "Meeting the Dragon" in combined_text
+            assert "Regular chapter content" in combined_text
+            assert "More regular content" in combined_text

@@ -1,14 +1,12 @@
 import Writer.Config
 import os
-import re
-import markdown
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, PageBreak, Paragraph
 from reportlab.lib.units import inch
 from reportlab.rl_config import defaultPageSize
 from reportlab.pdfgen import canvas
-from reportlab.lib.colors import black
+from Writer.MarkdownProcessor import MarkdownProcessor
+from Writer.PDFStyles import get_pdf_styles
 
 
 class NumberedCanvas(canvas.Canvas):
@@ -94,7 +92,7 @@ def extract_story_content(markdown_content):
 
 def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
     """
-    Generate PDF from markdown content using reportlab
+    Generate PDF from markdown content using reportlab and MarkdownProcessor
 
     Args:
         Interface: Interface wrapper (for compatibility, not used here)
@@ -123,98 +121,64 @@ def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
             bottomMargin=72
         )
 
-        # Get styles
-        styles = getSampleStyleSheet()
+        # Get centralized PDF styles
+        pdf_styles = get_pdf_styles()
+        font_family = pdf_styles['font_family']
+        chapter_style = pdf_styles['chapter']
 
-        # Use standard fonts available in reportlab
-        font_family = "Times-Roman"  # Always available
-        if Writer.Config.PDF_FONT_FAMILY.lower() == "georgia":
-            font_family = "Times-Roman"  # Georgia not available, fallback to Times
-
-        # Custom styles
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Title'],
-            fontName=font_family,
-            fontSize=Writer.Config.PDF_TITLE_SIZE,
-            textColor=black,
-            alignment=1,  # Center
-            spaceAfter=30
-        )
-
-        chapter_style = ParagraphStyle(
-            'Chapter',
-            parent=styles['Heading1'],
-            fontName=font_family,
-            fontSize=Writer.Config.PDF_CHAPTER_SIZE,
-            textColor=black,
-            spaceBefore=30,
-            spaceAfter=20
-        )
-
-        normal_style = ParagraphStyle(
-            'Normal',
-            parent=styles['Normal'],
-            fontName=font_family,
-            fontSize=Writer.Config.PDF_FONT_SIZE,
-            textColor=black,
-            spaceAfter=12
-        )
+        # Initialize MarkdownProcessor with centralized styles
+        processor = MarkdownProcessor(pdf_styles)
 
         story = []
 
-        # Parse markdown and extract chapters
+        # Process content with MarkdownProcessor
         lines = story_content.split('\n')
         current_chapter = []
         chapter_num = 0
+        title_processed = False
 
         for line in lines:
             # Title page
-            if line.startswith('# ') and chapter_num == 0:
-                # Add title page
-                story.append(Spacer(1, 2*inch))  # Space at top
-                story.append(Paragraph(line[2:].strip(), title_style))
-                story.append(Spacer(1, 1.5*inch))  # Space after title
-                story.append(PageBreak())  # New page for content
+            if line.startswith('# ') and not title_processed:
+                # Add title page using MarkdownProcessor
+                title_elements = processor.create_title_page(
+                    line[2:].strip(),
+                    font_family,
+                    Writer.Config.PDF_TITLE_SIZE
+                )
+                story.extend(title_elements)
+                title_processed = True
                 continue
 
             # Chapter headings
             if line.startswith('## ') and not line.startswith('## Summary') and not line.startswith('## Tags'):
-                # Save previous chapter content
+                # Save previous chapter content using MarkdownProcessor
                 if current_chapter:
-                    content = '\n'.join(current_chapter).strip()
-                    if content:
-                        # Convert markdown to HTML, then to paragraphs
-                        html = markdown.markdown(content)
-                        # Convert to simple paragraphs (handle <p> and <h3> etc)
-                        for para in re.split(r'\n\n+', content):
-                            if para.strip():
-                                if para.startswith('### '):
-                                    # Chapter sections
-                                    p_text = para[4:].strip()
-                                    if p_text:
-                                        story.append(Paragraph(p_text, chapter_style))
-                                else:
-                                    story.append(Paragraph(para.replace('\n', ' '), normal_style))
+                    chapter_text = '\n'.join(current_chapter).strip()
+                    if chapter_text:
+                        chapter_elements = processor.process_content(chapter_text)
+                        story.extend(chapter_elements)
 
-                # Start new chapter
+                # Process new chapter title
                 chapter_num += 1
-                chapter_title = line[3:].strip()
+                ch_num, ch_title = processor.process_chapter_title(line)
+
                 if chapter_num > 1:
                     story.append(PageBreak())  # New page for each chapter
-                story.append(Paragraph(f"Chapter {chapter_num}", chapter_style))
+
+                # Add chapter header
+                story.append(Paragraph(ch_title, chapter_style))
                 current_chapter = []
             else:
-                if line.strip() and not line.strip() == '---':
+                if line.strip():
                     current_chapter.append(line)
 
-        # Add final chapter
+        # Add final chapter content
         if current_chapter:
-            content = '\n'.join(current_chapter).strip()
-            if content:
-                for para in re.split(r'\n\n+', content):
-                    if para.strip() and not para.startswith('### '):
-                        story.append(Paragraph(para.replace('\n', ' '), normal_style))
+            chapter_text = '\n'.join(current_chapter).strip()
+            if chapter_text:
+                chapter_elements = processor.process_content(chapter_text)
+                story.extend(chapter_elements)
 
         # Build PDF with page numbers
         doc.build(story, canvasmaker=NumberedCanvas)

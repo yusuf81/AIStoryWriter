@@ -32,19 +32,6 @@ def mock_active_prompts(mocker: MockerFixture):
     yield # No explicit cleanup needed for sys.modules when using mocker.patch.dict
 
 
-# Mock Logger Utility
-class MockLogger:
-    def __init__(self):
-        self.logs = []
-    def Log(self, message, level):
-        # print(f"MockLog L{level}: {message}") # For debug during test writing
-        self.logs.append((level, message))
-    def SaveLangchain(self, stack, messages): pass
-
-@pytest.fixture
-def mock_logger():
-    return MockLogger()
-
 # Tests for GenerateOutline
 def test_generate_outline_success_first_pass(mocker: MockerFixture, mock_logger):
     # Mock dependencies
@@ -139,7 +126,7 @@ def test_generate_outline_reaches_max_revisions(mocker: MockerFixture, mock_logg
         ("Revised Outline v3", [{"role": "assistant", "content": "Revised Outline v3"}]),
     ]
 
-    _, _, outline_after_loop, _ = GenerateOutline(mock_interface, mock_logger, "Test")
+    _, _, outline_after_loop, _ = GenerateOutline(mock_interface, mock_logger(), "Test")
 
     assert outline_after_loop == "Revised Outline v3"
     assert mock_interface.SafeGenerateText.call_count == 2
@@ -370,7 +357,7 @@ Make sure your chapter has a markdown-formatted name!
 
 
     chapter_outline = GeneratePerChapterOutline(
-        mock_interface, mock_logger, _Chapter=1, _TotalChapters=5, _Outline="Main Story Outline"
+        mock_interface, mock_logger(), _Chapter=1, _TotalChapters=5, _Outline="Main Story Outline"
     )
 
     assert chapter_outline == "Detailed Chapter 1 Outline"

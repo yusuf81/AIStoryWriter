@@ -35,19 +35,6 @@ def mock_active_prompts_for_integration(mocker: MockerFixture):
     yield
 
 
-class MockLogger:
-    def __init__(self):
-        self.logs = []
-    def Log(self, msg, lvl):
-        self.logs.append((lvl, msg))
-    def SaveLangchain(self, s, m): pass
-
-
-@pytest.fixture
-def mock_logger():
-    return MockLogger()
-
-
 @pytest.fixture
 def mock_interface(mocker: MockerFixture):
     mock = mocker.Mock()
@@ -105,7 +92,7 @@ class TestPDFGenerationIntegration:
 
         try:
             # Create pipeline
-            pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, None)
+            pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, None)
 
             # Run post-processing stage directly
             args = MockArgs(generate_pdf=False)
@@ -146,7 +133,7 @@ class TestPDFGenerationIntegration:
 
         try:
             # Create pipeline
-            pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, None)
+            pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, None)
 
             # Enable PDF generation via args flag
             args = MockArgs(generate_pdf=True)
@@ -189,7 +176,7 @@ class TestPDFGenerationIntegration:
         mocked_generate.return_value = (False, "PDF generation failed")
 
         # Create pipeline
-        pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, None)
+        pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, None)
 
         # Enable PDF generation via args
         args = MockArgs(generate_pdf=True)

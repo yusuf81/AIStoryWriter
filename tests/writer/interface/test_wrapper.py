@@ -5,22 +5,6 @@ import Writer.Config # To access config values like retry limits
 import json_repair # To potentially mock it
 import Writer.PrintUtils # For potential logger mocking if needed
 
-# Placeholder for a more robust mock logger if complex assertions are needed later
-class MockLogger:
-    def __init__(self):
-        self.logs = []
-        self.saved_langchain = []
-
-    def Log(self, message, level):
-        # print(f"MockLog L{level}: {message}") # Print for visibility during test runs
-        self.logs.append({"message": message, "level": level})
-
-    def SaveLangchain(self, call_stack, messages):
-        self.saved_langchain.append({"call_stack": call_stack, "messages": messages})
-
-    def GetLastLog(self):
-        return self.logs[-1] if self.logs else None
-
 class TestGetModelAndProvider:
     def setup_method(self):
         self.interface = Interface(Models=[]) # No models needed for GetModelAndProvider
@@ -169,9 +153,10 @@ class TestRemoveThinkTagFromAssistantMessages:
         assert cleaned == messages
 
 class TestSafeGenerateText:
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, mock_logger):
         self.interface = Interface(Models=[])
-        self.mock_logger = MockLogger() # Use the defined MockLogger
+        self.mock_logger = mock_logger()
 
     def test_safegen_text_valid_first_try(self, mocker: MockerFixture):
         mock_chat_response = mocker.patch.object(self.interface, "ChatAndStreamResponse")
@@ -235,9 +220,10 @@ class TestSafeGenerateText:
         Writer.Config.MAX_TEXT_RETRIES = original_max_text_retries # Restore original value
 
 class TestSafeGenerateJSON:
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, mock_logger):
         self.interface = Interface(Models=[])
-        self.mock_logger = MockLogger()
+        self.mock_logger = mock_logger()
 
     def test_safegen_json_valid_first_try(self, mocker: MockerFixture):
         mock_chat_response = mocker.patch.object(self.interface, "ChatAndStreamResponse")

@@ -22,17 +22,6 @@ def mock_active_prompts_for_pipeline(mocker: MockerFixture):
     mocker.patch.dict(sys.modules, {"Writer.Prompts": mock_prompts})
     yield
 
-class MockLogger:
-    def __init__(self):
-        self.logs = []
-    def Log(self, msg, lvl):
-        # print(f"LOG L{lvl}: {msg}")
-        self.logs.append((lvl, msg))
-    def SaveLangchain(self, s, m): pass
-
-@pytest.fixture
-def mock_logger():
-    return MockLogger()
 
 @pytest.fixture
 def mock_interface(mocker: MockerFixture):
@@ -71,7 +60,7 @@ def test_run_pipeline_new_run_full_flow(mocker: MockerFixture, mock_logger, mock
     # Mock ActivePrompts again locally if necessary, or ensure autouse=True is effective.
     # For this test, rely on autouse fixture.
     active_prompts_mock = sys.modules["Writer.Prompts"]
-    pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+    pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, active_prompts_mock)
 
     initial_state = {"last_completed_step": "init"}
     state_filepath = "dummy_state.json"
@@ -98,7 +87,7 @@ def test_run_pipeline_new_run_full_flow(mocker: MockerFixture, mock_logger, mock
 
 def test_run_pipeline_resume_from_detect_chapters(mocker: MockerFixture, mock_logger, mock_interface, mock_pipeline_dependencies):
     active_prompts_mock = sys.modules["Writer.Prompts"]
-    pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+    pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, active_prompts_mock)
 
     initial_state = {
         "last_completed_step": "detect_chapters", # Start after this step
@@ -126,7 +115,8 @@ def test_run_pipeline_resume_from_detect_chapters(mocker: MockerFixture, mock_lo
 
 def test_run_pipeline_skip_expand_outline_if_disabled(mocker: MockerFixture, mock_logger, mock_interface, mock_pipeline_dependencies):
     active_prompts_mock = sys.modules["Writer.Prompts"]
-    pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+    logger_instance = mock_logger()
+    pipeline = StoryPipeline(mock_interface, logger_instance, Writer.Config, active_prompts_mock)
 
     initial_state = {
         "last_completed_step": "detect_chapters", # Start after this step
@@ -154,4 +144,4 @@ def test_run_pipeline_skip_expand_outline_if_disabled(mocker: MockerFixture, moc
     assert final_state['last_completed_step'] == 'complete'
 
     # Check logs for skipping message
-    assert any("Skipping Per-Chapter Outline Expansion (Config.EXPAND_OUTLINE=False)" in log[1] for log in mock_logger.logs)
+    assert any("Skipping Per-Chapter Outline Expansion (Config.EXPAND_OUTLINE=False)" in log[1] for log in logger_instance.logs)

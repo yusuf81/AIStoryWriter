@@ -16,7 +16,22 @@
       "Bash(flake8:*)",
       "Bash(.venv/bin/pytest tests/test_pdf_generation_integration.py -q)",
       "Bash(.venv/bin/pytest:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(.venv/bin/pip install beautifulsoup4)",
+      "Bash(.venv/bin/python3 -c \"\nfrom Writer.PDFGenerator import GeneratePDF\nfrom unittest.mock import MagicMock\n\n# Test what''s happening\nmock_interface = MagicMock()\nmock_logger = MagicMock()\nmock_logger.Log = MagicMock()\n\ncontent = ''''''# Test\n\n---\n\n## Chapter 1\nTest content''''''\n\nsuccess, msg = GeneratePDF(mock_interface, mock_logger, content, ''/tmp/test.pdf'', ''Test'')\nprint(f''Success: {success}'')\nprint(f''Message: {msg}'')\nprint(f''Logger calls: {mock_logger.Log.call_args_list}'')\n\")",
+      "Bash(.venv/bin/python3 -c \"\nfrom Writer.PDFGenerator import GeneratePDF\nfrom unittest.mock import MagicMock\n\n# Test what''s happening\nmock_interface = MagicMock()\nmock_logger = MagicMock()\nmock_logger.Log = MagicMock()\n\ncontent = ''''''# Test\n\n---\n\n## Chapter 1\nTest content with **bold** and *italic* text.\n\nSecond paragraph.\n\n### Section Header\nSection content.''''''\n\nsuccess, msg = GeneratePDF(mock_interface, mock_logger, content, ''/tmp/test.pdf'', ''Test'')\nprint(f''Success: {success}'')\nprint(f''Message: {msg}'')\n\")",
+      "Bash(.venv/bin/python3 -c \"\nfrom Writer.PDFGenerator import GeneratePDF\nfrom unittest.mock import MagicMock\nfrom reportlab.platypus import Paragraph\n\nmock_interface = MagicMock()\nmock_logger = MagicMock()\nmock_logger.Log = MagicMock()\nmocked_doc = MagicMock()\nmock_doc_build = MagicMock()\nmocked_doc.build = mock_doc_build\n\ncontent = ''''''# Paragraph Test\n\n---\n\n## Chapter 1\nFirst paragraph with some text.\n\nSecond paragraph with different text.\n\nThird paragraph after a blank line.\n\n\nThis should have proper spacing.''''''\n\nsuccess, msg = GeneratePDF(mock_interface, mock_logger, content, ''/tmp/test.pdf'', ''Test'')\nprint(f''Success: {success}'')\n\n# Get the story elements\ncall_args = mocked_doc.build.call_args[0][0]\n\nprint(f''Total elements: {len(call_args)}'')\nfor i, item in enumerate(call_args):\n    print(f''{i}: {type(item).__name__} - {str(item)[:50]}...'')\n\nparagraph_count = sum(1 for item in call_args if isinstance(item, Paragraph))\nprint(f''Paragraph count: {paragraph_count}'')\n\")",
+      "Bash(.venv/bin/python3 Write.py -Prompt Prompts/FantasyTest.txt -GeneratePDF -NoChapterRevision)",
+      "Bash(ls Prompts/*.txt)",
+      "Bash(.venv/bin/pip install PyPDF2 bs4)",
+      "Bash(.venv/bin/python3 -c \"\nfrom Writer.PDFGenerator import GeneratePDF\n\nclass SimpleLogger:\n    def Log(self, msg, lvl): pass\n    def SaveLangchain(self, s, m): pass\n\nlogger = SimpleLogger()\n\ncontent = ''''''# Test Story with **Bold** and *Italic*\n\n---\n\n## Chapter 1: The Beginning\nThis is **bold text** and this is *italic text*.\n\n### Section Header\nThis is a section.\n\nAnother paragraph with ***bold italic*** text.\n\n## Chapter 2: The End\nEnding with no special formatting.''''''\n\nimport tempfile\nimport os\n\nwith tempfile.TemporaryDirectory() as tmpdir:\n    output_path = os.path.join(tmpdir, ''test.pdf'')\n    success, msg = GeneratePDF(None, logger, content, output_path, ''Test Story'')\n    print(f''Success: {success}'')\n    print(f''Message: {msg}'')\n\")",
+      "Bash(python -m pytest:*)",
+      "Bash(git log:*)",
+      "Bash(python -c:*)",
+      "Bash(.venv/bin/pytest tests/writer/test_markdown_processor.py -v)",
+      "Bash(.venv/bin/pytest tests/writer/test_pdf_generator.py -v)",
+      "Bash(.venv/bin/pyright:*)",
+      "Bash(.venv/bin/flake8:*)"
     ]
   }
 }

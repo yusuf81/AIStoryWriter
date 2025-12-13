@@ -45,16 +45,6 @@ def mock_active_prompts_for_chapter(mocker: MockerFixture):
     mocker.patch.dict(sys.modules, {"Writer.Prompts": mock_prompts})
     yield # Cleanup is handled by pytest-mock
 
-class MockLogger:
-    def __init__(self): self.logs = []
-    def Log(self, msg, lvl):
-        # print(f"LOG L{lvl}: {msg}")
-        self.logs.append((lvl, msg))
-    def SaveLangchain(self, s, m): pass
-
-@pytest.fixture
-def mock_logger(mocker):
-    return MockLogger()
 
 # --- Tests for _prepare_initial_generation_context ---
 def test_prepare_initial_context_no_prev_chapters(mocker: MockerFixture, mock_logger):
@@ -69,7 +59,7 @@ def test_prepare_initial_context_no_prev_chapters(mocker: MockerFixture, mock_lo
     active_prompts_mock = sys.modules["Writer.Prompts"]
 
     history, ctx_insert, this_outline, last_summary, detail_check = _prepare_initial_generation_context(
-        mock_interface, mock_logger, active_prompts_mock,
+        mock_interface, mock_logger(), active_prompts_mock,
         _Outline="Main chapter outline section", _Chapters=[], _ChapterNum=1, _TotalChapters=5,
         Config_module=Writer.Config
     )
@@ -97,7 +87,7 @@ def test_prepare_initial_context_with_prev_chapters(mocker: MockerFixture, mock_
     active_prompts_mock = sys.modules["Writer.Prompts"]
     prev_chapters = [{"number": 1, "title": "Chapter 1", "text": "Chapter 1 content"}]
     history, ctx_insert, this_outline, last_summary, detail_check = _prepare_initial_generation_context(
-        mock_interface, mock_logger, active_prompts_mock,
+        mock_interface, mock_logger(), active_prompts_mock,
         _Outline="Main outline part for ch2", _Chapters=prev_chapters, _ChapterNum=2, _TotalChapters=5,
         Config_module=Writer.Config
     )
@@ -132,7 +122,7 @@ def test_generate_stage1_plot_success_first_try(mocker: MockerFixture, mock_logg
     active_prompts_mock = sys.modules["Writer.Prompts"]
 
     result = _generate_stage1_plot(
-        mock_interface, mock_logger, active_prompts_mock,
+        mock_interface, mock_logger(), active_prompts_mock,
         _ChapterNum=1, _TotalChapters=3, MessageHistory=[], ContextHistoryInsert="",
         ThisChapterOutline="Specific outline for Ch1", FormattedLastChapterSummary="Summary of prev",
         _BaseContext="Base story context", DetailedChapterOutlineForCheck="Detailed outline for check",
@@ -175,7 +165,7 @@ def test_generate_stage1_plot_retry_and_succeed(mocker: MockerFixture, mock_logg
     mocker.patch("Writer.Config.CHAPTER_MAX_REVISIONS", 5)
 
     result = _generate_stage1_plot(
-        mock_interface, mock_logger, active_prompts_mock,
+        mock_interface, mock_logger(), active_prompts_mock,
         _ChapterNum=1, _TotalChapters=3, MessageHistory=[], ContextHistoryInsert="",
         ThisChapterOutline="Specific outline for Ch1", FormattedLastChapterSummary="Summary of prev",
         _BaseContext="Base story context", DetailedChapterOutlineForCheck="Detailed outline for check",
@@ -200,7 +190,7 @@ def test_run_scene_generation_pipeline(mocker: MockerFixture, mock_logger):
     active_prompts_mock = sys.modules["Writer.Prompts"]
 
     result = _run_scene_generation_pipeline_for_initial_plot(
-        mocker.Mock(), mock_logger, active_prompts_mock, # Interface mock can be simpler here
+        mocker.Mock(), mock_logger(), active_prompts_mock, # Interface mock can be simpler here
         _ChapterNum=1, _TotalChapters=1, ThisChapterOutline="Scene outline here",
         _FullOutlineForSceneGen="Full story outline", _BaseContext="Base",
         Config_module=Writer.Config
@@ -227,7 +217,7 @@ def test_run_final_chapter_revision_loop_success(mocker: MockerFixture, mock_log
 
     initial_chapter_content = "Initial Chapter Content v1"
     result = _run_final_chapter_revision_loop(
-        mock_interface, mock_logger, active_prompts_mock,
+        mock_interface, mock_logger(), active_prompts_mock,
         _ChapterNum=1, _TotalChapters=1, ChapterToRevise=initial_chapter_content,
         OverallOutline="Story outline", MessageHistoryForRevision=[],
         Config_module=Writer.Config, LLMEditor_module=mock_llm_editor_module, # Pass the mocked module
@@ -310,7 +300,7 @@ def test_generate_chapter_orchestration_with_scenes_and_revisions(mocker: Mocker
 
     # Test the real GenerateChapter function with scenes and revisions enabled
     result = GenerateChapter(
-        mock_interface_main, mock_logger, 1, 1, "ChOutline", [], "BaseCtx", "FullOutline"
+        mock_interface_main, mock_logger(), 1, 1, "ChOutline", [], "BaseCtx", "FullOutline"
     )
 
     # Verify the function completed and returned content

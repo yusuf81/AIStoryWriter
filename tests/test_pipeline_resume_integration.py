@@ -35,19 +35,6 @@ def mock_active_prompts_for_integration(mocker: MockerFixture):
     yield
 
 
-class MockLogger:
-    def __init__(self):
-        self.logs = []
-    def Log(self, msg, lvl):
-        self.logs.append((lvl, msg))
-    def SaveLangchain(self, s, m): pass
-
-
-@pytest.fixture
-def mock_logger():
-    return MockLogger()
-
-
 @pytest.fixture
 def mock_interface(mocker: MockerFixture):
     return mocker.Mock()
@@ -96,7 +83,7 @@ class TestPipelineResumeFromDifferentCheckpoints:
     def test_resume_from_init_runs_full_pipeline(self, mocker: MockerFixture, mock_logger, mock_interface, mock_dependencies):
         """Test resume from 'init' runs the complete pipeline."""
         active_prompts_mock = sys.modules["Writer.Prompts"]
-        pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+        pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, active_prompts_mock)
 
         initial_state = {"last_completed_step": "init"}
         
@@ -121,7 +108,7 @@ class TestPipelineResumeFromDifferentCheckpoints:
     def test_resume_from_outline_skips_outline_generation(self, mocker: MockerFixture, mock_logger, mock_interface, mock_dependencies):
         """Test resume from 'outline' skips outline generation."""
         active_prompts_mock = sys.modules["Writer.Prompts"]
-        pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+        pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, active_prompts_mock)
 
         initial_state = {
             "last_completed_step": "outline",
@@ -154,7 +141,7 @@ class TestPipelineResumeFromDifferentCheckpoints:
     def test_resume_from_detect_chapters_with_expand_outline_disabled(self, mocker: MockerFixture, mock_logger, mock_interface, mock_dependencies):
         """Test resume from 'detect_chapters' when outline expansion is disabled."""
         active_prompts_mock = sys.modules["Writer.Prompts"]
-        pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+        pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, active_prompts_mock)
 
         # Disable outline expansion
         mocker.patch.object(Writer.Config, 'EXPAND_OUTLINE', False)
@@ -193,7 +180,7 @@ class TestPipelineResumeFromDifferentCheckpoints:
     def test_resume_from_expand_chapters_proceeds_to_chapter_generation(self, mocker: MockerFixture, mock_logger, mock_interface, mock_dependencies):
         """Test resume from 'expand_chapters' proceeds directly to chapter generation."""
         active_prompts_mock = sys.modules["Writer.Prompts"]
-        pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+        pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, active_prompts_mock)
 
         initial_state = {
             "last_completed_step": "expand_chapters",
@@ -232,7 +219,7 @@ class TestPipelineResumeFromDifferentCheckpoints:
         # Ensure final edit pass is enabled for this test
         mocker.patch.object(Writer.Config, 'ENABLE_FINAL_EDIT_PASS', True)
         
-        pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+        pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, active_prompts_mock)
 
         initial_state = {
             "last_completed_step": "chapter_generation_complete",
@@ -270,7 +257,7 @@ class TestPipelineResumeFromDifferentCheckpoints:
     def test_resume_preserves_existing_data(self, mocker: MockerFixture, mock_logger, mock_interface, mock_dependencies):
         """Test that resume preserves all existing data from previous run."""
         active_prompts_mock = sys.modules["Writer.Prompts"]
-        pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+        pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, active_prompts_mock)
 
         original_outline = "Original Detailed Outline Content"
         original_chapters = [
@@ -314,7 +301,7 @@ class TestPartialChapterGeneration:
     def test_resume_chapter_generation_continues_from_next_chapter(self, mocker: MockerFixture, mock_logger, mock_interface, mock_dependencies):
         """Test resume from partial chapter generation continues from the correct chapter."""
         active_prompts_mock = sys.modules["Writer.Prompts"]
-        pipeline = StoryPipeline(mock_interface, mock_logger, Writer.Config, active_prompts_mock)
+        pipeline = StoryPipeline(mock_interface, mock_logger(), Writer.Config, active_prompts_mock)
 
         # Simulate having completed 2 out of 5 chapters
         initial_state = {

@@ -68,16 +68,43 @@ def mock_interface():
 
 
 @pytest.fixture
+def mock_logger():
+    """Factory for creating mock Logger with standard interface"""
+    def _create_mock_logger():
+        from unittest.mock import MagicMock
+
+        # Create a fresh Mock with name for better debugging
+        logger = MagicMock(name='mock_logger')
+
+        # Standard logger methods
+        logger.Log = MagicMock()
+        logger.SaveLangchain = MagicMock()
+
+        # Track logs for assertions (format: [(lvl, msg), ...])
+        logger.logs = []
+
+        def log_side_effect(msg, lvl):
+            logger.logs.append((lvl, msg))
+
+        logger.Log.side_effect = log_side_effect
+
+        return logger
+    return _create_mock_logger
+
+
+@pytest.fixture
 def indonesian_language_config():
     """Set up Indonesian language configuration for tests"""
     with patch('Writer.Config.NATIVE_LANGUAGE', 'id'):
         yield
+
 
 @pytest.fixture
 def english_language_config():
     """Set up English language configuration for tests"""
     with patch('Writer.Config.NATIVE_LANGUAGE', 'en'):
         yield
+
 
 @pytest.fixture(autouse=True)
 def cleanup_test_artifacts():
