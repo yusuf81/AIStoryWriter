@@ -5,6 +5,9 @@ import shutil
 import time
 import datetime
 
+# Import Pydantic model for title generation
+from Writer.Models import TitleOutput
+
 # Assuming Writer.Config, Writer.Statistics, and other Writer modules will be imported
 # by the consuming code or passed appropriately.
 
@@ -178,15 +181,16 @@ def _handle_chapter_title_generation_pipeline_version(SysLogger, Interface, Conf
         )
 
         title_messages = [Interface.BuildUserQuery(title_prompt_content)]
-        title_response_messages, _ = Interface.SafeGenerateText(
+        # Use SafeGeneratePydantic for structured title generation
+        title_response_messages, Title_obj, _ = Interface.SafeGeneratePydantic(
             _Logger=SysLogger,
             _Messages=title_messages,
             _Model=Config.FAST_MODEL,
-            _MinWordCount=Config.MIN_WORDS_FOR_CHAPTER_TITLE,
+            _pydantic_model=TitleOutput,
             _max_retries_override=Config.MAX_RETRIES_CHAPTER_TITLE
         )
-        ChapterTitle = Interface.GetLastMessageText(title_response_messages)
-        ChapterTitle = ChapterTitle.strip().replace('"',"")
+        # Extract title from validated Pydantic model
+        ChapterTitle = Title_obj.title.strip()  # Title already cleaned by validator
 
         if not ChapterTitle or len(ChapterTitle) > Config.MAX_LENGTH_CHAPTER_TITLE:
             SysLogger.Log(f"Pipeline: Warning: Generated title for Chapter {chapter_num} is invalid ('{ChapterTitle}'). Using default.", 6)

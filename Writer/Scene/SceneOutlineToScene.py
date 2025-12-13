@@ -2,6 +2,7 @@ import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
+from Writer.Models import SceneOutline
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
@@ -34,15 +35,16 @@ def SceneOutlineToScene(
         )
     )
 
-    Response, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+    Response, Scene_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
         MesssageHistory,
         Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_SCENE_WRITE,  # Menggunakan Config
+        SceneOutline
     )
     _Logger.Log(
         f"Finished SceneOutline->Scene Generation for Scene {_SceneNum}/{_TotalScenes}",
         5,
     )
 
-    return Interface.GetLastMessageText(Response)
+    # Extract text from validated SceneOutline model
+    return Scene_obj.action

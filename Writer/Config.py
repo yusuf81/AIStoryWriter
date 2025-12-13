@@ -60,7 +60,7 @@ CHAPTER_QUALITY = 85  # Note this value is overridden by the argparser
 CHAPTER_MIN_REVISIONS = 0  # Note this value is overridden by the argparser
 CHAPTER_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
 
-# Minimum Word Counts for SafeGenerateText calls
+# Minimum Word Counts for chapter generation calls
 MIN_WORDS_TRANSLATE_PROMPT = 10  # Minimum words for prompt translation
 MIN_WORDS_INITIAL_OUTLINE = 250  # Minimum words for initial outline generation
 MIN_WORDS_REVISE_OUTLINE = 250  # Minimum words for outline revision
@@ -92,11 +92,11 @@ DEBUG = False
 # Nilai ini bisa juga di-override oleh argumen command-line jika diinginkan di masa depan.
 NATIVE_LANGUAGE = "id"
 
-# Maximum retries for SafeGenerateJSON
-MAX_JSON_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateJSON
+# Maximum retries for Pydantic validation
+MAX_PYDANTIC_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk Pydantic validation
 
-# Maximum retries for SafeGenerateText (whitespace/short response)
-MAX_TEXT_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk SafeGenerateText
+# Configuration comment removed - SafeGenerateText is no longer used
+# MAX_TEXT_RETRIES = 5  # This is deprecated as SafeGenerateText is replaced
 
 # Added based on test_pipeline.py AttributeErrors
 CHAPTER_HEADER_FORMAT = "### Chapter {chapter_num}: {chapter_title}"
@@ -134,8 +134,6 @@ LOREBOOK_PERSIST_DIR = "./lorebook_db"  # Directory for lorebook persistence
 LOREBOOK_SIMILARITY_THRESHOLD = 0.7  # Minimum similarity for lore retrieval
 
 USE_PYDANTIC_PARSING = True  # Enable/disable structured output
-PYDANTIC_STRICT_MODE = False  # Strict validation vs. attempt repair
-PYDANTIC_FALLBACK_TO_REPAIR = True  # Fall back to existing JSON repair
 PYDANTIC_WORD_COUNT_TOLERANCE = 50  # Tolerance for word count validation (±N words)
 
 USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning

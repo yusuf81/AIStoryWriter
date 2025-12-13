@@ -2,6 +2,7 @@ import Writer.PrintUtils
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 import Writer.Config  # Add this
 import Writer.Statistics  # Add this import
+from Writer.Models import ChapterOutput
 
 
 def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
@@ -22,15 +23,16 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
         )
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
-        Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+        Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
             _Logger,
             Messages,
             Writer.Config.SCRUB_MODEL,
-            _MinWordCount=Writer.Config.MIN_WORDS_SCRUB_CHAPTER,  # Menggunakan Config
+            ChapterOutput
         )
         _Logger.Log(f"Finished Chapter {i+1}/{_TotalChapters} Scrubbing Edit", 5)
 
-        NewChapter = Interface.GetLastMessageText(Messages)
+        # Extract text from validated ChapterOutput model
+        NewChapter = Chapter_obj.text
         EditedChapters[i] = NewChapter
         NewWordCount = Writer.Statistics.GetWordCount(NewChapter)
         _Logger.Log(

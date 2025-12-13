@@ -2,6 +2,7 @@ import Writer.PrintUtils
 import Writer.Config
 # Writer.Prompts akan diimpor sebagai ActivePrompts di dalam fungsi
 import Writer.Statistics  # Add this import
+from Writer.Models import ChapterOutput
 
 
 def TranslatePrompt(Interface, _Logger, _Prompt: str, _SourceLanguage: str, TargetLang: str = "English"): # Tambahkan TargetLang
@@ -15,15 +16,16 @@ def TranslatePrompt(Interface, _Logger, _Prompt: str, _SourceLanguage: str, Targ
     _Logger.Log(f"Prompting LLM To Translate User Prompt from {_SourceLanguage} to {TargetLang}", 5)
     Messages = []
     Messages.append(Interface.BuildUserQuery(PromptFormatted))
-    Messages, _ = Interface.SafeGenerateText(
+    Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
         Messages,
         Writer.Config.TRANSLATOR_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_TRANSLATE_PROMPT,  # Menggunakan Config
+        ChapterOutput
     )
     _Logger.Log(f"Finished Prompt Translation to {TargetLang}", 5)
 
-    return Interface.GetLastMessageText(Messages)
+    # Extract text from validated ChapterOutput model
+    return Chapter_obj.text
 
 
 def TranslateNovel(
@@ -47,12 +49,13 @@ def TranslateNovel(
         )
         Messages = []
         Messages.append(Interface.BuildUserQuery(PromptFormatted))
-        Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
-            _Logger, Messages, Writer.Config.TRANSLATOR_MODEL
+        Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
+            _Logger, Messages, Writer.Config.TRANSLATOR_MODEL, ChapterOutput
         )
         _Logger.Log(f"Finished Chapter {i+1} Translation to {_TargetLanguage}", 5)
 
-        NewChapter = Interface.GetLastMessageText(Messages)
+        # Extract text from validated ChapterOutput model
+        NewChapter = Chapter_obj.text
         EditedChapters[i] = NewChapter
         NewWordCount = Writer.Statistics.GetWordCount(NewChapter)
         _Logger.Log(

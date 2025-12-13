@@ -70,6 +70,19 @@ class Interface:
         self.Clients: dict = {}
         self.LoadModels(Models)
 
+    def _get_retry_limit(self, override: int = None) -> int:
+        """DRY helper: Get retry limit with safe fallback to MAX_PYDANTIC_RETRIES.
+
+        Args:
+            override: Optional explicit retry limit override
+
+        Returns:
+            int: Retry limit to use (override if provided, else config value, else 5)
+        """
+        if override is not None:
+            return override
+        return getattr(Writer.Config, 'MAX_PYDANTIC_RETRIES', 5)
+
     def ensure_package_is_installed(self, package_name):
         try:
             importlib.metadata.distribution(package_name)
@@ -146,54 +159,15 @@ class Interface:
 
         return handler(_Logger, _Model, ProviderModelName, _Texts)
 
-    def SafeGenerateText(self, _Logger, _Messages, _Model: str, _SeedOverride: int = -1, _FormatSchema: dict = None, _MinWordCount: int = 1, _max_retries_override: int = None):
-        CurrentMessages = self.RemoveThinkTagFromAssistantMessages([m.copy() for m in _Messages])
-        # Strip initial empty messages from the end of the copied list
-        while CurrentMessages and not CurrentMessages[-1]["content"].strip(): del CurrentMessages[-1]
-        if not CurrentMessages: # If all messages were empty or became empty
-             _Logger.Log("SafeGenerateText: Initial message list empty after stripping. Raising error as this indicates problematic input.", 7)
-             raise ValueError("Initial message list results in empty history after stripping.")
-
-        Retries = 0
-        max_r = _max_retries_override if _max_retries_override is not None else Writer.Config.MAX_TEXT_RETRIES
-
-        while Retries < max_r:
-            CurrentSeed = _SeedOverride if Retries == 0 else random.randint(0, 99999)
-            ResponseMessagesList, TokenUsage, InputChars, EstInputTokens = self.ChatAndStreamResponse(
-                _Logger, CurrentMessages, _Model, CurrentSeed, _FormatSchema
-            )
-
-            last_response_text = self.GetLastMessageText(ResponseMessagesList)
-            is_empty = not last_response_text.strip()
-            word_count = len(last_response_text.split())
-            is_too_short = word_count < _MinWordCount
-
-
-            if not is_empty and not is_too_short: # Valid response
-                _Logger.Log(f"Text Call Stats: Input Chars={InputChars}, Est. Input Tokens={EstInputTokens} | Actual Tokens: Prompt={TokenUsage.get('prompt_tokens', 'N/A') if TokenUsage else 'N/A'}, Completion={TokenUsage.get('completion_tokens', 'N/A') if TokenUsage else 'N/A'}",6)
-                return ResponseMessagesList, TokenUsage
-
-            log_retry_reason = "Empty Response" if is_empty else f"Short Response ({word_count} words, min {_MinWordCount})"
-            # Log with Retries as 0-indexed for "attempt number", so Retries+1 for "retry number"
-            _Logger.Log(f"SafeGenerateText: Generation Failed Due To {log_retry_reason}. Retry {Retries + 1}/{max_r}", 7)
-
-            Retries += 1 # Crucially, increment after checking the current attempt but before next iteration
-
-            # Prepare CurrentMessages for the next retry
-            CurrentMessages = ResponseMessagesList
-            if CurrentMessages and CurrentMessages[-1]["role"] == "assistant":
-                del CurrentMessages[-1]
-            if not CurrentMessages or not any(m['role'] == 'user' for m in CurrentMessages):
-                _Logger.Log("SafeGenerateText: Message history for retry was invalidated. Restoring original messages for next attempt.", 6)
-                CurrentMessages = [m.copy() for m in _Messages] # Reset to original state
-
-        _Logger.Log(f"SafeGenerateText: All {max_r} retries failed. RAISING EXCEPTION.", 7)
-        raise Exception(f"Failed to generate valid text after {max_r} retries")
+    # SafeGenerateText method removed - replaced with SafeGeneratePydantic
+    def SafeGenerateText_DEPRECATED(self, _Logger, _Messages, _Model: str, _SeedOverride: int = -1, _FormatSchema: dict = None, _MinWordCount: int = 1, _max_retries_override: int = None):
+        """DEPRECATED: This method is no longer used. Use SafeGeneratePydantic instead."""
+        raise DeprecationWarning("SafeGenerateText is deprecated. Use SafeGeneratePydantic instead.")
 
     def SafeGenerateJSON(self, _Logger, _Messages, _Model: str, _SeedOverride: int = -1, _FormatSchema: dict = None, _max_retries_override: int = None):
         CurrentMessages = self.RemoveThinkTagFromAssistantMessages([m.copy() for m in _Messages])
         Retries = 0
-        max_r = _max_retries_override if _max_retries_override is not None else Writer.Config.MAX_JSON_RETRIES
+        max_r = self._get_retry_limit(_max_retries_override)
 
         while Retries < max_r:
             CurrentSeed = _SeedOverride if Retries == 0 else random.randint(0, 99999)
@@ -255,7 +229,7 @@ class Interface:
 
     def SafeGeneratePydantic(self, _Logger, _Messages, _Model: str, _PydanticModel: type, _SeedOverride: int = -1, _max_retries_override: int = None):
         """
-        Generate structured output using Pydantic model validation.
+        Generate structured output using Pydantic model validation with smart retry.
 
         Args:
             _Logger: Logger instance
@@ -267,21 +241,17 @@ class Interface:
 
         Returns:
             Tuple of (ResponseMessagesList, Validated Pydantic Model, TokenUsage)
-        """
-        if not PYDANTIC_AVAILABLE:
-            _Logger.Log("Pydantic not available, falling back to SafeGenerateJSON", 3)
-            ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
-                _Logger, _Messages, _Model, _SeedOverride, {}, _max_retries_override
-            )
-            # Return JSONResponse as dict since Pydantic not available
-            return ResponseMessagesList, JSONResponse, TokenUsage
 
+        Raises:
+            Exception: If validation fails after max retries (no fallback)
+        """
+        # Check if Pydantic is available - fail fast
+        if not PYDANTIC_AVAILABLE:
+            raise Exception("Pydantic is not available but required for SafeGeneratePydantic")
+
+        # Check if Pydantic parsing is enabled - fail fast
         if Writer.Config.USE_PYDANTIC_PARSING is False:
-            _Logger.Log("Pydantic parsing disabled by config, using SafeGenerateJSON", 5)
-            ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
-                _Logger, _Messages, _Model, _SeedOverride, {}, _max_retries_override
-            )
-            return ResponseMessagesList, JSONResponse, TokenUsage
+            raise Exception("Pydantic parsing is disabled by config")
 
         from Writer.Models import get_model
 
@@ -290,11 +260,10 @@ class Interface:
             try:
                 _PydanticModel = get_model(_PydanticModel)
             except KeyError as e:
-                _Logger.Log(f"Pydantic model not found: {e}. Falling back to JSON.", 3)
-                ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
-                    _Logger, _Messages, _Model, _SeedOverride, {}, _max_retries_override
-                )
-                return ResponseMessagesList, JSONResponse, TokenUsage
+                raise Exception(f"Pydantic model '{_PydanticModel}' not found in registry")
+
+        # Get max retries from config
+        max_attempts = self._get_retry_limit(_max_retries_override)
 
         # Get format instructions for the model
         if hasattr(_PydanticModel, 'model_json_schema'):
@@ -317,53 +286,57 @@ class Interface:
 
         _Logger.Log(f"SafeGeneratePydantic: Using schema for {_PydanticModel.__name__}", 5)
 
-        try:
-            # First try to generate structured response using JSON format
-            ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
-                _Logger, messages_for_parsing, _Model, _SeedOverride, schema, _max_retries_override
-            )
-
-            # Validate and convert to Pydantic model
+        # Smart retry loop with repair instructions
+        for attempt in range(max_attempts):
             try:
+                # Generate structured response using JSON format
+                ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
+                    _Logger, messages_for_parsing, _Model, _SeedOverride, schema, _max_retries_override
+                )
+
+                # Validate and convert to Pydantic model
                 validated_model = _PydanticModel(**JSONResponse)
-                _Logger.Log(f"SafeGeneratePydantic: Successfully validated {_PydanticModel.__name__}", 5)
+                _Logger.Log(f"SafeGeneratePydantic: Successfully validated {_PydanticModel.__name__} on attempt {attempt + 1}", 5)
                 return ResponseMessagesList, validated_model, TokenUsage
 
             except ValidationError as e:
-                _Logger.Log(f"SafeGeneratePydantic: Validation failed: {e}. Attempting field extraction.", 3)
+                if attempt == max_attempts - 1:
+                    # Final attempt failed - raise exception (NO FALLBACK)
+                    error_details = "\n".join([
+                        f"- {'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
+                        for err in e.errors()
+                    ])
+                    raise Exception(f"Pydantic validation failed after {max_attempts} attempts:\n{error_details}")
 
-                # Try to extract individual fields from JSONResponse
-                try:
-                    # For ChapterOutput, try to extract text field as fallback
-                    if _PydanticModel.__name__ == 'ChapterOutput' and isinstance(JSONResponse, dict):
-                        if 'text' in JSONResponse:
-                            _Logger.Log("SafeGeneratePydantic: Using fallback text only extraction", 5)
-                            # Create minimal valid model with available fields
-                            fallback_data = {
-                                'text': str(JSONResponse['text']),
-                                'word_count': len(str(JSONResponse['text']).split()),
-                                'scenes': JSONResponse.get('scenes', []),
-                                'characters_present': JSONResponse.get('characters_present', []),
-                                'chapter_number': JSONResponse.get('chapter_number', 1),
-                                'chapter_title': JSONResponse.get('chapter_title')
-                            }
-                            validated_model = _PydanticModel(**fallback_data)
-                            return ResponseMessagesList, validated_model, TokenUsage
+                # Create repair instruction for next attempt
+                error_details = "\n".join([
+                    f"- {'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
+                    for err in e.errors()
+                ])
 
-                except Exception as e2:
-                    _Logger.Log(f"SafeGeneratePydantic: Fallback extraction failed: {e2}", 3)
+                repair_msg = {
+                    "role": "user",
+                    "content": f"""Previous response failed Pydantic validation with errors:
 
-                # If all else fails, return the JSON response
-                _Logger.Log("SafeGeneratePydantic: Returning raw JSON response after validation failure", 3)
-                return ResponseMessagesList, JSONResponse, TokenUsage
+{error_details}
 
-        except Exception as e:
-            _Logger.Log(f"SafeGeneratePydantic: Generation failed: {e}. Falls back to standard JSON parsing.", 3)
-            # Fallback to standard JSON parsing
-            ResponseMessagesList, JSONResponse, TokenUsage = self.SafeGenerateJSON(
-                _Logger, _Messages, _Model, _SeedOverride, {}, _max_retries_override
-            )
-            return ResponseMessagesList, JSONResponse, TokenUsage
+Please generate a response that STRICTLY follows this JSON schema:
+
+{json.dumps(schema, indent=2)}
+
+Key requirements:
+- All required fields must be present
+- Field types must match exactly
+- String fields must meet min_length constraints
+- Numeric fields must meet gt/ge constraints
+- Return ONLY valid JSON matching the schema"""
+                }
+                messages_for_parsing = messages_for_parsing + [repair_msg]
+
+                _Logger.Log(f"SafeGeneratePydantic: Retry attempt {attempt + 1}/{max_attempts} due to validation error", 4)
+
+        # This should never be reached due to raise in final attempt
+        raise Exception(f"Pydantic validation failed after {max_attempts} attempts")
 
     def _ollama_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
         import ollama

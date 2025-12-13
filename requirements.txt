@@ -14,7 +14,6 @@ scipy>=1.13.0
 reportlab
 markdown
 langchain>=1.1.3
-langchain-community>=0.4.1
 langchain-chroma>=1.0.0
 chromadb>=1.3.6
 vulture>=2.14

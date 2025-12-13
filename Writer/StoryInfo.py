@@ -27,16 +27,13 @@ def GetStoryInfo(
     )  # Log model yang digunakan
     Messages = _Messages
     Messages.append(Interface.BuildUserQuery(Prompt))
-    # Menggunakan SafeGenerateJSON dengan skema dan model yang benar (ModelToUse)
-    # Modify the call to SafeGenerateJSON to unpack three values
-    # Instead of: Messages, JSONResponse = Interface.SafeGenerateJSON(...)
-    Messages, JSONResponse, TokenUsage = Interface.SafeGenerateJSON(
+    # Use SafeGeneratePydantic with existing StoryInfoSchema (already a Pydantic model)
+    Messages, info_obj, TokenUsage = Interface.SafeGeneratePydantic(
         _Logger,
         Messages,
-        ModelToUse,  # Gunakan model yang sudah ditentukan
-        _FormatSchema=StoryInfoSchema.model_json_schema(),
+        ModelToUse,
+        StoryInfoSchema
     )
     _Logger.Log("Finished Getting Stats Feedback", 5)
-    # Modify the return statement
-    # Instead of: return JSONResponse
-    return JSONResponse, TokenUsage  # Return JSON and tokens
+    # Convert Pydantic object to dict for backward compatibility
+    return info_obj.model_dump(), TokenUsage

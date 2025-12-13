@@ -3,6 +3,7 @@ import Writer.Config
 import Writer.Statistics  # Add this import
 import copy
 import re
+from Writer.Models import ChapterOutput
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.metrics.pairwise import cosine_similarity
@@ -170,19 +171,20 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
 
         _Logger.Log(
             f"Prompting LLM To Perform Chapter {i}/{_TotalChapters} Second Pass In-Place Edit (Limited Context)",
-            5,  # Tambahkan catatan konteks
+            5,
         )
         Messages = []
         Messages.append(Interface.BuildUserQuery(Prompt))
-        Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+        Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
             _Logger,
             Messages,
-            Writer.Config.FINAL_NOVEL_EDITOR_MODEL,  # Gunakan nama variabel config baru
-            _MinWordCount=Writer.Config.MIN_WORDS_EDIT_NOVEL,
+            Writer.Config.FINAL_NOVEL_EDITOR_MODEL,
+            ChapterOutput
         )
         _Logger.Log(f"Finished Chapter {i} Second Pass In-Place Edit", 5)
 
-        NewChapter = Interface.GetLastMessageText(Messages)
+        # Extract text from validated ChapterOutput model
+        NewChapter = Chapter_obj.text
         
         # Validate the editing result
         original_chapter = OriginalChapters[current_chapter_index]

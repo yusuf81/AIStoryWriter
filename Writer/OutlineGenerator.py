@@ -1,7 +1,7 @@
 import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
-import Writer.Outline.StoryElements
+from Writer.Models import OutlineOutput, StoryElements, BaseContext, ChapterOutput
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
@@ -19,31 +19,58 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
 
     _Logger.Log(f"Extracting Important Base Context", 4)
     Messages = [Interface.BuildUserQuery(Prompt)]
-    Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
-        _Logger, Messages, Writer.Config.INITIAL_OUTLINE_WRITER_MODEL
+    Messages, BaseContext_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
+        _Logger, Messages, Writer.Config.INITIAL_OUTLINE_WRITER_MODEL, BaseContext
     )
-    BaseContext: str = Interface.GetLastMessageText(Messages)
+    BaseContext_str: str = BaseContext_obj.context
     _Logger.Log(f"Done Extracting Important Base Context", 4)
 
-    # Generate Story Elements
-    StoryElements: str = Writer.Outline.StoryElements.GenerateStoryElements(
-        Interface, _Logger, _OutlinePrompt
+    # Generate Story Elements using Pydantic model
+    from Writer.PromptsHelper import get_prompts
+    ActivePrompts = get_prompts()
+
+    Prompt: str = ActivePrompts.GENERATE_STORY_ELEMENTS.format(
+        _OutlinePrompt=_OutlinePrompt
     )
 
-    # Now, Generate Initial Outline
+    _Logger.Log(f"Generating Main Story Elements", 4)
+    Messages = [Interface.BuildUserQuery(Prompt)]
+    Messages, StoryElements_obj, _ = Interface.SafeGeneratePydantic(
+        _Logger,
+        Messages,
+        Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,
+        StoryElements
+    )
+
+    # Convert StoryElements object to string for use in prompts
+    StoryElements_str = f"""Characters:
+{chr(10).join([f"- {name}: {desc}" for name, desc in StoryElements_obj.characters.items()])}
+
+Locations:
+{chr(10).join([f"- {name}: {desc}" for name, desc in StoryElements_obj.locations.items()])}
+
+Themes: {', '.join(StoryElements_obj.themes)}
+
+Conflict: {StoryElements_obj.conflict or 'Not specified'}
+Resolution: {StoryElements_obj.resolution or 'Not specified'}"""
+
+    _Logger.Log(f"Done Generating Main Story Elements", 4)
+
+    # Now, Generate Initial Outline using Pydantic model
     Prompt: str = ActivePrompts.INITIAL_OUTLINE_PROMPT.format(
-        StoryElements=StoryElements, _OutlinePrompt=_OutlinePrompt
+        StoryElements=StoryElements_str, _OutlinePrompt=_OutlinePrompt
     )
 
     _Logger.Log(f"Generating Initial Outline", 4)
     Messages = [Interface.BuildUserQuery(Prompt)]
-    Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+    Messages, Outline_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
         Messages,
         Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_INITIAL_OUTLINE,  # Menggunakan Config
+        OutlineOutput
     )
-    Outline: str = Interface.GetLastMessageText(Messages)
+    # Extract text from OutlineOutput model
+    Outline: str = Outline_obj.title + "\n\n" + "\n\n".join(Outline_obj.chapters)
     _Logger.Log(f"Done Generating Initial Outline", 4)
 
     _Logger.Log(f"Entering Feedback/Revision Loop", 3)
@@ -81,14 +108,14 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
 
     # Generate Final Outline
     FinalOutline: str = f"""
-{BaseContext}
+{BaseContext_str}
 
-{StoryElements}
+{StoryElements_str}
 
 {Outline}
     """
 
-    return FinalOutline, StoryElements, Outline, BaseContext
+    return FinalOutline, StoryElements_obj, Outline, BaseContext_str
 
 
 def ReviseOutline(
@@ -104,20 +131,21 @@ def ReviseOutline(
     _Logger.Log(
         f"Revising Outline (Iteration {_Iteration}/{Writer.Config.OUTLINE_MAX_REVISIONS})",
         2,
-    )  # Tambahkan Max Revisions
+    )
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
-    Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+    Messages, Outline_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
         Messages,
         Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_REVISE_OUTLINE,  # Menggunakan Config
+        OutlineOutput
     )
-    SummaryText: str = Interface.GetLastMessageText(Messages)
+    # Extract text from OutlineOutput model
+    SummaryText: str = Outline_obj.title + "\n\n" + "\n\n".join(Outline_obj.chapters)
     _Logger.Log(
         f"Done Revising Outline (Iteration {_Iteration}/{Writer.Config.OUTLINE_MAX_REVISIONS})",
         2,
-    )  # Tambahkan Max Revisions
+    )
 
     return SummaryText, Messages
 
@@ -140,13 +168,13 @@ def GeneratePerChapterOutline(
     _Logger.Log(f"Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5)
     Messages = []  # Inisialisasi Messages sebagai list kosong di dalam fungsi
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
-    Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+    Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
         Messages,
         Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_PER_CHAPTER_OUTLINE,  # Menggunakan Config
+        ChapterOutput
     )
-    SummaryText: str = Interface.GetLastMessageText(Messages)
+    SummaryText: str = Chapter_obj.text  # Extract text from ChapterOutput model (minimum 100 chars)
     # Modifikasi pesan log ini
     _Logger.Log(
         f"Done Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5

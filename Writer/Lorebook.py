@@ -3,32 +3,15 @@ import os
 import re
 from typing import Dict
 
+# Import from langchain-chroma exclusively (no fallback to deprecated langchain_community)
+from langchain_chroma import Chroma
 try:
-    # Prefer langchain_chroma (new package) over langchain_community
-    from langchain_chroma import Chroma
-    # Removed HuggingFaceEmbeddings - using provider-based embeddings
-    try:
-        from langchain_core.documents import Document
-    except ImportError:
-        from langchain.docstore.document import Document
-    LANGCHAIN_AVAILABLE = True
-    CHROMA_SOURCE = "langchain_chroma"
-    chroma_version = getattr(Chroma, '__version__', 'unknown')
+    from langchain_core.documents import Document
 except ImportError:
-    # Fall back to old imports from langchain_community
-    try:
-        from langchain_community.vectorstores import Chroma
-        LANGCHAIN_AVAILABLE = True
-        CHROMA_SOURCE = "langchain_community"
-        chroma_version = getattr(Chroma, '__version__', 'unknown')
-    except ImportError:
-        LANGCHAIN_AVAILABLE = False
-        CHROMA_SOURCE = None
-        chroma_version = None
-    try:
-        from langchain_core.documents import Document
-    except ImportError:
-        from langchain.docstore.document import Document
+    from langchain.docstore.document import Document
+LANGCHAIN_AVAILABLE = True
+CHROMA_SOURCE = "langchain_chroma"
+chroma_version = getattr(Chroma, '__version__', 'unknown')
 
 from Writer import Config
 from Writer import PrintUtils

@@ -33,8 +33,9 @@ def mock_interface():
         # Create a fresh Mock with name for better debugging
         mock_int = MagicMock(name='mock_interface')
 
-        # SafeGenerateText returns (messages, token_usage)
-        mock_int.SafeGenerateText.return_value = (
+        # SafeGenerateText removed - replaced with SafeGeneratePydantic
+        # mock_int.SafeGenerateText_DEPRECATED returns (messages, token_usage)
+        mock_int.SafeGenerateText_DEPRECATED.return_value = (
             [{'role': 'assistant', 'content': 'Mock response'}],
             {'prompt_tokens': 100, 'completion_tokens': 50}
         )

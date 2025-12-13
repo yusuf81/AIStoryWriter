@@ -74,18 +74,14 @@ def ScenesToJSON(
         Interface.BuildUserQuery(ActivePrompts.SCENES_TO_JSON.format(_Scenes=_Scenes))
     )
 
-    # Menggunakan SafeGenerateJSON dengan skema
-    # Unpack 3 values, ignore messages and tokens
-    _, SceneJSONResponse, _ = (
-        Interface.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
-            # Response, SceneJSONResponse = Interface.SafeGenerateJSON( # Baris lama
-            _Logger,
-            MesssageHistory,
-            Writer.Config.CHECKER_MODEL,
-            _FormatSchema=SceneListSchema.model_json_schema(),
-        )
+    # Use SafeGeneratePydantic with existing SceneListSchema (already a Pydantic model)
+    _, scene_obj, _ = Interface.SafeGeneratePydantic(
+        _Logger,
+        MesssageHistory,
+        Writer.Config.CHECKER_MODEL,
+        SceneListSchema
     )
-    SceneList = SceneJSONResponse["scenes"]  # Ekstrak list dari dictionary
+    SceneList = scene_obj.scenes  # Access scenes via Pydantic object attribute
 
     # Optimize: Remove duplicate scenes
     SceneList = _deduplicate_scenes(SceneList)

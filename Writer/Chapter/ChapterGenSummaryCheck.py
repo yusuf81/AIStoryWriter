@@ -1,5 +1,6 @@
 from pydantic import BaseModel  # Ditambahkan
 import Writer.Config
+from Writer.Models import ChapterOutput
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 # Cache untuk outline summaries - untuk menghindari summary ulang outline yang sama
@@ -36,16 +37,17 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
             ActivePrompts.SUMMARY_CHECK_PROMPT.format(_Work=_Work)
         )
     )
-    # Tambahkan log sebelum memanggil SafeGenerateText pertama
+    # Tambahkan log sebelum memanggil SafeGeneratePydantic pertama
     _Logger.Log(
         "Generating summary of generated work for comparison.", 6
     )  # Tambahkan log ini
-    SummaryLangchain, _ = (
-        Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
-            _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
+    SummaryLangchain, chapter_obj, _ = (
+        Interface.SafeGeneratePydantic(  # Use Pydantic model
+            _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
+            ChapterOutput
         )
     )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
-    WorkSummary: str = Interface.GetLastMessageText(SummaryLangchain)
+    WorkSummary: str = chapter_obj.text
     _Logger.Log(
         "Finished generating summary of generated work.", 6
     )  # Tambahkan log ini
@@ -68,16 +70,17 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
                 ActivePrompts.SUMMARY_OUTLINE_PROMPT.format(_RefSummary=_RefSummary)
             )
         )
-        # Tambahkan log sebelum memanggil SafeGenerateText kedua
+        # Tambahkan log sebelum memanggil SafeGeneratePydantic kedua
         _Logger.Log(
             "Generating summary of reference outline for comparison.", 6
         )  # Tambahkan log ini
-        SummaryLangchain, _ = (
-            Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
-                _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
+        SummaryLangchain, outline_obj, _ = (
+            Interface.SafeGeneratePydantic(  # Use Pydantic model
+                _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
+                ChapterOutput
             )
         )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
-        OutlineSummary: str = Interface.GetLastMessageText(SummaryLangchain)
+        OutlineSummary: str = outline_obj.text
         # Cache the summary for future use
         _outline_summary_cache[outline_hash] = OutlineSummary
         _Logger.Log(
@@ -100,19 +103,16 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     _Logger.Log(
         "Comparing generated work summary vs reference outline summary.", 6
     )  # Tambahkan log ini
-    # Menggunakan SafeGenerateJSON dengan skema
-    # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = (
-        Interface.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
-            # ComparisonLangchain, JSONResponse = Interface.SafeGenerateJSON( # Baris lama
-            _Logger,
-            ComparisonLangchain,
-            Writer.Config.REVISION_MODEL,
-            _FormatSchema=SummaryComparisonSchema.model_json_schema(),
-        )
+    # Use SafeGeneratePydantic with existing SummaryComparisonSchema (already a Pydantic model)
+    _, comparison_obj, _ = Interface.SafeGeneratePydantic(
+        _Logger,
+        ComparisonLangchain,
+        Writer.Config.REVISION_MODEL,
+        SummaryComparisonSchema
     )
-    _Logger.Log("Finished comparing summaries.", 6)  # Tambahkan log ini
+    _Logger.Log("Finished comparing summaries.", 6)
+    # Access fields via Pydantic object attributes instead of dict keys
     return (
-        JSONResponse["DidFollowOutline"],
-        "### Extra Suggestions:\n" + JSONResponse["Suggestions"],
+        comparison_obj.DidFollowOutline,
+        "### Extra Suggestions:\n" + comparison_obj.Suggestions,
     )

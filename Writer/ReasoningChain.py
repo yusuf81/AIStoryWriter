@@ -2,7 +2,8 @@
 import Writer.Config as Config
 from Writer.Interface.Wrapper import Interface
 from Writer.PrintUtils import Logger
-from typing import Optional, Tuple
+from Writer.Models import ReasoningOutput
+from typing import Optional
 
 
 class ReasoningChain:
@@ -106,12 +107,12 @@ Do not write the chapter content, only reason about the approach.
         messages = [self.interface.BuildSystemQuery("You are a skilled story analyst providing structured reasoning for plot development.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, _ = self.interface.SafeGenerateText(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
             self.logger, messages, self.config.REASONING_MODEL,
-            _MinWordCount=100
+            ReasoningOutput
         )
 
-        return self.interface.GetLastMessageText(messages)
+        return reasoning_obj.reasoning
 
     def _reason_about_character(self,
                                context: str,
@@ -144,12 +145,12 @@ Do not write the chapter content, only reason about the character approach.
         messages = [self.interface.BuildSystemQuery("You are a skilled character analyst providing structured reasoning for character development.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, _ = self.interface.SafeGenerateText(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
             self.logger, messages, self.config.REASONING_MODEL,
-            _MinWordCount=100
+            ReasoningOutput
         )
 
-        return self.interface.GetLastMessageText(messages)
+        return reasoning_obj.reasoning
 
     def _reason_about_dialogue(self,
                               context: str,
@@ -182,12 +183,12 @@ Do not write the dialogue, only reason about the approach.
         messages = [self.interface.BuildSystemQuery("You are a skilled dialogue analyst providing structured reasoning for dialogue enhancement.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, _ = self.interface.SafeGenerateText(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
             self.logger, messages, self.config.REASONING_MODEL,
-            _MinWordCount=100
+            ReasoningOutput
         )
 
-        return self.interface.GetLastMessageText(messages)
+        return reasoning_obj.reasoning
 
     def _reason_about_outline(self, context: str) -> str:
         """Generate reasoning about outline creation."""
@@ -211,12 +212,12 @@ Focus on structure, pacing, and narrative arc.
         messages = [self.interface.BuildSystemQuery("You are a skilled story structure analyst providing reasoning for outline creation.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, _ = self.interface.SafeGenerateText(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
             self.logger, messages, self.config.REASONING_MODEL,
-            _MinWordCount=100
+            ReasoningOutput
         )
 
-        return self.interface.GetLastMessageText(messages)
+        return reasoning_obj.reasoning
 
     def _reason_general(self,
                        context: str,
@@ -243,12 +244,12 @@ Focus on providing actionable guidance that will improve the quality of the outp
         messages = [self.interface.BuildSystemQuery(f"You are a skilled AI assistant providing structured reasoning for {task_type} tasks.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, _ = self.interface.SafeGenerateText(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
             self.logger, messages, self.config.REASONING_MODEL,
-            _MinWordCount=50
+            ReasoningOutput
         )
 
-        return self.interface.GetLastMessageText(messages)
+        return reasoning_obj.reasoning
 
     def _log_reasoning(self, task_type: str, chapter_number: Optional[int], reasoning: str):
         """Log reasoning to separate file if configured."""

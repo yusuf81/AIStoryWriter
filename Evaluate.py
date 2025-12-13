@@ -62,29 +62,26 @@ def EvaluateOutline(_Client, _Logger, _Outline1, _Outline2):
             )  # Menggunakan prompt terpusat
         )
     )
-    # Menggunakan SafeGenerateJSON dengan skema
-    # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = (
-        _Client.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
-            # Messages, JSONResponse = _Client.SafeGenerateJSON( # Baris lama
-            _Logger,  # Menggunakan _Logger, bukan Logger global
-            Messages,
-            Args.Model,
-            _FormatSchema=OutlineEvalSchema.model_json_schema(),
-        )
+    # Use SafeGeneratePydantic with existing OutlineEvalSchema (already a Pydantic model)
+    _, eval_obj, _ = _Client.SafeGeneratePydantic(
+        _Logger,
+        Messages,
+        Args.Model,
+        OutlineEvalSchema
     )
     Report = ""
-    Report += f"Winner of Plot: {JSONResponse['Plot']}\n"
-    Report += f"Winner of Chapters: {JSONResponse['Chapters']}\n"
-    Report += f"Winner of Style: {JSONResponse['Style']}\n"
-    Report += f"Winner of Tropes: {JSONResponse['Tropes']}\n"
-    Report += f"Winner of Genre: {JSONResponse['Genre']}\n"
-    Report += f"Winner of Narrative: {JSONResponse['Narrative']}\n"
-    Report += f"Overall Winner: {JSONResponse['OverallWinner']}\n"
+    # Access fields via Pydantic object attributes instead of dict keys
+    Report += f"Winner of Plot: {eval_obj.Plot}\n"
+    Report += f"Winner of Chapters: {eval_obj.Chapters}\n"
+    Report += f"Winner of Style: {eval_obj.Style}\n"
+    Report += f"Winner of Tropes: {eval_obj.Tropes}\n"
+    Report += f"Winner of Genre: {eval_obj.Genre}\n"
+    Report += f"Winner of Narrative: {eval_obj.Narrative}\n"
+    Report += f"Overall Winner: {eval_obj.OverallWinner}\n"
 
     _Logger.Log(f"Finished Evaluating Outlines", 4)
 
-    return Report, JSONResponse
+    return Report, eval_obj.model_dump()  # Convert Pydantic object to dict for backward compatibility
 
 
 def EvaluateChapter(
@@ -104,29 +101,26 @@ def EvaluateChapter(
         )
     )
 
-    # Menggunakan SafeGenerateJSON dengan skema
-    # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = (
-        _Client.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
-            # Messages, JSONResponse = _Client.SafeGenerateJSON( # Baris lama
-            _Logger,  # Menggunakan _Logger, bukan Logger global
-            Messages,
-            Args.Model,
-            _FormatSchema=ChapterEvalSchema.model_json_schema(),
-        )
+    # Use SafeGeneratePydantic with existing ChapterEvalSchema (already a Pydantic model)
+    _, eval_obj, _ = _Client.SafeGeneratePydantic(
+        _Logger,
+        Messages,
+        Args.Model,
+        ChapterEvalSchema
     )
     Report = ""
-    Report += f"Winner of Plot: {JSONResponse['Plot']}\n"
-    Report += f"Winner of Style: {JSONResponse['Style']}\n"
-    Report += f"Winner of Dialogue: {JSONResponse['Dialogue']}\n"
-    Report += f"Winner of Tropes: {JSONResponse['Tropes']}\n"
-    Report += f"Winner of Genre: {JSONResponse['Genre']}\n"
-    Report += f"Winner of Narrative: {JSONResponse['Narrative']}\n"
-    Report += f"Overall Winner: {JSONResponse['OverallWinner']}\n"
+    # Access fields via Pydantic object attributes instead of dict keys
+    Report += f"Winner of Plot: {eval_obj.Plot}\n"
+    Report += f"Winner of Style: {eval_obj.Style}\n"
+    Report += f"Winner of Dialogue: {eval_obj.Dialogue}\n"
+    Report += f"Winner of Tropes: {eval_obj.Tropes}\n"
+    Report += f"Winner of Genre: {eval_obj.Genre}\n"
+    Report += f"Winner of Narrative: {eval_obj.Narrative}\n"
+    Report += f"Overall Winner: {eval_obj.OverallWinner}\n"
 
     _Logger.Log(f"Finished Evaluating Chapter {_ChapterNum}/{_TotalChapters}", 4)
 
-    return Report, JSONResponse
+    return Report, eval_obj.model_dump()  # Convert Pydantic object to dict for backward compatibility
 
 
 # Setup Argparser

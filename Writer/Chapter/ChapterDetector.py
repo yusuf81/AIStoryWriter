@@ -20,15 +20,15 @@ def LLMCountChapters(Interface, _Logger, _Summary):
     Messages = []
     Messages.append(Interface.BuildUserQuery(Prompt))
 
-    # Menggunakan SafeGenerateJSON dengan skema
-    # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = Interface.SafeGenerateJSON(
+    # Use SafeGeneratePydantic with existing ChapterCountSchema (already a Pydantic model)
+    _, count_obj, _ = Interface.SafeGeneratePydantic(
         _Logger,
         Messages,
         Writer.Config.EVAL_MODEL,
-        _FormatSchema=ChapterCountSchema.model_json_schema(),
+        ChapterCountSchema
     )
-    TotalChapters = JSONResponse["TotalChapters"]
+    # Access field via Pydantic object attribute instead of dict key
+    TotalChapters = count_obj.TotalChapters
     _Logger.Log(
         f"Finished Getting ChapterCount JSON. Found {TotalChapters} chapters.", 5
     )

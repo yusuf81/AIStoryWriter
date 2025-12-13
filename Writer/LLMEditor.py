@@ -3,6 +3,7 @@ import Writer.PrintUtils
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 import json
+from Writer.Models import ChapterOutput
 
 
 # Definisikan Skema Pydantic
@@ -25,15 +26,16 @@ def GetFeedbackOnOutline(Interface, _Logger, _Outline: str):
 
     _Logger.Log("Prompting LLM To Critique Outline", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    History, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+    History, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
         History,
         Writer.Config.REVISION_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_OUTLINE_FEEDBACK,  # Menggunakan Config
+        ChapterOutput
     )
     _Logger.Log("Finished Getting Outline Feedback", 5)
 
-    return Interface.GetLastMessageText(History)
+    # Extract text from validated ChapterOutput model
+    return Chapter_obj.text
 
 
 def GetOutlineRating(
@@ -54,17 +56,15 @@ def GetOutlineRating(
     _Logger.Log("Prompting LLM To Get Review JSON", 5)
 
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    # Menggunakan SafeGenerateJSON dengan skema
-    # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = (
-        Interface.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
-            _Logger,
-            History,  # Pass the current history
-            Writer.Config.EVAL_MODEL,
-            _FormatSchema=OutlineCompleteSchema.model_json_schema(),
-        )
+    # Use SafeGeneratePydantic with existing OutlineCompleteSchema (already a Pydantic model)
+    _, review_obj, _ = Interface.SafeGeneratePydantic(
+        _Logger,
+        History,
+        Writer.Config.EVAL_MODEL,
+        OutlineCompleteSchema
     )
-    Rating = JSONResponse["IsComplete"]
+    # Access field via Pydantic object attribute instead of dict key
+    Rating = review_obj.IsComplete
     _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)
     return Rating
 
@@ -83,12 +83,13 @@ def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
 
     _Logger.Log("Prompting LLM To Critique Chapter", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
-        _Logger, History, Writer.Config.REVISION_MODEL
+    Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
+        _Logger, History, Writer.Config.REVISION_MODEL, ChapterOutput
     )
     _Logger.Log("Finished Getting Chapter Feedback", 5)
 
-    return Interface.GetLastMessageText(Messages)
+    # Extract text from validated ChapterOutput model
+    return Chapter_obj.text
 
 
 # Switch this to iscomplete true/false (similar to outline)
@@ -105,16 +106,14 @@ def GetChapterRating(Interface, _Logger, _Chapter: str):
 
     _Logger.Log("Prompting LLM To Get Review JSON", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    # Menggunakan SafeGenerateJSON dengan skema
-    # Unpack 3 values, ignore messages and tokens
-    _, JSONResponse, _ = (
-        Interface.SafeGenerateJSON(  # Unpack 3 values, ignore messages and tokens
-            _Logger,
-            History,
-            Writer.Config.EVAL_MODEL,
-            _FormatSchema=ChapterCompleteSchema.model_json_schema(),
-        )
+    # Use SafeGeneratePydantic with existing ChapterCompleteSchema (already a Pydantic model)
+    _, review_obj, _ = Interface.SafeGeneratePydantic(
+        _Logger,
+        History,
+        Writer.Config.EVAL_MODEL,
+        ChapterCompleteSchema
     )
-    Rating = JSONResponse["IsComplete"]
+    # Access field via Pydantic object attribute instead of dict key
+    Rating = review_obj.IsComplete
     _Logger.Log(f"Editor Determined IsComplete: {Rating}", 5)
     return Rating

@@ -6,6 +6,7 @@ import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 import Writer.Statistics  # Add near other imports at the top
+from Writer.Models import ChapterOutput, OutlineOutput
 
 import Writer.Scene.ChapterByScene
 
@@ -106,11 +107,11 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
             ActivePrompts.CHAPTER_GENERATION_PROMPT.format(_Outline=_Outline, _ChapterNum=_ChapterNum)
         )
     ]
-    ChapterSegmentMessages, _ = Interface.SafeGenerateText(
+    ChapterSegmentMessages, chapter_obj, _ = Interface.SafeGeneratePydantic(
         _Logger, ChapterSegmentMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL,
-        _MinWordCount=Config_module.MIN_WORDS_CHAPTER_SEGMENT_EXTRACT
+        ChapterOutput
     )
-    ThisChapterOutline = Interface.GetLastMessageText(ChapterSegmentMessages)
+    ThisChapterOutline = chapter_obj.text
     _Logger.Log(f"Created Chapter Specific Outline for Chapter {_ChapterNum}/{_TotalChapters}", 4)
 
     # Generate Summary of Last Chapter If Applicable
@@ -126,11 +127,11 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
                 )
             )
         ]
-        ChapterSummaryMessages, _ = Interface.SafeGenerateText(
+        ChapterSummaryMessages, summary_obj, _ = Interface.SafeGeneratePydantic(
             _Logger, ChapterSummaryMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL,
-            _MinWordCount=Config_module.MIN_WORDS_CHAPTER_SUMMARY
+            ChapterOutput
         )
-        FormattedLastChapterSummary = Interface.GetLastMessageText(ChapterSummaryMessages)
+        FormattedLastChapterSummary = summary_obj.text
         _Logger.Log("Created Summary Of Last Chapter Info", 3)
 
     # DetailedChapterOutline combines ThisChapterOutline and FormattedLastChapterSummary (as per original logic)
@@ -206,21 +207,13 @@ def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _Total
         CurrentMessages = MessageHistory[:] # Use a copy for each iteration
         CurrentMessages.append(Interface.BuildUserQuery(Prompt))
 
-        # Use Pydantic if enabled, otherwise use regular text generation
-        if Config_module.USE_PYDANTIC_PARSING and hasattr(Interface, 'SafeGeneratePydantic'):
-            from Writer.Models import ChapterOutput
-            CurrentMessages, pydantic_result, _ = Interface.SafeGeneratePydantic(
-                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL,
-                ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
-            )
-            Stage1Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
-        else:
-            CurrentMessages, _ = Interface.SafeGenerateText(
-                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL,
-                _SeedOverride=IterCounter + Config_module.SEED,
-                _MinWordCount=Config_module.MIN_WORDS_CHAPTER_DRAFT
-            )
-            Stage1Chapter = Interface.GetLastMessageText(CurrentMessages)
+        # Use Pydantic model for structured output
+        from Writer.Models import ChapterOutput
+        CurrentMessages, pydantic_result, _ = Interface.SafeGeneratePydantic(
+            _Logger, CurrentMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL,
+            ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
+        )
+        Stage1Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
 
         IterCounter += 1
         _Logger.Log(f"Finished Initial Generation For Initial Chapter (Stage 1: Plot)  {_ChapterNum}/{_TotalChapters}", 5)
@@ -276,21 +269,13 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
         CurrentMessages = MessageHistory[:] # Use a copy
         CurrentMessages.append(Interface.BuildUserQuery(Prompt))
 
-        # Use Pydantic if enabled, otherwise use regular text generation
-        if Config_module.USE_PYDANTIC_PARSING and hasattr(Interface, 'SafeGeneratePydantic'):
-            from Writer.Models import ChapterOutput
-            CurrentMessages, pydantic_result, _ = Interface.SafeGeneratePydantic(
-                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE2_WRITER_MODEL,
-                ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
-            )
-            Stage2Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
-        else:
-            CurrentMessages, _ = Interface.SafeGenerateText(
-                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE2_WRITER_MODEL,
-                _SeedOverride=IterCounter + Config_module.SEED,
-                _MinWordCount=Config_module.MIN_WORDS_CHAPTER_DRAFT
-            )
-            Stage2Chapter = Interface.GetLastMessageText(CurrentMessages)
+        # Use Pydantic model for structured output
+        from Writer.Models import ChapterOutput
+        CurrentMessages, pydantic_result, _ = Interface.SafeGeneratePydantic(
+            _Logger, CurrentMessages, Config_module.CHAPTER_STAGE2_WRITER_MODEL,
+            ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
+        )
+        Stage2Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
 
         IterCounter += 1
         _Logger.Log(f"Finished Character Development Generation (Stage 2) for Chapter {_ChapterNum}/{_TotalChapters}", 5)
@@ -346,21 +331,13 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
         CurrentMessages = MessageHistory[:] # Use a copy
         CurrentMessages.append(Interface.BuildUserQuery(Prompt))
 
-        # Use Pydantic if enabled, otherwise use regular text generation
-        if Config_module.USE_PYDANTIC_PARSING and hasattr(Interface, 'SafeGeneratePydantic'):
-            from Writer.Models import ChapterOutput
-            CurrentMessages, pydantic_result, _ = Interface.SafeGeneratePydantic(
-                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE3_WRITER_MODEL,
-                ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
-            )
-            Stage3Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
-        else:
-            CurrentMessages, _ = Interface.SafeGenerateText(
-                _Logger, CurrentMessages, Config_module.CHAPTER_STAGE3_WRITER_MODEL,
-                _SeedOverride=IterCounter + Config_module.SEED,
-                _MinWordCount=Config_module.MIN_WORDS_CHAPTER_DRAFT
-            )
-            Stage3Chapter = Interface.GetLastMessageText(CurrentMessages)
+        # Use Pydantic model for structured output
+        from Writer.Models import ChapterOutput
+        CurrentMessages, pydantic_result, _ = Interface.SafeGeneratePydantic(
+            _Logger, CurrentMessages, Config_module.CHAPTER_STAGE3_WRITER_MODEL,
+            ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
+        )
+        Stage3Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
 
         IterCounter += 1
         _Logger.Log(f"Finished Dialogue Generation (Stage 3) for Chapter {_ChapterNum}/{_TotalChapters}", 5)
@@ -538,13 +515,13 @@ def ReviseChapter(
     )
     Messages = _History
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
-    Messages, _ = Interface.SafeGenerateText(  # Unpack tuple, ignore token usage
+    Messages, revision_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
         Messages,
         Writer.Config.CHAPTER_REVISION_WRITER_MODEL,
-        _MinWordCount=Writer.Config.MIN_WORDS_REVISE_CHAPTER,  # Menggunakan Config
+        OutlineOutput
     )
-    SummaryText: str = Interface.GetLastMessageText(Messages)
+    SummaryText: str = revision_obj.title + "\n\n" + "\n\n".join(revision_obj.chapters)
     NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
     # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
     _Logger.Log(
