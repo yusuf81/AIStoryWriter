@@ -78,3 +78,11 @@ markers = [
     "contract: Contract tests for mock validation",
     "slow: Tests that take a long time to run"
 ]
+
+[tool.vulture]
+paths = ["Writer", "Write.py", "Evaluate.py", "simulate_story_info.py"]
+exclude = ["tests/", "venv/", ".venv/", "__pycache__/"]
+min_confidence = 60
+sort_by_size = true
+verbose = false
+ignore_names = ["visit_*", "handle_*", "*provider*", "__all__"]

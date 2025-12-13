@@ -1,0 +1,48 @@
+# Vulture configuration for AIStoryWriter dead code analysis
+# This configuration focuses on the Writer module and main scripts
+
+[paths]
+# Primary analysis targets - all core application files
+paths = [
+    "Writer/",
+    "Write.py",
+    "Evaluate.py",
+    "simulate_story_info.py"
+]
+
+[exclude]
+# Standard Python exclusions
+min_confidence = 60
+exclude = [
+    "tests/",           # Skip test utilities in Phase 1
+    "__pycache__/",     # Python cache
+    "*.pyc",           # Compiled Python files
+    "venv/",           # Virtual environments
+    ".venv/",          # Virtual environments
+    ".git/",           # Git repository
+    "*.md"             # Documentation files
+]
+
+[whitelists]
+# Common patterns in AIStoryWriter that appear unused but are actually used
+whitelist_names = [
+    "__all__",
+    # Dynamic module loading patterns
+    "*provider*",
+    "*Provider*",
+    # Visit/Handler patterns (common in AI/LLM interfaces)
+    "visit_*",
+    "handle_*",
+    # CLI and entry point patterns
+    "main",
+    "__main__",
+]
+
+# Files and functions to whitelist due to dynamic usage
+whitelist_files = [
+    # These files contain dynamic imports that Vulture can't detect
+    "Writer/Interface/__init__.py",
+    "Writer/Interface/Wrapper.py",
+    "Writer/Interface/OpenRouter.py",
+    "Writer/Interface/Ollama.py"
+]

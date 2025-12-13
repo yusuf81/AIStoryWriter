@@ -7,6 +7,7 @@ import pytest
 from pytest_mock import MockerFixture
 import json
 import os
+import errno
 import tempfile
 import sys
 import shutil
@@ -366,37 +367,57 @@ class TestFileSystemLevelCorruption:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
 
-    def test_disk_space_exhaustion_simulation(self):
-        """Test handling of disk space exhaustion during save."""
-        test_data = {"large_data": "x" * 1000000}  # 1MB of data
-        
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            temp_path = f.name
-        
-        try:
-            with patch('builtins.open', mock_open()) as mock_file:
-                # Simulate disk full during write
-                mock_file.return_value.write.side_effect = OSError(28, "No space left on device")
-                
-                save_state(test_data, temp_path)
-                
-                # Should handle error gracefully (already tested in error handling)
-                
-        finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+    def test_disk_space_exhaustion_simulation(self, capsys):
+        """Test handling of disk space exhaustion during save.
 
-    def test_inode_exhaustion_simulation(self):
-        """Test handling of inode exhaustion (cannot create new files)."""
+        Note: We mock this because we can't actually fill the disk in a test.
+        The test verifies that save_state handles OSError(ENOSPC) gracefully.
+        """
+        test_data = {"large_data": "x" * 1000000}  # 1MB of data
+
+        # Use real temp directory for realistic path
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_path = os.path.join(tmpdir, "large_file.json")
+
+            # Mock only the open call to simulate disk full during write
+            # We keep the path real to make the test more realistic
+            with patch('builtins.open', mock_open()) as mock_file:
+                # Simulate disk full during write operation
+                mock_file.return_value.write.side_effect = OSError(errno.ENOSPC, "No space left on device")
+
+                # Attempt to save - should handle error gracefully
+                save_state(test_data, temp_path)
+
+                # Verify error was logged to stderr
+                captured = capsys.readouterr()
+                assert "FATAL: Failed to save state" in captured.err
+                assert "No space left on device" in captured.err or temp_path in captured.err
+
+    def test_inode_exhaustion_simulation(self, capsys):
+        """Test handling of inode exhaustion (cannot create new files).
+
+        Note: We mock this because we can't exhaust inodes in a test.
+        The test verifies that save_state handles OSError gracefully when
+        the filesystem cannot create new files.
+        """
         test_data = {"test": "inode_test"}
-        
-        with patch('builtins.open', mock_open()) as mock_file:
-            # Simulate inode exhaustion
-            mock_file.side_effect = OSError(28, "No space left on device")
-            
-            save_state(test_data, "/tmp/test_inode.json")
-            
-            # Should handle error gracefully
+
+        # Use real temp directory for realistic path
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_path = os.path.join(tmpdir, "test_inode.json")
+
+            # Mock open to simulate inode exhaustion when creating file
+            with patch('builtins.open', mock_open()) as mock_file:
+                # Simulate inode exhaustion (no inodes available)
+                mock_file.side_effect = OSError(errno.ENOSPC, "No space left on device")
+
+                # Attempt to save - should handle error gracefully
+                save_state(test_data, test_path)
+
+                # Verify error was logged to stderr
+                captured = capsys.readouterr()
+                assert "FATAL: Failed to save state" in captured.err
+                assert test_path in captured.err or "No space left on device" in captured.err
 
 
 class TestRecoveryStrategies:

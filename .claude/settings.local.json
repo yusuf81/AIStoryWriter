@@ -15,7 +15,8 @@
       "Bash(pyright:*)",
       "Bash(flake8:*)",
       "Bash(.venv/bin/pytest tests/test_pdf_generation_integration.py -q)",
-      "Bash(.venv/bin/pytest:*)"
+      "Bash(.venv/bin/pytest:*)",
+      "WebSearch"
     ]
   }
 }

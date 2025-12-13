@@ -154,3 +154,41 @@ The system includes multiple quality gates:
 9. Please use TDD (London School) for all aspect of source code modification
 10. jalankan pyright dan flake8 --ignore=E501,W504,W503 untuk setiap files yang di edit, dan perbaiki error yang muncul
 11. jalankan pytest untuk fungsi-fungsi yang terkait
+
+### Dead Code Analysis
+
+#### Running Dead Code Detection
+```bash
+# Quick scan (recommended for daily use)
+make vulture
+
+# Detailed scan with report
+make vulture-report
+
+# Generate whitelist suggestions
+vulture --make-whitelist Writer/ Write.py Evaluate.py simulate_story_info.py
+```
+
+#### Interpreting Results
+- **60-79% confidence**: Review manually - may be dynamic usage
+- **80-99% confidence**: Likely dead code, safe to remove
+- **100% confidence**: Definitely unused, safe to remove
+
+#### Common False Positives in AIStoryWriter
+- LLM provider interfaces (loaded dynamically via import_module)
+- Feature flag controlled code (Config.USE_LOREBOOK, Config.USE_REASONING_CHAIN)
+- Reflection-based module loading
+- CLI entry points that appear unused statically
+
+#### Dead Code Handling Workflow
+1. **Scan**: Run `make vulture-report` to generate analysis
+2. **Review**: Check reports in `/reports/` directory
+3. **Verify**: Manually check high-confidence items before removal
+4. **Clean**: Remove verified dead code, update whitelist for false positives
+5. **Test**: Run pytest to ensure no regressions
+
+#### Current Findings Summary
+As of initial scan, **71 instances** of potential dead code found:
+- 58 unused variables (60% confidence)
+- 13 unused functions/methods (various confidence levels)
+- Reports available in `/reports/dead_code_YYYYMMDD.txt`
