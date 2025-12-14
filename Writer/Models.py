@@ -1,6 +1,6 @@
 # Writer/Models.py - Pydantic data models for structured output
 from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Union
 from datetime import datetime
 import Writer.Config as Config
 
@@ -80,8 +80,8 @@ class ChapterOutlineOutput(BaseModel):
     chapter_number: int = Field(ge=1, description="Chapter number in the story")
     chapter_title: str = Field(min_length=5, description="Chapter title")
 
-    # Scene structure matching CHAPTER_OUTLINE_PROMPT expectations
-    scenes: List[str] = Field(description="Scene descriptions from outline")
+    # Scene structure supporting both strings and enhanced scene objects
+    scenes: List[Union[str, 'EnhancedSceneOutline']] = Field(description="Scene descriptions or structured scene data")
     characters_present: List[str] = Field(default_factory=list, description="Characters appearing in this chapter")
 
     # Outline-specific fields (no minimum length like ChapterOutput.text)
@@ -96,12 +96,22 @@ class ChapterOutlineOutput(BaseModel):
     @classmethod
     def validate_scenes(cls, v):
         """Ensure each scene has meaningful content"""
-        if len(v) < 3:
-            raise ValueError("Chapter must have at least 3 scenes")
+        if len(v) < 1:  # Allow flexible scene count when using structured scenes
+            raise ValueError("Chapter must have at least 1 scene")
 
         for i, scene in enumerate(v):
-            if len(scene.strip()) < 10:
-                raise ValueError(f"Scene {i+1} description is too short (minimum 10 characters)")
+            if isinstance(scene, str):
+                # String scene validation
+                if len(scene.strip()) < 10:
+                    raise ValueError(f"Scene {i+1} description is too short (minimum 10 characters)")
+            elif not isinstance(scene, str):
+                # Enhanced scene validation - check if it has meaningful content
+                meaningful_fields = [field for field in [scene.title, scene.characters_and_setting,
+                                                        scene.conflict_and_tone, scene.key_events,
+                                                        scene.literary_devices, scene.resolution]
+                                   if field and field.strip()]
+                if not meaningful_fields:
+                    raise ValueError(f"Enhanced scene {i+1} must have at least one meaningful field")
 
         return v
 
@@ -125,6 +135,7 @@ class OutlineOutput(BaseModel):
     theme: Optional[str] = Field(None, description="Central theme of the story")
     chapters: List[str] = Field(min_length=1, description="List of chapter outlines")
     character_list: List[str] = Field(default_factory=list, description="List of main characters")
+    character_details: Optional[Dict[str, str]] = Field(None, description="Extracted character descriptions from chapters")
     setting: Optional[str] = Field(None, description="Story setting description")
     target_chapter_count: int = Field(gt=0, le=100, description="Target number of chapters")
 
@@ -151,6 +162,26 @@ class OutlineOutput(BaseModel):
         return v
 
 
+class CharacterDetail(BaseModel):
+    """
+    Detailed character information to match prompt structure.
+    Supports both English and Indonesian character formats.
+    """
+    name: str = Field(min_length=2, max_length=100, description="Character name")
+    physical_description: Optional[str] = Field(None, description="Physical appearance and characteristics")
+    personality: Optional[str] = Field(None, description="Personality traits and behavioral patterns")
+    background: Optional[str] = Field(None, description="Character history and background story")
+    motivation: Optional[str] = Field(None, description="Character motivation, goals, or role in story")
+
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v):
+        """Ensure character name is meaningful"""
+        if len(v.strip()) < 2:
+            raise ValueError("Character name must be at least 2 characters long")
+        return v.strip()
+
+
 class StoryElements(BaseModel):
     """
     Structured output for story elements extraction.
@@ -160,7 +191,7 @@ class StoryElements(BaseModel):
     title: str = Field(min_length=5, max_length=200, description="Story title")
     genre: str = Field(min_length=2, description="Story genre category")
     themes: List[str] = Field(min_length=1, description="Central themes of the story")
-    characters: Dict[str, str] = Field(default_factory=dict, description="Character names and their descriptions")
+    characters: Dict[str, List[CharacterDetail]] = Field(default_factory=dict, description="Character lists by type with detailed information")
 
     # Optional fields for enhanced story structure
     pacing: Optional[str] = Field(None, description="Story pacing speed (e.g., slow, moderate, fast)")
@@ -200,6 +231,18 @@ class StoryElements(BaseModel):
         for theme in v:
             if not theme.strip():
                 raise ValueError("Theme cannot be empty")
+        return v
+
+    @field_validator('characters')
+    @classmethod
+    def validate_characters(cls, v):
+        """Ensure character lists are properly formatted"""
+        for character_type, character_list in v.items():
+            if not character_list:
+                raise ValueError(f"Character list for {character_type} cannot be empty")
+            for i, character in enumerate(character_list):
+                if not character.name.strip():
+                    raise ValueError(f"Character name cannot be empty in {character_type}[{i}]")
         return v
 
     @field_validator('plot_structure')
@@ -304,6 +347,29 @@ class SceneOutline(BaseModel):
         """Ensure setting is not empty"""
         if not v.strip():
             raise ValueError("Setting cannot be empty")
+        return v
+
+
+class EnhancedSceneOutline(BaseModel):
+    """
+    Enhanced scene structure matching prompt expectations.
+    Supports the detailed scene fields requested by Indonesian and English prompts.
+    """
+    title: Optional[str] = Field(None, max_length=200, description="Brief scene title")
+    characters_and_setting: Optional[str] = Field(None, description="Characters present and setting details")
+    conflict_and_tone: Optional[str] = Field(None, description="Scene conflict and emotional tone")
+    key_events: Optional[str] = Field(None, description="Important plot points and events")
+    literary_devices: Optional[str] = Field(None, description="Literary techniques used")
+    resolution: Optional[str] = Field(None, description="Scene conclusion and lead-in")
+
+    @field_validator('title')
+    @classmethod
+    def validate_title(cls, v):
+        """Validate title content if provided"""
+        if v is not None:
+            v = v.strip()
+            if len(v) > 200:
+                raise ValueError("Scene title cannot exceed 200 characters")
         return v
 
 
@@ -448,10 +514,54 @@ class SceneValidationOutput(BaseModel):
 # ==============================================================================
 
 class ReviewOutput(BaseModel):
-    """Structured output for outline/chapter review feedback."""
+    """Structured output for outline/chapter review feedback with flexible suggestion handling."""
     feedback: str = Field(min_length=10, description="Detailed feedback")
-    suggestions: List[str] = Field(description="Specific suggestions for improvement")
+    suggestions: Optional[List[str]] = Field(None, description="Specific suggestions for improvement (can be extracted from feedback)")
     rating: int = Field(ge=0, le=10, description="Quality rating 0-10")
+
+    @field_validator('suggestions')
+    @classmethod
+    def extract_suggestions_from_feedback(cls, v, info):
+        """Extract suggestions from feedback if not provided separately"""
+        if v is None and 'feedback' in info.data:
+            feedback = info.data['feedback']
+            # Try to extract suggestions embedded in feedback
+            suggestions = []
+
+            # Look for numbered lists
+            import re
+            numbered_suggestions = re.findall(r'(\d+[.)\s]+[^\n]+)', feedback)
+            for suggestion in numbered_suggestions:
+                # Clean up the suggestion
+                clean_suggestion = re.sub(r'^\d+[.)\s]+', '', suggestion).strip()
+                if clean_suggestion:
+                    suggestions.append(clean_suggestion)
+
+            # Look for bullet points
+            bullet_suggestions = re.findall(r'[•\-\*]\s+([^\n]+)', feedback)
+            for suggestion in bullet_suggestions:
+                clean_suggestion = suggestion.strip()
+                if clean_suggestion:
+                    suggestions.append(clean_suggestion)
+
+            # If no structured suggestions found, look for suggestion keywords
+            if not suggestions:
+                suggestion_patterns = [
+                    r'(?:suggest|recommend|could|should|might)\s+([^.!?]*[.!?])',
+                    r'(?:consider|try|add|include|use)[^.!?]*[.!?]',
+                    r'(?:improve|enhance|better)[^.!?]*[.!?]'
+                ]
+
+                for pattern in suggestion_patterns:
+                    matches = re.findall(pattern, feedback, re.IGNORECASE)
+                    for match in matches:
+                        clean_suggestion = match.strip()
+                        if clean_suggestion and len(clean_suggestion) > 10:
+                            suggestions.append(clean_suggestion)
+
+            return suggestions if suggestions else None
+
+        return v
 
     @field_validator('feedback')
     @classmethod
@@ -470,6 +580,8 @@ MODEL_REGISTRY = {
     'ChapterOutlineOutput': ChapterOutlineOutput,
     'OutlineOutput': OutlineOutput,
     'StoryElements': StoryElements,
+    'CharacterDetail': CharacterDetail,
+    'EnhancedSceneOutline': EnhancedSceneOutline,
     'ChapterGenerationRequest': ChapterGenerationRequest,
     'GenerationStats': GenerationStats,
     'QualityMetrics': QualityMetrics,

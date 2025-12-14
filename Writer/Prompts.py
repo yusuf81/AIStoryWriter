@@ -149,6 +149,29 @@ Please make your response have the following format:
 
 Of course, don't include the XML tags - those are just to indicate the example.
 Also, the items in parenthesis are just to give you a better idea of what to write about, and should also be omitted from your response.
+
+=== JSON SCHEMA (REFERENCE ONLY) ===
+This defines the structure. DO NOT repeat the schema in your response!
+
+=== YOUR RESPONSE (JSON ONLY) ===
+Provide ONLY the JSON data below. Do NOT include explanations or the schema.
+
+Required fields:
+  - title (string, Required): Story title
+  - genre (string, Required): Story genre category
+  - themes (array of strings, Required): Central themes of the story
+    Example: ["String 1", "String 2"]
+
+Optional fields:
+  - characters (object, Optional): Character names and their descriptions...
+  - pacing (unknown, Optional): Story pacing speed (e.g., slow, moderate, fast)...
+  - style (unknown, Optional): Language style description...
+  - plot_structure (unknown, Optional): Plot elements (exposition, rising action, climax, ...)
+  - settings (object, Optional): Setting details with time, location, culture, mood...
+  - ... and 3 more optional fields
+
+Example format: {{"field1": "value", "field2": 123}}
+IMPORTANT: Return ONLY the JSON data, not the schema!
 """
 
 INITIAL_OUTLINE_PROMPT = """

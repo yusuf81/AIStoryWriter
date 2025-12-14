@@ -110,7 +110,7 @@ class TestChapterOutput:
         with pytest.raises(ValidationError) as exc_info:
             ChapterOutput(
                 text=chapter_text,
-                word_count=100,  # Wrong word count
+                word_count=150,  # Outside ±100 tolerance (actual: 34)
                 scenes=[],
                 characters_present=["Alice"],
                 chapter_number=1
@@ -287,12 +287,30 @@ class TestStoryElements:
         """Test creating valid StoryElements"""
         from Writer.Models import StoryElements
 
+        from Writer.Models import CharacterDetail
+
+        alice_character = CharacterDetail(
+            name="Alice",
+            physical_description="A brave knight with blue eyes",
+            background="Searching for the ancient artifact",
+            personality="Determined and courageous",
+            motivation="Find the artifact to save the kingdom"
+        )
+
+        merlin_character = CharacterDetail(
+            name="Merlin",
+            physical_description="A wise old wizard with long white beard",
+            background="Ancient magical guardian of the realm",
+            personality="Wise and mysterious",
+            motivation="Guide Alice on her quest to defeat evil"
+        )
+
         elements = StoryElements(
             title="Alice and the Ancient Artifact",
             genre="Fantasy Adventure",
             characters={
-                "Alice": "A brave knight with blue eyes, searching for the ancient artifact",
-                "Merlin": "A wise old wizard who guides Alice on her quest"
+                "main_character": [alice_character],
+                "mentor": [merlin_character]
             },
             settings={
                 "Dark Forest": {
@@ -313,8 +331,12 @@ class TestStoryElements:
             resolution="Alice defeats the Dark Lord and restores peace to Eldoria"
         )
 
-        assert "Alice" in elements.characters
-        assert elements.characters["Alice"] == "A brave knight with blue eyes, searching for the ancient artifact"
+        assert "main_character" in elements.characters
+        assert len(elements.characters["main_character"]) == 1
+        assert elements.characters["main_character"][0].name == "Alice"
+        assert "blue eyes" in elements.characters["main_character"][0].physical_description
+        assert "mentor" in elements.characters
+        assert elements.characters["mentor"][0].name == "Merlin"
         assert len(elements.themes) == 3
         assert elements.conflict == "Alice must find the artifact before the Dark Lord does"
 
@@ -536,7 +558,8 @@ class TestModelRegistry:
         expected_models = [
             'ChapterOutput', 'OutlineOutput', 'StoryElements',
             'ChapterGenerationRequest', 'GenerationStats',
-            'QualityMetrics', 'SceneOutline', 'ChapterWithScenes'
+            'QualityMetrics', 'SceneOutline', 'ChapterWithScenes',
+            'CharacterDetail', 'EnhancedSceneOutline'
         ]
 
         for model_name in expected_models:

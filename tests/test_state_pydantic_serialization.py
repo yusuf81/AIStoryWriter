@@ -29,7 +29,10 @@ class TestStatePydanticSerialization:
         story_elements = StoryElements(
             title="Petualangan Naga",
             genre="Petualangan Fantasi",
-            characters={"pemain": "petualang", "penjahat": "naga"},
+            characters={
+                "pemain": [{"name": "petualang", "physical_description": "A brave adventurer"}],
+                "penjahat": [{"name": "naga", "physical_description": "A fearsome dragon"}]
+            },
             settings={
                 "gua": {
                     "location": "gua harta karun",
@@ -98,7 +101,10 @@ class TestStatePydanticSerialization:
                     "__data__": {
                         "title": "Petualangan Naga",
                         "genre": "Petualangan Fantasi",
-                        "characters": {"pemain": "petualang", "penjahat": "naga"},
+                        "characters": {
+                            "pemain": [{"name": "petualang", "physical_description": "A brave adventurer"}],
+                            "penjahat": [{"name": "naga", "physical_description": "A fearsome dragon"}]
+                        },
                         "settings": {
                             "gua": {
                                 "location": "gua harta karun",
@@ -140,7 +146,7 @@ class TestStatePydanticSerialization:
 
         # Verify Pydantic objects are properly reconstructed
         assert isinstance(loaded["story_elements"], StoryElements)
-        assert loaded["story_elements"].characters["pemain"] == "petualang"
+        assert loaded["story_elements"].characters["pemain"][0].name == "petualang"
         assert loaded["story_elements"].themes == ["petualangan", "keberanian"]
 
         assert isinstance(loaded["title"], TitleOutput)
@@ -188,7 +194,7 @@ class TestStatePydanticSerialization:
         from Writer.StateManager import StateManager
 
         mixed_state = {
-            "pydantic_obj": StoryElements(title="Test Story", genre="Test", themes=["test"], characters={"hero": "brave"}),
+            "pydantic_obj": StoryElements(title="Test Story", genre="Test", themes=["test"], characters={"hero": [{"name": "brave", "physical_description": "A brave hero"}]}),
             "string": "test string",
             "number": 42,
             "list": [1, 2, 3],

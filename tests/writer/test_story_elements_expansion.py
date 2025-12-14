@@ -25,8 +25,8 @@ class TestStoryElementsExpansion:
             "genre": "Fantasy Adventure",
             "themes": ["friendship", "courage", "self-discovery"],
             "characters": {
-                "Rian": "Petualang berani yang mencari harta karun legendaris",
-                "Bang Jaga": "Naga kecil bijaksana yang menjaga gua mistis"
+                "Rian": [{"name": "Rian", "physical_description": "Petualang berani yang mencari harta karun legendaris"}],
+                "Bang Jaga": [{"name": "Bang Jaga", "physical_description": "Naga kecil bijaksana yang menjaga gua mistis"}]
             }
         }
 
@@ -74,8 +74,8 @@ class TestStoryElementsExpansion:
                 {"symbol": "The treasure", "meaning": "Not material wealth but friendship and knowledge"}
             ],
             "characters": {
-                "Rian": "Young adventurer driven by curiosity and courage",
-                "Bang Jaga": "Ancient dragon guardian, wise but initially wary"
+                "Rian": [{"name": "Rian", "physical_description": "Young adventurer driven by curiosity and courage"}],
+                "Bang Jaga": [{"name": "Bang Jaga", "physical_description": "Ancient dragon guardian, wise but initially wary"}]
             },
             "resolution": "True treasure is the friendship formed and lessons learned"
         }
@@ -137,7 +137,7 @@ class TestStoryElementsExpansion:
             title="Test Story",
             genre="Test Genre",
             themes=["theme1", "theme2"],
-            characters={"Hero": "Brave protagonist"},
+            characters={"Hero": [{"name": "Hero", "physical_description": "Brave protagonist"}]},
             conflict="Hero must overcome obstacles"
         )
 
@@ -169,8 +169,8 @@ class TestStoryElementsExpansion:
             "title": "Harta Karun Naga Penjaga",
             "genre": "Fantasy Petualangan",
             "characters": {
-                "Rian": "Petualang berani",
-                "Bang Jaga": "Naga penjaga"
+                "Rian": [{"name": "Rian", "physical_description": "Petualang berani"}],
+                "Bang Jaga": [{"name": "Bang Jaga", "physical_description": "Naga penjaga"}]
             },
             "settings": {
                 "Gua Naga": {
@@ -202,7 +202,7 @@ class TestStoryElementsExpansion:
         with pytest.raises(ValidationError) as exc_info:
             StoryElements(
                 # Missing title, genre - new required fields
-                characters={"Character": "Description"},
+                characters={"Character": [{"name": "Character", "physical_description": "Description"}]},
                 themes=["theme1"]
             )
         error_msg = str(exc_info.value)
@@ -216,7 +216,7 @@ class TestStoryElementsExpansion:
             "title": "Valid Title",
             "genre": "Fantasy",
             "themes": ["theme1"],
-            "characters": {"Character": "Description"}
+            "characters": {"Character": [{"name": "Character", "physical_description": "Description"}]}
             # All optional fields omitted - should work
         }
 

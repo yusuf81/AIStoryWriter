@@ -134,7 +134,7 @@ LOREBOOK_PERSIST_DIR = "./lorebook_db"  # Directory for lorebook persistence
 LOREBOOK_SIMILARITY_THRESHOLD = 0.7  # Minimum similarity for lore retrieval
 
 USE_PYDANTIC_PARSING = True  # Enable/disable structured output
-PYDANTIC_WORD_COUNT_TOLERANCE = 50  # Tolerance for word count validation (±N words)
+PYDANTIC_WORD_COUNT_TOLERANCE = 100  # Tolerance for word count validation (±N words)
 
 USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning
 REASONING_MODEL = CHAPTER_STAGE1_WRITER_MODEL  # Model to use for reasoning generation

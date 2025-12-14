@@ -28,7 +28,7 @@ def test_word_count_validation_default_tolerance():
     assert chapter.word_count == 10
 
     # Test exceeding tolerance - should fail
-    text_very_long = "This is a much longer test chapter that contains significantly more words than the specified count. It has way too many words and should exceed the tolerance threshold by a considerable margin making it fail validation because the difference is too large. Adding more text here to ensure it goes over the fifty word tolerance limit by a lot. More words are needed here. Even more words. And some extra words just to be sure. This should definitely exceed the tolerance limit now."
+    text_very_long = "This is a much longer test chapter that contains significantly more words than the specified count. It has way too many words and should exceed the tolerance threshold by a considerable margin making it fail validation because the difference is too large. Adding more text here to ensure it goes over the one hundred word tolerance limit by a lot. More words are needed here to make sure we exceed the new tolerance. Even more words. And some extra words just to be sure. This should definitely exceed the tolerance limit now with the new setting of one hundred words. Additional text is required to push the word count beyond one hundred and one, ensuring the validation actually fails when the difference exceeds the configured tolerance of one hundred words between the specified word count and the actual word count in the chapter text. This extra padding should make it fail properly now for the unit test to validate the word count tolerance checking mechanism is working correctly with the new tolerance setting."
     with pytest.raises(ValidationError) as exc_info:
         ChapterOutput(
             text=text_very_long,
@@ -132,7 +132,7 @@ def test_configurable_tolerance_in_values():
     assert Config.PYDANTIC_WORD_COUNT_TOLERANCE >= 0
 
     # Default should be reasonable
-    assert Config.PYDANTIC_WORD_COUNT_TOLERANCE == 50
+    assert Config.PYDANTIC_WORD_COUNT_TOLERANCE == 100
 
 
 def test_word_count_validator_error_message():

@@ -150,6 +150,29 @@ Harap buat respons Anda memiliki format berikut:
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 Tentu saja, jangan sertakan tag XML - itu hanya untuk menunjukkan contoh.
 Juga, item dalam tanda kurung hanya untuk memberi Anda gambaran yang lebih baik tentang apa yang harus ditulis, dan juga harus dihilangkan dari respons Anda.
+
+=== FORMAT JSON (REFERENSA HANYA) ===
+Ini mendefinisikan struktur. JANGAN ulangi skema dalam respons Anda!
+
+=== RESPONS ANDA (HANYA JSON) ===
+Hanya berikan data JSON di bawah ini. JANGAN sertakan penjelasan atau skema.
+
+Fields yang diperlukan:
+  - title (string, Required): Judul cerita
+  - genre (string, Required): Kategori genre cerita
+  - themes (array of strings, Required): Tema sentral cerita
+    Example: ["String 1", "String 2"]
+
+Fields opsional:
+  - characters (object, Optional): Nama karakter dan deskripsi detail...
+  - pacing (unknown, Optional): Kecepatan alur cerita (misalnya, lambat, sedang, cepat)...
+  - style (unknown, Optional): Deskripsi gaya bahasa...
+  - plot_structure (unknown, Optional): Elemen plot (eksposisi, aksi meningkat, klimaks, ...)
+  - settings (object, Optional): Detail latar dengan waktu, lokasi, budaya, suasana...
+  - ... dan 3 field opsional lainnya
+
+Example format: {{"field1": "value", "field2": 123}}
+PENTING: Hanya kembalikan data JSON, bukan skemanya!
 """
 
 INITIAL_OUTLINE_PROMPT = """

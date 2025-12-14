@@ -83,12 +83,12 @@ class TestChapterOutlineOutput:
                 outline_summary="Summary"
             )
 
-        # Test too few scenes (min 3)
+        # Test too few scenes (min 1)
         with pytest.raises(ValidationError) as exc_info:
             ChapterOutlineOutput(
                 chapter_number=1,
                 chapter_title="Test",
-                scenes=["Scene 1", "Scene 2"],  # Too few
+                scenes=[],  # Too few
                 characters_present=["Character"],
                 outline_summary="Summary"
             )
@@ -98,7 +98,7 @@ class TestChapterOutlineOutput:
             ChapterOutlineOutput(
                 chapter_number=1,
                 chapter_title="Test",
-                scenes=["Scene 1", "Scene 2", "Scene 3"],
+                scenes=["Scene 1", "Scene 2"],
                 characters_present=["Character"],
                 outline_summary="Summary",
                 estimated_word_count=0  # Should be > 0
@@ -156,7 +156,7 @@ class TestChapterOutlineOutput:
         # Should contain proper field descriptions
         assert "chapter_number (integer, Required)" in instruction
         assert "chapter_title (string, Required)" in instruction
-        assert "scenes (array of strings, Required)" in instruction
+        assert "scenes (array of objects, Required)" in instruction
         assert "outline_summary (string, Required)" in instruction
 
         # Should contain examples for arrays
@@ -175,7 +175,7 @@ class TestChapterOutlineOutput:
             ChapterOutlineOutput(
                 chapter_number=1,
                 chapter_title="B1",  # Too short (min 5)
-                scenes=["Scene 1", "Scene 2", "Scene 3"],
+                scenes=["Scene 1", "Scene 2"],
                 characters_present=["Character"],
                 outline_summary="Valid summary with enough characters"
             )
@@ -189,7 +189,7 @@ class TestChapterOutlineOutput:
             ChapterOutlineOutput(
                 chapter_number=1,
                 chapter_title="Valid Chapter Title",
-                scenes=["Scene 1", "Scene 2", "Scene 3"],
+                scenes=["Scene 1", "Scene 2"],
                 characters_present=["Character"],
                 outline_summary="Too short"  # Too short (min 20)
             )

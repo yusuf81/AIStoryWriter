@@ -23,7 +23,10 @@ class TestOutlineGeneratorPydanticConversion:
         story_elements = StoryElements(
             title="Hero's Journey",
             genre="Fantasy Adventure",
-            characters={"Hero": "Brave protagonist", "Villain": "Dark wizard"},
+            characters={
+                "Hero": [{"name": "Hero", "physical_description": "Brave protagonist"}],
+                "Villain": [{"name": "Dark wizard", "physical_description": "Evil antagonist"}]
+            },
             settings={
                 "Castle": {
                     "location": "Magical fortress",
