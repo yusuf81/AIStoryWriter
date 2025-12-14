@@ -515,11 +515,47 @@ class SceneValidationOutput(BaseModel):
 # Review Models
 # ==============================================================================
 
+class EnhancedSuggestion(BaseModel):
+    """Structured suggestion with detailed criteria from critique prompts."""
+    description: str = Field(description="Main suggestion detail (maps to Indonesian 'detail')")
+    pacing: Optional[str] = Field(None, description="Pacing-related suggestion (maps to Indonesian 'laju')")
+    flow: Optional[str] = Field(None, description="Flow/narrative suggestion (maps to Indonesian 'alur')")
+    other_criteria: Optional[Dict[str, str]] = Field(None, description="Additional criteria from critique prompts")
+
+
 class ReviewOutput(BaseModel):
     """Structured output for outline/chapter review feedback with flexible suggestion handling."""
     feedback: str = Field(min_length=10, description="Detailed feedback")
-    suggestions: Optional[List[str]] = Field(None, description="Specific suggestions for improvement (can be extracted from feedback)")
+    suggestions: Optional[List[Union[str, 'EnhancedSuggestion']]] = Field(None, description="Specific suggestions for improvement (structured or simple)")
     rating: int = Field(ge=0, le=10, description="Quality rating 0-10")
+
+    @field_validator('suggestions', mode='before')
+    @classmethod
+    def normalize_suggestions(cls, v):
+        """Convert structured Indonesian suggestions to EnhancedSuggestion objects."""
+        if isinstance(v, list):
+            normalized = []
+            for item in v:
+                if isinstance(item, str):
+                    # Keep string suggestions as-is
+                    normalized.append(item)
+                elif isinstance(item, dict):
+                    # Map Indonesian fields to English EnhancedSuggestion
+                    suggestion_data = {
+                        'description': item.get('detail', ''),
+                        'pacing': item.get('laju'),
+                        'flow': item.get('alur'),
+                        'other_criteria': {
+                            k: v for k, v in item.items()
+                            if k not in ['detail', 'laju', 'alur']
+                        }
+                    }
+                    # Remove None values from other_criteria if empty
+                    if not suggestion_data['other_criteria']:
+                        suggestion_data.pop('other_criteria', None)
+                    normalized.append(suggestion_data)
+            return normalized
+        return v
 
     @field_validator('suggestions')
     @classmethod

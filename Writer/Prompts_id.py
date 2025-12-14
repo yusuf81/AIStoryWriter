@@ -294,7 +294,23 @@ Harus sangat jelas bab mana yang mana, dan konten di setiap bab.
 Harap berikan kritik Anda dalam format terstruktur berikut:
 - Umpan balik keseluruhan: Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan
 - Saran spesifik: Rekomendasi yang dapat ditindaklanjuti untuk meningkatkan outline
-- Peringkat kualitas: Skor dari 0-10 (0=buruk, 10=luar biasa)"""
+- Peringkat kualitas: Skor dari 0-10
+
+Harap berikan kritik Anda dalam format JSON:
+{
+    "feedback": "Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan...",
+    "rating": 7,
+    "suggestions": [
+        "Saran sederhana string",
+        {
+            "detail": "Saran terstruktur untuk detail",
+            "laju": "Saran untuk laju cerita",
+            "alur": "Saran untuk alur naratif"
+        }
+    ]
+}
+
+Catatan: 'detail' untuk detail umum, 'laju' untuk pacing/cepat-lambat, 'alur' untuk alur naratif"""
 
 OUTLINE_REVISION_PROMPT = """
 Harap revisi outline berikut:

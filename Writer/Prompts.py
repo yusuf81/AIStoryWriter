@@ -287,7 +287,23 @@ It should be very clear which chapter is which, and the content in each chapter.
 Please provide your critique in the following structured format:
 - Overall feedback: Detailed analysis of strengths and areas for improvement
 - Specific suggestions: Actionable recommendations for improving the outline
-- Quality rating: Score from 0-10 (0=poor, 10=excellent)"""
+- Quality rating: Score from 0-10
+
+Please provide your critique in the following JSON format:
+{
+    "feedback": "Detailed analysis of strengths and areas for improvement...",
+    "rating": 7,
+    "suggestions": [
+        "Simple string suggestion",
+        {
+            "detail": "Structured suggestion for details",
+            "pacing": "Suggestion for story pacing",
+            "flow": "Suggestion for narrative flow"
+        }
+    ]
+}
+
+Note: Field names match English: 'detail' for general details, 'pacing' for pacing/timing, 'flow' for narrative flow"""
 
 OUTLINE_REVISION_PROMPT = """
 Please revise the following outline:

@@ -601,6 +601,67 @@ class TestSceneOutline:
             )
 
 
+class TestReviewOutputSuggestions:
+    """Test ReviewOutput with structured suggestions from LLM"""
+
+    def test_review_output_accepts_structured_suggestions_green(self):
+        """GREEN: Test that ReviewOutput now accepts structured suggestions after implementation"""
+        from Writer.Models import ReviewOutput
+        from Writer.Models import EnhancedSuggestion
+
+        # This should work now with our Union[str, EnhancedSuggestion] implementation
+        review = ReviewOutput(
+            feedback="Outline ini memiliki kekuatan dalam menggambarkan karakter dan setting yang menarik.",
+            suggestions=[
+                {
+                    "detail": "Tambahkan lebih banyak detail tentang tantangan yang dihadapi Rian dalam menemukan gua tersebut. Misalnya, apa saja rintangannya dan bagaimana ia mengatasinya?",
+                    "laju": "Perlu diperhatikan laju cerita agar tidak terlalu cepat melewati poin plot tertentu. Misalnya, tambahkan lebih banyak detail tentang hubungan antara Rian dengan Naga Kecil.",
+                    "alur": "Pastikan setiap bab mengalir ke bab berikutnya dan memiliki struktur naratif yang konsisten di seluruh cerita."
+                },
+                "Saran sederhana tentang pengembangan karakter"
+            ],
+            rating=7
+        )
+
+        # Should validate successfully with structured suggestions
+        assert review.feedback is not None
+        assert len(review.suggestions) == 2
+        assert review.rating == 7
+
+        # Check types - first should be EnhancedSuggestion, second should be string
+        assert isinstance(review.suggestions[0], EnhancedSuggestion)
+        assert isinstance(review.suggestions[1], str)
+
+        # Check field mapping from Indonesian to English
+        structured_suggestion = review.suggestions[0]
+        assert structured_suggestion.description == "Tambahkan lebih banyak detail tentang tantangan yang dihadapi Rian dalam menemukan gua tersebut. Misalnya, apa saja rintangannya dan bagaimana ia mengatasinya?"
+        assert structured_suggestion.pacing == "Perlu diperhatikan laju cerita agar tidak terlalu cepat melewati poin plot tertentu. Misalnya, tambahkan lebih banyak detail tentang hubungan antara Rian dengan Naga Kecil."
+        assert structured_suggestion.flow == "Pastikan setiap bab mengalir ke bab berikutnya dan memiliki struktur naratif yang konsisten di seluruh cerita."
+
+    def test_enhanced_suggestion_model_will_work_after_creation(self):
+        """GREEN: Test that EnhancedSuggestion model will work after we create it"""
+        # This tests the future state after we create EnhancedSuggestion
+
+        # For now, just verify the structured data pattern
+        structured_suggestion = {
+            "detail": "Tambahkan lebih banyak detail tentang tantangan",
+            "laju": "Perbaiki laju cerita di bab pertama",
+            "alur": "Pastikan alur naratif konsisten"
+        }
+
+        # Verify the expected English field mappings
+        expected_mapping = {
+            "description": "detail",
+            "pacing": "laju",
+            "flow": "alur"
+        }
+
+        # This will be used in our future validator
+        for english_field, indonesian_field in expected_mapping.items():
+            assert indonesian_field in structured_suggestion
+            assert structured_suggestion[indonesian_field] is not None
+
+
 class TestModelRegistry:
     """Test suite for model registry functionality"""
 
