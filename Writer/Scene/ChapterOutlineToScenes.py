@@ -1,8 +1,5 @@
-import Writer.LLMEditor
-import Writer.PrintUtils
 import Writer.Config
-import Writer.Chapter.ChapterGenSummaryCheck
-from Writer.Models import SceneOutline
+from Writer.Models import SceneOutlineList
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
@@ -15,7 +12,7 @@ def ChapterOutlineToScenes(
     _Outline: str,
     _BaseContext: str = "",
 ):  # Added _ChapterNum, _TotalChapters, renamed _ThisChapter
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
 
     # We're now going to convert the chapter outline into a more detailed outline for each scene.
     # The scene by scene outline will be returned, JSONified, and then later converted into fully written scenes
@@ -35,15 +32,15 @@ def ChapterOutlineToScenes(
         )
     )
 
-    Response, Scene_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
+    Response, SceneList_obj, _ = Interface.SafeGeneratePydantic(  # Use wrapper model for multiple scenes
         _Logger,
         MesssageHistory,
         Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL,
-        SceneOutline
+        SceneOutlineList
     )
     _Logger.Log(
         f"Finished Splitting Chapter {_ChapterNum}/{_TotalChapters} Into Scenes", 5
     )
 
-    # Extract text from validated SceneOutline model
-    return Scene_obj.action
+    # Return list of scene actions directly (no backward compatibility)
+    return [scene.action for scene in SceneList_obj.scenes]

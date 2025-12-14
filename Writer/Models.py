@@ -352,6 +352,19 @@ class SceneOutline(BaseModel):
         return v
 
 
+class SceneOutlineList(BaseModel):
+    """Wrapper model for multiple SceneOutline objects following SceneListSchema pattern"""
+    scenes: List[SceneOutline] = Field(description="List of scenes for chapter outline conversion")
+
+    @field_validator('scenes')
+    @classmethod
+    def validate_scenes(cls, v):
+        """Ensure at least one scene is provided"""
+        if not v:
+            raise ValueError("At least one scene must be provided")
+        return v
+
+
 class EnhancedSceneOutline(BaseModel):
     """
     Enhanced scene structure matching prompt expectations.

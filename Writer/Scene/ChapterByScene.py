@@ -1,8 +1,3 @@
-import Writer.LLMEditor
-import Writer.PrintUtils
-import Writer.Config
-import Writer.Chapter.ChapterGenSummaryCheck
-# import Writer.Prompts # Dihapus karena tidak digunakan secara langsung di file ini
 import Writer.Scene.ChapterOutlineToScenes
 import Writer.Scene.ScenesToJSON
 import Writer.Scene.SceneOutlineToScene
@@ -35,12 +30,15 @@ def ChapterByScene(
         _BaseContext=_BaseContext,  # Pass chapter info
     )
 
+    # Convert list to string for ScenesToJSON (expects string input)
+    SceneBySceneText = "\n\n---\n\n".join(SceneBySceneOutline)
+
     SceneJSONList = Writer.Scene.ScenesToJSON.ScenesToJSON(
         Interface,
         _Logger,
         _ChapterNum,
         _TotalChapters,
-        SceneBySceneOutline,  # Pass chapter context
+        SceneBySceneText,  # Pass chapten context as string
     )
 
     # Now we iterate through each scene one at a time and write it, then add it to this rough chapter, which is then returned for further editing
