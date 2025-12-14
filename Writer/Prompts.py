@@ -290,18 +290,18 @@ Please provide your critique in the following structured format:
 - Quality rating: Score from 0-10
 
 Please provide your critique in the following JSON format:
-{
+{{
     "feedback": "Detailed analysis of strengths and areas for improvement...",
     "rating": 7,
     "suggestions": [
         "Simple string suggestion",
-        {
+        {{
             "detail": "Structured suggestion for details",
             "pacing": "Suggestion for story pacing",
             "flow": "Suggestion for narrative flow"
-        }
+        }}
     ]
-}
+}}
 
 Note: Field names match English: 'detail' for general details, 'pacing' for pacing/timing, 'flow' for narrative flow"""
 
@@ -734,6 +734,10 @@ CRITIC_CHAPTER_INTRO = "You are a helpful AI Assistant. Answer the user's prompt
 CRITIC_CHAPTER_PROMPT = """<CHAPTER>
 {_Chapter}
 </CHAPTER>
+
+<OUTLINE>
+{_Outline}
+</OUTLINE>
 
 Please give feedback on the above chapter based on the following criteria:
     - Pacing: Is the story rushing over certain plot points and excessively focusing on others?

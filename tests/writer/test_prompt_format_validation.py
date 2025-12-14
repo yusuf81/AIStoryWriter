@@ -490,3 +490,144 @@ class TestFormatInstructionBuilder:
 
         assert has_style_example, "Format instruction should contain style field examples"
         assert has_string_style, "Style example should be shown as string, not object"
+
+
+class TestPromptJSONBraceFormat:
+    """Test prompt format compatibility with Python .format() and JSON braces."""
+
+    def test_critic_outline_prompt_format_english(self, mock_logger):
+        """
+        RED: Test that English CRITIC_OUTLINE_PROMPT currently fails with KeyError
+
+        Arrange: Get English CRITIC_OUTLINE_PROMPT
+        Act: Attempt to format the prompt with _Outline parameter
+        Assert: Should raise KeyError for JSON braces (RED phase)
+        """
+        # Arrange
+        prompt = Prompts.CRITIC_OUTLINE_PROMPT
+        test_outline = "Test outline content with some text"
+
+        # Act & Assert
+        # This should FAIL in RED phase, pass in GREEN phase after fix
+        formatted = prompt.format(_Outline=test_outline)
+
+        # If we get here, the prompt successfully formatted (GREEN phase)
+        assert "_Outline" not in formatted, "Placeholder should be replaced"
+        assert test_outline in formatted, "Test outline should be in formatted output"
+
+    def test_critic_outline_prompt_format_indonesian(self, mock_logger):
+        """
+        RED: Test that Indonesian CRITIC_OUTLINE_PROMPT currently fails with KeyError
+
+        Arrange: Load Indonesian prompts
+        Act: Attempt to format the prompt with _Outline parameter
+        Assert: Should raise KeyError for JSON braces (RED phase)
+        """
+        # Arrange
+        # Load Indonesian prompts
+        from Writer.PromptsHelper import get_prompts
+        indonesian_prompts = get_prompts()
+        prompt = indonesian_prompts.CRITIC_OUTLINE_PROMPT
+        test_outline = "Konten outline test"
+
+        # Act & Assert
+        # This should FAIL in RED phase, pass in GREEN phase after fix
+        formatted = prompt.format(_Outline=test_outline)
+
+        # If we get here, the prompt successfully formatted (GREEN phase)
+        assert "_Outline" not in formatted, "Placeholder should be replaced"
+        assert test_outline in formatted, "Test outline should be in formatted output"
+
+    def test_critic_chapter_prompt_missing_outline_placeholder(self, mock_logger):
+        """
+        RED: Test that CRITIC_CHAPTER_PROMPT ignores _Outline parameter
+
+        This demonstrates the bug where outline information is lost during formatting,
+        not a KeyError, but ignored parameters that should be included.
+
+        Arrange: Get CRITIC_CHAPTER_PROMPT
+        Act: Format with _Chapter and _Outline parameters
+        Assert: Should FAIL because outline content is missing from formatted output
+        """
+        # Arrange
+        prompt = Prompts.CRITIC_CHAPTER_PROMPT
+        test_chapter = "Chapter content here"
+        test_outline = "IMPORTANT OUTLINE INFORMATION THAT SHOULD BE INCLUDED"
+
+        # Act
+        # This should FAIL the test because _Outline is ignored (no KeyError, but missing content)
+        formatted = prompt.format(_Chapter=test_chapter, _Outline=test_outline)
+
+        # Assert - This should FAIL in RED phase, pass in GREEN after fix
+        assert test_outline in formatted, "Outline information should be present in formatted prompt"
+        assert "_Outline" not in formatted, "Placeholder should be replaced"
+
+    def test_json_examples_have_double_braces_scenes_to_json(self, mock_logger):
+        """
+        GREEN: Verify SCENES_TO_JSON uses correct double braces pattern
+
+        This test verifies that existing prompts correctly use double braces.
+        It should PASS, showing the correct pattern to follow.
+        """
+        # Arrange
+        prompt = Prompts.SCENES_TO_JSON
+        test_scenes = "Scene 1\nScene 2\nScene 3"
+
+        # Act & Assert
+        # This should PASS because SCENES_TO_JSON correctly uses double braces
+        try:
+            formatted = prompt.format(_Scenes=test_scenes)
+            assert "_Scenes" not in formatted, "Placeholder should be replaced"
+            assert test_scenes in formatted, "Test content should be in formatted output"
+        except KeyError:
+            pytest.fail("SCENES_TO_JSON should format correctly with double braces")
+
+    def test_all_prompts_scan_for_json_braces(self, mock_logger):
+        """
+        GREEN: Verify all prompts have properly escaped JSON braces
+
+        Arrange: Get all prompts from both language files
+        Act: Search for JSON examples with single braces
+        Assert: Should find NO problematic patterns after fixes
+        """
+        # Arrange
+        import Writer.Prompts as EnglishPrompts
+        from Writer.PromptsHelper import get_prompts as get_indonesian_prompts
+
+        # Get all prompt attributes (strings only)
+        english_prompts = {k: v for k, v in vars(EnglishPrompts).items()
+                          if not k.startswith('_') and isinstance(v, str)}
+        indonesian_prompts = {k: v for k, v in vars(get_indonesian_prompts()).items()
+                             if not k.startswith('_') and isinstance(v, str)}
+
+        all_prompts = [('English', english_prompts), ('Indonesian', indonesian_prompts)]
+        found_issues = []
+
+        # Act
+        for lang_name, prompts in all_prompts:
+            for prompt_name, prompt_text in prompts.items():
+                # Skip prompts without JSON indicators
+                if 'JSON' not in prompt_text and 'json' not in prompt_text.lower():
+                    continue
+
+                # Check for patterns that look like unescaped JSON
+                lines = prompt_text.split('\n')
+                for i, line in enumerate(lines):
+                    # Skip format placeholders
+                    if any(placeholder in line for placeholder in ['_{', '_O', '_C', '_S', '_P']):
+                        continue
+
+                    # Look for JSON-like patterns with single braces
+                    # Pattern: Lines with {"key": or [ or } but not {{ or }}
+                    if (('{' in line and '}' in line and
+                         not line.count('{') == line.count('{{') and
+                         '"' in line and (':' in line or ']' in line)) or
+                        (line.strip() == '{' or line.strip() == '}')):
+
+                        # Check if this is actually JSON (has keys/colons)
+                        if any(key in line for key in ['"feedback":', '"rating":', '"suggestions":', '"detail":', '"laju":', '"alur":']):
+                            found_issues.append(f"{lang_name}.{prompt_name} line {i+1}: {line.strip()}")
+
+        # Assert
+        # After GREEN phase fixes, this should PASS because no issues remain
+        assert len(found_issues) == 0, f"Found prompts with unescaped JSON braces: {found_issues}"

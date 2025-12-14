@@ -297,18 +297,18 @@ Harap berikan kritik Anda dalam format terstruktur berikut:
 - Peringkat kualitas: Skor dari 0-10
 
 Harap berikan kritik Anda dalam format JSON:
-{
+{{
     "feedback": "Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan...",
     "rating": 7,
     "suggestions": [
         "Saran sederhana string",
-        {
+        {{
             "detail": "Saran terstruktur untuk detail",
             "laju": "Saran untuk laju cerita",
             "alur": "Saran untuk alur naratif"
-        }
+        }}
     ]
-}
+}}
 
 Catatan: 'detail' untuk detail umum, 'laju' untuk pacing/cepat-lambat, 'alur' untuk alur naratif"""
 
@@ -758,6 +758,10 @@ CRITIC_CHAPTER_INTRO = "Anda adalah Asisten AI yang membantu. Jawab prompt pengg
 CRITIC_CHAPTER_PROMPT = """<CHAPTER>
 {_Chapter}
 </CHAPTER>
+
+<OUTLINE>
+{_Outline}
+</OUTLINE>
 
 Harap berikan umpan balik pada bab di atas berdasarkan kriteria berikut:
     - Laju: Apakah cerita terlalu cepat melewati poin plot tertentu dan terlalu fokus pada yang lain?
