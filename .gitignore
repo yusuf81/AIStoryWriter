@@ -176,3 +176,4 @@ test_output.md*
 lorebook_db/
 test_db/
 test_lorebook_db/
+.claude/*
