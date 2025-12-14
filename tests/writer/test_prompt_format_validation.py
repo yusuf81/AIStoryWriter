@@ -198,6 +198,224 @@ class TestPromptFormatValidation:
             except Exception as e:
                 pytest.fail(f"Wrapper example {i} fails StoryElements validation: {e}")
 
+    def test_conflict_field_structure_in_english_prompt(self, mock_logger):
+        """
+        RED: Test that English prompt conflict examples are strings, not objects
+
+        Arrange: Get English GENERATE_STORY_ELEMENTS prompt
+        Act: Extract JSON examples and check conflict field structure
+        Assert: Conflict field should be a string, not nested object
+        """
+        # Arrange
+        prompt = Prompts.GENERATE_STORY_ELEMENTS
+
+        # Act
+        examples = self.extract_json_examples(prompt)
+
+        # Assert - This will FAIL because current examples show conflict as object
+        for example in examples:
+            if 'conflict' in example:
+                conflict = example['conflict']
+                assert isinstance(conflict, str), \
+                    f"Conflict field should be a string, got {type(conflict).__name__}: {conflict}"
+
+    def test_conflict_field_structure_in_indonesian_prompt(self, mock_logger):
+        """
+        RED: Test that Indonesian prompt conflict examples are strings, not objects
+
+        Arrange: Get Indonesian GENERATE_STORY_ELEMENTS prompt
+        Act: Extract JSON examples and check conflict field structure
+        Assert: Conflict field should be a string, not nested object
+        """
+        # Arrange
+        import Writer.Config as Config
+        original_lang = getattr(Config, 'NATIVE_LANGUAGE', 'en')
+        Config.NATIVE_LANGUAGE = 'id'
+        indonesian_prompts = get_prompts()
+        prompt = indonesian_prompts.GENERATE_STORY_ELEMENTS
+        Config.NATIVE_LANGUAGE = original_lang  # Restore
+
+        # Act
+        examples = self.extract_json_examples(prompt)
+
+        # Assert - This will FAIL because Indonesian examples show conflict as object
+        for example in examples:
+            if 'conflict' in example:
+                conflict = example['conflict']
+                assert isinstance(conflict, str), \
+                    f"Conflict field should be a string, got {type(conflict).__name__}: {conflict}"
+
+    def test_symbolism_field_structure_in_english_prompt(self, mock_logger):
+        """
+        RED: Test that English prompt symbolism examples are lists, not objects
+
+        Arrange: Get English GENERATE_STORY_ELEMENTS prompt
+        Act: Extract JSON examples and check symbolism field structure
+        Assert: Symbolism field should be a list of dicts, not nested object
+        """
+        # Arrange
+        prompt = Prompts.GENERATE_STORY_ELEMENTS
+
+        # Act
+        examples = self.extract_json_examples(prompt)
+
+        # Assert - This will FAIL because current examples show symbolism as nested object
+        for example in examples:
+            if 'symbolism' in example:
+                symbolism = example['symbolism']
+                assert isinstance(symbolism, list), \
+                    f"Symbolism field should be a list, got {type(symbolism).__name__}: {symbolism}"
+
+                # If list is not empty, check structure
+                if symbolism:
+                    assert isinstance(symbolism[0], dict), \
+                        f"Symbolism list items should be dicts, got {type(symbolism[0]).__name__}"
+
+    def test_symbolism_field_structure_in_indonesian_prompt(self, mock_logger):
+        """
+        RED: Test that Indonesian prompt symbolism examples are lists, not objects
+
+        Arrange: Get Indonesian GENERATE_STORY_ELEMENTS prompt
+        Act: Extract JSON examples and check symbolism field structure
+        Assert: Symbolism field should be a list of dicts, not nested object
+        """
+        # Arrange
+        import Writer.Config as Config
+        original_lang = getattr(Config, 'NATIVE_LANGUAGE', 'en')
+        Config.NATIVE_LANGUAGE = 'id'
+        indonesian_prompts = get_prompts()
+        prompt = indonesian_prompts.GENERATE_STORY_ELEMENTS
+        Config.NATIVE_LANGUAGE = original_lang  # Restore
+
+        # Act
+        examples = self.extract_json_examples(prompt)
+
+        # Assert - This will FAIL because Indonesian examples show symbolism as nested object
+        for example in examples:
+            if 'symbolism' in example:
+                symbolism = example['symbolism']
+                assert isinstance(symbolism, list), \
+                    f"Symbolism field should be a list, got {type(symbolism).__name__}: {symbolism}"
+
+                # If list is not empty, check structure
+                if symbolism:
+                    assert isinstance(symbolism[0], dict), \
+                        f"Symbolism list items should be dicts, got {type(symbolism[0]).__name__}"
+
+    def test_response_template_conflict_structure_english(self, mock_logger):
+        """
+        RED: Test that English response template's conflict section expects free text, not nested keys
+
+        Arrange: Get English GENERATE_STORY_ELEMENTS prompt
+        Act: Check the conflict section in RESPONSE_TEMPLATE
+        Assert: Template should expect free text, not structured object
+        """
+        # Arrange
+        prompt = Prompts.GENERATE_STORY_ELEMENTS
+
+        # Act - Find the conflict section
+        conflict_start = prompt.find('## Conflict')
+        assert conflict_start != -1, "Prompt should have Conflict section"
+
+        # Extract conflict section
+        conflict_section = prompt[conflict_start:conflict_start + 500]
+
+        # Assert - Now PASSES because we simplified the structure
+        # Should have single bullet point, not separate Type and Description
+        assert '- **' in conflict_section, "Conflict section should have bullet points"
+        assert '**Type**:' not in conflict_section, \
+            "Conflict section should not have separate Type key - this creates nested structure"
+        # Note: **Description** is now used as a single field, not separate from Type
+
+    def test_response_template_symbolism_structure_english(self, mock_logger):
+        """
+        RED: Test that English response template's symbolism section expects list, not nested object
+
+        Arrange: Get English GENERATE_STORY_ELEMENTS prompt
+        Act: Check the symbolism section in RESPONSE_TEMPLATE
+        Assert: Template should not create nested object with numbered symbols
+        """
+        # Arrange
+        prompt = Prompts.GENERATE_STORY_ELEMENTS
+
+        # Act - Find the symbolism section
+        symbolism_start = prompt.find('## Symbolism')
+        assert symbolism_start != -1, "Prompt should have Symbolism section"
+
+        # Extract symbolism section
+        symbolism_section = prompt[symbolism_start:symbolism_start + 500]
+
+        # Assert - This will FAIL because template uses numbered symbols with sub-keys
+        # Should NOT have nested structure with "Symbol 1", "Symbol 2" keys
+        assert '### Symbol 1' not in symbolism_section, \
+            "Symbolism section should not create numbered symbols with nested structure"
+        assert '**Symbol**:' not in symbolism_section, \
+            "Symbolism section should not have Symbol key - this creates nested structure"
+        assert '**Meaning**:' not in symbolism_section, \
+            "Symbolism section should not have Meaning key - this creates nested structure"
+
+    def test_response_template_conflict_structure_indonesian(self, mock_logger):
+        """
+        RED: Test that Indonesian response template's conflict section expects free text, not nested keys
+
+        Arrange: Get Indonesian GENERATE_STORY_ELEMENTS prompt
+        Act: Check the conflict section in RESPONSE_TEMPLATE
+        Assert: Template should expect free text, not structured object
+        """
+        # Arrange
+        import Writer.Config as Config
+        original_lang = getattr(Config, 'NATIVE_LANGUAGE', 'en')
+        Config.NATIVE_LANGUAGE = 'id'
+        indonesian_prompts = get_prompts()
+        prompt = indonesian_prompts.GENERATE_STORY_ELEMENTS
+        Config.NATIVE_LANGUAGE = original_lang  # Restore
+
+        # Act - Find the conflict section
+        conflict_start = prompt.find('## Konflik')
+        assert conflict_start != -1, "Indonesian prompt should have Konflik section"
+
+        # Extract conflict section
+        conflict_section = prompt[conflict_start:conflict_start + 500]
+
+        # Assert - Now PASSES because we simplified the structure
+        # Should have single bullet point, not separate Jenis and Deskripsi
+        assert '- **' in conflict_section, "Konflik section should have bullet points"
+        assert '**Jenis**:' not in conflict_section, \
+            "Konflik section should not have separate Jenis key - this creates nested structure"
+        # Note: **Deskripsi** is now used as a single field, not separate from Jenis
+
+    def test_response_template_symbolism_structure_indonesian(self, mock_logger):
+        """
+        RED: Test that Indonesian response template's symbolism section expects list, not nested object
+
+        Arrange: Get Indonesian GENERATE_STORY_ELEMENTS prompt
+        Act: Check the symbolism section in RESPONSE_TEMPLATE
+        Assert: Template should not create nested object with numbered symbols
+        """
+        # Arrange
+        import Writer.Config as Config
+        original_lang = getattr(Config, 'NATIVE_LANGUAGE', 'en')
+        Config.NATIVE_LANGUAGE = 'id'
+        indonesian_prompts = get_prompts()
+        prompt = indonesian_prompts.GENERATE_STORY_ELEMENTS
+        Config.NATIVE_LANGUAGE = original_lang  # Restore
+
+        # Act - Find the symbolism section
+        symbolism_start = prompt.find('## Simbolisme')
+        assert symbolism_start != -1, "Indonesian prompt should have Simbolisme section"
+
+        # Extract symbolism section
+        symbolism_section = prompt[symbolism_start:symbolism_start + 500]
+
+        # Assert - This will FAIL because template uses numbered symbols with sub-keys
+        # Should NOT have nested structure with "Simbol 1", "Simbol 2" keys
+        assert '### Simbol 1' not in symbolism_section, \
+            "Simbolisme section should not create numbered symbols with nested structure"
+        assert '**Simbol**:' not in symbolism_section, \
+            "Simbolisme section should not have Simbol key - this creates nested structure"
+        assert '**Makna**:' not in symbolism_section, \
+            "Simbolisme section should not have Makna key - this creates nested structure"
+
 
 class TestFormatInstructionBuilder:
     """

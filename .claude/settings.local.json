@@ -228,7 +228,14 @@
       "Bash(.venv/bin/python3 -c \"\nfrom Writer import Prompts\npos = Prompts.GENERATE_STORY_ELEMENTS.find(''Example format:'')\nif pos != -1:\n    excerpt = Prompts.GENERATE_STORY_ELEMENTS[pos:pos+100]\n    print(''Example section start:'')\n    print(repr(excerpt))\n\")",
       "Bash(.venv/bin/python3 -c \"\nfrom tests.writer.test_prompt_format_validation import TestPromptFormatValidation\nfrom Writer import Prompts\n\ntest = TestPromptFormatValidation()\nexamples = test.extract_json_examples(Prompts.GENERATE_STORY_ELEMENTS)\nprint(''Examples found:'', len(examples))\nif examples:\n    print(''First example title:'', examples[0].get(''title'', ''NOT FOUND''))\n    print(''Has characters:'', ''characters'' in examples[0])\n    if ''characters'' in examples[0]:\n        chars = examples[0][''characters'']\n        print(''Characters type:'', type(chars))\n        if chars:\n            for char_type, char_list in chars.items():\n                print(f''  {char_type}: {type(char_list)} with {len(char_list)} items'')\n\")",
       "Bash(.venv/bin/python -m pytest tests/writer/interface/test_json_format_fix.py::TestListStrFormatInstructions::test_outlineoutput_specific_examples -v)",
-      "Bash(.venv/bin/python -m pytest -v --tb=short)"
+      "Bash(.venv/bin/python -m pytest -v --tb=short)",
+      "Bash(.venv/bin/python -m pytest tests/writer/test_prompt_format_validation.py::TestPromptFormatValidation::test_conflict_field_structure_in_english_prompt -v)",
+      "Bash(.venv/bin/python3 -c \"\nfrom tests.writer.test_prompt_format_validation import TestPromptFormatValidation\nfrom Writer import Prompts\n\ntest = TestPromptFormatValidation()\nexamples = test.extract_json_examples(Prompts.GENERATE_STORY_ELEMENTS)\nprint(''Examples found:'', examples)\nprint(''Type of first example:'', type(examples[0]) if examples else ''None'')\n\")",
+      "Bash(.venv/bin/python -m pytest tests/writer/test_prompt_format_validation.py::TestPromptFormatValidation::test_response_template_conflict_structure_english -v)",
+      "Bash(.venv/bin/python -m pytest tests/writer/test_prompt_format_validation.py::TestPromptFormatValidation::test_response_template_symbolism_structure_english -v)",
+      "Bash(.venv/bin/python -m pytest tests/writer/test_prompt_format_validation.py::TestPromptFormatValidation::test_response_template_conflict_structure_indonesian tests/writer/test_prompt_format_validation.py::TestPromptFormatValidation::test_response_template_symbolism_structure_indonesian -v)",
+      "Bash(.venv/bin/python -m pytest tests/test_outline_generator_pydantic.py::TestOutlineGeneratorPydanticConversion::test_extract_base_context_uses_pydantic -v -s)",
+      "Bash(.venv/bin/python -m pytest -x -v --tb=short)"
     ]
   }
 }

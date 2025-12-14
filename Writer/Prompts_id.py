@@ -64,15 +64,10 @@ Harap buat respons Anda memiliki format berikut:
 (Ulangi struktur di atas untuk latar tambahan)
 
 ## Konflik
-- **Jenis**: (misalnya, internal, eksternal)
-- **Deskripsi**:
+- **Deskripsi**: (jenis dan deskripsi konflik utama)
 
 ## Simbolisme
-### Simbol 1
-- **Simbol**:
-- **Makna**:
-
-(Ulangi struktur di atas untuk simbol tambahan)
+- **Simbol dan Makna**: (daftar simbol dan artinya)
 
 ## Karakter
 ### Karakter Utama
@@ -199,7 +194,9 @@ Example format: {{
         ]
     }},
     "pacing": "Sedang dengan ketegangan yang meningkat saat momen kunci.",
-    "style": "Naratif deskriptif dengan citraan yang hidup dan kedalaman emosional"
+    "style": "Naratif deskriptif dengan citraan yang hidup dan kedalaman emosional",
+    "conflict": "Konflik eksternal antara pahlawan dan penjaga harta karun",
+    "symbolism": [{{"symbol": "Harta Karun", "meaning": "Simbol dari pencapaian dan penemuan diri"}}]
 }}
 PENTING: Hanya kembalikan data JSON, bukan skemanya!
 """

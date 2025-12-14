@@ -424,7 +424,9 @@ For example:
         ]
     },
     "pacing": "Moderate with moments of excitement and wonder.",
-    "style": "Descriptive narrative with vivid imagery and emotional depth"
+    "style": "Descriptive narrative with vivid imagery and emotional depth",
+    "conflict": "External conflict between hero and antagonist over the treasure",
+    "symbolism": [{{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}}]
 }"""
 
         return instruction

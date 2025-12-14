@@ -64,15 +64,10 @@ Please make your response have the following format:
 (Repeat the above structure for additional settings)
 
 ## Conflict
-- **Type**: (e.g., internal, external)
-- **Description**:
+- **Description**: (type and description of the main conflict)
 
 ## Symbolism
-### Symbol 1
-- **Symbol**:
-- **Meaning**:
-
-(Repeat the above structure for additional symbols)
+- **Symbols and Meanings**: (list of symbols and their meanings)
 
 ## Characters
 ### Main Character(s)
@@ -195,7 +190,9 @@ Example format: {{
         ]
     }},
     "pacing": "Moderate with escalating tension during key moments.",
-    "style": "Descriptive narrative with vivid imagery and emotional depth"
+    "style": "Descriptive narrative with vivid imagery and emotional depth",
+    "conflict": "External conflict between hero and antagonist over the treasure",
+    "symbolism": [{{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}}]
 }}
 IMPORTANT: Return ONLY the JSON data, not the schema!
 """
