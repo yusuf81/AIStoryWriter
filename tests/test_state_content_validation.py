@@ -103,11 +103,11 @@ class TestStateDataStructureValidation:
             ],
             "next_chapter_index": 3,
             "expanded_chapter_outlines": [
-                "Detailed outline for chapter 1",
-                "Detailed outline for chapter 2",
-                "Detailed outline for chapter 3",
-                "Detailed outline for chapter 4",
-                "Detailed outline for chapter 5"
+                {"text": "Detailed outline for chapter 1", "title": "Chapter 1"},
+                {"text": "Detailed outline for chapter 2", "title": "Chapter 2"},
+                {"text": "Detailed outline for chapter 3", "title": "Chapter 3"},
+                {"text": "Detailed outline for chapter 4", "title": "Chapter 4"},
+                {"text": "Detailed outline for chapter 5", "title": "Chapter 5"}
             ],
             "full_outline": "Complete story outline",
             "base_context": "Story context",

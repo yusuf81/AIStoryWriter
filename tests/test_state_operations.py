@@ -239,7 +239,9 @@ class TestStateRoundTrip:
             "last_completed_step": "expand_chapters",
             "total_chapters": 15,
             "expanded_chapter_outlines": [
-                "Outline 1", "Outline 2", "Outline 3"
+                {"text": "Outline 1", "title": "Chapter 1"},
+                {"text": "Outline 2", "title": "Chapter 2"},
+                {"text": "Outline 3", "title": "Chapter 3"}
             ],
             "config": {
                 "SEED": 12345,

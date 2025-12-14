@@ -85,11 +85,22 @@ def _get_outline_for_chapter_pipeline_version(SysLogger, Config, Statistics, Act
     if Config.EXPAND_OUTLINE and ExpandedChapterOutlines and chapter_index > 0 and len(ExpandedChapterOutlines) >= chapter_index:
         potential_expanded_outline = ExpandedChapterOutlines[chapter_index - 1]
         min_len_threshold = Config.MIN_WORDS_PER_CHAPTER_OUTLINE
-        word_count = Statistics.GetWordCount(potential_expanded_outline)
+
+        # Extract text from dict format (Option B)
+        if isinstance(potential_expanded_outline, dict):
+            text_for_word_count = potential_expanded_outline["text"]
+        else:
+            text_for_word_count = potential_expanded_outline
+
+        word_count = Statistics.GetWordCount(text_for_word_count)
 
         if word_count >= min_len_threshold:
             SysLogger.Log(f"Pipeline: Using specific expanded outline for Chapter {chapter_index} (Words: {word_count}).", 6)
-            return potential_expanded_outline
+            # Return extracted text for consistency
+            if isinstance(potential_expanded_outline, dict):
+                return potential_expanded_outline["text"]
+            else:
+                return potential_expanded_outline
         else:
             SysLogger.Log(f"Pipeline: Warning: Expanded outline for Chapter {chapter_index} is too short ({word_count} words, min {min_len_threshold}). Falling back to MegaOutline.", 6)
             # Fall through to use MegaOutline
