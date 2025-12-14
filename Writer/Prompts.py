@@ -568,6 +568,17 @@ Please break your response into scenes, which each have the following format (pl
 - **Resolution & Lead-in:**
   - [How the scene ends and connects to the next one]
 
+When generating structured JSON responses (optional), use these field names to match the expected schema:
+Example JSON scene structure:
+{{
+    "title": "Brief scene title",
+    "characters_and_setting": "Characters present and where the scene takes place",
+    "conflict_and_tone": "Type of conflict and emotional tone",
+    "key_events": "Important plot points and actions",
+    "literary_devices": "Literary techniques used (optional)",
+    "resolution": "How the scene ends and connects to the next"
+}}
+
 Again, don't write the chapter itself, just create a detailed outline of the chapter.
 
 Make sure your chapter has a markdown-formatted name!

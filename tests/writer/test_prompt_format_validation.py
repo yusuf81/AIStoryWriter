@@ -631,3 +631,125 @@ class TestPromptJSONBraceFormat:
         # Assert
         # After GREEN phase fixes, this should PASS because no issues remain
         assert len(found_issues) == 0, f"Found prompts with unescaped JSON braces: {found_issues}"
+
+
+class TestEnhancedSceneOutlineFieldNames:
+    """Test suite for enhanced scene outline field name alignment"""
+
+    def test_enhanced_scene_outline_field_names_mismatch_english(self, mock_logger):
+        """
+        RED: Test that English CHAPTER_OUTLINE_PROMPT teaches wrong field names
+        that don't match EnhancedSceneOutline model
+        """
+        # Arrange
+        from Writer.Prompts import CHAPTER_OUTLINE_PROMPT
+        from Writer.Models import EnhancedSceneOutline
+        from Writer.PromptsHelper import validate_prompt_format
+
+        # Act & Assert - Prompt can be formatted but teaches wrong field names
+        is_valid, error = validate_prompt_format(CHAPTER_OUTLINE_PROMPT, ['Chapter', 'Outline'])
+        assert is_valid == True, "Prompt should format successfully"
+
+        # Check presence of problematic field instructions that cause mismatch
+        assert "## Scene: [Brief Scene Title]" in CHAPTER_OUTLINE_PROMPT, \
+            "Contains Scene title template that causes LLM to generate 'scene_title'"
+        assert "**Characters & Setting:**" in CHAPTER_OUTLINE_PROMPT, \
+            "Contains Characters & Setting template that causes field name confusion"
+        assert "**Conflict & Tone:**" in CHAPTER_OUTLINE_PROMPT, \
+            "Contains Conflict & Tone template that causes field name confusion"
+        assert "**Key Events & Dialogue:**" in CHAPTER_OUTLINE_PROMPT, \
+            "Contains Key Events template that might cause 'key_events' but in wrong location"
+
+        # These markdown templates will cause LLM to generate mismatched field names
+        # when the SafeGeneratePydantic appends JSON schema instructions
+
+        # RED: This test shows the prompt teaches field names that don't match
+        # EnhancedSceneOutline model (title, characters_and_setting, conflict_and_tone, etc.)
+
+    def test_enhanced_scene_outline_field_names_mismatch_indonesian(self, mock_logger):
+        """
+        RED: Test that Indonesian CHAPTER_OUTLINE_PROMPT teaches wrong field names
+        that don't match EnhancedSceneOutline model
+        """
+        # Arrange
+        from Writer.Prompts_id import CHAPTER_OUTLINE_PROMPT
+
+        # Act & Assert - Indonesian prompt has same field name issues
+        assert "## Adegan: [Judul Adegan Singkat]" in CHAPTER_OUTLINE_PROMPT, \
+            "Contains Indonesian Scene title template that causes 'scene_title'"
+        assert "**Karakter & Latar:**" in CHAPTER_OUTLINE_PROMPT, \
+            "Contains Indonesian Characters & Setting template"
+        assert "**Konflik & Nada:**" in CHAPTER_OUTLINE_PROMPT, \
+            "Contains Indonesian Conflict & Tone template"
+
+        # RED: Indonesian prompt teaches field names that don't match
+        # EnhancedSceneOutline model expectations
+
+    def test_enhanced_scene_outline_model_expected_fields(self, mock_logger):
+        """
+        RED: Verify what fields EnhancedSceneOutline model actually expects
+        """
+        # Arrange
+        from Writer.Models import EnhancedSceneOutline
+
+        # Act & Assert - Check model field names that should match LLM output
+        expected_fields = [
+            'title',
+            'characters_and_setting',
+            'conflict_and_tone',
+            'key_events',
+            'literary_devices',
+            'resolution'
+        ]
+
+        model_fields = EnhancedSceneOutline.model_fields.keys()
+        for field in expected_fields:
+            assert field in model_fields, f"EnhancedSceneOutline should have field: {field}"
+
+        # RED: Model expects these field names but prompt teaches different ones
+
+    def test_enhanced_scene_outline_green_fixes_english(self, mock_logger):
+        """
+        GREEN: Verify English CHAPTER_OUTLINE_PROMPT now has correct JSON field examples
+        """
+        # Arrange
+        from Writer.Prompts import CHAPTER_OUTLINE_PROMPT
+
+        # Act & Assert - Check for correct JSON field examples
+        assert '"title": "Brief scene title"' in CHAPTER_OUTLINE_PROMPT, \
+            "English prompt should now contain correct 'title' field example"
+        assert '"characters_and_setting":' in CHAPTER_OUTLINE_PROMPT, \
+            "English prompt should contain correct 'characters_and_setting' field example"
+        assert '"conflict_and_tone":' in CHAPTER_OUTLINE_PROMPT, \
+            "English prompt should contain correct 'conflict_and_tone' field example"
+        assert '"key_events":' in CHAPTER_OUTLINE_PROMPT, \
+            "English prompt should contain correct 'key_events' field example"
+        assert '"literary_devices":' in CHAPTER_OUTLINE_PROMPT, \
+            "English prompt should contain correct 'literary_devices' field example"
+        assert '"resolution":' in CHAPTER_OUTLINE_PROMPT, \
+            "English prompt should contain correct 'resolution' field example"
+
+        # GREEN: The prompts now have correct JSON field examples that match EnhancedSceneOutline
+
+    def test_enhanced_scene_outline_green_fixes_indonesian(self, mock_logger):
+        """
+        GREEN: Verify Indonesian CHAPTER_OUTLINE_PROMPT now has correct JSON field examples
+        """
+        # Arrange
+        from Writer.Prompts_id import CHAPTER_OUTLINE_PROMPT
+
+        # Act & Assert - Check for correct JSON field examples
+        assert '"title": "Judul adegan singkat"' in CHAPTER_OUTLINE_PROMPT, \
+            "Indonesian prompt should now contain correct 'title' field example"
+        assert '"characters_and_setting":' in CHAPTER_OUTLINE_PROMPT, \
+            "Indonesian prompt should contain correct 'characters_and_setting' field example"
+        assert '"conflict_and_tone":' in CHAPTER_OUTLINE_PROMPT, \
+            "Indonesian prompt should contain correct 'conflict_and_tone' field example"
+        assert '"key_events":' in CHAPTER_OUTLINE_PROMPT, \
+            "Indonesian prompt should contain correct 'key_events' field example"
+        assert '"literary_devices":' in CHAPTER_OUTLINE_PROMPT, \
+            "Indonesian prompt should contain correct 'literary_devices' field example"
+        assert '"resolution":' in CHAPTER_OUTLINE_PROMPT, \
+            "Indonesian prompt should contain correct 'resolution' field example"
+
+        # GREEN: The Indonesian prompts now have correct JSON field examples

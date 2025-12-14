@@ -584,6 +584,17 @@ Harap bagi respons Anda menjadi adegan-adegan, yang masing-masing memiliki forma
 - **Resolusi & Pengantar:**
   - [Bagaimana adegan berakhir dan terhubung ke adegan berikutnya]
 
+Ketika menghasilkan respons JSON terstruktur (opsional), gunakan nama field yang sesuai dengan skema yang diharapkan:
+Contoh struktur JSON adegan:
+{{
+    "title": "Judul adegan singkat",
+    "characters_and_setting": "Karakter yang hadir dan tempat adegan berlangsung",
+    "conflict_and_tone": "Jenis konflik dan nada emosional",
+    "key_events": "Poin plot penting dan tindakan",
+    "literary_devices": "Perangkat sastra yang digunakan (opsional)",
+    "resolution": "Bagaimana adegan berakhir dan terhubung ke berikutnya"
+}}
+
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 Sekali lagi, jangan menulis bab itu sendiri, cukup buat outline bab yang detail.
 
