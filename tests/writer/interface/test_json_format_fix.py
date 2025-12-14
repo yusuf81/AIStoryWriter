@@ -241,7 +241,7 @@ class TestListStrFormatInstructions:
         assert "scene_details (array of objects" in instruction
 
     def test_outlineoutput_specific_examples(self, mock_logger):
-        """Test OutlineOutput gets specific examples for chapters and characters"""
+        """Test OutlineOutput gets specific format without StoryElements examples"""
         from Writer.Interface.Wrapper import Interface
         from Writer.Models import OutlineOutput
 
@@ -250,10 +250,15 @@ class TestListStrFormatInstructions:
 
         instruction = interface._build_format_instruction(schema)
 
-        # Should contain model-specific example
-        assert "Petualangan di Gua Tersembunyi" in instruction
-        assert "Chapter 1: Rian menemukan gua mistis" in instruction
-        assert "Rian - Petualang berani yang mencari harta karun" in instruction
+        # Should contain OutlineOutput format with chapters list
+        assert "chapters" in instruction
+        assert "array of strings" in instruction
+        assert "character_list" in instruction
+
+        # Should NOT contain StoryElements-specific examples
+        assert "Petualangan di Gua Tersembunyi" not in instruction
+        assert "Chapter 1: Rian menemukan gua mistis" not in instruction
+        assert "The Dragon's Treasure Cave" not in instruction or "Adventure" not in instruction
 
     def test_chapteroutput_format_instruction(self, mock_logger):
         """Test ChapterOutput gets examples for scenes and characters_present fields"""

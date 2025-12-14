@@ -171,7 +171,36 @@ Fields opsional:
   - settings (object, Optional): Detail latar dengan waktu, lokasi, budaya, suasana...
   - ... dan 3 field opsional lainnya
 
-Example format: {{"field1": "value", "field2": 123}}
+PENTING: Gunakan kunci JSON dalam Bahasa Inggris, meskipun konten bisa dalam Bahasa Indonesia!
+IMPORTANT: Use English JSON keys, even though content can be in Indonesian!
+
+Example format: {{
+    "title": "Gua Harta Karun Naga",
+    "genre": "Petualangan Fantasi",
+    "themes": ["keberanian", "persahabatan", "penemuan-diri"],
+    "characters": {{
+        "Karakter Utama": [
+            {{
+                "name": "Rian",
+                "physical_description": "Penjelajah muda dengan mata penuh tekad dan peralatan yang sudah usang.",
+                "personality": "Berani, penasaran, dan baik hati.",
+                "background": "Anak desa yang besar dengan mendengar kisah harta karun kuno.",
+                "motivation": "Ingin membuktikan dirinya dan menemukan harta karun legendaris."
+            }}
+        ],
+        "Karakter Pendukung": [
+            {{
+                "name": "Sage Tua",
+                "physical_description": "Wanita bijaksana tua dengan mata penuh pengetahuan dan senyum lembut.",
+                "personality": "Bijaksana, sabar, dan misterius.",
+                "background": "Penjaga kuno pengetahuan hutan dan rahasia.",
+                "role in the story": "Mentor yang membimbing protagonis dalam perjalanannya."
+            }}
+        ]
+    }},
+    "pacing": "Sedang dengan ketegangan yang meningkat saat momen kunci.",
+    "style": "Naratif deskriptif dengan citraan yang hidup dan kedalaman emosional"
+}}
 PENTING: Hanya kembalikan data JSON, bukan skemanya!
 """
 

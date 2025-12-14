@@ -170,7 +170,33 @@ Optional fields:
   - settings (object, Optional): Setting details with time, location, culture, mood...
   - ... and 3 more optional fields
 
-Example format: {{"field1": "value", "field2": 123}}
+Example format: {{
+    "title": "The Dragon's Treasure Cave",
+    "genre": "Fantasy Adventure",
+    "themes": ["courage", "friendship", "self-discovery"],
+    "characters": {{
+        "Main Character(s)": [
+            {{
+                "name": "Rian",
+                "physical_description": "Young explorer with determined eyes and weathered gear.",
+                "personality": "Brave, curious, and kind-hearted.",
+                "background": "Village boy who grew up hearing tales of ancient treasures.",
+                "motivation": "Seek to prove his worth and find the legendary treasure."
+            }}
+        ],
+        "Supporting Characters": [
+            {{
+                "name": "Elder Sage",
+                "physical_description": "Old wise woman with knowing eyes and gentle smile.",
+                "personality": "Wise, patient, and mysterious.",
+                "background": "Ancient guardian of forest knowledge and secrets.",
+                "role in the story": "Mentor who guides the protagonist on their journey."
+            }}
+        ]
+    }},
+    "pacing": "Moderate with escalating tension during key moments.",
+    "style": "Descriptive narrative with vivid imagery and emotional depth"
+}}
 IMPORTANT: Return ONLY the JSON data, not the schema!
 """
 

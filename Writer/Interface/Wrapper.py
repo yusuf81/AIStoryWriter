@@ -394,20 +394,37 @@ class Interface:
         instruction += "\nExample format: {\"field1\": \"value\", \"field2\": 123}\n"
         instruction += "IMPORTANT: Return ONLY the JSON data, not the schema!\n"
 
-        # Add specific examples for models with List[str] fields that are problematic
-        if any(field in properties.keys() for field in ['chapters', 'character_list']):
+        # Add specific examples for StoryElements model
+        # Check for StoryElements specifically by looking for themes AND characters fields together
+        if 'themes' in properties.keys() and 'characters' in properties.keys():
             instruction += """
 For example:
 {
-  "title": "Petualangan di Gua Tersembunyi",
-  "chapters": [
-    "Chapter 1: Rian menemukan gua mistis di tengah hutan",
-    "Chapter 2: Pertarungan dengan naga kecil penjaga harta karun"
-  ],
-  "character_list": [
-    "Rian - Petualang berani yang mencari harta karun",
-    "Bang Jaga - Naga kecil bijaksana yang menjaga gua"
-  ]
+    "title": "The Dragon's Treasure Cave",
+    "genre": "Fantasy Adventure",
+    "themes": ["courage", "friendship", "self-discovery"],
+    "characters": {
+        "Main Character(s)": [
+            {
+                "name": "Rian",
+                "physical_description": "Young explorer with determined eyes and weathered gear.",
+                "personality": "Brave, curious, and kind-hearted.",
+                "background": "Village boy seeking adventure and treasure.",
+                "motivation": "To prove himself and find the legendary dragon's treasure."
+            }
+        ],
+        "Supporting Characters": [
+            {
+                "name": "The Dragon",
+                "physical_description": "Small green dragon with gleaming emerald scales.",
+                "personality": "Wise and protective, with a playful spirit.",
+                "background": "Ancient guardian of the cave's treasure for centuries.",
+                "role in the story": "Tests the hero's worthiness and becomes an unexpected friend."
+            }
+        ]
+    },
+    "pacing": "Moderate with moments of excitement and wonder.",
+    "style": "Descriptive narrative with vivid imagery and emotional depth"
 }"""
 
         return instruction
