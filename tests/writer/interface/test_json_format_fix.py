@@ -38,9 +38,9 @@ class TestJSONFormatFix:
         assert '"properties"' not in instruction
 
         # Should contain field information
-        assert "text (string): The text content" in instruction
-        assert "count (integer): A number" in instruction
-        assert "optional_field (string, optional)" in instruction
+        assert "text (string, Required): The text content" in instruction
+        assert "count (integer, Required): A number" in instruction
+        assert "optional_field (string, Optional): Optional info" in instruction
 
         # Should contain clear instructions
         assert "JSON SCHEMA (REFERENCE ONLY)" in instruction
@@ -202,3 +202,86 @@ class TestJSONFormatFix:
 
             # Should only be called once (no retries needed)
             assert mock_json.call_count == 1
+
+
+class TestListStrFormatInstructions:
+    """Test enhanced format instructions for List[str] fields to prevent object generation"""
+
+    def test_format_instruction_detects_string_arrays(self, mock_logger):
+        """Test that List[str] fields get explicit examples in format instruction"""
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import OutlineOutput
+
+        interface = Interface(Models=[])
+        schema = OutlineOutput.model_json_schema()
+
+        instruction = interface._build_format_instruction(schema)
+
+        # Should contain specific string array indicators
+        assert "array of strings" in instruction
+        assert "chapters (array of strings, Required)" in instruction
+        assert "character_list (array of strings, Optional)" in instruction
+
+        # Should contain explicit examples for string arrays
+        assert "Example: [\"String 1\", \"String 2\"]" in instruction
+
+    def test_format_instruction_handles_object_arrays(self, mock_logger):
+        """Test that non-string arrays get different format instructions"""
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import ChapterWithScenes
+
+        interface = Interface(Models=[])
+        schema = ChapterWithScenes.model_json_schema()
+
+        instruction = interface._build_format_instruction(schema)
+
+        # Should identify object arrays differently
+        assert "array of objects" in instruction
+        # Scene details should be marked as object array
+        assert "scene_details (array of objects" in instruction
+
+    def test_outlineoutput_specific_examples(self, mock_logger):
+        """Test OutlineOutput gets specific examples for chapters and characters"""
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import OutlineOutput
+
+        interface = Interface(Models=[])
+        schema = OutlineOutput.model_json_schema()
+
+        instruction = interface._build_format_instruction(schema)
+
+        # Should contain model-specific example
+        assert "Petualangan di Gua Tersembunyi" in instruction
+        assert "Chapter 1: Rian menemukan gua mistis" in instruction
+        assert "Rian - Petualang berani yang mencari harta karun" in instruction
+
+    def test_chapteroutput_format_instruction(self, mock_logger):
+        """Test ChapterOutput gets examples for scenes and characters_present fields"""
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import ChapterOutput
+
+        interface = Interface(Models=[])
+        schema = ChapterOutput.model_json_schema()
+
+        instruction = interface._build_format_instruction(schema)
+
+        # Should identify List[str] fields in ChapterOutput
+        assert "scenes (array of strings" in instruction
+        assert "characters_present (array of strings" in instruction
+
+        # Should contain examples for these fields
+        assert "Example: [\"String 1\", \"String 2\"]" in instruction
+
+    def test_non_array_fields_unchanged(self, mock_logger):
+        """Test that non-array fields keep their current format"""
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import OutlineOutput
+
+        interface = Interface(Models=[])
+        schema = OutlineOutput.model_json_schema()
+
+        instruction = interface._build_format_instruction(schema)
+
+        # Non-array fields should keep normal format
+        assert "title (string, Required)" in instruction
+        assert "target_chapter_count (integer, Required)" in instruction

@@ -324,11 +324,15 @@ class Interface:
                     # Final attempt failed - raise exception
                     if isinstance(e, ValidationError):
                         # Format Pydantic errors nicely
-                        error_details = "\n".join([
-                            f"- {'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
-                            for err in e.errors()
-                        ])
-                        raise Exception(f"Pydantic validation failed after {max_attempts} attempts:\n{error_details}")
+                        pydantic_error = e  # type: ignore
+                        if hasattr(pydantic_error, 'errors'):
+                            error_details = "\n".join([
+                                f"- {'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
+                                for err in pydantic_error.errors()
+                            ])
+                            raise Exception(f"Pydantic validation failed after {max_attempts} attempts:\n{error_details}")
+                        else:
+                            raise Exception(f"Pydantic validation failed after {max_attempts} attempts: {str(e)}")
                     else:
                         raise Exception(f"Failed to generate valid response after {max_attempts} attempts. Last error: {e}")
 
@@ -347,10 +351,20 @@ class Interface:
             field_info = properties.get(field, {})
             field_type = field_info.get('type', 'unknown')
             field_desc = field_info.get('description', '')
-            if field_desc:
-                instruction += f"  - {field} ({field_type}): { field_desc}\n"
+
+            # Handle array types with specific examples
+            if field_type == 'array':
+                items_type = field_info.get('items', {}).get('type', 'unknown')
+                if items_type == 'string':
+                    instruction += f"  - {field} (array of strings, Required): {field_desc}\n"
+                    instruction += f"    Example: [\"String 1\", \"String 2\"]\n"
+                else:
+                    instruction += f"  - {field} (array of objects, Required): {field_desc}\n"
             else:
-                instruction += f"  - {field} ({field_type})\n"
+                if field_desc:
+                    instruction += f"  - {field} ({field_type}, Required): { field_desc}\n"
+                else:
+                    instruction += f"  - {field} ({field_type}, Required)\n"
 
         # Add optional fields if any
         optional_fields = [k for k in properties.keys() if k not in required_fields]
@@ -360,15 +374,41 @@ class Interface:
                 field_info = properties.get(field, {})
                 field_type = field_info.get('type', 'unknown')
                 field_desc = field_info.get('description', '')
-                if field_desc:
-                    instruction += f"  - {field} ({field_type}, optional): { field_desc[:50]}...\n"
+
+                # Handle array types with specific examples
+                if field_type == 'array':
+                    items_type = field_info.get('items', {}).get('type', 'unknown')
+                    if items_type == 'string':
+                        instruction += f"  - {field} (array of strings, Optional): {field_desc[:50]}...\n"
+                        instruction += f"    Example: [\"String 1\", \"String 2\"]\n"
+                    else:
+                        instruction += f"  - {field} (array of objects, Optional): {field_desc[:50]}...\n"
                 else:
-                    instruction += f"  - {field} ({field_type}, optional)\n"
+                    if field_desc:
+                        instruction += f"  - {field} ({field_type}, Optional): { field_desc[:50]}...\n"
+                    else:
+                        instruction += f"  - {field} ({field_type}, Optional)\n"
             if len(optional_fields) > 5:
                 instruction += f"  - ... and {len(optional_fields) - 5} more optional fields\n"
 
         instruction += "\nExample format: {\"field1\": \"value\", \"field2\": 123}\n"
         instruction += "IMPORTANT: Return ONLY the JSON data, not the schema!\n"
+
+        # Add specific examples for models with List[str] fields that are problematic
+        if any(field in properties.keys() for field in ['chapters', 'character_list']):
+            instruction += """
+For example:
+{
+  "title": "Petualangan di Gua Tersembunyi",
+  "chapters": [
+    "Chapter 1: Rian menemukan gua mistis di tengah hutan",
+    "Chapter 2: Pertarungan dengan naga kecil penjaga harta karun"
+  ],
+  "character_list": [
+    "Rian - Petualang berani yang mencari harta karun",
+    "Bang Jaga - Naga kecil bijaksana yang menjaga gua"
+  ]
+}"""
 
         return instruction
 

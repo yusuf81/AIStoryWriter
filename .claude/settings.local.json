@@ -142,7 +142,16 @@
       "Bash(python -m pytest tests/writer/interface/test_pydantic_non_streaming.py tests/test_state_pydantic_serialization.py tests/writer/interface/test_json_format_fix.py --tb=no -q)",
       "Bash(python -m pytest tests/writer/interface/ --tb=no -q)",
       "Bash(pyright Writer/Interface/Wrapper.py --skipunknown)",
-      "Bash(pyright Writer/Interface/Wrapper.py)"
+      "Bash(pyright Writer/Interface/Wrapper.py)",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py::TestListStrFormatInstructions -v)",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py::TestListStrFormatInstructions::test_format_instruction_detects_string_arrays -v)",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py::TestListStrFormatInstructions::test_format_instruction_handles_object_arrays -v)",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py::TestListStrFormatInstructions::test_outlineoutput_specific_examples -v)",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py::TestListStrFormatInstructions::test_chapteroutput_format_instruction -v)",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py::TestListStrFormatInstructions::test_non_array_fields_unchanged -v)",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py -v)",
+      "Bash(flake8 --ignore=E501,W504,W503 Writer/Interface/Wrapper.py)",
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py -q)"
     ]
   }
 }
