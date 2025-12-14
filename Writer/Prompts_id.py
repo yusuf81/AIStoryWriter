@@ -240,7 +240,12 @@ Saat Anda merevisi, pertimbangkan kriteria berikut:
 
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 Juga, harap periksa apakah outline ditulis bab demi bab, bukan dalam bagian yang mencakup beberapa bab atau subbagian.
-Harus sangat jelas bab mana yang mana, dan konten di setiap bab."""
+Harus sangat jelas bab mana yang mana, dan konten di setiap bab.
+
+Harap berikan kritik Anda dalam format terstruktur berikut:
+- Umpan balik keseluruhan: Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan
+- Saran spesifik: Rekomendasi yang dapat ditindaklanjuti untuk meningkatkan outline
+- Peringkat kualitas: Skor dari 0-10 (0=buruk, 10=luar biasa)"""
 
 OUTLINE_REVISION_PROMPT = """
 Harap revisi outline berikut:
@@ -700,6 +705,11 @@ Harap berikan umpan balik pada bab di atas berdasarkan kriteria berikut:
 
     - Dialog: Apakah dialog masuk akal? Apakah sesuai dengan situasi? Apakah laju masuk akal untuk adegan tersebut Misalnya: (Apakah lajunya cepat karena mereka berlari, atau lambat karena mereka makan malam romantis)?
     - Gangguan: Jika alur dialog terganggu, apa alasan gangguan tersebut? Apakah itu rasa urgensi? Apa yang menyebabkan gangguan tersebut? Bagaimana pengaruhnya terhadap dialog ke depan?
+
+Harap berikan kritik Anda dalam format terstruktur berikut:
+- Umpan balik keseluruhan: Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan
+- Saran spesifik: Rekomendasi yang dapat ditindaklanjuti untuk meningkatkan bab
+- Peringkat kualitas: Skor dari 0-10 (0=buruk, 10=luar biasa)
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 """
 

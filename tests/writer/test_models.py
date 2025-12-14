@@ -288,13 +288,25 @@ class TestStoryElements:
         from Writer.Models import StoryElements
 
         elements = StoryElements(
+            title="Alice and the Ancient Artifact",
+            genre="Fantasy Adventure",
             characters={
                 "Alice": "A brave knight with blue eyes, searching for the ancient artifact",
                 "Merlin": "A wise old wizard who guides Alice on her quest"
             },
-            locations={
-                "Dark Forest": "A dangerous forest filled with magical creatures",
-                "Eldoria": "The peaceful kingdom where Alice lives"
+            settings={
+                "Dark Forest": {
+                    "location": "A dangerous forest filled with magical creatures",
+                    "time": "Present day in story timeline",
+                    "culture": "Magical, dangerous",
+                    "mood": "Mysterious and threatening"
+                },
+                "Eldoria": {
+                    "location": "The peaceful kingdom where Alice lives",
+                    "time": "Present day in story timeline",
+                    "culture": "Medieval fantasy kingdom",
+                    "mood": "Peaceful and safe"
+                }
             },
             themes=["courage", "friendship", "good vs evil"],
             conflict="Alice must find the artifact before the Dark Lord does",
@@ -310,11 +322,17 @@ class TestStoryElements:
         """Test creating StoryElements with minimum required fields"""
         from Writer.Models import StoryElements
 
-        elements = StoryElements()
+        elements = StoryElements(
+            title="Test Story",
+            genre="Test Genre",
+            themes=["theme1"]
+        )
 
+        assert elements.title == "Test Story"
+        assert elements.genre == "Test Genre"
+        assert elements.themes == ["theme1"]
         assert elements.characters == {}
-        assert elements.locations == {}
-        assert elements.themes == []
+        assert elements.settings == {}
         assert elements.conflict is None
         assert elements.resolution is None
 

@@ -154,12 +154,90 @@ class OutlineOutput(BaseModel):
 class StoryElements(BaseModel):
     """
     Structured output for story elements extraction.
+    Enhanced to capture all fields requested by GENERATE_STORY_ELEMENTS prompt.
     """
+    # New required fields from prompt analysis
+    title: str = Field(min_length=5, max_length=200, description="Story title")
+    genre: str = Field(min_length=2, description="Story genre category")
+    themes: List[str] = Field(min_length=1, description="Central themes of the story")
     characters: Dict[str, str] = Field(default_factory=dict, description="Character names and their descriptions")
-    locations: Dict[str, str] = Field(default_factory=dict, description="Locations and their descriptions")
-    themes: List[str] = Field(default_factory=list, description="Main themes of the story")
+
+    # Optional fields for enhanced story structure
+    pacing: Optional[str] = Field(None, description="Story pacing speed (e.g., slow, moderate, fast)")
+    style: Optional[str] = Field(None, description="Language style description")
+    plot_structure: Optional[Dict[str, str]] = Field(None, description="Plot elements (exposition, rising action, climax, falling_action, resolution)")
+    settings: Dict[str, Dict[str, str]] = Field(default_factory=dict, description="Setting details with time, location, culture, mood")
     conflict: Optional[str] = Field(None, description="Central conflict of the story")
+    symbolism: Optional[List[Dict[str, str]]] = Field(None, description="Symbols and their meanings")
     resolution: Optional[str] = Field(None, description="Story resolution or ending direction")
+
+    @field_validator('title')
+    @classmethod
+    def validate_title(cls, v):
+        """Validate title has meaningful content"""
+        v = v.strip()
+        if len(v) < 5:
+            raise ValueError("Title must be at least 5 characters long")
+        if len(v) > 200:
+            raise ValueError("Title must be at most 200 characters long")
+        return v
+
+    @field_validator('genre')
+    @classmethod
+    def validate_genre(cls, v):
+        """Validate genre has meaningful content"""
+        v = v.strip()
+        if len(v) < 2:
+            raise ValueError("Genre must be at least 2 characters long")
+        return v
+
+    @field_validator('themes')
+    @classmethod
+    def validate_themes(cls, v):
+        """Ensure themes list has meaningful content"""
+        if not v:
+            raise ValueError("Must have at least 1 theme")
+        for theme in v:
+            if not theme.strip():
+                raise ValueError("Theme cannot be empty")
+        return v
+
+    @field_validator('plot_structure')
+    @classmethod
+    def validate_plot_structure(cls, v):
+        """Validate plot structure has meaningful values if provided"""
+        if v is not None:
+            for key, value in v.items():
+                if not value.strip():
+                    raise ValueError(f"Plot structure element '{key}' cannot be empty")
+        return v
+
+    @field_validator('settings')
+    @classmethod
+    def validate_settings(cls, v):
+        """Validate settings have proper structure if provided"""
+        if v is not None:
+            for setting_name, setting_details in v.items():
+                if not isinstance(setting_details, dict):
+                    raise ValueError(f"Setting '{setting_name}' must be a dictionary")
+                for detail_key, detail_value in setting_details.items():
+                    if not isinstance(detail_value, str) or not detail_value.strip():
+                        raise ValueError(f"Setting detail '{detail_key}' for '{setting_name}' must be non-empty string")
+        return v
+
+    @field_validator('symbolism')
+    @classmethod
+    def validate_symbolism(cls, v):
+        """Validate symbolism entries if provided"""
+        if v is not None:
+            for symbol_entry in v:
+                if not isinstance(symbol_entry, dict):
+                    raise ValueError("Each symbolism entry must be a dictionary")
+                if 'symbol' not in symbol_entry or 'meaning' not in symbol_entry:
+                    raise ValueError("Symbolism entries must have 'symbol' and 'meaning' fields")
+                if not symbol_entry['symbol'].strip() or not symbol_entry['meaning'].strip():
+                    raise ValueError("Symbol and meaning cannot be empty")
+        return v
 
 
 class ChapterGenerationRequest(BaseModel):
@@ -290,6 +368,7 @@ class ReasoningOutput(BaseModel):
             raise ValueError("Reasoning must contain meaningful text")
 
         return v
+
 
 # ==============================================================================
 # Evaluation Models (DRY base class pattern)

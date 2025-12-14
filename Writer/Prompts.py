@@ -236,7 +236,12 @@ As you revise, consider the following criteria:
     - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
 
 Also, please check if the outline is written chapter-by-chapter, not in sections spanning multiple chapters or subsections.
-It should be very clear which chapter is which, and the content in each chapter."""
+It should be very clear which chapter is which, and the content in each chapter.
+
+Please provide your critique in the following structured format:
+- Overall feedback: Detailed analysis of strengths and areas for improvement
+- Specific suggestions: Actionable recommendations for improving the outline
+- Quality rating: Score from 0-10 (0=poor, 10=excellent)"""
 
 OUTLINE_REVISION_PROMPT = """
 Please revise the following outline:
@@ -501,7 +506,7 @@ Please break your response into scenes, which each have the following format (pl
 - **Resolution & Lead-in:**
   - [How the scene ends and connects to the next one]
 
-Again, don't write the chapter itself, just create a detailed outline of the chapter.  
+Again, don't write the chapter itself, just create a detailed outline of the chapter.
 
 Make sure your chapter has a markdown-formatted name!
 """
@@ -673,13 +678,17 @@ Please give feedback on the above chapter based on the following criteria:
     - Details: How are things described? Is it repetitive? Is the word choice appropriate for the scene? Are we describing things too much or too little?
     - Flow: Does each chapter flow into the next? Does the plot make logical sense to the reader? Does it have a specific narrative structure at play? Is the narrative structure consistent throughout the story?
     - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
-    
+
     - Characters: Who are the characters in this chapter? What do they mean to each other? What is the situation between them? Is it a conflict? Is there tension? Is there a reason that the characters have been brought together?
     - Development:  What are the goals of each character, and do they meet those goals? Do the characters change and exhibit growth? Do the goals of each character change over the story?
-    
-    - Dialogue: Does the dialogue make sense? Is it appropriate given the situation? Does the pacing make sense for the scene E.g: (Is it fast-paced because they're running, or slow-paced because they're having a romantic dinner)? 
-    - Disruptions: If the flow of dialogue is disrupted, what is the reason for that disruption? Is it a sense of urgency? What is causing the disruption? How does it affect the dialogue moving forwards? 
-"""
+
+    - Dialogue: Does the dialogue make sense? Is it appropriate given the situation? Does the pacing make sense for the scene E.g: (Is it fast-paced because they're running, or slow-paced because they're having a romantic dinner)?
+    - Disruptions: If the flow of dialogue is disrupted, what is the reason for that disruption? Is it a sense of urgency? What is causing the disruption? How does it affect the dialogue moving forwards?
+
+Please provide your critique in the following structured format:
+- Overall feedback: Detailed analysis of strengths and areas for improvement
+- Specific suggestions: Actionable recommendations for improving the chapter
+- Quality rating: Score from 0-10 (0=poor, 10=excellent)"""
 
 CHAPTER_REVISION = """
 Please revise the following chapter:
@@ -692,7 +701,7 @@ Based on the following feedback:
 <FEEDBACK>
 {_Feedback}
 </FEEDBACK>
-Do not reflect on the revisions, just write the improved chapter that addresses the feedback and prompt criteria.  
+Do not reflect on the revisions, just write the improved chapter that addresses the feedback and prompt criteria.
 Remember not to include any author notes."""
 
 CHAPTER_COMPLETE_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."

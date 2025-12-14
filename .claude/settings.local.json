@@ -164,7 +164,18 @@
       "Bash(pyright Writer/Models.py Writer/OutlineGenerator.py)",
       "Bash(flake8 --ignore=E501,W504,W503 Writer/Models.py Writer/OutlineGenerator.py)",
       "Bash(flake8 --ignore=E501,W504,W503,E261,F541,E712,W292,E302 Writer/Models.py)",
-      "Bash(python -m pytest tests/writer/test_chapter_outline_output.py tests/writer/test_llm_editor.py tests/writer/interface/test_json_format_fix.py -v --tb=short)"
+      "Bash(python -m pytest tests/writer/test_chapter_outline_output.py tests/writer/test_llm_editor.py tests/writer/interface/test_json_format_fix.py -v --tb=short)",
+      "Bash(python -m pytest tests/writer/test_story_elements_expansion.py -v)",
+      "Bash(python -m pytest tests/writer/test_story_elements_expansion.py -xvs --tb=short)",
+      "Bash(python -m pytest tests/writer/test_review_output_enhancement.py -xvs --tb=short)",
+      "Bash(python -m pytest tests/writer/test_review_output_enhancement.py -x --tb=no)",
+      "Bash(python -m pytest tests/writer/test_review_output_enhancement.py -v)",
+      "Bash(flake8 --ignore=E501,W504,W503 Writer/Prompts.py Writer/Prompts_id.py)",
+      "Bash(python -m pytest tests/writer/test_story_elements_expansion.py tests/writer/test_review_output_enhancement.py tests/writer/test_chapter_outline_output.py tests/writer/test_llm_editor.py -v --tb=short)",
+      "Bash(pyright Writer/Models.py Writer/OutlineGenerator.py Writer/Prompts.py Writer/Prompts_id.py Writer/LLMEditor.py)",
+      "Bash(python -m pytest tests/writer/ -k \"test_story_elements_expansion or test_review_output_enhancement or test_chapter_outline_output or test_llm_editor\" -q --tb=no)",
+      "Bash(python -m pytest tests/writer/test_models.py tests/test_outline_generator_pydantic.py tests/test_state_pydantic_serialization.py -v --tb=short)",
+      "Bash(python -m pytest --tb=no -q)"
     ]
   }
 }

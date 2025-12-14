@@ -1,9 +1,8 @@
 from pydantic import BaseModel  # Ditambahkan
-import Writer.PrintUtils
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
+import Writer.Config as Config
 
-import json
-from Writer.Models import ChapterOutput, ReviewOutput
+from Writer.Models import ReviewOutput
 
 
 # Definisikan Skema Pydantic
@@ -29,7 +28,7 @@ def GetFeedbackOnOutline(Interface, _Logger, _Outline: str):
     History, Review_obj, _ = Interface.SafeGeneratePydantic(  # Use ReviewOutput model
         _Logger,
         History,
-        Writer.Config.REVISION_MODEL,
+        Config.REVISION_MODEL,
         ReviewOutput
     )
     _Logger.Log("Finished Getting Outline Feedback", 5)
@@ -60,7 +59,7 @@ def GetOutlineRating(
     _, review_obj, _ = Interface.SafeGeneratePydantic(
         _Logger,
         History,
-        Writer.Config.EVAL_MODEL,
+        Config.EVAL_MODEL,
         OutlineCompleteSchema
     )
     # Access field via Pydantic object attribute instead of dict key
@@ -84,7 +83,7 @@ def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
     _Logger.Log("Prompting LLM To Critique Chapter", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
     Messages, Review_obj, _ = Interface.SafeGeneratePydantic(  # Use ReviewOutput model
-        _Logger, History, Writer.Config.REVISION_MODEL, ReviewOutput
+        _Logger, History, Config.REVISION_MODEL, ReviewOutput
     )
     _Logger.Log("Finished Getting Chapter Feedback", 5)
 
@@ -110,7 +109,7 @@ def GetChapterRating(Interface, _Logger, _Chapter: str):
     _, review_obj, _ = Interface.SafeGeneratePydantic(
         _Logger,
         History,
-        Writer.Config.EVAL_MODEL,
+        Config.EVAL_MODEL,
         ChapterCompleteSchema
     )
     # Access field via Pydantic object attribute instead of dict key

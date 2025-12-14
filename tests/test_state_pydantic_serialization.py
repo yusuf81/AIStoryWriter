@@ -27,8 +27,23 @@ class TestStatePydanticSerialization:
 
         # Create Pydantic objects
         story_elements = StoryElements(
+            title="Petualangan Naga",
+            genre="Petualangan Fantasi",
             characters={"pemain": "petualang", "penjahat": "naga"},
-            locations={"gua": "gua harta karun", "desa": "desa pertanian"},
+            settings={
+                "gua": {
+                    "location": "gua harta karun",
+                    "time": "Present day",
+                    "culture": "Ancient cave",
+                    "mood": "Mysterious"
+                },
+                "desa": {
+                    "location": "desa pertanian",
+                    "time": "Present day",
+                    "culture": "Farming village",
+                    "mood": "Peaceful"
+                }
+            },
             themes=["petualangan", "keberanian"],
             conflict="petualang vs naga",
             resolution="petualang menang"
@@ -81,8 +96,23 @@ class TestStatePydanticSerialization:
                 "story_elements": {
                     "__model__": "StoryElements",
                     "__data__": {
+                        "title": "Petualangan Naga",
+                        "genre": "Petualangan Fantasi",
                         "characters": {"pemain": "petualang", "penjahat": "naga"},
-                        "locations": {"gua": "gua harta karun", "desa": "desa pertanian"},
+                        "settings": {
+                            "gua": {
+                                "location": "gua harta karun",
+                                "time": "Present day",
+                                "culture": "Ancient cave",
+                                "mood": "Mysterious"
+                            },
+                            "desa": {
+                                "location": "desa pertanian",
+                                "time": "Present day",
+                                "culture": "Farming village",
+                                "mood": "Peaceful"
+                            }
+                        },
                         "themes": ["petualangan", "keberanian"],
                         "conflict": "petualang vs naga",
                         "resolution": "petualang menang"
@@ -158,7 +188,7 @@ class TestStatePydanticSerialization:
         from Writer.StateManager import StateManager
 
         mixed_state = {
-            "pydantic_obj": StoryElements(characters={"hero": "brave"}, locations={}),
+            "pydantic_obj": StoryElements(title="Test Story", genre="Test", themes=["test"], characters={"hero": "brave"}),
             "string": "test string",
             "number": 42,
             "list": [1, 2, 3],
@@ -226,7 +256,7 @@ class TestStatePydanticSerialization:
             if model_class and model_name != "BaseContext":  # Skip abstract models
                 # Create minimal instance for testing
                 if model_name == "StoryElements":
-                    instance = model_class(characters={}, locations={}, themes=[])
+                    instance = model_class(title="Test Story", genre="Test", themes=["test"])
                 elif model_name == "TitleOutput":
                     instance = model_class(title="Test Title")
                 elif model_name == "ReasoningOutput":

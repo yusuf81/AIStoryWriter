@@ -42,16 +42,37 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
     )
 
     # Convert StoryElements object to string for use in prompts
-    StoryElements_str = f"""Characters:
+    StoryElements_str = f"""Title: {StoryElements_obj.title}
+
+Genre: {StoryElements_obj.genre}
+
+Characters:
 {chr(10).join([f"- {name}: {desc}" for name, desc in StoryElements_obj.characters.items()])}
 
-Locations:
-{chr(10).join([f"- {name}: {desc}" for name, desc in StoryElements_obj.locations.items()])}
+Themes: {', '.join(StoryElements_obj.themes)}"""
 
-Themes: {', '.join(StoryElements_obj.themes)}
-
-Conflict: {StoryElements_obj.conflict or 'Not specified'}
-Resolution: {StoryElements_obj.resolution or 'Not specified'}"""
+    # Add optional fields if they exist
+    if StoryElements_obj.pacing:
+        StoryElements_str += f"\n\nPacing: {StoryElements_obj.pacing}"
+    if StoryElements_obj.style:
+        StoryElements_str += f"\n\nStyle: {StoryElements_obj.style}"
+    if StoryElements_obj.plot_structure:
+        plot_elements = [f"- {key}: {value}" for key, value in StoryElements_obj.plot_structure.items()]
+        StoryElements_str += f"\n\nPlot Structure:\n" + "\n".join(plot_elements)
+    if StoryElements_obj.settings:
+        settings_text = []
+        for name, details in StoryElements_obj.settings.items():
+            settings_text.append(f"- {name}:")
+            for detail_key, detail_value in details.items():
+                settings_text.append(f"  - {detail_key}: {detail_value}")
+            settings_text.append("")  # Add empty line for readability
+        StoryElements_str += f"\n\nSettings:\n" + "\n".join(settings_text).strip()
+    if StoryElements_obj.conflict:
+        StoryElements_str += f"\n\nConflict: {StoryElements_obj.conflict}"
+    if StoryElements_obj.symbolism:
+        StoryElements_str += f"\n\nSymbolism:\n" + chr(10).join([f"- {symbol['symbol']}: {symbol['meaning']}" for symbol in StoryElements_obj.symbolism])
+    if StoryElements_obj.resolution:
+        StoryElements_str += f"\n\nResolution: {StoryElements_obj.resolution}"
 
     _Logger.Log(f"Done Generating Main Story Elements", 4)
 

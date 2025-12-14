@@ -21,8 +21,23 @@ class TestOutlineGeneratorPydanticConversion:
 
         base_context = BaseContextModel(context="Important story elements extracted from prompt")
         story_elements = StoryElements(
+            title="Hero's Journey",
+            genre="Fantasy Adventure",
             characters={"Hero": "Brave protagonist", "Villain": "Dark wizard"},
-            locations={"Castle": "Magical fortress", "Forest": "Dark woods"},
+            settings={
+                "Castle": {
+                    "location": "Magical fortress",
+                    "time": "Present day",
+                    "culture": "Medieval fantasy",
+                    "mood": "Mysterious"
+                },
+                "Forest": {
+                    "location": "Dark woods",
+                    "time": "Present day",
+                    "culture": "Wild magical",
+                    "mood": "Dangerous"
+                }
+            },
             themes=["Courage", "Good vs Evil"],
             conflict="Hero must defeat dark wizard",
             resolution="Hero saves the kingdom"
