@@ -62,10 +62,14 @@ def _build_mega_outline_pipeline_version(SysLogger, Config, ActivePrompts, curre
             is_current_chapter = (chapter_index_for_context is not None and chapter_num == chapter_index_for_context)
             prefix = ActivePrompts.MEGA_OUTLINE_CURRENT_CHAPTER_PREFIX if is_current_chapter else ""
 
+            # Extract text and title from dict
+            text = chapter_outline_text["text"]
+            title = chapter_outline_text["title"]
+
             MegaOutline += ChapterOutlineFormat.format(
                 chapter_num=chapter_num,
-                prefix=prefix,
-                chapter_outline_text=chapter_outline_text
+                chapter_title=title,
+                chapter_content=text
             )
             MegaOutline += "\n\n"
 
@@ -340,10 +344,10 @@ class StoryPipeline:
         if num_chapters > 0 : # Only proceed if there are chapters to outline
             for ChapterIdx in range(1, num_chapters + 1):
                 self.SysLogger.Log(f"Pipeline: Generating outline for chapter {ChapterIdx}/{num_chapters}...", 6)
-                ChapterOutlineText = self.OutlineGenerator.GeneratePerChapterOutline(
+                ChapterOutlineText, ChapterTitle = self.OutlineGenerator.GeneratePerChapterOutline(
                     self.Interface, self.SysLogger, ChapterIdx, num_chapters, refined_global_outline
                 )
-                GeneratedChapterOutlines.append(ChapterOutlineText)
+                GeneratedChapterOutlines.append({"text": ChapterOutlineText, "title": ChapterTitle})
             self.SysLogger.Log(f"Pipeline: Generated {len(GeneratedChapterOutlines)} per-chapter outlines.", 4)
         else:
             self.SysLogger.Log(f"Pipeline: Skipping per-chapter outline generation as num_chapters is {num_chapters}.", 4)

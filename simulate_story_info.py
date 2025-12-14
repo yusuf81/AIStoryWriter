@@ -94,7 +94,9 @@ def _determine_query_content(state_data, sys_logger):
     if expand_outline_enabled and state_data.get("expanded_chapter_outlines"):
         expanded_outlines = state_data["expanded_chapter_outlines"]
         if isinstance(expanded_outlines, list) and expanded_outlines:
-            info_query_content = "\n\n---\n\n".join(expanded_outlines)
+            # Extract text from dict format
+            outline_texts = [item["text"] for item in expanded_outlines]
+            info_query_content = "\n\n---\n\n".join(outline_texts)
             source = "expanded_chapter_outlines"
             sys_logger.Log(
                 "Using joined expanded chapter outlines for GetStoryInfo.",

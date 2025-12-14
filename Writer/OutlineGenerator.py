@@ -214,4 +214,4 @@ def GeneratePerChapterOutline(
         f"Done Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5
     )
 
-    return SummaryText  # Hanya kembalikan teks outline
+    return SummaryText, Chapter_obj.chapter_title  # Return summary and title
