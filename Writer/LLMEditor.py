@@ -3,7 +3,7 @@ import Writer.PrintUtils
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 import json
-from Writer.Models import ChapterOutput
+from Writer.Models import ChapterOutput, ReviewOutput
 
 
 # Definisikan Skema Pydantic
@@ -26,16 +26,16 @@ def GetFeedbackOnOutline(Interface, _Logger, _Outline: str):
 
     _Logger.Log("Prompting LLM To Critique Outline", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    History, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
+    History, Review_obj, _ = Interface.SafeGeneratePydantic(  # Use ReviewOutput model
         _Logger,
         History,
         Writer.Config.REVISION_MODEL,
-        ChapterOutput
+        ReviewOutput
     )
     _Logger.Log("Finished Getting Outline Feedback", 5)
 
-    # Extract text from validated ChapterOutput model
-    return Chapter_obj.text
+    # Extract feedback from validated ReviewOutput model
+    return Review_obj.feedback
 
 
 def GetOutlineRating(
@@ -83,13 +83,13 @@ def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
 
     _Logger.Log("Prompting LLM To Critique Chapter", 5)
     History.append(Interface.BuildUserQuery(StartingPrompt))
-    Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
-        _Logger, History, Writer.Config.REVISION_MODEL, ChapterOutput
+    Messages, Review_obj, _ = Interface.SafeGeneratePydantic(  # Use ReviewOutput model
+        _Logger, History, Writer.Config.REVISION_MODEL, ReviewOutput
     )
     _Logger.Log("Finished Getting Chapter Feedback", 5)
 
-    # Extract text from validated ChapterOutput model
-    return Chapter_obj.text
+    # Extract feedback from validated ReviewOutput model
+    return Review_obj.feedback
 
 
 # Switch this to iscomplete true/false (similar to outline)

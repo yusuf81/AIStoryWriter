@@ -1,7 +1,6 @@
 import Writer.LLMEditor
-import Writer.PrintUtils
 import Writer.Config
-from Writer.Models import OutlineOutput, StoryElements, BaseContext, ChapterOutput
+from Writer.Models import OutlineOutput, StoryElements, BaseContext, ChapterOutlineOutput
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 
@@ -168,13 +167,13 @@ def GeneratePerChapterOutline(
     _Logger.Log(f"Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5)
     Messages = []  # Inisialisasi Messages sebagai list kosong di dalam fungsi
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
-    Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
+    Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use ChapterOutlineOutput model
         _Logger,
         Messages,
         Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL,
-        ChapterOutput
+        ChapterOutlineOutput
     )
-    SummaryText: str = Chapter_obj.text  # Extract text from ChapterOutput model (minimum 100 chars)
+    SummaryText: str = Chapter_obj.outline_summary  # Extract outline summary from ChapterOutlineOutput model
     # Modifikasi pesan log ini
     _Logger.Log(
         f"Done Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5

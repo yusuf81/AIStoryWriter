@@ -72,6 +72,49 @@ class ChapterOutput(BaseModel):
         }
 
 
+class ChapterOutlineOutput(BaseModel):
+    """
+    Structured output for chapter outline generation.
+    Specifically designed for outline data structure without requiring full chapter text.
+    """
+    chapter_number: int = Field(ge=1, description="Chapter number in the story")
+    chapter_title: str = Field(min_length=5, description="Chapter title")
+
+    # Scene structure matching CHAPTER_OUTLINE_PROMPT expectations
+    scenes: List[str] = Field(description="Scene descriptions from outline")
+    characters_present: List[str] = Field(default_factory=list, description="Characters appearing in this chapter")
+
+    # Outline-specific fields (no minimum length like ChapterOutput.text)
+    outline_summary: str = Field(min_length=20, description="Brief summary of chapter outline")
+    estimated_word_count: Optional[int] = Field(None, gt=0, description="Estimated chapter word count")
+
+    # Metadata for pipeline workflow
+    setting: Optional[str] = Field(None, description="Primary setting for this chapter")
+    main_conflict: Optional[str] = Field(None, description="Main conflict in this chapter")
+
+    @field_validator('scenes')
+    @classmethod
+    def validate_scenes(cls, v):
+        """Ensure each scene has meaningful content"""
+        if len(v) < 3:
+            raise ValueError("Chapter must have at least 3 scenes")
+
+        for i, scene in enumerate(v):
+            if len(scene.strip()) < 10:
+                raise ValueError(f"Scene {i+1} description is too short (minimum 10 characters)")
+
+        return v
+
+    @field_validator('characters_present')
+    @classmethod
+    def validate_characters(cls, v):
+        """Ensure character names are properly formatted"""
+        for character in v:
+            if len(character.strip()) < 2:
+                raise ValueError("Character names must be at least 2 characters long")
+        return v
+
+
 class OutlineOutput(BaseModel):
     """
     Structured output for story outline.
@@ -345,6 +388,7 @@ class ReviewOutput(BaseModel):
 MODEL_REGISTRY = {
     'BaseContext': BaseContext,
     'ChapterOutput': ChapterOutput,
+    'ChapterOutlineOutput': ChapterOutlineOutput,
     'OutlineOutput': OutlineOutput,
     'StoryElements': StoryElements,
     'ChapterGenerationRequest': ChapterGenerationRequest,

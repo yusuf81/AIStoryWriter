@@ -151,7 +151,20 @@
       "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py::TestListStrFormatInstructions::test_non_array_fields_unchanged -v)",
       "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py -v)",
       "Bash(flake8 --ignore=E501,W504,W503 Writer/Interface/Wrapper.py)",
-      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py -q)"
+      "Bash(python -m pytest tests/writer/interface/test_json_format_fix.py -q)",
+      "Bash(python -m pytest tests/writer/test_llm_editor.py::TestLLMEditorModelAssignments::test_current_implementation_uses_wrong_model -v -s)",
+      "Bash(python -m pytest tests/writer/test_llm_editor.py::TestLLMEditorModelAssignments::test_current_get_feedback_on_outline_uses_wrong_model -v)",
+      "Bash(python -m pytest tests/writer/test_llm_editor.py::TestLLMEditorModelAssignments::test_current_get_feedback_on_chapter_uses_wrong_model -v)",
+      "Bash(python -m pytest tests/writer/test_llm_editor.py::TestLLMEditorModelAssignments::test_get_feedback_on_outline_should_use_review_output -v)",
+      "Bash(python -m pytest tests/writer/test_llm_editor.py::TestLLMEditorModelAssignments::test_get_feedback_on_chapter_should_use_review_output -v)",
+      "Bash(python -m pytest tests/writer/test_llm_editor.py -v)",
+      "Bash(python -m pytest tests/writer/test_chapter_outline_output.py -v)",
+      "Bash(python -m pytest tests/writer/test_chapter_outline_output.py::TestChapterOutlineOutput::test_valid_chapter_outline_creation_minimal -v)",
+      "Bash(python -m pytest tests/writer/test_chapter_outline_output.py tests/writer/test_llm_editor.py -v)",
+      "Bash(pyright Writer/Models.py Writer/OutlineGenerator.py)",
+      "Bash(flake8 --ignore=E501,W504,W503 Writer/Models.py Writer/OutlineGenerator.py)",
+      "Bash(flake8 --ignore=E501,W504,W503,E261,F541,E712,W292,E302 Writer/Models.py)",
+      "Bash(python -m pytest tests/writer/test_chapter_outline_output.py tests/writer/test_llm_editor.py tests/writer/interface/test_json_format_fix.py -v --tb=short)"
     ]
   }
 }
