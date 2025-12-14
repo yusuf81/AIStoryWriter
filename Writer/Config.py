@@ -148,5 +148,6 @@ EMBEDDING_CTX = 8192  # Context window for embeddings
 EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback
 
 
+# Example model URLs for reference (not actively used)
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"
 "google://gemini-1.5-pro"

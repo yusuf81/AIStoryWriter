@@ -151,7 +151,7 @@ Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 Tentu saja, jangan sertakan tag XML - itu hanya untuk menunjukkan contoh.
 Juga, item dalam tanda kurung hanya untuk memberi Anda gambaran yang lebih baik tentang apa yang harus ditulis, dan juga harus dihilangkan dari respons Anda.
 
-=== FORMAT JSON (REFERENSA HANYA) ===
+=== FORMAT JSON (HANYA REFERENSI) ===
 Ini mendefinisikan struktur. JANGAN ulangi skema dalam respons Anda!
 
 === RESPONS ANDA (HANYA JSON) ===
@@ -984,7 +984,7 @@ CHAPTER_TRANSLATE_PROMPT = """
 Terjemahkan seluruh teks di dalam tag <CHAPTER> di atas ke Bahasa {_Language}.
 Respons Anda HARUS HANYA berisi teks terjemahan dari bab tersebut.
 JANGAN sertakan frasa pengantar, penjelasan, komentar, permintaan maaf, format markdown, atau teks apa pun selain terjemahan langsung itu sendiri.
-Jika ada komunikasi tambahan yang mutlak diperlukan di luar terjemahan, pastiken itu dalam Bahasa Indonesia, namun idealnya, respons Anda hanya berisi teks terjemahan.
+Jika ada komunikasi tambahan yang mutlak diperlukan di luar terjemahan, pastikan itu dalam Bahasa Indonesia, namun idealnya, respons Anda hanya berisi teks terjemahan.
 """
 
 MEGA_OUTLINE_PREAMBLE = """Ini adalah konteks cerita lengkap untuk generasi bab."""
@@ -1008,4 +1008,4 @@ Konten Bab:
 Konteks Cerita:
 {base_story_context}
 
-Responlah hanya dengan judul, tanpa teks atau format tambahan."""""
+Responlah hanya dengan judul, tanpa teks atau format tambahan."""
