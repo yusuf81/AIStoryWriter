@@ -12,7 +12,7 @@ Berikut adalah analisis dan kritik terhadap basis kode AIStoryWriter yang ada, b
 4.  **Prompt Terpusat:** `Writer/Prompts.py` menyimpan semua template prompt, membuatnya lebih mudah untuk dikelola dan dimodifikasi.
 5.  **Penggunaan Pydantic:** Penggunaan skema Pydantic (`SummaryComparisonSchema`, `SceneListSchema`, dll.) di `SafeGenerateJSON` dan fungsi terkait adalah praktik yang baik untuk memastikan output LLM yang terstruktur sesuai dengan format yang diharapkan.
 6.  **Logging:** Implementasi logging (`Writer/PrintUtils.py`) membantu dalam melacak proses eksekusi dan debugging, termasuk menyimpan riwayat Langchain.
-7.  **Penanganan Error Dasar:** Fungsi `SafeGenerateText` dan `SafeGenerateJSON` menyertakan loop retry untuk menangani kasus umum seperti respons kosong/pendek atau JSON yang tidak valid. Loop retry spesifik untuk Ollama di `ChatAndStreamResponse` juga merupakan tambahan yang bagus.
+7.  **Penanganan Error Dasar:** Fungsi `SafeGenerateText` dan `SafeGenerateJSON` menyertakan loop retry untuk menangani kasus umum seperti respons kosong/pendek atau JSON yang tidak valid. Loop retry spesifik untuk Ollama di `ChatResponse` juga merupakan tambahan yang bagus.
 
 ## Area Kritik dan Potensi Perbaikan
 
@@ -22,7 +22,7 @@ Berikut adalah analisis dan kritik terhadap basis kode AIStoryWriter yang ada, b
     *   **Global State:** Kode sangat bergantung pada variabel konfigurasi global (`Writer.Config.*`) yang diakses di banyak modul. Ini dapat mempersulit pengujian unit dan membuat dependensi antar modul menjadi kurang eksplisit. Melewatkan objek konfigurasi atau nilai-nilai yang relevan sebagai argumen fungsi bisa menjadi pendekatan yang lebih bersih.
 
 2.  **Struktur dan Kompleksitas Kode:**
-    *   **Fungsi Panjang (`ChatAndStreamResponse`):** Fungsi `ChatAndStreamResponse` di `Wrapper.py` cukup panjang dan menangani logika spesifik penyedia (Ollama, Google, OpenRouter) menggunakan blok `if/elif` yang besar. Ini bisa dipecah menjadi fungsi atau kelas yang lebih kecil per penyedia untuk meningkatkan keterbacaan dan pemeliharaan (misalnya, menggunakan Strategy Pattern).
+    *   **Fungsi Panjang (`ChatResponse`):** Fungsi `ChatResponse` di `Wrapper.py` cukup panjang dan menangani logika spesifik penyedia (Ollama, Google, OpenRouter) menggunakan blok `if/elif` yang besar. Ini bisa dipecah menjadi fungsi atau kelas yang lebih kecil per penyedia untuk meningkatkan keterbacaan dan pemeliharaan (misalnya, menggunakan Strategy Pattern).
     *   **Alur Eksekusi Kaku (`Write.py`):** Urutan operasi (outline -> chapter -> edit -> scrub) ditetapkan secara kaku di `Write.py`. Meskipun modular, orkestrasinya tidak fleksibel.
     *   **Pencampuran Logika dan Konfigurasi (`Write.py`):** Menetapkan variabel `Writer.Config` langsung dari `Args` di badan skrip utama mencampur pengaturan konfigurasi dengan logika eksekusi.
 
@@ -68,7 +68,7 @@ Berikut adalah analisis dan kritik terhadap basis kode AIStoryWriter yang ada, b
 - `LLMSummaryCheck` yang tidak efisien (3 panggilan LLM)
 - Chapter generation Stage 1/2/3 yang kaku
 - Terlalu banyak argumen baris perintah
-- Fungsi `ChatAndStreamResponse` yang panjang
+- Fungsi `ChatResponse` yang panjang
 
 ---
 

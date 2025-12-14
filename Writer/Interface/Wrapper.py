@@ -602,9 +602,6 @@ For example:
 
         return FullResponseMessages, TokenUsage, TotalInputChars, EstInputTokens
 
-    def ChatAndStreamResponse(self, _Logger, _Messages, _Model: str, _SeedOverride: int, _FormatSchema: dict):
-        """DEPRECATED: Use ChatResponse instead. Kept for backward compatibility."""
-        return self.ChatResponse(_Logger, _Messages, _Model, _SeedOverride, _FormatSchema)
 
     def _DisplayPydanticResponse(self, full_content: str, schema: dict, _Logger):
         """Display user-friendly extracted content from Pydantic response"""

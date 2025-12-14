@@ -175,7 +175,12 @@
       "Bash(pyright Writer/Models.py Writer/OutlineGenerator.py Writer/Prompts.py Writer/Prompts_id.py Writer/LLMEditor.py)",
       "Bash(python -m pytest tests/writer/ -k \"test_story_elements_expansion or test_review_output_enhancement or test_chapter_outline_output or test_llm_editor\" -q --tb=no)",
       "Bash(python -m pytest tests/writer/test_models.py tests/test_outline_generator_pydantic.py tests/test_state_pydantic_serialization.py -v --tb=short)",
-      "Bash(python -m pytest --tb=no -q)"
+      "Bash(python -m pytest --tb=no -q)",
+      "Bash(find /var/www/AIStoryWriter -name \"*.py\" -type f -not -path \"*/tests/*\" -not -path \"*/Docs/*\" -exec grep -l \"ChatAndStreamResponse\" {} ;)",
+      "Bash(python -m pytest tests/writer/interface/test_chat_and_stream_removal.py::TestChatAndStreamRemoval::test_chat_and_stream_response_completely_removed -xvs)",
+      "Bash(python -m pytest tests/writer/interface/test_chat_and_stream_removal.py -xvs)",
+      "Bash(python -m pytest tests/writer/interface/test_chat_and_stream_removal.py tests/writer/interface/test_pydantic_non_streaming.py -v)",
+      "Bash(python -m pytest tests/writer/interface/ -q)"
     ]
   }
 }

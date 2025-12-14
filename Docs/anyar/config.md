@@ -100,7 +100,7 @@ These variables define which Large Language Model (LLM) is used for specific tas
 
 -   **`OLLAMA_CTX`**:
     -   **Function:** Default context window size (in tokens) to use for Ollama models if not specified in the model string parameters.
-    -   **Usage:** Used by `Writer.Interface.Wrapper.ChatAndStreamResponse` when setting Ollama options.
+    -   **Usage:** Used by `Writer.Interface.Wrapper.ChatResponse` when setting Ollama options.
 
 -   **`OLLAMA_HOST`**:
     -   **Function:** Default hostname and port for the Ollama server if not specified in the model string (e.g., `ollama://model_name` instead of `ollama://model_name@host`).
@@ -110,7 +110,7 @@ These variables define which Large Language Model (LLM) is used for specific tas
 
 -   **`SEED`**:
     -   **Function:** Seed value used for LLM generation to attempt to make outputs more deterministic and reproducible. A specific seed is used for initial generation, and variations might be used during retries or revisions.
-    -   **Usage:** Used by `Writer.Interface.Wrapper.ChatAndStreamResponse` and potentially passed as an override in generation stages.
+    -   **Usage:** Used by `Writer.Interface.Wrapper.ChatResponse` and potentially passed as an override in generation stages.
 
 -   **`TRANSLATE_LANGUAGE`**:
     -   **Function:** Target language for translating the final novel. If empty or `None`, translation is skipped. Set via `-Translate` argument.
@@ -195,7 +195,7 @@ These boolean flags control whether certain optional steps or pipelines are exec
 
 -   **`DEBUG`**:
     -   **Function:** If `True`, enables additional verbose logging, potentially including printing full message histories sent to the LLM. Set via `-Debug` argument.
-    -   **Usage:** Checked in `Writer.Interface.Wrapper.ChatAndStreamResponse` and potentially other places for conditional logging/printing.
+    -   **Usage:** Checked in `Writer.Interface.Wrapper.ChatResponse` and potentially other places for conditional logging/printing.
 
 ## Retry Limits
 

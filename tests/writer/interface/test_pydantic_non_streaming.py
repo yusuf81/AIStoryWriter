@@ -37,8 +37,8 @@ class TestPydanticNonStreaming:
                     {"prompt_tokens": 10, "completion_tokens": 20}
                 )
 
-                # Call SafeGenerateJSON with _FormatSchema (triggers Pydantic mode)
-                messages, tokens, input_chars, est_tokens = real_interface.ChatAndStreamResponse(
+                # Call ChatResponse with _FormatSchema (triggers Pydantic mode)
+                messages, tokens, input_chars, est_tokens = real_interface.ChatResponse(
                     mock_logger(),
                     [{"role": "user", "content": "test"}],
                     "ollama://test",
@@ -72,7 +72,7 @@ class TestPydanticNonStreaming:
                     {"prompt_tokens": 10, "completion_tokens": 20}
                 )
 
-                real_interface.ChatAndStreamResponse(
+                real_interface.ChatResponse(
                     mock_logger(),
                     [{"role": "user", "content": "test"}],
                     "ollama://test",
@@ -91,14 +91,14 @@ class TestPydanticNonStreaming:
         This PASSes because:
         - StreamResponse has been removed
         - _CleanStreamingOutput has been removed
-        - ChatAndStreamResponse is now a deprecated wrapper
+        - ChatAndStreamResponse has been completely removed
         """
         from Writer.Interface.Wrapper import Interface
 
         # After cleanup, streaming methods should be removed
         assert not hasattr(Interface, 'StreamResponse'), "StreamResponse should have been removed"
         assert not hasattr(Interface, '_CleanStreamingOutput'), "_CleanStreamingOutput should have been removed"
-        assert hasattr(Interface, 'ChatAndStreamResponse'), "ChatAndStreamResponse should still exist as deprecated wrapper"
+        assert not hasattr(Interface, 'ChatAndStreamResponse'), "ChatAndStreamResponse should be completely removed"
         assert hasattr(Interface, 'ChatResponse'), "ChatResponse should exist as the new method"
 
     def test_base_context_display_format(self, mock_logger, capsys):
@@ -116,7 +116,7 @@ class TestPydanticNonStreaming:
                 {"prompt_tokens": 10, "completion_tokens": 20}
             )
 
-            real_interface.ChatAndStreamResponse(
+            real_interface.ChatResponse(
                 mock_logger(),
                 [{"role": "user", "content": "test"}],
                 "ollama://test",
@@ -143,7 +143,7 @@ class TestPydanticNonStreaming:
                 {"prompt_tokens": 10, "completion_tokens": 20}
             )
 
-            real_interface.ChatAndStreamResponse(
+            real_interface.ChatResponse(
                 mock_logger(),
                 [{"role": "user", "content": "test"}],
                 "ollama://test",
@@ -171,7 +171,7 @@ class TestPydanticNonStreaming:
                 {"prompt_tokens": 10, "completion_tokens": 20}
             )
 
-            real_interface.ChatAndStreamResponse(
+            real_interface.ChatResponse(
                 mock_logger(),
                 [{"role": "user", "content": "test"}],
                 "ollama://test",
