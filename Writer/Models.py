@@ -106,10 +106,12 @@ class ChapterOutlineOutput(BaseModel):
                     raise ValueError(f"Scene {i+1} description is too short (minimum 10 characters)")
             elif not isinstance(scene, str):
                 # Enhanced scene validation - check if it has meaningful content
-                meaningful_fields = [field for field in [scene.title, scene.characters_and_setting,
-                                                        scene.conflict_and_tone, scene.key_events,
-                                                        scene.literary_devices, scene.resolution]
-                                   if field and field.strip()]
+                meaningful_fields = [
+                    field for field in [scene.title, scene.characters_and_setting,
+                                        scene.conflict_and_tone, scene.key_events,
+                                        scene.literary_devices, scene.resolution]
+                    if field and field.strip()
+                ]
                 if not meaningful_fields:
                     raise ValueError(f"Enhanced scene {i+1} must have at least one meaningful field")
 
@@ -136,7 +138,7 @@ class OutlineOutput(BaseModel):
     chapters: List[str] = Field(min_length=1, description="List of chapter outlines")
     character_list: List[str] = Field(default_factory=list, description="List of main characters")
     character_details: Optional[Dict[str, str]] = Field(None, description="Extracted character descriptions from chapters")
-    setting: Optional[str] = Field(None, description="Story setting description")
+    setting: Optional[Dict[str, str]] = Field(None, description="Story setting details with time, location, culture, mood")
     target_chapter_count: int = Field(gt=0, le=100, description="Target number of chapters")
 
     @field_validator('chapters')

@@ -170,7 +170,12 @@ class TestOutlineOutput:
                 "Chapter 3: Alice discovers the hidden temple where the artifact is located"
             ],
             character_list=["Alice", "Merlin", "Dark Lord"],
-            setting="Medieval kingdom of Eldoria",
+            setting={
+                "time": "Medieval era",
+                "location": "Medieval kingdom of Eldoria",
+                "culture": "Feudal society with knights and magic",
+                "mood": "Epic fantasy with mysterious undertones"
+            },
             target_chapter_count=10
         )
 
@@ -278,6 +283,74 @@ class TestOutlineOutput:
                 chapters=["Chapter 1: Content"],
                 target_chapter_count=101
             )
+
+    def test_outline_output_with_dict_setting(self):
+        """GREEN: Test that OutlineOutput accepts Dict[str, str] for setting field"""
+        from Writer.Models import OutlineOutput
+
+        # This should PASS after updating model (GREEN phase)
+        structured_setting = {
+            "time": "Saat ini",
+            "location": "Hutan yang dipenuhi misteri di pinggiran desa Rian.",
+            "culture": "Modern dengan sentuhan legenda kuno.",
+            "mood": "Misterius dan menantang."
+        }
+
+        # Should pass after model change to accept Dict[str, str]
+        outline = OutlineOutput(
+            title="Gua Harta Karun Naga",
+            chapters=[
+                "Chapter 1: Rian, seorang petualang berani dari desa kecil di pinggiran hutan, mendengar legenda tentang gua yang dipenuhi harta karun dan dijaga oleh naga kecil. Dengan semangat petualangan, ia memutuskan untuk mencari gua tersebut.",
+                "Chapter 2: Setelah menemukan gua, Rian menghadapi Naga Kecil yang menjaga harta karun. Terjadi konflik yang kemudian berubah menjadi persahabatan."
+            ],
+            target_chapter_count=2,
+            genre="Fantasi Petualangan",
+            character_list=["Rian", "Naga Kecil"],
+            setting=structured_setting  # Dict should now be accepted
+        )
+
+        # Verify dict structure is preserved
+        assert isinstance(outline.setting, dict)
+        assert "time" in outline.setting
+        assert "location" in outline.setting
+        assert "culture" in outline.setting
+        assert "mood" in outline.setting
+        assert outline.setting["time"] == "Saat ini"
+        assert outline.setting["location"] == "Hutan yang dipenuhi misteri di pinggiran desa Rian."
+
+    def test_outline_output_with_none_setting(self):
+        """Test that OutlineOutput handles None setting correctly"""
+        from Writer.Models import OutlineOutput
+
+        # Should work fine with None
+        outline = OutlineOutput(
+            title="Test Story",
+            chapters=["Chapter 1: This is a long enough chapter outline that meets the minimum length requirement."],
+            target_chapter_count=1,
+            setting=None
+        )
+
+        assert outline.setting is None
+
+    def test_outline_output_with_string_setting(self):
+        """GREEN: Test that string setting fails after model change (as expected)"""
+        from Writer.Models import OutlineOutput
+        from pydantic import ValidationError
+        import pytest
+
+        # String setting should now fail after model change to expect dict
+        with pytest.raises(ValidationError) as exc_info:
+            OutlineOutput(
+                title="Test Story",
+                chapters=["Chapter 1: This is a long enough chapter outline that meets the minimum length requirement."],
+                target_chapter_count=1,
+                setting="A mystical forest setting in ancient times"
+            )
+
+        # Should fail expecting dict
+        error_str = str(exc_info.value)
+        assert "Input should be a valid dictionary" in error_str
+        assert "setting" in error_str
 
 
 class TestStoryElements:

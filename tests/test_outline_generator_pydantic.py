@@ -66,7 +66,12 @@ class TestOutlineGeneratorPydanticConversion:
             genre="Fantasy",
             chapters=["Chapter 1: Beginning where the hero starts his journey", "Chapter 2: Journey through the dark forest"],
             character_list=["Hero"],
-            setting="Fantasy world",
+            setting={
+                "time": "Fantasy era",
+                "location": "Fantasy world",
+                "culture": "Magical society with heroes and mythical creatures",
+                "mood": "Adventurous and mysterious"
+            },
             target_chapter_count=5
         )
         outline_return = (
@@ -80,7 +85,12 @@ class TestOutlineGeneratorPydanticConversion:
             genre="Fantasy",
             chapters=["Revised Chapter 1: Beginning where the hero starts his journey with more detail", "Revised Chapter 2: Journey through the dark forest with challenges"],
             character_list=["Hero"],
-            setting="Fantasy world",
+            setting={
+                "time": "Fantasy era",
+                "location": "Fantasy world",
+                "culture": "Magical society with heroes and mythical creatures",
+                "mood": "Adventurous and mysterious"
+            },
             target_chapter_count=5
         )
         revised_outline_return = (
@@ -127,7 +137,12 @@ class TestOutlineGeneratorPydanticConversion:
             theme="Good vs Evil",
             chapters=["Chapter 1: Beginning where the hero starts his journey", "Chapter 2: Journey through the dark forest"],
             character_list=["Alice", "Bob"],
-            setting="Fairy land",
+            setting={
+                "time": "Fairytale era",
+                "location": "Fairy land",
+                "culture": "Magical realm with enchantments",
+                "mood": "Whimsical and wondrous"
+            },
             target_chapter_count=10
         )
 
@@ -159,6 +174,92 @@ class TestOutlineGeneratorPydanticConversion:
         # Verify result is the OutlineOutput text
         assert isinstance(result_outline, str)
         assert "Revised Story Title" in result_outline
+
+    def test_generate_outline_with_structured_setting(self, mock_interface, mock_logger, mocker):
+        """Integration test: Verify GenerateOutline handles structured dict setting correctly"""
+        from Writer.OutlineGenerator import GenerateOutline
+
+        # Arrange: Create OutlineOutput with structured setting to verify it validates properly
+        from Writer.Models import OutlineOutput
+
+        # This should validate successfully with dict setting after our GREEN fix
+        outline_with_structured_setting = OutlineOutput(
+            title="Story with Structured Setting",
+            genre="Fantasy Adventure",
+            chapters=[
+                "Chapter 1: The hero begins their journey in a mystical land",
+                "Chapter 2: Challenges arise in the enchanted forest"
+            ],
+            character_list=["Hero", "Mentor"],
+            setting={
+                "time": "Medieval fantasy era",
+                "location": "Enchanted kingdom with magical creatures",
+                "culture": "Feudal society with wizards and knights",
+                "mood": "Mysterious and adventurous"
+            },
+            target_chapter_count=5
+        )
+
+        # Assert: The structured setting is properly validated and stored
+        assert isinstance(outline_with_structured_setting.setting, dict)
+        assert outline_with_structured_setting.setting["time"] == "Medieval fantasy era"
+        assert outline_with_structured_setting.setting["location"] == "Enchanted kingdom with magical creatures"
+        assert outline_with_structured_setting.setting["culture"] == "Feudal society with wizards and knights"
+        assert outline_with_structured_setting.setting["mood"] == "Mysterious and adventurous"
+
+        # Arrange: Mock the full GenerateOutline process
+        mock_iface = mock_interface()
+
+        # Create proper mocks for BaseContext and StoryElements
+        from Writer.Models import BaseContext, StoryElements
+
+        mock_base_context = BaseContext(context="Important context extracted")
+        mock_story_elements = StoryElements(
+            title="Fantasy Adventure",
+            genre="Fantasy",
+            characters={
+                "Hero": [{"name": "Hero", "description": "Main protagonist"}],
+                "Mentor": [{"name": "Mentor", "description": "Guide character"}]
+            },
+            settings={},
+            themes=["Courage", "Good vs Evil"],
+            conflict="Hero faces challenges",
+            resolution="Hero succeeds"
+        )
+
+        # Set up the mock to return our structured objects in sequence
+        mock_iface.SafeGeneratePydantic.side_effect = [
+            ([{"role": "assistant", "content": "Base context extracted"}], mock_base_context, {"tokens": 50}),
+            ([{"role": "assistant", "content": "Story elements generated"}], mock_story_elements, {"tokens": 100}),
+            ([{"role": "assistant", "content": "Outline generated"}], outline_with_structured_setting, {"tokens": 150}),
+            ([{"role": "assistant", "content": "Outline revised"}], outline_with_structured_setting, {"tokens": 100})
+        ]
+
+        # Mock LLMEditor methods
+        mock_llm_editor = mocker.patch('Writer.LLMEditor')
+        mock_llm_editor.GetFeedbackOnOutline.return_value = "Good outline with structured setting"
+        mock_llm_editor.GetOutlineRating.return_value = True
+
+        # Mock Config attributes
+        mocker.patch('Writer.Config.INITIAL_OUTLINE_WRITER_MODEL', "test_model")
+        mocker.patch('Writer.Config.OUTLINE_MAX_REVISIONS', 1)
+        mocker.patch('Writer.Config.OUTLINE_MIN_REVISIONS', 1)
+
+        # Act: Generate outline
+        final_outline, story_elements_obj, outline_text, base_context = GenerateOutline(
+            mock_iface,
+            mock_logger(),
+            "Create a fantasy story with detailed setting",
+            "Fantasy"
+        )
+
+        # Assert: Generation succeeded without validation errors
+        assert final_outline is not None
+        assert isinstance(final_outline, str)
+        assert "Story with Structured Setting" in final_outline
+
+        # Verify SafeGeneratePydantic was called 4 times, accepting our structured setting
+        assert mock_iface.SafeGeneratePydantic.call_count == 4
 
 
 class TestBaseContextModel:

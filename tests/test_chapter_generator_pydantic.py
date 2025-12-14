@@ -112,7 +112,12 @@ class TestChapterGeneratorPydanticConversion:
             genre="Fantasy",
             chapters=["Revised chapter content with more details and better flow"],
             character_list=["Hero"],
-            setting="Fantasy world",
+            setting={
+                "time": "Fantasy era",
+                "location": "Fantasy world",
+                "culture": "Magical society with heroes and mythical creatures",
+                "mood": "Adventurous and mysterious"
+            },
             target_chapter_count=5
         )
 
@@ -168,7 +173,12 @@ class TestChapterGeneratorPydanticConversion:
             genre="Test",
             chapters=["Revised chapter content"],
             character_list=["Character"],
-            setting="Test setting",
+            setting={
+                "time": "Test era",
+                "location": "Test setting",
+                "culture": "Test culture with traditions",
+                "mood": "Test mood and atmosphere"
+            },
             target_chapter_count=1
         )
 
