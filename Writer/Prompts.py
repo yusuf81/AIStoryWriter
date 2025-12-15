@@ -618,8 +618,7 @@ Be detailed and well-formatted in your response, yet ensure you have a well-thou
 
 # JSON OUTPUT FORMAT #
 Please return your response in the following JSON format:
-{{
-  "scenes": [
+{{ "scenes": [
     {{
       "scene_number": 1,
       "setting": "Description of where the scene takes place",
@@ -628,12 +627,10 @@ Please return your response in the following JSON format:
       "purpose": "Purpose of this scene in the story (minimum 5 characters)",
       "estimated_word_count": 150
     }}
-  ]
-}}
+  ]}}
 
 Complete example:
-{{
-  "scenes": [
+{{ "scenes": [
     {{
       "scene_number": 1,
       "setting": "Small village at the edge of the forest",
@@ -650,8 +647,7 @@ Complete example:
       "purpose": "Develop conflict and show character determination",
       "estimated_word_count": 200
     }}
-  ]
-}}
+  ]}}
 
 IMPORTANT: Use English field names as specified above!
 """

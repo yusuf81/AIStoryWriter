@@ -636,8 +636,7 @@ Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 
 # FORMAT JSON OUTPUT #
 Harap kembalikan respons dalam format JSON berikut:
-{{
-  "scenes": [
+{{ "scenes": [
     {{
       "scene_number": 1,
       "setting": "Deskripsi lokasi adegan",
@@ -646,12 +645,10 @@ Harap kembalikan respons dalam format JSON berikut:
       "purpose": "Tujuan adegan dalam cerita (minimal 5 karakter)",
       "estimated_word_count": 150
     }}
-  ]
-}}
+  ]}}
 
 Contoh lengkap:
-{{
-  "scenes": [
+{{ "scenes": [
     {{
       "scene_number": 1,
       "setting": "Desa kecil di pinggiran hutan",
@@ -668,8 +665,7 @@ Contoh lengkap:
       "purpose": "Mengembangkan konflik dan menunjukkan keteguhan karakter",
       "estimated_word_count": 200
     }}
-  ]
-}}
+  ]}}
 
 PENTING: Gunakan field names dalam Bahasa Inggris, meskipun kontennya dalam Bahasa Indonesia!
 """
