@@ -308,33 +308,47 @@ class Interface:
                 _Logger.Log(f"SafeGeneratePydantic: Successfully validated {_PydanticModel.__name__} on attempt {attempt + 1}", 5)
                 return ResponseMessagesList, validated_model, TokenUsage
 
-            except Exception as e:  # Catch ALL response format errors
-                # This triggers retry logic
+            except ValidationError as ve:
+                # Handle Pydantic validation errors with targeted error feedback
+                if attempt < max_attempts - 1:
+                    _Logger.Log(f"Attempt {attempt + 1} failed: Pydantic validation error. Retrying with error feedback...", 5)
+
+                    # Build targeted error message (no schema structure)
+                    error_message = self._build_validation_error_message(ve, _PydanticModel.__name__)
+                    _Logger.Log(f"Validation errors:\n{error_message}", 5)
+
+                    # Add error feedback to conversation for retry
+                    messages_for_parsing.append({
+                        "role": "user",
+                        "content": error_message
+                    })
+
+                    continue
+                else:
+                    # Final attempt failed - format and raise
+                    if hasattr(ve, 'errors'):
+                        error_details = "\n".join([
+                            f"- {'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
+                            for err in ve.errors()
+                        ])
+                        raise Exception(f"Pydantic validation failed after {max_attempts} attempts:\n{error_details}")
+                    else:
+                        raise Exception(f"Pydantic validation failed: {str(ve)}")
+
+            except Exception as e:
+                # Handle non-ValidationError exceptions (TypeError, etc.)
                 if attempt < max_attempts - 1:
                     _Logger.Log(f"Attempt {attempt + 1} failed: {e}. Retrying...", 5)
 
-                    # For structured responses, provide more specific retry guidance
+                    # Keep existing generic hints for other error types
                     if isinstance(e, TypeError) and "list" in str(e):
-                        _Logger.Log("Hint: Ensure response is single JSON object, not multiple objects. Do NOT include schema in response.", 5)
+                        _Logger.Log("Hint: Ensure response is single JSON object, not multiple objects. DO NOT include schema in response.", 5)
                     elif "missing" in str(e).lower() or "validation" in str(e).lower():
                         _Logger.Log("Hint: Ensure all required fields are present and correct.", 5)
 
                     continue
                 else:
-                    # Final attempt failed - raise exception
-                    if isinstance(e, ValidationError):
-                        # Format Pydantic errors nicely
-                        pydantic_error = e  # type: ignore
-                        if hasattr(pydantic_error, 'errors'):
-                            error_details = "\n".join([
-                                f"- {'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
-                                for err in pydantic_error.errors()
-                            ])
-                            raise Exception(f"Pydantic validation failed after {max_attempts} attempts:\n{error_details}")
-                        else:
-                            raise Exception(f"Pydantic validation failed after {max_attempts} attempts: {str(e)}")
-                    else:
-                        raise Exception(f"Failed to generate valid response after {max_attempts} attempts. Last error: {e}")
+                    raise Exception(f"Failed to generate valid response after {max_attempts} attempts. Last error: {e}")
 
     def _build_format_instruction(self, schema):
         """Build clear format instruction without showing full schema to prevent echoing"""
@@ -430,6 +444,59 @@ For example:
 }"""
 
         return instruction
+
+    def _build_validation_error_message(self, validation_error: "ValidationError", model_name: str) -> str:
+        """
+        Build targeted error message for Pydantic validation failures.
+
+        Extracts specific field errors WITHOUT including schema structure.
+        Prevents schema echoing while providing actionable feedback.
+
+        Args:
+            validation_error: Pydantic ValidationError instance
+            model_name: Name of the Pydantic model for context
+
+        Returns:
+            str: Natural language error message with field-specific guidance
+        """
+        errors = validation_error.errors()
+        error_lines = []
+
+        for err in errors:
+            field_path = '.'.join(str(x) for x in err['loc'])
+            error_type = err['type']
+            error_msg = err['msg']
+
+            # Format based on error type
+            if error_type == 'missing':
+                line = f"- {field_path}: This field is required but was not provided"
+
+            elif error_type == 'string_too_short':
+                input_val = err.get('input', '')
+                actual_len = len(str(input_val)) if input_val else 0
+                line = f"- {field_path}: {error_msg} (you provided {actual_len} characters)"
+
+            elif error_type in ('int_parsing', 'float_parsing', 'bool_parsing'):
+                input_val = err.get('input', 'unknown')
+                expected_type = error_type.split('_')[0]
+                line = f"- {field_path}: Expected {expected_type} (you provided: {repr(input_val)})"
+
+            elif error_type == 'value_error':
+                # Custom validator error (e.g., word_count mismatch) - use message as-is
+                line = f"- {field_path}: {error_msg}"
+
+            else:
+                # Generic format for other error types
+                line = f"- {field_path}: {error_msg}"
+
+            error_lines.append(line)
+
+        # Build final message
+        message = "Your response had validation errors. Please correct these fields:\n\n"
+        message += '\n'.join(error_lines)
+        message += "\n\nImportant: Return ONLY the corrected JSON data. Do NOT include explanations or other text."
+
+        return message
 
     def _ollama_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
         import ollama
