@@ -204,7 +204,7 @@ def _handle_chapter_title_generation_pipeline_version(SysLogger, Interface, Conf
             _Logger=SysLogger,
             _Messages=title_messages,
             _Model=Config.FAST_MODEL,
-            _pydantic_model=TitleOutput,
+            _PydanticModel=TitleOutput,
             _max_retries_override=Config.MAX_RETRIES_CHAPTER_TITLE
         )
         # Extract title from validated Pydantic model
