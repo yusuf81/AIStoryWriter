@@ -64,7 +64,7 @@ CHAPTER_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
 MIN_WORDS_TRANSLATE_PROMPT = 10  # Minimum words for prompt translation
 MIN_WORDS_INITIAL_OUTLINE = 250  # Minimum words for initial outline generation
 MIN_WORDS_REVISE_OUTLINE = 250  # Minimum words for outline revision
-MIN_WORDS_PER_CHAPTER_OUTLINE = 50  # Minimum words for per-chapter outline generation
+MIN_WORDS_PER_CHAPTER_OUTLINE = 100  # Minimum words for per-chapter outline generation
 MIN_WORDS_STORY_ELEMENTS = 150  # Minimum words for story elements generation
 MIN_WORDS_CHAPTER_SEGMENT_EXTRACT = (
     120  # Minimum words for extracting chapter outline segment

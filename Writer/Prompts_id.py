@@ -452,6 +452,12 @@ CHAPTER_GENERATION_STAGE1 = """
 Harap tulis plot untuk bab {_ChapterNum} dari {_TotalChapters} berdasarkan outline bab berikut dan bab-bab sebelumnya.
 Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sangat penting bahwa tulisan Anda terhubung dengan baik dengan bab sebelumnya, dan mengalir ke bab berikutnya (jadi cobalah untuk mengikuti outline)!
 
+INSTRUKSI KRITIS: Konteks bab sebelumnya di bawah ini HANYA untuk kontinuitas.
+- JANGAN mendeskripsikan ulang scene yang sudah ditulis di bab sebelumnya
+- JANGAN memperkenalkan ulang karakter yang sudah diperkenalkan
+- MULAI dari titik di mana bab sebelumnya berakhir, jangan ulangi
+- Jika pertemuan/interaksi sudah terjadi, lanjutkan dari SETELAH kejadian tersebut
+
 Berikut adalah outline saya untuk bab ini:
 <CHAPTER_OUTLINE>
 {ThisChapterOutline}
@@ -478,6 +484,11 @@ Harap tulis pengembangan karakter untuk bab berikut {_ChapterNum} dari {_TotalCh
 Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sangat penting bahwa tulisan Anda terhubung dengan baik dengan bab sebelumnya, dan mengalir ke bab berikutnya (jadi cobalah untuk mengikuti outline)!
 
 Jangan mengambil konten, sebaliknya perluas untuk membuat output yang lebih panjang dan lebih detail.
+
+ATURAN ANTI-DUPLIKASI: Ketika Anda melihat konteks bab sebelumnya:
+- JANGAN menulis ulang pengenalan karakter yang sudah dilakukan
+- JANGAN mengulang interaksi atau percakapan yang sama
+- KEMBANGKAN apa yang sudah ada, jangan buat ulang
 
 Sebagai referensi Anda, berikut adalah outline saya untuk bab ini:
 <CHAPTER_OUTLINE>
@@ -515,6 +526,10 @@ Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sa
 
 Jangan mengambil konten, sebaliknya perluas untuk membuat output yang lebih panjang dan lebih detail.
 
+ATURAN ANTI-DUPLIKASI: Ketika memperbaiki dialog:
+- JANGAN mengulang dialog dari konteks bab sebelumnya
+- JANGAN membuat ulang percakapan yang sudah ditulis
+- KEMBANGKAN dialog yang ada, jangan duplikasi
 
 {FormattedLastChapterSummary}
 

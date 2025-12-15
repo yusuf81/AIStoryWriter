@@ -439,6 +439,12 @@ CHAPTER_GENERATION_STAGE1 = """
 Please write the plot for chapter {_ChapterNum} of {_TotalChapters} based on the following chapter outline and any previous chapters.
 Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next (so try to follow the outline)!
 
+CRITICAL INSTRUCTION: The previous chapter context below is provided for continuity ONLY.
+- DO NOT re-describe scenes already written in the previous chapter
+- DO NOT re-introduce characters who were already introduced
+- START where the previous chapter ended, don't repeat it
+- If a meeting/interaction already happened, continue from AFTER that event
+
 Here is my outline for this chapter:
 <CHAPTER_OUTLINE>
 {ThisChapterOutline}
@@ -464,6 +470,11 @@ Please write character development for the following chapter {_ChapterNum} of {_
 Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next (so try to follow the outline)!
 
 Don't take away content, instead expand upon it to make a longer and more detailed output.{PydanticFormatInstructions}
+
+ANTI-DUPLICATION RULE: When you see previous chapter context:
+- DO NOT rewrite character introductions already done
+- DO NOT repeat the same interactions or conversations
+- BUILD UPON what was established, don't re-establish it
 
 For your reference, here is my outline for this chapter:
 <CHAPTER_OUTLINE>
@@ -500,6 +511,10 @@ Pay attention to the previous chapters, and make sure you both continue seamless
 
 Don't take away content, instead expand upon it to make a longer and more detailed output.
 
+ANTI-DUPLICATION RULE: When refining dialogue:
+- DO NOT repeat dialogue from the previous chapter context
+- DO NOT recreate conversations already written
+- EXPAND existing dialogue, don't duplicate it
 
 {FormattedLastChapterSummary}
 
