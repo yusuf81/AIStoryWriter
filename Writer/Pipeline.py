@@ -238,11 +238,12 @@ def _get_full_story_text_pipeline_version(chapters_data_list, Config, add_titles
 
 
 class StoryPipeline:
-    def __init__(self, interface, sys_logger, config, active_prompts):
+    def __init__(self, interface, sys_logger, config, active_prompts, is_fresh_run=True):
         self.Interface = interface
         self.SysLogger = sys_logger
         self.Config = config
         self.ActivePrompts = active_prompts
+        self.is_fresh_run = is_fresh_run
 
         try:
             import Writer.OutlineGenerator
@@ -273,6 +274,12 @@ class StoryPipeline:
                     self.lorebook = Writer.Lorebook.LorebookManager(
                         persist_dir=self.Config.LOREBOOK_PERSIST_DIR
                     )
+                    # Auto-clear for fresh runs only
+                    if (self.lorebook and
+                        self.is_fresh_run and
+                        getattr(self.Config, 'LOREBOOK_AUTO_CLEAR', True)):
+                        self.lorebook.clear()
+                        self.SysLogger.Log("Lorebook auto-cleared for fresh run", 5)
                 except ImportError as e:
                     self.SysLogger.Log(f"Failed to import Lorebook: {e}", 6)
                     self.lorebook = None

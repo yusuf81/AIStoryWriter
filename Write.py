@@ -647,7 +647,7 @@ def main():
     # --- Mulai logika utama ---
     # Instantiate and run the pipeline
     try:
-        pipeline = StoryPipeline(Interface, SysLogger, Writer.Config, ActivePrompts)
+        pipeline = StoryPipeline(Interface, SysLogger, Writer.Config, ActivePrompts, is_fresh_run=not bool(Args.Resume))
 
         # Determine initial_prompt_for_outline based on new/resume and translation
         initial_prompt_for_outline_gen = ""

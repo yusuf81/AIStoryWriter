@@ -132,6 +132,7 @@ USE_LOREBOOK = True  # Enable/disable lorebook system
 LOREBOOK_K_RETRIEVAL = 5  # Number of lore entries to retrieve
 LOREBOOK_PERSIST_DIR = "./lorebook_db"  # Directory for lorebook persistence
 LOREBOOK_SIMILARITY_THRESHOLD = 0.7  # Minimum similarity for lore retrieval
+LOREBOOK_AUTO_CLEAR = True  # Auto-clear lorebook for fresh runs (not resume)
 
 USE_PYDANTIC_PARSING = True  # Enable/disable structured output
 PYDANTIC_WORD_COUNT_TOLERANCE = 100  # Tolerance for word count validation (±N words)
