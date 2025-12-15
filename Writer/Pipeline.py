@@ -7,7 +7,7 @@ import datetime
 # Import Pydantic model for title generation
 from Writer.Models import TitleOutput
 # Import StateManager for proper Pydantic serialization
-from Writer.StateManager import StateManager
+from Writer.StateManager import StateManager, serialize_for_json
 
 
 # Assuming Writer.Config, Writer.Statistics, and other Writer modules will be imported
@@ -725,7 +725,9 @@ class StoryPipeline:
         current_state["StoryInfoJSON"] = StoryInfoJSON # Save updated StoryInfoJSON to state
         try:
             with open(FinalJSONPath, "w", encoding="utf-8") as F:
-                json.dump(StoryInfoJSON, F, indent=4, ensure_ascii=False)
+                # Serialize Pydantic objects to JSON-compatible dicts before dumping
+                serializable_story_info = serialize_for_json(StoryInfoJSON)
+                json.dump(serializable_story_info, F, indent=4, ensure_ascii=False)
             self.SysLogger.Log(f"Pipeline: Story info JSON saved to {FinalJSONPath}", 5)
         except Exception as e:
             self.SysLogger.Log(f"PIPELINE _perform_post_processing_stage FATAL: Error writing story info JSON file {FinalJSONPath}: {e}", 7)

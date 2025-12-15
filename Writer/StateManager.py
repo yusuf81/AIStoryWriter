@@ -132,4 +132,86 @@ class StateManager:
                 type(value).__name__ in MODEL_REGISTRY)
 
 
-__all__ = ['StateManager']
+def serialize_for_json(obj: Any) -> Any:
+    """
+    Recursively convert Pydantic objects to JSON-serializable dicts.
+
+    Processes nested data structures (dict, list, tuple, set) and converts
+    any Pydantic model instances to dictionaries using model_dump().
+    Non-Pydantic data is preserved unchanged.
+
+    Args:
+        obj: Object to serialize. Can be any type including:
+            - Pydantic models (converted to dict)
+            - dict/list/tuple/set (recursively processed)
+            - Primitives (returned as-is)
+
+    Returns:
+        JSON-serializable version of obj:
+            - Pydantic models become dicts
+            - Collections are recursively processed
+            - Primitives pass through unchanged
+
+    Raises:
+        TypeError: If obj contains types that cannot be JSON-serialized
+            (e.g., custom classes not in MODEL_REGISTRY)
+
+    Examples:
+        Convert single Pydantic object:
+        >>> from Writer.Models import StoryElements
+        >>> story = StoryElements(title="Test", genre="Fantasy", themes=["magic"])
+        >>> result = serialize_for_json(story)
+        >>> isinstance(result, dict)
+        True
+
+        Handle nested structures:
+        >>> data = {"story": story, "count": 5}
+        >>> result = serialize_for_json(data)
+        >>> isinstance(result["story"], dict)
+        True
+        >>> result["count"]
+        5
+
+    Note:
+        - Does NOT handle circular references (will hit recursion limit)
+        - Sets are converted to lists (JSON limitation)
+        - Tuples are preserved as tuples
+        - Reuses StateManager._is_pydantic_model() for detection (DRY principle)
+    """
+    from datetime import datetime
+
+    # Base case: None and primitives pass through unchanged
+    if obj is None or isinstance(obj, (str, int, float, bool)):
+        return obj
+
+    # Check if it's a Pydantic model (reuse existing detection logic)
+    if StateManager._is_pydantic_model(obj):
+        # Convert to dict and recursively process to handle nested Pydantic
+        return serialize_for_json(obj.model_dump())
+
+    # Handle dict: recursively process both keys and values
+    if isinstance(obj, dict):
+        return {key: serialize_for_json(value) for key, value in obj.items()}
+
+    # Handle list: recursively process elements
+    if isinstance(obj, list):
+        return [serialize_for_json(item) for item in obj]
+
+    # Handle tuple: recursively process and preserve tuple type
+    if isinstance(obj, tuple):
+        return tuple(serialize_for_json(item) for item in obj)
+
+    # Handle set: convert to list (JSON doesn't support sets)
+    if isinstance(obj, set):
+        return [serialize_for_json(item) for item in obj]
+
+    # Edge case: datetime objects (convert to ISO format string)
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+
+    # Fallback: return as-is and let json.dump() raise TypeError if needed
+    # This provides clearer error messages than catching and re-raising
+    return obj
+
+
+__all__ = ['StateManager', 'serialize_for_json']
