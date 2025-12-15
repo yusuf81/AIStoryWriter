@@ -615,6 +615,45 @@ Please tailor your response to another creative writer.
 # RESPONSE #
 Be detailed and well-formatted in your response, yet ensure you have a well-thought out and creative output.
 ###############
+
+# JSON OUTPUT FORMAT #
+Please return your response in the following JSON format:
+{{
+  "scenes": [
+    {{
+      "scene_number": 1,
+      "setting": "Description of where the scene takes place",
+      "characters_present": ["Character 1", "Character 2"],
+      "action": "What happens in the scene (minimum 10 characters)",
+      "purpose": "Purpose of this scene in the story (minimum 5 characters)",
+      "estimated_word_count": 150
+    }}
+  ]
+}}
+
+Complete example:
+{{
+  "scenes": [
+    {{
+      "scene_number": 1,
+      "setting": "Small village at the edge of the forest",
+      "characters_present": ["Rian", "Village Elder"],
+      "action": "Rian hears the legend of the treasure cave from the village elder",
+      "purpose": "Establish background and trigger the adventure",
+      "estimated_word_count": 150
+    }},
+    {{
+      "scene_number": 2,
+      "setting": "Mysterious forest",
+      "characters_present": ["Rian"],
+      "action": "Rian begins his journey searching for the cave",
+      "purpose": "Develop conflict and show character determination",
+      "estimated_word_count": 200
+    }}
+  ]
+}}
+
+IMPORTANT: Use English field names as specified above!
 """
 
 SCENES_TO_JSON = """

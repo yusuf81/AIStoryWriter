@@ -633,6 +633,45 @@ Harap sesuaikan respons Anda untuk penulis kreatif lainnya.
 Jadilah detail dan berformat baik dalam respons Anda, namun pastikan Anda memiliki output yang dipikirkan dengan matang dan kreatif.
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 ###############
+
+# FORMAT JSON OUTPUT #
+Harap kembalikan respons dalam format JSON berikut:
+{{
+  "scenes": [
+    {{
+      "scene_number": 1,
+      "setting": "Deskripsi lokasi adegan",
+      "characters_present": ["Karakter 1", "Karakter 2"],
+      "action": "Apa yang terjadi dalam adegan (minimal 10 karakter)",
+      "purpose": "Tujuan adegan dalam cerita (minimal 5 karakter)",
+      "estimated_word_count": 150
+    }}
+  ]
+}}
+
+Contoh lengkap:
+{{
+  "scenes": [
+    {{
+      "scene_number": 1,
+      "setting": "Desa kecil di pinggiran hutan",
+      "characters_present": ["Rian", "Tetua Desa"],
+      "action": "Rian mendengar legenda tentang gua harta karun dari tetua desa",
+      "purpose": "Membangun latar belakang dan memicu petualangan",
+      "estimated_word_count": 150
+    }},
+    {{
+      "scene_number": 2,
+      "setting": "Hutan misterius",
+      "characters_present": ["Rian"],
+      "action": "Rian memulai perjalanannya mencari gua tersebut",
+      "purpose": "Mengembangkan konflik dan menunjukkan keteguhan karakter",
+      "estimated_word_count": 200
+    }}
+  ]
+}}
+
+PENTING: Gunakan field names dalam Bahasa Inggris, meskipun kontennya dalam Bahasa Indonesia!
 """
 
 SCENES_TO_JSON = """
