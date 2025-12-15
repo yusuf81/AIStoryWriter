@@ -274,12 +274,29 @@ class StoryPipeline:
                     self.lorebook = Writer.Lorebook.LorebookManager(
                         persist_dir=self.Config.LOREBOOK_PERSIST_DIR
                     )
-                    # Auto-clear for fresh runs only
+
+                    # NEW: Handle lorebook state restoration for resume
+                    if self.lorebook and not self.is_fresh_run:
+                        # For resume, look for state file in current run logs
+                        import glob
+                        log_dirs = glob.glob("Logs/Generation_*/")
+                        if log_dirs:
+                            latest_dir = sorted(log_dirs)[-1]
+                            state_file = os.path.join(latest_dir, "run.state.json")
+                            if os.path.exists(state_file):
+                                try:
+                                    self.lorebook.load_entries_from_state(state_file)
+                                    self.SysLogger.Log(f"Lorebook state restored from {state_file}", 5)
+                                except Exception as e:
+                                    self.SysLogger.Log(f"Failed to restore lorebook from {state_file}: {e}", 3)
+
+                    # Auto-clear logic remains for fresh runs
                     if (self.lorebook and
                         self.is_fresh_run and
                         getattr(self.Config, 'LOREBOOK_AUTO_CLEAR', True)):
                         self.lorebook.clear()
                         self.SysLogger.Log("Lorebook auto-cleared for fresh run", 5)
+
                 except ImportError as e:
                     self.SysLogger.Log(f"Failed to import Lorebook: {e}", 6)
                     self.lorebook = None
@@ -294,7 +311,26 @@ class StoryPipeline:
             raise
 
     def _save_state_wrapper(self, current_state, state_filepath):
-        save_state_pipeline(current_state, state_filepath, self.SysLogger)
+        """Enhanced state save that includes lorebook entries"""
+        try:
+            # Add lorebook entries to state if lorebook is enabled and has entries
+            if self.Config.USE_LOREBOOK and self.lorebook:
+                try:
+                    lorebook_entries = self.lorebook.get_all_entries()
+                    if "other_data" not in current_state:
+                        current_state["other_data"] = {}
+                    current_state["other_data"]["lorebook_entries"] = lorebook_entries
+                    self.SysLogger.Log(f"Added {len(lorebook_entries)} lorebook entries to state", 5)
+                except Exception as e:
+                    self.SysLogger.Log(f"Failed to get lorebook entries for state: {e}", 3)
+
+            # Use existing save function
+            save_state_pipeline(current_state, state_filepath, self.SysLogger)
+
+        except Exception as e:
+            self.SysLogger.Log(f"Failed to save state with lorebook entries: {e}", 3)
+            # Fallback to original save without lorebook
+            save_state_pipeline(current_state, state_filepath, self.SysLogger)
 
     def _generate_outline_stage(self, current_state, prompt_content, state_filepath):
         self.SysLogger.Log("Pipeline: Starting Outline Generation Stage...", 3)

@@ -1,6 +1,8 @@
 # Writer/Lorebook.py - Vector-based lorebook management
 import os
 import re
+import json
+from datetime import datetime
 from typing import Dict
 
 # Import from langchain-chroma exclusively (no fallback to deprecated langchain_community)
@@ -87,20 +89,27 @@ class LorebookManager:
             self.db = None
             self.embeddings = None
 
-    def add_entry(self, content: str, metadata: Dict[str, object]) -> None:
+    def add_entry(self, content: str, metadata: Dict[str, object]) -> str:
         """
         Add a lore entry to the vector store
 
         Args:
             content (str): The lore content
             metadata (Dict[str, any]): Metadata about the entry (type, character, etc.)
+
+        Returns:
+            str: The ID of the added entry
         """
         if self.db is None:
             self.SysLogger.Log("Cannot add entry: Lorebook not initialized", 6)
             self.SysLogger.Log(f"self.db is None: {self.db is None}, self.embeddings is None: {self.embeddings is None}", 6)
-            return
+            return ""
 
         try:
+            # Add timestamp to metadata for tracking
+            metadata = metadata.copy()  # Don't modify original
+            metadata["added_at"] = str(datetime.now())
+
             # Create document with content and metadata
             doc = Document(
                 page_content=content,
@@ -108,12 +117,15 @@ class LorebookManager:
             )
 
             # Add to vector store
-            self.db.add_documents([doc])
+            doc_ids = self.db.add_documents([doc])
 
-            self.SysLogger.Log(f"Added lore entry: {content[:50]}...", 5)
+            self.SysLogger.Log(f"Added lore entry: {metadata.get('type', 'unknown')} - {metadata.get('name', 'unnamed')}", 5)
+
+            return doc_ids[0] if doc_ids else ""
 
         except Exception as e:
             self.SysLogger.Log(f"Failed to add lore entry: {str(e)}", 2)
+            return ""
 
     def retrieve(self, query: str, k: int = 5) -> str:
         """
@@ -354,3 +366,128 @@ class LorebookManager:
         except Exception as e:
             self.SysLogger.Log(f"Failed to get stats: {str(e)}", 2)
             return {"initialized": True, "error": str(e)}
+
+    def get_all_entries(self) -> list:
+        """
+        Get all lorebook entries as serializable list
+
+        Returns:
+            list: List of dictionaries with id, text, and metadata
+        """
+        if self.db is None:
+            return []
+
+        try:
+            # Get all documents from ChromaDB
+            all_docs = self.db.get(include=["metadatas", "documents"])
+
+            entries = []
+            for i, doc_id in enumerate(all_docs["ids"]):
+                entries.append({
+                    "id": doc_id,
+                    "text": all_docs["documents"][i],
+                    "metadata": all_docs["metadatas"][i]
+                })
+
+            return entries
+        except Exception as e:
+            self.SysLogger.Log(f"Failed to get all entries: {str(e)}", 3)
+            return []
+
+    def save_entries_to_state(self, state_filepath: str) -> None:
+        """
+        Save all lorebook entries to state file
+
+        Args:
+            state_filepath (str): Path to the state file
+        """
+        if self.db is None:
+            return
+
+        try:
+            # Read existing state
+            state_data = {}
+            if os.path.exists(state_filepath):
+                with open(state_filepath, 'r', encoding='utf-8') as f:
+                    state_data = json.load(f)
+
+            # Get all entries
+            entries = self.get_all_entries()
+
+            # Update or create lorebook_entries in state
+            if "other_data" not in state_data:
+                state_data["other_data"] = {}
+
+            state_data["other_data"]["lorebook_entries"] = entries
+
+            # Save state back to file (atomic save)
+            temp_file = state_filepath + ".tmp"
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                json.dump(state_data, f, indent=2, ensure_ascii=False)
+
+            os.rename(temp_file, state_filepath)
+            self.SysLogger.Log(f"Saved {len(entries)} lorebook entries to state", 5)
+
+        except Exception as e:
+            self.SysLogger.Log(f"Failed to save entries to state: {str(e)}", 3)
+
+    def load_entries_from_state(self, state_filepath: str) -> None:
+        """
+        Load all lorebook entries from state file
+
+        Args:
+            state_filepath (str): Path to the state file
+        """
+        if self.db is None:
+            return
+
+        try:
+            # Read state file
+            if not os.path.exists(state_filepath):
+                self.SysLogger.Log("State file not found, no lorebook entries to load", 5)
+                return
+
+            with open(state_filepath, 'r', encoding='utf-8') as f:
+                state_data = json.load(f)
+
+            # Get lorebook entries
+            lorebook_entries = state_data.get("other_data", {}).get("lorebook_entries", [])
+
+            if not lorebook_entries:
+                self.SysLogger.Log("No lorebook entries found in state", 5)
+                return
+
+            # Clear existing entries and restore from state
+            self.clear()
+
+            loaded_count = 0
+            for entry in lorebook_entries:
+                self.add_entry(entry["text"], entry["metadata"])
+                loaded_count += 1
+
+            self.SysLogger.Log(f"Loaded {loaded_count} lorebook entries from state", 5)
+
+        except Exception as e:
+            self.SysLogger.Log(f"Failed to load entries from state: {str(e)}", 3)
+
+    @staticmethod
+    def save_lorebook_state(lorebook_instance, state_filepath: str) -> None:
+        """
+        Static method to save lorebook entries to state
+
+        Args:
+            lorebook_instance: LorebookManager instance
+            state_filepath (str): Path to the state file
+        """
+        lorebook_instance.save_entries_to_state(state_filepath)
+
+    @staticmethod
+    def load_lorebook_state(lorebook_instance, state_filepath: str) -> None:
+        """
+        Static method to load lorebook entries from state
+
+        Args:
+            lorebook_instance: LorebookManager instance
+            state_filepath (str): Path to the state file
+        """
+        lorebook_instance.load_entries_from_state(state_filepath)

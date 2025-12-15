@@ -91,7 +91,10 @@ class TestLorebookManager:
         assert len(call_args) == 1
         added_doc = call_args[0]
         assert added_doc.page_content == "Alice has blue eyes and is a brave knight."
-        assert added_doc.metadata == {"type": "character", "name": "Alice"}
+        # Check that original metadata is preserved (timestamp is added automatically)
+        assert added_doc.metadata["type"] == "character"
+        assert added_doc.metadata["name"] == "Alice"
+        assert "added_at" in added_doc.metadata
 
     def test_retrieve_character_information(self, mock_document):
         """Test retrieving character information"""
