@@ -171,9 +171,12 @@ class TestChapterOutlineToScenesIntegration:
             "test story outline"
         )
 
-        # Verify returns list of scene actions (no backward compatibility)
+        # Verify returns list of SceneOutline objects (Phase 1 change)
         assert isinstance(result, list)
         assert len(result) == 2
-        # Should contain both scene actions
-        assert "Rian berangkat" in result[0]
-        assert "Rian bertemu naga" in result[1]
+        # Should be SceneOutline objects, not strings
+        from Writer.Models import SceneOutline
+        assert all(isinstance(scene, SceneOutline) for scene in result)
+        # Verify scene actions are accessible via .action attribute
+        assert "Rian berangkat" in result[0].action
+        assert "Rian bertemu naga" in result[1].action

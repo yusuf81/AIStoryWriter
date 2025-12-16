@@ -757,6 +757,12 @@ Sebagai konteks, berikut adalah outline lengkap dari cerita tersebut.
 # OBJEKTIF #
 Buat adegan lengkap berdasarkan outline adegan yang diberikan, yang ditulis dengan nada yang sesuai untuk adegan tersebut.
 Pastikan untuk menyertakan dialog dan elemen penulisan lainnya sesuai kebutuhan.
+
+**Pedoman Penting:**
+- **Latar:** Perhatikan dengan seksama latar dan suasana yang ditentukan
+- **Karakter:** Pastikan semua karakter yang disebutkan hadir dan dikarakterisasi dengan tepat
+- **Tujuan:** Adegan harus memenuhi tujuannya yang dinyatakan dalam cerita
+- **Panjang:** Bidik jumlah kata target sambil mempertahankan kecepatan yang alami
 ###############
 
 # GAYA #
@@ -769,6 +775,8 @@ Harap sesuaikan respons Anda untuk ditulis untuk hiburan masyarakat umum sebagai
 
 # RESPONS #
 Pastikan respons Anda dipikirkan dengan matang dan kreatif. Luangkan waktu sejenak untuk memastikan respons tersebut mengikuti outline adegan yang disediakan, dan pastikan juga sesuai dengan outline cerita utama.
+
+Ketika metadata adegan disediakan (latar, karakter, tujuan, jumlah kata), gunakan untuk memandu penulisan Anda dan pastikan konsistensi dengan struktur cerita.
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 ###############
 """

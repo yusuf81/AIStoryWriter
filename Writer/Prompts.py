@@ -738,6 +738,12 @@ For context, here is the full outline of the story.
 # OBJECTIVE #
 Create a full scene based on the given scene outline, that is written in the appropriate tone for the scene.
 Make sure to include dialogue and other writing elements as needed.
+
+**Important Guidelines:**
+- **Setting:** Pay close attention to the specified setting and atmosphere
+- **Characters:** Ensure all mentioned characters are present and characterized appropriately
+- **Purpose:** The scene should fulfill its stated purpose in the story
+- **Length:** Aim for the target word count while maintaining natural pacing
 ###############
 
 # STYLE #
@@ -750,6 +756,8 @@ Please tailor your response to be written for the general public's entertainment
 
 # RESPONSE #
 Make sure your response is well thought out and creative. Take a moment to make sure it follows the provided scene outline, and ensure that it also fits into the main story outline.
+
+When scene metadata is provided (setting, characters, purpose, word count), use it to guide your writing and ensure consistency with the story structure.
 ###############
 """
 

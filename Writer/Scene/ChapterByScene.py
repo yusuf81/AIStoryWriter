@@ -1,6 +1,6 @@
 import Writer.Scene.ChapterOutlineToScenes
-import Writer.Scene.ScenesToJSON
 import Writer.Scene.SceneOutlineToScene
+from Writer.Scene.ScenesToJSON import _deduplicate_scenes
 
 
 def ChapterByScene(
@@ -20,40 +20,43 @@ def ChapterByScene(
         2,
     )
 
-    SceneBySceneOutline = Writer.Scene.ChapterOutlineToScenes.ChapterOutlineToScenes(
+    # Get full SceneOutline objects (not strings) - preserves metadata
+    SceneOutlineObjects = Writer.Scene.ChapterOutlineToScenes.ChapterOutlineToScenes(
         Interface,
         _Logger,
         _ChapterNum,
         _TotalChapters,
         _ThisChapterOutline,
         _Outline,
-        _BaseContext=_BaseContext,  # Pass chapter info
+        _BaseContext=_BaseContext,
     )
 
-    # Convert list to string for ScenesToJSON (expects string input)
-    SceneBySceneText = "\n\n---\n\n".join(SceneBySceneOutline)
+    # Deduplicate WITHOUT LLM call (reuse existing _deduplicate_scenes utility)
+    scene_actions = [scene.action for scene in SceneOutlineObjects]
+    deduplicated_actions = _deduplicate_scenes(scene_actions)
 
-    SceneJSONList = Writer.Scene.ScenesToJSON.ScenesToJSON(
-        Interface,
-        _Logger,
-        _ChapterNum,
-        _TotalChapters,
-        SceneBySceneText,  # Pass chapten context as string
-    )
+    # Filter to keep only non-duplicates (preserve order and metadata)
+    deduplicated_scenes = []
+    for scene in SceneOutlineObjects:
+        if scene.action in deduplicated_actions:
+            deduplicated_scenes.append(scene)
+            deduplicated_actions.remove(scene.action)  # Remove to handle exact duplicates
+
+    SceneOutlineList = deduplicated_scenes
 
     # Now we iterate through each scene one at a time and write it, then add it to this rough chapter, which is then returned for further editing
     RoughChapter: str = ""
-    TotalScenes = len(SceneJSONList)  # Get total scenes
-    for idx, SceneOutline in enumerate(SceneJSONList):  # Use enumerate for index
+    TotalScenes = len(SceneOutlineList)  # Get total scenes after deduplication
+    for idx, SceneOutlineObj in enumerate(SceneOutlineList):  # SceneOutlineObj is SceneOutline object
         SceneNum = idx + 1  # 1-based index for logging
         RoughChapter += Writer.Scene.SceneOutlineToScene.SceneOutlineToScene(
             Interface,
             _Logger,
             SceneNum,
             TotalScenes,
-            SceneOutline,
+            SceneOutlineObj,  # Pass SceneOutline object (not string) with all metadata
             _Outline,
-            _BaseContext,  # Pass scene info
+            _BaseContext,
         )
 
     _Logger.Log(

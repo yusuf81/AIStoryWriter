@@ -42,5 +42,5 @@ def ChapterOutlineToScenes(
         f"Finished Splitting Chapter {_ChapterNum}/{_TotalChapters} Into Scenes", 5
     )
 
-    # Return list of scene actions directly (no backward compatibility)
-    return [scene.action for scene in SceneList_obj.scenes]
+    # Return full SceneOutline objects (preserves all metadata)
+    return SceneList_obj.scenes
