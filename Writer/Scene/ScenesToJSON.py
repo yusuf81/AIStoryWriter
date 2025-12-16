@@ -1,12 +1,7 @@
-from pydantic import BaseModel
-from typing import List
-import Writer.Config
-# import Writer.Prompts  # Dihapus untuk pemuatan dinamis
+from typing import List, TYPE_CHECKING
 
-
-# Definisikan Skema Pydantic
-class SceneListSchema(BaseModel):
-    scenes: List[str]
+if TYPE_CHECKING:
+    from Writer.Models import SceneOutline
 
 
 def _deduplicate_scenes(scenes: List[str]) -> List[str]:
@@ -56,39 +51,50 @@ def _deduplicate_scenes(scenes: List[str]) -> List[str]:
     return unique_scenes
 
 
-def ScenesToJSON(
-    Interface, _Logger, _ChapterNum: int, _TotalChapters: int, _Scenes: str
-):  # Added chapter context
-    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
+def deduplicate_scene_objects(scenes: List['SceneOutline']) -> List['SceneOutline']:
+    """
+    Deduplicate SceneOutline objects by comparing action fields.
+    Convenience wrapper around _deduplicate_scenes for SceneOutline objects.
 
-    # This function converts the given scene list (from markdown format, to a specified JSON format).
+    Args:
+        scenes: List of SceneOutline objects
 
-    _Logger.Log(
-        f"Starting ChapterScenes->JSON for Chapter {_ChapterNum}/{_TotalChapters}", 2
-    )
-    MesssageHistory: list = []
-    MesssageHistory.append(
-        Interface.BuildSystemQuery(ActivePrompts.DEFAULT_SYSTEM_PROMPT)
-    )
-    MesssageHistory.append(
-        Interface.BuildUserQuery(ActivePrompts.SCENES_TO_JSON.format(_Scenes=_Scenes))
-    )
+    Returns:
+        List of SceneOutline objects with duplicates removed
 
-    # Use SafeGeneratePydantic with existing SceneListSchema (already a Pydantic model)
-    _, scene_obj, _ = Interface.SafeGeneratePydantic(
-        _Logger,
-        MesssageHistory,
-        Writer.Config.CHECKER_MODEL,
-        SceneListSchema
-    )
-    SceneList = scene_obj.scenes  # Access scenes via Pydantic object attribute
+    Examples:
+        >>> from Writer.Models import SceneOutline
+        >>> scenes = [
+        ...     SceneOutline(scene_number=1, setting="Cave", characters_present=["Hero"],
+        ...                  action="Hero finds treasure", purpose="Climax", estimated_word_count=200),
+        ...     SceneOutline(scene_number=2, setting="Cave", characters_present=["Hero"],
+        ...                  action="Hero finds treasure", purpose="Climax", estimated_word_count=200),
+        ...     SceneOutline(scene_number=3, setting="Exit", characters_present=["Hero"],
+        ...                  action="Hero exits", purpose="Resolution", estimated_word_count=150)
+        ... ]
+        >>> result = deduplicate_scene_objects(scenes)
+        >>> len(result)
+        2
+        >>> result[0].action
+        'Hero finds treasure'
+        >>> result[1].action
+        'Hero exits'
+    """
+    if not scenes:
+        return scenes
 
-    # Optimize: Remove duplicate scenes
-    SceneList = _deduplicate_scenes(SceneList)
+    # Extract actions for deduplication
+    scene_actions = [scene.action for scene in scenes]
+    deduplicated_actions = _deduplicate_scenes(scene_actions)
 
-    _Logger.Log(
-        f"Finished ChapterScenes->JSON for Chapter {_ChapterNum}/{_TotalChapters} ({len(SceneList)} Scenes Found after deduplication)",
-        5,
-    )
+    # Filter to keep only non-duplicates (preserve order and metadata)
+    result = []
+    actions_to_keep = set(deduplicated_actions)
+    seen_actions = set()
 
-    return SceneList
+    for scene in scenes:
+        if scene.action in actions_to_keep and scene.action not in seen_actions:
+            result.append(scene)
+            seen_actions.add(scene.action)
+
+    return result

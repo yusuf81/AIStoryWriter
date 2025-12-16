@@ -77,17 +77,14 @@ class TestSceneOutlineWrapper:
         with pytest.raises(ValidationError, match="At least one scene must be provided"):
             SceneOutlineList(scenes=[])
 
-    def test_scene_outline_list_follows_scenelistschema_pattern(self):
-        """RED: Verify SceneOutlineList follows SceneListSchema pattern"""
-        from Writer.Scene.ScenesToJSON import SceneListSchema
+    def test_scene_outline_list_structure(self):
+        """Verify SceneOutlineList model structure"""
         from Writer.Models import SceneOutline, SceneOutlineList
 
-        # Ensure both models have scenes field (follow same pattern)
-        assert 'scenes' in SceneListSchema.model_fields
+        # Ensure SceneOutlineList has scenes field
         assert 'scenes' in SceneOutlineList.model_fields
 
-        # SceneListSchema uses List[str], SceneOutlineList should use List[SceneOutline]
-        scene_list = SceneListSchema(scenes=["scene 1", "scene 2"])
+        # SceneOutlineList uses List[SceneOutline]
         scene_outline_list = SceneOutlineList(scenes=[
             SceneOutline(
                 scene_number=1,
@@ -99,9 +96,7 @@ class TestSceneOutlineWrapper:
             )
         ])
 
-        assert len(scene_list.scenes) == 2
         assert len(scene_outline_list.scenes) == 1
-        assert isinstance(scene_list.scenes[0], str)
         assert isinstance(scene_outline_list.scenes[0], SceneOutline)
 
 

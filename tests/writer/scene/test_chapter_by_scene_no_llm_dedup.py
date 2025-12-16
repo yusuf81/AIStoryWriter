@@ -17,8 +17,8 @@ sys.modules['termcolor'] = MagicMock()
 class TestChapterBySceneNoLLMDedup:
     """RED Tests: ChapterByScene should not call ScenesToJSON"""
 
-    def test_chapter_by_scene_does_not_call_scenes_to_json(self, mock_interface, mock_logger):
-        """Verify ChapterByScene does NOT call ScenesToJSON (no LLM call)"""
+    def test_chapter_by_scene_uses_deduplicate_utility(self, mock_interface, mock_logger):
+        """Verify ChapterByScene uses deduplicate_scene_objects utility (no LLM call)"""
         from Writer.Scene.ChapterByScene import ChapterByScene
 
         # Arrange: Create mock scenes that ChapterOutlineToScenes will return
@@ -48,9 +48,9 @@ class TestChapterBySceneNoLLMDedup:
         with patch('Writer.Scene.ChapterByScene.Writer.Scene.ChapterOutlineToScenes.ChapterOutlineToScenes') as mock_cots:
             mock_cots.return_value = mock_scenes
 
-            # Mock ScenesToJSON - should NOT be called
-            with patch('Writer.Scene.ChapterByScene.Writer.Scene.ScenesToJSON.ScenesToJSON') as mock_stj:
-                mock_stj.return_value = ["should", "not", "be", "called"]
+            # Mock deduplicate_scene_objects utility
+            with patch('Writer.Scene.ChapterByScene.deduplicate_scene_objects') as mock_dedup:
+                mock_dedup.return_value = mock_scenes  # Return same scenes (no duplicates)
 
                 # Mock SceneOutlineToScene to return text
                 with patch('Writer.Scene.ChapterByScene.Writer.Scene.SceneOutlineToScene.SceneOutlineToScene') as mock_sots:
@@ -67,8 +67,8 @@ class TestChapterBySceneNoLLMDedup:
                         "test base context"
                     )
 
-                    # Assert: ScenesToJSON should NOT have been called
-                    mock_stj.assert_not_called()
+                    # Assert: deduplicate_scene_objects utility was called
+                    mock_dedup.assert_called_once_with(mock_scenes)
 
                     # Verify ChapterOutlineToScenes WAS called
                     mock_cots.assert_called_once()

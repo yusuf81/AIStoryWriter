@@ -1,6 +1,6 @@
 import Writer.Scene.ChapterOutlineToScenes
 import Writer.Scene.SceneOutlineToScene
-from Writer.Scene.ScenesToJSON import _deduplicate_scenes
+from Writer.Scene.ScenesToJSON import deduplicate_scene_objects
 
 
 def ChapterByScene(
@@ -31,18 +31,8 @@ def ChapterByScene(
         _BaseContext=_BaseContext,
     )
 
-    # Deduplicate WITHOUT LLM call (reuse existing _deduplicate_scenes utility)
-    scene_actions = [scene.action for scene in SceneOutlineObjects]
-    deduplicated_actions = _deduplicate_scenes(scene_actions)
-
-    # Filter to keep only non-duplicates (preserve order and metadata)
-    deduplicated_scenes = []
-    for scene in SceneOutlineObjects:
-        if scene.action in deduplicated_actions:
-            deduplicated_scenes.append(scene)
-            deduplicated_actions.remove(scene.action)  # Remove to handle exact duplicates
-
-    SceneOutlineList = deduplicated_scenes
+    # Deduplicate WITHOUT LLM call using utility function
+    SceneOutlineList = deduplicate_scene_objects(SceneOutlineObjects)
 
     # Now we iterate through each scene one at a time and write it, then add it to this rough chapter, which is then returned for further editing
     RoughChapter: str = ""

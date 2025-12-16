@@ -109,8 +109,8 @@ class TestScenePipelineIntegration:
                 assert scene2_meta['characters'] == ["Rian", "Bang Jaga"]
                 assert scene2_meta['word_count'] == 250
 
-    def test_pipeline_removes_only_one_llm_call(self, mock_interface, mock_logger):
-        """Verify pipeline no longer calls ScenesToJSON (redundant LLM call removed)"""
+    def test_pipeline_uses_utility_for_deduplication(self, mock_interface, mock_logger):
+        """Verify pipeline uses deduplicate_scene_objects utility (no redundant LLM call)"""
         from Writer.Scene.ChapterByScene import ChapterByScene
 
         # Arrange: Mock scenes
@@ -128,22 +128,13 @@ class TestScenePipelineIntegration:
         mock_iface = mock_interface()
         mock_log = mock_logger()
 
-        # Track LLM calls
-        llm_call_count = {'count': 0}
-
-        def track_llm_call(*args, **kwargs):
-            llm_call_count['count'] += 1
-            mock_result = Mock()
-            mock_result.action = "Scene text"
-            return ([], mock_result, {})
-
         # Mock ChapterOutlineToScenes
         with patch('Writer.Scene.ChapterByScene.Writer.Scene.ChapterOutlineToScenes.ChapterOutlineToScenes') as mock_cots:
             mock_cots.return_value = mock_scenes
 
-            # Mock ScenesToJSON - should NOT be called
-            with patch('Writer.Scene.ChapterByScene.Writer.Scene.ScenesToJSON.ScenesToJSON') as mock_stj:
-                mock_stj.side_effect = Exception("ScenesToJSON should NOT be called!")
+            # Mock deduplicate_scene_objects utility
+            with patch('Writer.Scene.ChapterByScene.deduplicate_scene_objects') as mock_dedup:
+                mock_dedup.return_value = mock_scenes
 
                 # Mock SceneOutlineToScene
                 with patch('Writer.Scene.ChapterByScene.Writer.Scene.SceneOutlineToScene.SceneOutlineToScene') as mock_sots:
@@ -155,13 +146,13 @@ class TestScenePipelineIntegration:
                         "outline", "story", "context"
                     )
 
-                    # Assert: ScenesToJSON was NOT called (no redundant LLM call)
-                    mock_stj.assert_not_called()
+                    # Assert: deduplicate_scene_objects utility was called (no LLM)
+                    mock_dedup.assert_called_once_with(mock_scenes)
 
                     # Verify only necessary components were called
                     mock_cots.assert_called_once()  # ChapterOutlineToScenes called
                     mock_sots.assert_called_once()  # SceneOutlineToScene called
-                    # ScenesToJSON NOT called (redundant LLM call eliminated!)
+                    # No ScenesToJSON LLM call - utility handles deduplication!
 
     def test_pipeline_handles_deduplication_without_llm(self, mock_interface, mock_logger):
         """Verify pipeline deduplicates scenes without making LLM call"""
