@@ -50,8 +50,8 @@ class StateManager:
                     cls.DATA_KEY: value.model_dump()
                 }
             else:
-                # Regular data - store as-is
-                other_data[key] = value
+                # Regular data - serialize to handle nested Pydantic objects
+                other_data[key] = serialize_for_json(value)
 
         # Combine and save
         combined = {
