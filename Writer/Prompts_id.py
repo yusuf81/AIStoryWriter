@@ -458,6 +458,12 @@ INSTRUKSI KRITIS: Konteks bab sebelumnya di bawah ini HANYA untuk kontinuitas.
 - MULAI dari titik di mana bab sebelumnya berakhir, jangan ulangi
 - Jika pertemuan/interaksi sudah terjadi, lanjutkan dari SETELAH kejadian tersebut
 
+ATURAN KONSISTENSI INTERNAL: Dalam bab yang Anda tulis ini:
+- JANGAN mengulang deskripsi scene yang sama beberapa kali
+- JANGAN memperkenalkan karakter yang sama dua kali dalam bab yang sama
+- JANGAN mendeskripsikan aksi atau kejadian yang sama dari berbagai sudut kecuali disengaja untuk efek
+- Jaga narasi Anda tetap BERGERAK MAJU dalam bab ini
+
 Berikut adalah outline saya untuk bab ini:
 <CHAPTER_OUTLINE>
 {ThisChapterOutline}
@@ -489,6 +495,12 @@ ATURAN ANTI-DUPLIKASI: Ketika Anda melihat konteks bab sebelumnya:
 - JANGAN menulis ulang pengenalan karakter yang sudah dilakukan
 - JANGAN mengulang interaksi atau percakapan yang sama
 - KEMBANGKAN apa yang sudah ada, jangan buat ulang
+
+ATURAN KONSISTENSI INTERNAL: Dalam bab saat ini:
+- Kembangkan karakter secara progresif - jangan reset perkembangan mereka di tengah bab
+- Jika karakter belajar atau menyadari sesuatu, mereka harus mempertahankan pengetahuan itu
+- Alur emosional harus mengalir secara alami tanpa monolog internal yang repetitif
+- Interaksi karakter harus membangun dari momen-momen sebelumnya di bab INI
 
 Sebagai referensi Anda, berikut adalah outline saya untuk bab ini:
 <CHAPTER_OUTLINE>
@@ -530,6 +542,12 @@ ATURAN ANTI-DUPLIKASI: Ketika memperbaiki dialog:
 - JANGAN mengulang dialog dari konteks bab sebelumnya
 - JANGAN membuat ulang percakapan yang sudah ditulis
 - KEMBANGKAN dialog yang ada, jangan duplikasi
+
+ATURAN KONSISTENSI INTERNAL: Dalam dialog bab ini:
+- Setiap percakapan harus terjadi SEKALI - jangan ulangi pertukaran yang sama
+- Karakter tidak boleh mengajukan pertanyaan yang sama beberapa kali
+- Informasi yang terungkap dalam dialog tidak boleh diulang lagi di bab ini
+- Dialog harus mengalir secara alami tanpa percakapan yang berputar-putar
 
 {FormattedLastChapterSummary}
 

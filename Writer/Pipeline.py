@@ -146,8 +146,20 @@ def _get_current_context_for_chapter_gen_pipeline_version(SysLogger, Config, Sta
 
             if previous_chapter_text:
                 previous_chapter_words = previous_chapter_text.split()
-                # Ensure CHAPTER_MEMORY_WORDS is positive, else take all words.
-                context_words_count = Config.CHAPTER_MEMORY_WORDS if Config.CHAPTER_MEMORY_WORDS > 0 else len(previous_chapter_words)
+
+                # ADAPTIVE MEMORY LOGIC
+                # For short stories (≤3 chapters), use min(100, CHAPTER_MEMORY_WORDS)
+                # For longer stories (>3 chapters), use full CHAPTER_MEMORY_WORDS
+                total_chapters = current_state.get("total_chapters", chapter_num)
+                if total_chapters <= 3:
+                    adaptive_memory_words = min(100, Config.CHAPTER_MEMORY_WORDS)
+                    SysLogger.Log(f"Pipeline: Using adaptive memory {adaptive_memory_words} words for short story ({total_chapters} chapters).", 6)
+                else:
+                    adaptive_memory_words = Config.CHAPTER_MEMORY_WORDS
+                    SysLogger.Log(f"Pipeline: Using full memory {adaptive_memory_words} words for long story ({total_chapters} chapters).", 6)
+
+                # Ensure adaptive_memory_words is positive, else take all words
+                context_words_count = adaptive_memory_words if adaptive_memory_words > 0 else len(previous_chapter_words)
                 previous_chapter_segment = " ".join(previous_chapter_words[-context_words_count:])
 
                 formatted_prev_chapter_text = ActivePrompts.PREVIOUS_CHAPTER_CONTEXT_FORMAT.format(

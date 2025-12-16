@@ -445,6 +445,12 @@ CRITICAL INSTRUCTION: The previous chapter context below is provided for continu
 - START where the previous chapter ended, don't repeat it
 - If a meeting/interaction already happened, continue from AFTER that event
 
+INTERNAL CONSISTENCY RULE: Within this chapter you are writing:
+- DO NOT repeat the same scene descriptions multiple times
+- DO NOT re-introduce the same character twice in the same chapter
+- DO NOT describe the same action or event from multiple angles unless intentional for effect
+- Keep your narrative FORWARD-MOVING within this chapter
+
 Here is my outline for this chapter:
 <CHAPTER_OUTLINE>
 {ThisChapterOutline}
@@ -475,6 +481,12 @@ ANTI-DUPLICATION RULE: When you see previous chapter context:
 - DO NOT rewrite character introductions already done
 - DO NOT repeat the same interactions or conversations
 - BUILD UPON what was established, don't re-establish it
+
+INTERNAL CONSISTENCY RULE: Within the current chapter:
+- Develop characters progressively - don't reset their development mid-chapter
+- If a character learns or realizes something, they should retain that knowledge
+- Emotional arcs should flow naturally without repetitive internal monologues
+- Character interactions should build upon earlier moments in THIS chapter
 
 For your reference, here is my outline for this chapter:
 <CHAPTER_OUTLINE>
@@ -515,6 +527,12 @@ ANTI-DUPLICATION RULE: When refining dialogue:
 - DO NOT repeat dialogue from the previous chapter context
 - DO NOT recreate conversations already written
 - EXPAND existing dialogue, don't duplicate it
+
+INTERNAL CONSISTENCY RULE: Within this chapter's dialogue:
+- Each conversation should happen ONCE - don't repeat the same exchange
+- Characters should not ask the same question multiple times
+- Information revealed in dialogue should not be repeated later in the chapter
+- Dialogue should flow naturally without circular conversations
 
 {FormattedLastChapterSummary}
 

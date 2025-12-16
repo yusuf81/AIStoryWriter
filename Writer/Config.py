@@ -100,7 +100,7 @@ MAX_PYDANTIC_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk Pydantic valid
 
 # Added based on test_pipeline.py AttributeErrors
 CHAPTER_HEADER_FORMAT = "### Chapter {chapter_num}: {chapter_title}"
-CHAPTER_MEMORY_WORDS = 250
+CHAPTER_MEMORY_WORDS = 250  # Adaptive: Short stories (≤3 chapters) use min(100, this value), longer stories use full value
 GENERATE_CHAPTER_TITLES = True
 TITLE_MAX_TOKENS = 50
 MAX_WORDS_FOR_CHAPTER_TITLE_PROMPT = 500  # Maximum words of chapter content to use for title generation
