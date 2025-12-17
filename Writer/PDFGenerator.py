@@ -38,6 +38,46 @@ class NumberedCanvas(canvas.Canvas):
         )
 
 
+def _create_readable_document(output_path):
+    """
+    Create SimpleDocTemplate with improved margins for readability.
+
+    Args:
+        output_path: Path for the PDF output file
+
+    Returns:
+        SimpleDocTemplate: Configured document with readable margins
+    """
+    return SimpleDocTemplate(
+        output_path,
+        pagesize=letter,
+        rightMargin=Writer.Config.PDF_MARGIN_RIGHT,
+        leftMargin=Writer.Config.PDF_MARGIN_LEFT,
+        topMargin=Writer.Config.PDF_MARGIN_TOP,
+        bottomMargin=Writer.Config.PDF_MARGIN_BOTTOM
+    )
+
+
+def _format_chapter_title(chapter_num, chapter_title):
+    """
+    Format chapter title with proper numbering and title display.
+
+    Args:
+        chapter_num: Chapter number as string
+        chapter_title: Chapter title text (may be empty or include "Chapter X")
+
+    Returns:
+        str: Formatted chapter title like "Chapter 1: The Adventure Begins"
+    """
+    formatted_title = f"Chapter {chapter_num}"
+
+    # Only add colon and title if title exists and doesn't already contain "Chapter X"
+    if chapter_title and not chapter_title.startswith(f"Chapter {chapter_num}"):
+        formatted_title = f"Chapter {chapter_num}: {chapter_title}"
+
+    return formatted_title
+
+
 def extract_story_content(markdown_content):
     """
     Extract only story content from markdown, removing YAML front matter and metadata sections.
@@ -111,15 +151,8 @@ def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
         # Create output directory if needed
         os.makedirs(os.path.dirname(OutputPath), exist_ok=True)
 
-        # Create PDF document
-        doc = SimpleDocTemplate(
-            OutputPath,
-            pagesize=letter,
-            rightMargin=72,
-            leftMargin=72,
-            topMargin=72,
-            bottomMargin=72
-        )
+        # Create PDF document with improved margins for readability
+        doc = _create_readable_document(OutputPath)
 
         # Get centralized PDF styles
         pdf_styles = get_pdf_styles()
@@ -163,11 +196,12 @@ def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
                 chapter_num += 1
                 ch_num, ch_title = processor.process_chapter_title(line)
 
-                if chapter_num > 1:
-                    story.append(PageBreak())  # New page for each chapter
+                # Always start chapters on new pages (including first chapter)
+                story.append(PageBreak())  # New page for each chapter
 
-                # Add chapter header
-                story.append(Paragraph(ch_title, chapter_style))
+                # Add chapter header with proper formatting
+                formatted_title = _format_chapter_title(ch_num, ch_title)
+                story.append(Paragraph(formatted_title, chapter_style))
                 current_chapter = []
             else:
                 if line.strip():

@@ -1,5 +1,6 @@
 #ollamasemua="ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
-ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
+#ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
+ollamasemua="csalab/sealion3.5:8b-F16"
 INITIAL_OUTLINE_WRITER_MODEL = (
     #"ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
@@ -126,6 +127,15 @@ PDF_FONT_FAMILY = "Georgia"  # Font family for PDF text
 PDF_FONT_SIZE = 12  # Font size for regular text
 PDF_TITLE_SIZE = 24  # Font size for title
 PDF_CHAPTER_SIZE = 18  # Font size for chapter headings
+
+# PDF readability improvements configuration
+PDF_LINE_HEIGHT = 1.15  # Line height ratio for comfortable reading
+PDF_PARAGRAPH_FIRST_LINE_INDENT = 12  # First line indent in points
+PDF_PARAGRAPH_SPACING = 6  # Space between paragraphs in points
+PDF_MARGIN_LEFT = 90  # Left margin in points (was 72, too cramped)
+PDF_MARGIN_RIGHT = 90  # Right margin in points (was 72, too cramped)
+PDF_MARGIN_TOP = 75  # Top margin in points (optimized for readability)
+PDF_MARGIN_BOTTOM = 75  # Bottom margin in points (optimized for readability)
 
 # LangChain Enhancement Configuration
 USE_LOREBOOK = True  # Enable/disable lorebook system
