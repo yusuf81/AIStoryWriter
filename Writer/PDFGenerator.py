@@ -204,8 +204,8 @@ def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
                 story.append(Paragraph(formatted_title, chapter_style))
                 current_chapter = []
             else:
-                if line.strip():
-                    current_chapter.append(line)
+                # Add ALL lines including empty ones for paragraph breaks
+                current_chapter.append(line)
 
         # Add final chapter content
         if current_chapter:
