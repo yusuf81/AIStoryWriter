@@ -53,12 +53,12 @@ SEED = 12  # Note this value is overridden by the argparser
 TRANSLATE_LANGUAGE = ""  # If the user wants to translate, this'll be changed from empty to a language e.g 'French' or 'Russian'
 TRANSLATE_PROMPT_LANGUAGE = ""  # If the user wants to translate their prompt, this'll be changed from empty to a language e.g 'French' or 'Russian'
 
-OUTLINE_QUALITY = 87  # Note this value is overridden by the argparser
-OUTLINE_MIN_REVISIONS = 0  # Note this value is overridden by the argparser
+OUTLINE_QUALITY = 92  # Note this value is overridden by the argparser
+OUTLINE_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
 OUTLINE_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
 CHAPTER_NO_REVISIONS = False  # Note this value is overridden by the argparser # disables all revision checks for the chapter, overriding any other chapter quality/revision settings
-CHAPTER_QUALITY = 85  # Note this value is overridden by the argparser
-CHAPTER_MIN_REVISIONS = 0  # Note this value is overridden by the argparser
+CHAPTER_QUALITY = 90  # Note this value is overridden by the argparser
+CHAPTER_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
 CHAPTER_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
 
 # Minimum Word Counts for chapter generation calls
@@ -71,11 +71,11 @@ MIN_WORDS_CHAPTER_SEGMENT_EXTRACT = (
     120  # Minimum words for extracting chapter outline segment
 )
 MIN_WORDS_CHAPTER_SUMMARY = 100  # Minimum words for summarizing previous chapter
-MIN_WORDS_CHAPTER_DRAFT = 100  # Minimum words for chapter draft stages (1, 2, 3)
+MIN_WORDS_CHAPTER_DRAFT = 300  # Minimum words for chapter draft stages (1, 2, 3)
 MIN_WORDS_REVISE_CHAPTER = 100  # Minimum words for chapter revision
 MIN_WORDS_OUTLINE_FEEDBACK = 70  # Minimum words for outline feedback/critique
 MIN_WORDS_SCENE_OUTLINE = 100  # Minimum words for scene-by-scene outline generation
-MIN_WORDS_SCENE_WRITE = 100  # Minimum words for writing a scene from its outline
+MIN_WORDS_SCENE_WRITE = 150  # Minimum words for writing a scene from its outline
 MIN_WORDS_SCRUB_CHAPTER = 100  # Minimum words for scrubbing a chapter
 MIN_WORDS_EDIT_NOVEL = 150  # Minimum words for final novel edit pass per chapter
 

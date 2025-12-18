@@ -350,6 +350,46 @@ class Interface:
                 else:
                     raise Exception(f"Failed to generate valid response after {max_attempts} attempts. Last error: {e}")
 
+    def _build_constraint_explanations(self, properties):
+        """
+        Build human-readable explanations of Pydantic validation constraints.
+
+        This helps LLMs understand validation rules upfront, reducing validation failures.
+        """
+        import Writer.Config as Config
+
+        explanations = []
+
+        for field_name, field_info in properties.items():
+            # Reasoning field max_length constraint
+            if field_name == 'reasoning' and 'maxLength' in field_info:
+                max_len = field_info['maxLength']
+                explanations.append(
+                    f"'{field_name}': Maximum {max_len} characters. "
+                    "Keep your reasoning concise and focused - verbose explanations "
+                    "will be rejected. Aim for clarity over length."
+                )
+
+            # Word count tolerance
+            if field_name == 'word_count':
+                tolerance = getattr(Config, 'PYDANTIC_WORD_COUNT_TOLERANCE', 100)
+                explanations.append(
+                    f"'{field_name}': Must match actual text word count within ±{tolerance} words. "
+                    "Be accurate but don't obsess over exact counts."
+                )
+
+            # Character name minimum length
+            if 'character' in field_name.lower() and 'minLength' in field_info:
+                min_len = field_info['minLength']
+                explanations.append(
+                    f"'{field_name}': Each name must be at least {min_len} characters. "
+                    "Avoid single-letter placeholders."
+                )
+
+        if explanations:
+            return "IMPORTANT CONSTRAINTS:\n" + "\n".join(f"- {exp}" for exp in explanations) + "\n\n"
+        return ""
+
     def _build_format_instruction(self, schema):
         """Build clear format instruction without showing full schema to prevent echoing"""
         properties = schema.get('properties', {})
@@ -357,6 +397,13 @@ class Interface:
 
         instruction = "\n\n=== JSON SCHEMA (REFERENCE ONLY) ===\n"
         instruction += "This defines the structure. DO NOT repeat the schema in your response!\n\n"
+
+        # Add constraint explanations to help LLMs understand validation rules
+        constraint_explanations = self._build_constraint_explanations(properties)
+        if constraint_explanations:
+            instruction += "=== VALIDATION CONSTRAINTS (IMPORTANT) ===\n"
+            instruction += constraint_explanations
+
         instruction += "=== YOUR RESPONSE (JSON ONLY) ===\n"
         instruction += "Provide ONLY the JSON data below. Do NOT include explanations or the schema.\n\n"
         instruction += "Required fields:\n"

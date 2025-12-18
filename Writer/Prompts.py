@@ -275,11 +275,35 @@ Please critique the following outline - make sure to provide constructive critic
 {_Outline}
 </OUTLINE>
 
-As you revise, consider the following criteria:
-    - Pacing: Is the story rushing over certain plot points and excessively focusing on others?
-    - Details: How are things described? Is it repetitive? Is the word choice appropriate for the scene? Are we describing things too much or too little?
-    - Flow: Does each chapter flow into the next? Does the plot make logical sense to the reader? Does it have a specific narrative structure at play? Is the narrative structure consistent throughout the story?
-    - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
+QUALITY STANDARDS (Minimum threshold: 92/100):
+
+1. STRUCTURAL INTEGRITY:
+   - Is the story arc complete (setup, rising action, climax, resolution)?
+   - Are there any plot holes or logical inconsistencies?
+   - Does each chapter serve a clear purpose in advancing the plot?
+
+2. CHARACTER DEPTH:
+   - Are characters fully defined with clear motivations?
+   - Do character arcs show growth and transformation?
+   - Are character relationships and dynamics well-established?
+
+3. NARRATIVE COHESION:
+   - Does each chapter flow logically to the next?
+   - Are transitions smooth and motivated by story logic?
+   - Is the timeline consistent and clear?
+
+4. GENRE ALIGNMENT:
+   - Does the outline meet genre expectations?
+   - Are genre-appropriate elements present?
+   - Is the tone consistent with the genre?
+
+5. PACING & DETAIL BALANCE:
+   - Are critical plot points given sufficient space?
+   - Is there balance between action, reflection, and dialogue?
+   - Are any chapters too rushed or too slow?
+
+CRITICAL: Give specific, actionable feedback with chapter numbers.
+A score below 92 indicates major structural issues requiring significant revision.
 
 Also, please check if the outline is written chapter-by-chapter, not in sections spanning multiple chapters or subsections.
 It should be very clear which chapter is which, and the content in each chapter.
@@ -287,7 +311,7 @@ It should be very clear which chapter is which, and the content in each chapter.
 Please provide your critique in the following structured format:
 - Overall feedback: Detailed analysis of strengths and areas for improvement
 - Specific suggestions: Actionable recommendations for improving the outline
-- Quality rating: Score from 0-10
+- Quality rating: Score from 0-100 (minimum 92 for acceptance)
 
 Please provide your critique in the following JSON format:
 {{
@@ -465,6 +489,9 @@ As you write your work, please use the following suggestions to help you write c
     - Flow: Does each chapter flow into the next? Does the plot make logical sense to the reader? Does it have a specific narrative structure at play? Is the narrative structure consistent throughout the story?
     - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
 
+WORD COUNT TARGET: Generate 600-800 words for this chapter.
+This is a guideline - quality and completeness are more important than hitting an exact number.
+
 {Feedback}{PydanticFormatInstructions}"""
 
 CHAPTER_GENERATION_STAGE2 = """
@@ -511,6 +538,9 @@ Make sure that your chapter flows into the next and from the previous (if applic
 
 Remember, have fun, be creative, and improve the character development of chapter {_ChapterNum} (make sure you only write this one)!
 
+WORD COUNT GUIDANCE: Expand character development to add 200-300 words.
+Focus on depth and authenticity rather than padding.
+
 {Feedback}"""
 
 CHAPTER_GENERATION_STAGE3 = """
@@ -555,6 +585,9 @@ Make sure that your chapter flows into the next and from the previous (if applic
 Also, please remove any headings from the outline that may still be present in the chapter.
 
 Remember, have fun, be creative, and add dialogue to chapter {_ChapterNum} (make sure you only write this one)!
+
+WORD COUNT GUIDANCE: Add meaningful dialogue to expand by 150-250 words.
+Prioritize natural conversation over word count.
 
 {Feedback}{PydanticFormatInstructions}"""
 
@@ -647,6 +680,12 @@ Please tailor your response to another creative writer.
 
 # RESPONSE #
 Be detailed and well-formatted in your response, yet ensure you have a well-thought out and creative output.
+
+IMPORTANT: When estimating word counts for each scene:
+- Simple dialogue scenes: 150-250 words
+- Action/description scenes: 200-350 words
+- Complex emotional scenes: 300-500 words
+Be realistic - scenes should sum to 600-1000 words total.
 ###############
 
 # JSON OUTPUT FORMAT #
@@ -744,6 +783,9 @@ Make sure to include dialogue and other writing elements as needed.
 - **Characters:** Ensure all mentioned characters are present and characterized appropriately
 - **Purpose:** The scene should fulfill its stated purpose in the story
 - **Length:** Aim for the target word count while maintaining natural pacing
+
+WORD COUNT TARGET: Write approximately the estimated word count for this scene based on its complexity and purpose.
+The scene outline should indicate the target - prioritize scene completeness over exact word count.
 ###############
 
 # STYLE #
@@ -826,22 +868,45 @@ CRITIC_CHAPTER_PROMPT = """<CHAPTER>
 {_Outline}
 </OUTLINE>
 
-Please give feedback on the above chapter based on the following criteria:
-    - Pacing: Is the story rushing over certain plot points and excessively focusing on others?
-    - Details: How are things described? Is it repetitive? Is the word choice appropriate for the scene? Are we describing things too much or too little?
-    - Flow: Does each chapter flow into the next? Does the plot make logical sense to the reader? Does it have a specific narrative structure at play? Is the narrative structure consistent throughout the story?
-    - Genre: What is the genre? What language is appropriate for that genre? Do the scenes support the genre?
+QUALITY STANDARDS (Minimum threshold: 90/100):
 
-    - Characters: Who are the characters in this chapter? What do they mean to each other? What is the situation between them? Is it a conflict? Is there tension? Is there a reason that the characters have been brought together?
-    - Development:  What are the goals of each character, and do they meet those goals? Do the characters change and exhibit growth? Do the goals of each character change over the story?
+1. NARRATIVE PROGRESSION: Advances plot meaningfully
+   - Does the chapter move the story forward?
+   - Are plot points resolved or advanced?
+   - Is there clear cause-and-effect between scenes?
 
-    - Dialogue: Does the dialogue make sense? Is it appropriate given the situation? Does the pacing make sense for the scene E.g: (Is it fast-paced because they're running, or slow-paced because they're having a romantic dinner)?
-    - Disruptions: If the flow of dialogue is disrupted, what is the reason for that disruption? Is it a sense of urgency? What is causing the disruption? How does it affect the dialogue moving forwards?
+2. CHARACTER AUTHENTICITY: Consistent traits, natural dialogue
+   - Do characters act according to their established personalities?
+   - Is dialogue natural and character-appropriate?
+   - Are character motivations clear and believable?
+
+3. DESCRIPTIVE BALANCE: Purposeful sensory detail
+   - Is description vivid but not excessive?
+   - Are settings and actions clearly visualized?
+   - Is word choice appropriate and varied?
+
+4. INTERNAL CONSISTENCY: No repetitions or contradictions
+   - Are there any repeated scenes or descriptions?
+   - Is the timeline consistent within the chapter?
+   - Do facts align with earlier chapters?
+
+5. GENRE MASTERY: Delivers on genre expectations
+   - Does the chapter meet genre conventions?
+   - Is the tone appropriate for the genre?
+   - Are genre-specific elements handled well?
+
+SCORING GUIDE:
+- 90-100: Excellent, minor polish needed
+- 80-89: Good but requires targeted improvements
+- 70-79: Significant issues, major revision needed
+- Below 70: Fundamental problems, complete rewrite recommended
+
+Provide specific line-by-line or scene-by-scene feedback with examples from the text.
 
 Please provide your critique in the following structured format:
 - Overall feedback: Detailed analysis of strengths and areas for improvement
-- Specific suggestions: Actionable recommendations for improving the chapter
-- Quality rating: Score from 0-10 (0=poor, 10=excellent)"""
+- Specific suggestions: Actionable recommendations for improving the chapter (cite specific passages)
+- Quality rating: Score from 0-100 (minimum 90 for acceptance)"""
 
 CHAPTER_REVISION = """
 Please revise the following chapter:

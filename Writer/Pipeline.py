@@ -76,6 +76,51 @@ def _build_mega_outline_pipeline_version(SysLogger, Config, ActivePrompts, curre
     SysLogger.Log(f"Pipeline: Mega Outline Length: {len(MegaOutline)} chars.", 6)
     return MegaOutline.strip()
 
+
+def _calculate_total_chapter_outline_words(chapter_outline_dict, Statistics):
+    """
+    Calculate total word count for a chapter outline including ALL fields.
+
+    Counts words from:
+    - outline_summary (stored as "text" field)
+    - all scenes in the scenes array (if present)
+
+    This fixes the bug where only outline_summary was counted,
+    ignoring the richer scenes array content.
+
+    Args:
+        chapter_outline_dict: Dict with 'text', 'scenes' (optional), etc.
+        Statistics: Statistics module for word counting
+
+    Returns:
+        int: Total word count across all fields
+    """
+    total_words = 0
+
+    # Count outline_summary text
+    if "text" in chapter_outline_dict:
+        total_words += Statistics.GetWordCount(chapter_outline_dict["text"])
+
+    # Count all scenes if present
+    if "scenes" in chapter_outline_dict and chapter_outline_dict["scenes"]:
+        for scene in chapter_outline_dict["scenes"]:
+            if isinstance(scene, str):
+                # Simple string scene
+                total_words += Statistics.GetWordCount(scene)
+            elif isinstance(scene, dict):
+                # Structured scene - count all text fields
+                for key, value in scene.items():
+                    if isinstance(value, str):
+                        total_words += Statistics.GetWordCount(value)
+                    elif isinstance(value, list):
+                        # Handle lists of strings (e.g., characters_present)
+                        for item in value:
+                            if isinstance(item, str):
+                                total_words += Statistics.GetWordCount(item)
+
+    return total_words
+
+
 # Helper: Gets the specific outline to be used for generating a given chapter.
 def _get_outline_for_chapter_pipeline_version(SysLogger, Config, Statistics, ActivePrompts, current_state, chapter_index):
     SysLogger.Log(f"Pipeline: Determining outline for Chapter {chapter_index}.", 6)
@@ -86,13 +131,15 @@ def _get_outline_for_chapter_pipeline_version(SysLogger, Config, Statistics, Act
         potential_expanded_outline = ExpandedChapterOutlines[chapter_index - 1]
         min_len_threshold = Config.MIN_WORDS_PER_CHAPTER_OUTLINE
 
-        # Extract text from dict format (Option B)
+        # Calculate word count including ALL content (summary + scenes)
         if isinstance(potential_expanded_outline, dict):
-            text_for_word_count = potential_expanded_outline["text"]
+            # NEW: Count ALL content, not just summary
+            word_count = _calculate_total_chapter_outline_words(
+                potential_expanded_outline, Statistics
+            )
         else:
-            text_for_word_count = potential_expanded_outline
-
-        word_count = Statistics.GetWordCount(text_for_word_count)
+            # Fallback for old string format
+            word_count = Statistics.GetWordCount(potential_expanded_outline)
 
         if word_count >= min_len_threshold:
             SysLogger.Log(f"Pipeline: Using specific expanded outline for Chapter {chapter_index} (Words: {word_count}).", 6)
@@ -451,16 +498,27 @@ class StoryPipeline:
                 self.SysLogger.Log(f"PIPELINE _write_chapters_stage FATAL: Generation context for Chapter {current_chap_num} is empty.", 7)
                 raise ValueError(f"Empty generation context for Chapter {current_chap_num}.")
 
+            # Get expanded chapter outline for scene pipeline (if available)
+            expanded_chapter_outline_dict = None
+            expanded_chapter_outlines = current_state.get("expanded_chapter_outlines", [])
+            if self.Config.EXPAND_OUTLINE and self.Config.SCENE_GENERATION_PIPELINE and expanded_chapter_outlines:
+                if current_chap_num > 0 and len(expanded_chapter_outlines) >= current_chap_num:
+                    potential_expanded = expanded_chapter_outlines[current_chap_num - 1]
+                    if isinstance(potential_expanded, dict):
+                        expanded_chapter_outline_dict = potential_expanded
+                        self.SysLogger.Log(f"Passing expanded outline dict for Chapter {current_chap_num} to scene pipeline", 5)
+
             # Generate chapter content using ChapterGenerator.GenerateChapter
             raw_chapter_content = self.ChapterGenerator.GenerateChapter(
                 self.Interface,              # Interface
-                self.SysLogger,             # _Logger  
+                self.SysLogger,             # _Logger
                 current_chap_num,           # _ChapterNum
                 total_num_chapters_overall, # _TotalChapters
                 current_gen_context,        # _Outline (full context string)
                 completed_chapters_data,    # _Chapters (list of prior chapters)
                 "",                         # _BaseContext (empty for now)
-                current_gen_context         # _FullOutlineForSceneGen (same as outline)
+                current_gen_context,        # _FullOutlineForSceneGen (same as outline)
+                expanded_chapter_outline_dict # _ExpandedChapterOutline (dict with scenes)
             )
 
             # Get specific outline for title generation (can be different from full gen context)

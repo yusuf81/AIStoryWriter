@@ -281,11 +281,35 @@ Harap kritik outline berikut - pastikan untuk memberikan kritik konstruktif tent
 {_Outline}
 </OUTLINE>
 
-Saat Anda merevisi, pertimbangkan kriteria berikut:
-    - Laju: Apakah cerita terlalu cepat melewati poin plot tertentu dan terlalu fokus pada yang lain?
-    - Detail: Bagaimana hal-hal dijelaskan? Apakah berulang? Apakah pilihan kata sesuai untuk adegan tersebut? Apakah kita menjelaskan hal-hal terlalu banyak atau terlalu sedikit?
-    - Alur: Apakah setiap bab mengalir ke bab berikutnya? Apakah plot masuk akal secara logis bagi pembaca? Apakah memiliki struktur naratif tertentu yang dimainkan? Apakah struktur naratif konsisten di seluruh cerita?
-    - Genre: Apa genrenya? Bahasa apa yang sesuai untuk genre itu? Apakah adegan mendukung genre tersebut?
+STANDAR KUALITAS (Ambang batas minimum: 92/100):
+
+1. INTEGRITAS STRUKTURAL:
+   - Apakah alur cerita lengkap (setup, rising action, klimaks, resolusi)?
+   - Apakah ada plot hole atau inkonsistensi logis?
+   - Apakah setiap bab memiliki tujuan yang jelas dalam memajukan plot?
+
+2. KEDALAMAN KARAKTER:
+   - Apakah karakter didefinisikan sepenuhnya dengan motivasi yang jelas?
+   - Apakah karakter arc menunjukkan pertumbuhan dan transformasi?
+   - Apakah hubungan dan dinamika karakter terbangun dengan baik?
+
+3. KOHESI NARATIF:
+   - Apakah setiap bab mengalir secara logis ke bab berikutnya?
+   - Apakah transisi halus dan dimotivasi oleh logika cerita?
+   - Apakah timeline konsisten dan jelas?
+
+4. KESELARASAN GENRE:
+   - Apakah outline memenuhi ekspektasi genre?
+   - Apakah elemen yang sesuai dengan genre ada?
+   - Apakah nada konsisten dengan genre?
+
+5. KESEIMBANGAN LAJU & DETAIL:
+   - Apakah poin plot kritis diberi ruang yang cukup?
+   - Apakah ada keseimbangan antara aksi, refleksi, dan dialog?
+   - Apakah ada bab yang terlalu terburu-buru atau terlalu lambat?
+
+KRITIS: Berikan umpan balik spesifik dan dapat ditindaklanjuti dengan nomor bab.
+Skor di bawah 92 menunjukkan masalah struktural besar yang memerlukan revisi signifikan.
 
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 Juga, harap periksa apakah outline ditulis bab demi bab, bukan dalam bagian yang mencakup beberapa bab atau subbagian.
@@ -294,7 +318,7 @@ Harus sangat jelas bab mana yang mana, dan konten di setiap bab.
 Harap berikan kritik Anda dalam format terstruktur berikut:
 - Umpan balik keseluruhan: Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan
 - Saran spesifik: Rekomendasi yang dapat ditindaklanjuti untuk meningkatkan outline
-- Peringkat kualitas: Skor dari 0-10
+- Peringkat kualitas: Skor dari 0-100 (minimum 92 untuk diterima)
 
 Harap berikan kritik Anda dalam format JSON:
 {{
@@ -478,6 +502,9 @@ Saat Anda menulis karya Anda, harap gunakan saran berikut untuk membantu Anda me
     - Alur: Apakah setiap bab mengalir ke bab berikutnya? Apakah plot masuk akal secara logis bagi pembaca? Apakah memiliki struktur naratif tertentu yang dimainkan? Apakah struktur naratif konsisten di seluruh cerita?
     - Genre: Apa genrenya? Bahasa apa yang sesuai untuk genre itu? Apakah adegan mendukung genre tersebut?
 
+TARGET JUMLAH KATA: Buatlah 600-800 kata untuk bab ini.
+Ini adalah panduan - kualitas dan kelengkapan lebih penting daripada mencapai angka yang tepat.
+
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 {Feedback}"""
 
@@ -525,6 +552,9 @@ Pastikan bab Anda mengalir ke bab berikutnya dan dari bab sebelumnya (jika berla
 
 Ingat, bersenang-senanglah, berkreasilah, dan tingkatkan pengembangan karakter bab {_ChapterNum} (pastikan Anda hanya menulis yang ini)!
 
+PANDUAN JUMLAH KATA: Perluas pengembangan karakter untuk menambah 200-300 kata.
+Fokus pada kedalaman dan keaslian daripada pengisian.
+
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 {Feedback}"""
 
@@ -570,6 +600,9 @@ Pastikan bab Anda mengalir ke bab berikutnya dan dari bab sebelumnya (jika berla
 Juga, harap hapus semua judul dari outline yang mungkin masih ada di bab tersebut.
 
 Ingat, bersenang-senanglah, berkreasilah, dan tambahkan dialog ke bab {_ChapterNum} (pastikan Anda hanya menulis yang ini)!
+
+PANDUAN JUMLAH KATA: Tambahkan dialog yang bermakna untuk memperluas sebanyak 150-250 kata.
+Prioritaskan percakapan yang alami daripada jumlah kata.
 
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 {Feedback}"""
@@ -664,6 +697,13 @@ Harap sesuaikan respons Anda untuk penulis kreatif lainnya.
 
 # RESPONS #
 Jadilah detail dan berformat baik dalam respons Anda, namun pastikan Anda memiliki output yang dipikirkan dengan matang dan kreatif.
+
+PENTING: Saat memperkirakan jumlah kata untuk setiap adegan:
+- Adegan dialog sederhana: 150-250 kata
+- Adegan aksi/deskripsi: 200-350 kata
+- Adegan emosional kompleks: 300-500 kata
+Jadilah realistis - adegan harus berjumlah total 600-1000 kata.
+
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 ###############
 
@@ -763,6 +803,9 @@ Pastikan untuk menyertakan dialog dan elemen penulisan lainnya sesuai kebutuhan.
 - **Karakter:** Pastikan semua karakter yang disebutkan hadir dan dikarakterisasi dengan tepat
 - **Tujuan:** Adegan harus memenuhi tujuannya yang dinyatakan dalam cerita
 - **Panjang:** Bidik jumlah kata target sambil mempertahankan kecepatan yang alami
+
+TARGET JUMLAH KATA: Tulis kira-kira jumlah kata yang diperkirakan untuk adegan ini berdasarkan kompleksitas dan tujuannya.
+Outline adegan harus menunjukkan target - prioritaskan kelengkapan adegan daripada jumlah kata yang tepat.
 ###############
 
 # GAYA #
@@ -850,22 +893,45 @@ CRITIC_CHAPTER_PROMPT = """<CHAPTER>
 {_Outline}
 </OUTLINE>
 
-Harap berikan umpan balik pada bab di atas berdasarkan kriteria berikut:
-    - Laju: Apakah cerita terlalu cepat melewati poin plot tertentu dan terlalu fokus pada yang lain?
-    - Detail: Bagaimana hal-hal dijelaskan? Apakah berulang? Apakah pilihan kata sesuai untuk adegan tersebut? Apakah kita menjelaskan hal-hal terlalu banyak atau terlalu sedikit?
-    - Alur: Apakah setiap bab mengalir ke bab berikutnya? Apakah plot masuk akal secara logis bagi pembaca? Apakah memiliki struktur naratif tertentu yang dimainkan? Apakah struktur naratif konsisten di seluruh cerita?
-    - Genre: Apa genrenya? Bahasa apa yang sesuai untuk genre itu? Apakah adegan mendukung genre tersebut?
+STANDAR KUALITAS (Ambang batas minimum: 90/100):
 
-    - Karakter: Siapa karakter dalam bab ini? Apa arti mereka satu sama lain? Bagaimana situasi di antara mereka? Apakah itu konflik? Apakah ada ketegangan? Apakah ada alasan karakter-karakter tersebut disatukan?
-    - Pengembangan: Apa tujuan masing-masing karakter, dan apakah mereka mencapai tujuan tersebut? Apakah karakter berubah dan menunjukkan pertumbuhan? Apakah tujuan masing-masing karakter berubah sepanjang cerita?
+1. PROGRESI NARATIF: Memajukan plot secara bermakna
+   - Apakah bab ini menggerakkan cerita ke depan?
+   - Apakah poin plot terselesaikan atau maju?
+   - Apakah ada hubungan sebab-akibat yang jelas antar adegan?
 
-    - Dialog: Apakah dialog masuk akal? Apakah sesuai dengan situasi? Apakah laju masuk akal untuk adegan tersebut Misalnya: (Apakah lajunya cepat karena mereka berlari, atau lambat karena mereka makan malam romantis)?
-    - Gangguan: Jika alur dialog terganggu, apa alasan gangguan tersebut? Apakah itu rasa urgensi? Apa yang menyebabkan gangguan tersebut? Bagaimana pengaruhnya terhadap dialog ke depan?
+2. AUTENTISITAS KARAKTER: Sifat konsisten, dialog alami
+   - Apakah karakter bertindak sesuai kepribadian yang telah ditetapkan?
+   - Apakah dialog alami dan sesuai karakter?
+   - Apakah motivasi karakter jelas dan dapat dipercaya?
+
+3. KESEIMBANGAN DESKRIPTIF: Detail sensorik yang bertujuan
+   - Apakah deskripsi vivid tetapi tidak berlebihan?
+   - Apakah setting dan aksi divisualisasikan dengan jelas?
+   - Apakah pilihan kata sesuai dan bervariasi?
+
+4. KONSISTENSI INTERNAL: Tidak ada pengulangan atau kontradiksi
+   - Apakah ada adegan atau deskripsi yang diulang?
+   - Apakah timeline konsisten dalam bab ini?
+   - Apakah fakta selaras dengan bab-bab sebelumnya?
+
+5. PENGUASAAN GENRE: Memenuhi ekspektasi genre
+   - Apakah bab memenuhi konvensi genre?
+   - Apakah nada sesuai untuk genre?
+   - Apakah elemen khusus genre ditangani dengan baik?
+
+PANDUAN PENILAIAN:
+- 90-100: Luar biasa, perlu polesan kecil
+- 80-89: Bagus tetapi memerlukan perbaikan yang ditargetkan
+- 70-79: Masalah signifikan, perlu revisi besar
+- Di bawah 70: Masalah mendasar, disarankan penulisan ulang lengkap
+
+Berikan umpan balik spesifik baris-demi-baris atau adegan-demi-adegan dengan contoh dari teks.
 
 Harap berikan kritik Anda dalam format terstruktur berikut:
 - Umpan balik keseluruhan: Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan
-- Saran spesifik: Rekomendasi yang dapat ditindaklanjuti untuk meningkatkan bab
-- Peringkat kualitas: Skor dari 0-10 (0=buruk, 10=luar biasa)
+- Saran spesifik: Rekomendasi yang dapat ditindaklanjuti untuk meningkatkan bab (kutip bagian spesifik)
+- Peringkat kualitas: Skor dari 0-100 (minimum 90 untuk diterima)
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 """
 

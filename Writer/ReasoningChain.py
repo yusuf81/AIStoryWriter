@@ -28,6 +28,19 @@ class ReasoningChain:
         self.logger = logger
         self.reasoning_cache = {} if config.REASONING_CACHE_RESULTS else None
 
+        # Log reasoning chain status
+        if config.USE_REASONING_CHAIN:
+            logger.Log(
+                f"Reasoning chain ENABLED using model: {config.REASONING_MODEL}",
+                4
+            )
+            logger.Log(
+                f"Reasoning logging: {'separate file' if config.REASONING_LOG_SEPARATE else 'main log'}",
+                5
+            )
+        else:
+            logger.Log("Reasoning chain DISABLED by config", 5)
+
     def reason(self,
                context: str,
                task_type: str,
@@ -45,6 +58,12 @@ class ReasoningChain:
         Returns:
             str: Reasoning text to guide generation
         """
+        # Log reasoning request
+        self.logger.Log(
+            f"Generating {task_type} reasoning for Chapter {chapter_number or 'N/A'}",
+            5
+        )
+
         # Check cache if enabled
         if self.reasoning_cache is not None:
             cache_key = f"{task_type}_{hash(context)}_{chapter_number or 0}"
@@ -68,11 +87,15 @@ class ReasoningChain:
         if self.reasoning_cache is not None:
             self.reasoning_cache[cache_key] = reasoning
 
+        # Log reasoning completion (always to main log for visibility)
+        self.logger.Log(
+            f"Generated {task_type} reasoning for Chapter {chapter_number or 'N/A'}: {len(reasoning)} chars",
+            4
+        )
+
         # Log reasoning separately if enabled
         if self.config.REASONING_LOG_SEPARATE:
             self._log_reasoning(task_type, chapter_number, reasoning)
-        else:
-            self.logger.Log(f"Generated reasoning for {task_type} (Chapter {chapter_number}): {len(reasoning)} chars", 4)
 
         return reasoning
 

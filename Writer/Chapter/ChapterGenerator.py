@@ -55,7 +55,14 @@ def _generate_reasoning_for_stage(Interface, _Logger, Config_module, reasoning_t
         str: Generated reasoning text
     """
     if not Config_module.USE_REASONING_CHAIN:
+        _Logger.Log("Skipping reasoning (USE_REASONING_CHAIN=False)", 6)
         return ""
+
+    # Log reasoning request
+    _Logger.Log(
+        f"Requesting {reasoning_type} reasoning from {Config_module.REASONING_MODEL} for Chapter {_ChapterNum or 'N/A'}",
+        5
+    )
 
     # Import ReasoningChain here to avoid circular imports
     from Writer.ReasoningChain import ReasoningChain
@@ -394,7 +401,7 @@ def _run_final_chapter_revision_loop(Interface, _Logger, ActivePrompts, _Chapter
     return CurrentChapterContent
 
 
-def _run_scene_generation_pipeline_for_initial_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, ThisChapterOutline, _FullOutlineForSceneGen, _BaseContext, Config_module):
+def _run_scene_generation_pipeline_for_initial_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, ThisChapterOutline, _FullOutlineForSceneGen, _BaseContext, Config_module, _ExpandedChapterOutline=None):
     """Generates initial plot using scene-by-scene pipeline."""
     _Logger.Log(f"Stage 1 (Alternative): Running Scene Generation Pipeline for Chapter {_ChapterNum}/{_TotalChapters}", 3)
     # Note: Writer.Scene.ChapterByScene is imported in the main GenerateChapter or at file top.
@@ -407,6 +414,7 @@ def _run_scene_generation_pipeline_for_initial_plot(Interface, _Logger, ActivePr
         ThisChapterOutline, # This is the chapter-specific outline
         _FullOutlineForSceneGen, # This is the overall story outline
         _BaseContext,
+        _ExpandedChapterOutline, # Pass expanded chapter outline with scenes
         # Config_module is implicitly used by ChapterByScene if it imports Writer.Config directly
     )
     _Logger.Log(f"Stage 1 (Alternative): Scene Generation Pipeline COMPLETE for Chapter {_ChapterNum}/{_TotalChapters}", 3)
@@ -424,7 +432,8 @@ def GenerateChapter(
     _Chapters: list = [],
     # _QualityThreshold: int = 85, # Removed as it's unused
     _BaseContext: str = "",
-    _FullOutlineForSceneGen: str = "" # Added to pass the full outline if needed by scene gen
+    _FullOutlineForSceneGen: str = "", # Added to pass the full outline if needed by scene gen
+    _ExpandedChapterOutline: dict = None # Added to pass expanded chapter outline with scenes
 ):
     from Writer.PromptsHelper import get_prompts
     ActivePrompts = get_prompts() # Use language-aware import
@@ -451,7 +460,8 @@ def GenerateChapter(
     if Config.SCENE_GENERATION_PIPELINE: # Use Config from import
         Stage1Chapter = _run_scene_generation_pipeline_for_initial_plot(
             Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters,
-            ThisChapterOutline, _FullOutlineForSceneGen, _BaseContext, Config # Pass Config module
+            ThisChapterOutline, _FullOutlineForSceneGen, _BaseContext, Config, # Pass Config module
+            _ExpandedChapterOutline # Pass expanded chapter outline with scenes
         )
     else:
         Stage1Chapter = _generate_stage1_plot(
