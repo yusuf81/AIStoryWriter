@@ -1,6 +1,6 @@
 #ollamasemua="ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
 #ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
-ollamasemua="csalab/sealion3.5:8b-F16"
+ollamasemua="aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
 INITIAL_OUTLINE_WRITER_MODEL = (
     #"ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
