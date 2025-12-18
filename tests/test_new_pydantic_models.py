@@ -28,7 +28,7 @@ class TestEvaluationModels:
         assert eval_obj.strengths == "Good plot structure and pacing"
 
     def test_outline_evaluation_output_validates_score_range(self):
-        """RED: Test OutlineEvaluationOutput validates score 0-10"""
+        """RED: Test OutlineEvaluationOutput validates score 0-100"""
         from Writer.Models import OutlineEvaluationOutput
 
         # Arrange - valid data
@@ -46,9 +46,9 @@ class TestEvaluationModels:
         assert eval_obj.score == 8
         assert len(eval_obj.strengths) >= 10
 
-        # Test validation: score must be 0-10
+        # Test validation: score must be 0-100
         with pytest.raises(ValidationError):
-            OutlineEvaluationOutput(**{**eval_data, "score": 11})  # Invalid score > 10
+            OutlineEvaluationOutput(**{**eval_data, "score": 101})  # Invalid score > 100
 
         with pytest.raises(ValidationError):
             OutlineEvaluationOutput(**{**eval_data, "score": -1})  # Invalid score < 0
@@ -203,19 +203,20 @@ class TestReviewModel:
 
         review_obj = ReviewOutput(**review_data)
         assert len(review_obj.feedback) >= 10
+        assert review_obj.suggestions is not None
         assert len(review_obj.suggestions) == 3
         assert review_obj.rating == 8
 
     def test_review_output_validates_rating_range(self):
-        """Test ReviewOutput validates rating 0-10"""
+        """Test ReviewOutput validates rating 0-100"""
         from Writer.Models import ReviewOutput
 
-        # Rating > 10 should fail
+        # Rating > 100 should fail
         with pytest.raises(ValidationError):
             ReviewOutput(
                 feedback="Good story structure overall",
                 suggestions=["Add more details"],
-                rating=11  # Invalid rating > 10
+                rating=101  # Invalid rating > 100
             )
 
         # Rating < 0 should fail
@@ -225,6 +226,22 @@ class TestReviewModel:
                 suggestions=["Revise entire plot"],
                 rating=-1  # Invalid rating < 0
             )
+
+    def test_review_output_accepts_0_to_100_range(self):
+        """Verify rating accepts values in 0-100 range"""
+        from Writer.Models import ReviewOutput
+
+        # Test low-medium range
+        review_low = ReviewOutput(feedback="Needs work", suggestions=[], rating=85)
+        assert review_low.rating == 85
+
+        # Test high range
+        review_high = ReviewOutput(feedback="Excellent work", suggestions=[], rating=95)
+        assert review_high.rating == 95
+
+        # Test upper bound
+        review_max = ReviewOutput(feedback="Perfect story", suggestions=[], rating=100)
+        assert review_max.rating == 100
 
     def test_review_output_validates_min_feedback_length(self):
         """Test ReviewOutput validates feedback minimum length"""

@@ -460,7 +460,7 @@ class EvaluationOutputBase(BaseModel):
     BASE CLASS for evaluation outputs - DRY principle.
     Used by both OutlineEvaluationOutput and ChapterEvaluationOutput.
     """
-    score: int = Field(ge=0, le=10, description="Evaluation score 0-10")
+    score: int = Field(ge=0, le=100, description="Evaluation score 0-100")
     strengths: str = Field(min_length=10, description="What works well")
     weaknesses: str = Field(min_length=10, description="What needs improvement")
     recommendations: str = Field(min_length=10, description="Specific recommendations")
@@ -540,7 +540,7 @@ class ReviewOutput(BaseModel):
     """Structured output for outline/chapter review feedback with flexible suggestion handling."""
     feedback: str = Field(min_length=10, description="Detailed feedback")
     suggestions: Optional[List[Union[str, 'EnhancedSuggestion']]] = Field(None, description="Specific suggestions for improvement (structured or simple)")
-    rating: int = Field(ge=0, le=10, description="Quality rating 0-10")
+    rating: int = Field(ge=0, le=100, description="Quality rating 0-100")
 
     @field_validator('suggestions', mode='before')
     @classmethod

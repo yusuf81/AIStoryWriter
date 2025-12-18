@@ -72,7 +72,7 @@ class TestReviewOutputEnhancement:
         assert has_feedback, "Prompt should request feedback"
 
     def test_enhanced_critique_prompts_score_range(self, mock_logger):
-        """Test that enhanced prompts specify 0-10 score range"""
+        """Test that enhanced prompts specify 0-100 score range"""
         from Writer.PromptsHelper import get_prompts
 
         ActivePrompts = get_prompts()
@@ -81,9 +81,9 @@ class TestReviewOutputEnhancement:
         outline_prompt = ActivePrompts.CRITIC_OUTLINE_PROMPT
         chapter_prompt = ActivePrompts.CRITIC_CHAPTER_PROMPT
 
-        # Should mention 0-10 range or similar
-        assert "0-10" in outline_prompt or "0 to 10" in outline_prompt or "10" in outline_prompt
-        assert "0-10" in chapter_prompt or "0 to 10" in chapter_prompt or "10" in chapter_prompt
+        # Should mention 0-100 range or similar (updated from 0-10)
+        assert "0-100" in outline_prompt or "0 to 100" in outline_prompt or "100" in outline_prompt
+        assert "0-100" in chapter_prompt or "0 to 100" in chapter_prompt or "100" in chapter_prompt
 
     def test_llm_response_matches_structure(self, mock_logger):
         """Test that LLM can provide properly structured ReviewOutput response"""
@@ -93,7 +93,7 @@ class TestReviewOutputEnhancement:
         # Create mock interface
         interface = Interface(Models=[])
 
-        # Mock ReviewOutput response as LLM should provide
+        # Mock ReviewOutput response as LLM should provide (updated to 0-100 scale)
         mock_review = ReviewOutput(
             feedback="The outline shows good character development but needs more conflict.",
             suggestions=[
@@ -101,7 +101,7 @@ class TestReviewOutputEnhancement:
                 "Clarify the main character's motivation",
                 "Strengthen the climax scene"
             ],
-            rating=7
+            rating=75
         )
 
         with patch.object(interface, 'SafeGeneratePydantic') as mock_generate:
@@ -120,7 +120,8 @@ class TestReviewOutputEnhancement:
             )
 
             assert isinstance(result, ReviewOutput)
-            assert result.rating == 7
+            assert result.rating == 75
+            assert result.suggestions is not None
             assert len(result.suggestions) == 3
             assert "character development" in result.feedback
 
@@ -128,23 +129,24 @@ class TestReviewOutputEnhancement:
         """Test that ReviewOutput validation still works as expected"""
         from Writer.Models import ReviewOutput
 
-        # Test valid ReviewOutput
+        # Test valid ReviewOutput (updated to 0-100 scale)
         valid_review = ReviewOutput(
             feedback="Great story with strong characters",
             suggestions=["Add more description", "Check pacing"],
-            rating=8
+            rating=85
         )
-        assert valid_review.rating == 8
+        assert valid_review.rating == 85
+        assert valid_review.suggestions is not None
         assert len(valid_review.suggestions) == 2
 
-        # Test rating boundary validation
+        # Test rating boundary validation (updated from 0-10 to 0-100)
         with pytest.raises(ValidationError) as exc_info:
             ReviewOutput(
                 feedback="Valid feedback",
                 suggestions=["Good suggestion"],
-                rating=11  # Too high
+                rating=101  # Too high (was 11)
             )
-        assert "less than or equal to 10" in str(exc_info.value)
+        assert "less than or equal to 100" in str(exc_info.value)
 
         with pytest.raises(ValidationError) as exc_info:
             ReviewOutput(
@@ -163,7 +165,7 @@ class TestReviewOutputEnhancement:
             ReviewOutput(
                 feedback="Too",  # Too short (min 10)
                 suggestions=["Good suggestion"],
-                rating=5
+                rating=50
             )
         assert "at least 10 characters" in str(exc_info.value)
 
@@ -171,7 +173,7 @@ class TestReviewOutputEnhancement:
         valid_review = ReviewOutput(
             feedback="This is exactly ten",
             suggestions=["Good suggestion"],
-            rating=5
+            rating=50
         )
         assert valid_review.feedback == "This is exactly ten"
 
@@ -183,8 +185,9 @@ class TestReviewOutputEnhancement:
         review_no_suggestions = ReviewOutput(
             feedback="Good feedback with analysis",
             suggestions=[],
-            rating=6
+            rating=65
         )
+        assert review_no_suggestions.suggestions is not None
         assert len(review_no_suggestions.suggestions) == 0
 
         # Test with multiple suggestions
@@ -196,8 +199,9 @@ class TestReviewOutputEnhancement:
                 "Improve story pacing",
                 "Clarify story themes"
             ],
-            rating=7
+            rating=78
         )
+        assert review_multi_suggestions.suggestions is not None
         assert len(review_multi_suggestions.suggestions) == 4
         assert "Improve story pacing" in review_multi_suggestions.suggestions
 

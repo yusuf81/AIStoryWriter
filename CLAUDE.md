@@ -84,9 +84,22 @@ The project supports multiple AI model providers through a unified interface:
 Model format: `{provider}://{model}@{host}?parameter=value`
 
 ### Configuration System
-- `Writer/Config.py`: Default model assignments and generation parameters
-- `.env`: API keys for cloud providers
-- Command-line arguments override config defaults
+
+**Config.py is the master configuration** - `Writer/Config.py` defines all default values for generation parameters, quality thresholds, model assignments, and feature flags.
+
+**CLI flags override Config.py ONLY when explicitly provided**:
+- If you run `python Write.py -Prompt test.txt` without other flags, **all Config.py values are used**
+- If you run `python Write.py -Prompt test.txt -ExpandOutline`, it **enables** expanded outlines regardless of Config.py value
+- If you run `python Write.py -Prompt test.txt -NoExpandOutline`, it **disables** expanded outlines regardless of Config.py value
+
+**Common CLI flags for feature control:**
+- `-ExpandOutline` / `-NoExpandOutline`: Control detailed chapter outline expansion
+- `-SceneGenerationPipeline` / `-NoSceneGenerationPipeline`: Control scene-by-scene generation
+- `-EnableFinalEditPass` / `-NoEnableFinalEditPass`: Control final story editing pass
+- `-ChapterRevision` / `-NoChapterRevision`: Control chapter quality revision loops
+
+**Other configuration sources:**
+- `.env`: API keys for cloud providers (Google, OpenRouter, etc.)
 - State persistence in `run.state.json` for resumable generation
 
 ### Multi-Language Support

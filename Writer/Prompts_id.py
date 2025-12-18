@@ -196,8 +196,19 @@ Example format: {{
     "pacing": "Sedang dengan ketegangan yang meningkat saat momen kunci.",
     "style": "Naratif deskriptif dengan citraan yang hidup dan kedalaman emosional",
     "conflict": "Konflik eksternal antara pahlawan dan penjaga harta karun",
-    "symbolism": [{{"symbol": "Harta Karun", "meaning": "Simbol dari pencapaian dan penemuan diri"}}]
+    "symbolism": [{{"symbol": "Harta Karun", "meaning": "Simbol dari pencapaian dan penemuan diri"}}],
+    "character_details": {{
+        "Rian": "Penjelajah muda, pemberani dan penasaran, mencari harta untuk membuktikan nilainya",
+        "Tetua Bijak": "Wanita tua bijaksana, mentor sabar dengan pengetahuan misterius"
+    }}
 }}
+
+PENTING - Format Character Details:
+- Jika menyertakan field character_details, HARUS berupa objek/dict sederhana dengan nama karakter sebagai kunci
+- Nilai HARUS berupa STRING deskripsi sederhana, BUKAN objek bersarang atau array
+- Contoh: {{"Pahlawan": "Deskripsi string singkat", "Penjahat": "Deskripsi string singkat"}}
+- JANGAN gunakan struktur bersarang seperti {{"name": "...", "personality": "..."}}
+
 PENTING: Hanya kembalikan data JSON, bukan skemanya!
 """
 
@@ -319,6 +330,13 @@ Harap berikan kritik Anda dalam format terstruktur berikut:
 - Umpan balik keseluruhan: Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan
 - Saran spesifik: Rekomendasi yang dapat ditindaklanjuti untuk meningkatkan outline
 - Peringkat kualitas: Skor dari 0-100 (minimum 92 untuk diterima)
+
+PENTING - Persyaratan Format Suggestions:
+- Field "suggestions" HARUS berupa JSON array/list
+- Setiap saran bisa berupa string sederhana
+- Contoh: ["Saran pertama di sini", "Saran kedua di sini", "Saran ketiga di sini"]
+- JANGAN kembalikan suggestions sebagai string tunggal atau paragraf
+- JANGAN lupa tanda kurung siku array []
 
 Harap berikan kritik Anda dalam format JSON:
 {{
@@ -604,6 +622,10 @@ Ingat, bersenang-senanglah, berkreasilah, dan tambahkan dialog ke bab {_ChapterN
 PANDUAN JUMLAH KATA: Tambahkan dialog yang bermakna untuk memperluas sebanyak 150-250 kata.
 Prioritaskan percakapan yang alami daripada jumlah kata.
 
+PENTING - Pelaporan Jumlah Kata:
+Setelah menghasilkan peningkatan dialog, hitung TOTAL kata AKTUAL dalam teks bab lengkap Anda.
+JANGAN estimasi atau tebak. Laporkan jumlah kata yang tepat di field word_count.
+
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 {Feedback}"""
 
@@ -613,6 +635,17 @@ Harap hasilkan outline untuk bab {_Chapter} berdasarkan outline yang disediakan.
 <OUTLINE>
 {_Outline}
 </OUTLINE>
+
+PERSYARATAN MINIMUM (PENTING):
+- Outline bab Anda HARUS setidaknya 100 kata total
+- Sertakan setidaknya 2-3 adegan terperinci per bab
+- Setiap adegan harus memiliki:
+  * Detail setting (lokasi, waktu, atmosfer)
+  * Aksi dan interaksi karakter
+  * Poin plot utama dan petunjuk dialog
+  * Catatan laju cerita
+
+JANGAN hanya memberikan ringkasan singkat. Kembangkan menjadi struktur adegan demi adegan yang terperinci.
 
 Saat Anda menulis, ingatlah hal berikut:
     - Apa konfliknya?
@@ -932,6 +965,24 @@ Harap berikan kritik Anda dalam format terstruktur berikut:
 - Umpan balik keseluruhan: Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan
 - Saran spesifik: Rekomendasi yang dapat ditindaklanjuti untuk meningkatkan bab (kutip bagian spesifik)
 - Peringkat kualitas: Skor dari 0-100 (minimum 90 untuk diterima)
+
+PENTING - Persyaratan Format Suggestions:
+- Field "suggestions" HARUS berupa JSON array/list
+- Setiap saran bisa berupa string sederhana
+- Contoh: ["Tambah dialog di adegan pembuka", "Perkuat motivasi karakter dalam konflik"]
+- JANGAN kembalikan suggestions sebagai string tunggal atau paragraf
+- JANGAN lupa tanda kurung siku array []
+
+Harap berikan kritik Anda dalam format JSON:
+{{
+    "feedback": "Analisis mendalam...",
+    "rating": 85,
+    "suggestions": [
+        "Saran spesifik pertama",
+        "Saran spesifik kedua"
+    ]
+}}
+
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 """
 

@@ -192,8 +192,19 @@ Example format: {{
     "pacing": "Moderate with escalating tension during key moments.",
     "style": "Descriptive narrative with vivid imagery and emotional depth",
     "conflict": "External conflict between hero and antagonist over the treasure",
-    "symbolism": [{{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}}]
+    "symbolism": [{{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}}],
+    "character_details": {{
+        "Rian": "Young explorer, brave and curious, seeking treasure to prove his worth",
+        "Elder Sage": "Ancient wise woman, patient mentor with mysterious knowledge"
+    }}
 }}
+
+CRITICAL - Character Details Format:
+- If including character_details field, it MUST be a simple object/dict with character names as keys
+- Values MUST be simple STRING descriptions, NOT nested objects or arrays
+- Example: {{"Hero": "Brief string description", "Villain": "Brief string description"}}
+- DO NOT use nested structures like {{"name": "...", "personality": "..."}}
+
 IMPORTANT: Return ONLY the JSON data, not the schema!
 """
 
@@ -312,6 +323,13 @@ Please provide your critique in the following structured format:
 - Overall feedback: Detailed analysis of strengths and areas for improvement
 - Specific suggestions: Actionable recommendations for improving the outline
 - Quality rating: Score from 0-100 (minimum 92 for acceptance)
+
+CRITICAL - Suggestions Format Requirements:
+- The "suggestions" field MUST be a JSON array/list
+- Each suggestion can be a simple string
+- Example: ["First suggestion here", "Second suggestion here", "Third suggestion here"]
+- NEVER return suggestions as a single string or paragraph
+- NEVER omit the array brackets []
 
 Please provide your critique in the following JSON format:
 {{
@@ -589,6 +607,10 @@ Remember, have fun, be creative, and add dialogue to chapter {_ChapterNum} (make
 WORD COUNT GUIDANCE: Add meaningful dialogue to expand by 150-250 words.
 Prioritize natural conversation over word count.
 
+IMPORTANT - Word Count Reporting:
+After generating your dialogue enhancements, count the ACTUAL total words in your complete chapter text.
+Do NOT estimate or guess. Report the precise word count in the word_count field.
+
 {Feedback}{PydanticFormatInstructions}"""
 
 CHAPTER_OUTLINE_PROMPT = """
@@ -597,6 +619,17 @@ Please generate an outline for chapter {_Chapter} based on the provided outline.
 <OUTLINE>
 {_Outline}
 </OUTLINE>
+
+MINIMUM REQUIREMENTS (CRITICAL):
+- Your chapter outline MUST be at least 100 words total
+- Include at least 2-3 detailed scenes per chapter
+- Each scene should have:
+  * Setting details (location, time, atmosphere)
+  * Character actions and interactions
+  * Key plot points and dialogue hints
+  * Pacing notes
+
+DO NOT provide only a brief summary. Expand into detailed scene-by-scene structure.
 
 As you write, keep the following in mind:
     - What is the conflict?
@@ -906,7 +939,24 @@ Provide specific line-by-line or scene-by-scene feedback with examples from the 
 Please provide your critique in the following structured format:
 - Overall feedback: Detailed analysis of strengths and areas for improvement
 - Specific suggestions: Actionable recommendations for improving the chapter (cite specific passages)
-- Quality rating: Score from 0-100 (minimum 90 for acceptance)"""
+- Quality rating: Score from 0-100 (minimum 90 for acceptance)
+
+CRITICAL - Suggestions Format Requirements:
+- The "suggestions" field MUST be a JSON array/list
+- Each suggestion can be a simple string
+- Example: ["Add more dialogue in opening scene", "Strengthen character motivation in conflict"]
+- NEVER return suggestions as a single string or paragraph
+- NEVER omit the array brackets []
+
+Please provide your critique in JSON format:
+{{
+    "feedback": "Detailed analysis...",
+    "rating": 85,
+    "suggestions": [
+        "First specific suggestion",
+        "Second specific suggestion"
+    ]
+}}"""
 
 CHAPTER_REVISION = """
 Please revise the following chapter:
