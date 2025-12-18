@@ -196,13 +196,41 @@ def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
                 chapter_num += 1
                 ch_num, ch_title = processor.process_chapter_title(line)
 
-                # Always start chapters on new pages (including first chapter)
-                story.append(PageBreak())  # New page for each chapter
+                # Start chapters on new pages (except first chapter - title page already has PageBreak)
+                if chapter_num > 1:
+                    story.append(PageBreak())  # New page for subsequent chapters
 
                 # Add chapter header with proper formatting
                 formatted_title = _format_chapter_title(ch_num, ch_title)
                 story.append(Paragraph(formatted_title, chapter_style))
                 current_chapter = []
+            # Story Outline section handling
+            elif line.startswith('# Story Outline'):
+                # Save previous chapter content using MarkdownProcessor
+                if current_chapter:
+                    chapter_text = '\n'.join(current_chapter).strip()
+                    if chapter_text:
+                        chapter_elements = processor.process_content(chapter_text)
+                        story.extend(chapter_elements)
+                    current_chapter = []
+
+                # Add PageBreak before Story Outline section
+                story.append(PageBreak())
+
+                # Add Story Outline header with different styling
+                story.append(Paragraph(line[2:].strip(), chapter_style))
+            # Generation Statistics section handling
+            elif line.startswith('# Generation Statistics'):
+                # Save previous chapter content using MarkdownProcessor
+                if current_chapter:
+                    chapter_text = '\n'.join(current_chapter).strip()
+                    if chapter_text:
+                        chapter_elements = processor.process_content(chapter_text)
+                        story.extend(chapter_elements)
+                    current_chapter = []
+
+                # Add Generation Statistics header (continue on same page after Story Outline)
+                story.append(Paragraph(line[2:].strip(), chapter_style))
             else:
                 # Add ALL lines including empty ones for paragraph breaks
                 current_chapter.append(line)
