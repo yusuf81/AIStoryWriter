@@ -111,8 +111,10 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
         SummaryComparisonSchema
     )
     _Logger.Log("Finished comparing summaries.", 6)
-    # Access fields via Pydantic object attributes instead of dict keys
+    # Access fields via Pydantic object attributes (structured access)
+    suggestions_text = "### Extra Suggestions:\n" + comparison_obj.Suggestions
+
     return (
         comparison_obj.DidFollowOutline,
-        "### Extra Suggestions:\n" + comparison_obj.Suggestions,
+        suggestions_text,
     )

@@ -41,52 +41,8 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
         StoryElements
     )
 
-    # Convert StoryElements object to string for use in prompts
-    characters_text = []
-    for character_type, character_list in StoryElements_obj.characters.items():
-        for i, character in enumerate(character_list):
-            char_desc = f"{character.name}"
-            if character.physical_description:
-                char_desc += f" - {character.physical_description}"
-            if character.personality:
-                char_desc += f", {character.personality}"
-            if character.background:
-                char_desc += f", {character.background}"
-            if character.motivation:
-                char_desc += f", ({character.motivation})"
-            characters_text.append(f"- {character_type}: {char_desc}")
-
-    StoryElements_str = f"""Title: {StoryElements_obj.title}
-
-Genre: {StoryElements_obj.genre}
-
-Characters:
-{chr(10).join(characters_text)}
-
-Themes: {', '.join(StoryElements_obj.themes)}"""
-
-    # Add optional fields if they exist
-    if StoryElements_obj.pacing:
-        StoryElements_str += f"\n\nPacing: {StoryElements_obj.pacing}"
-    if StoryElements_obj.style:
-        StoryElements_str += f"\n\nStyle: {StoryElements_obj.style}"
-    if StoryElements_obj.plot_structure:
-        plot_elements = [f"- {key}: {value}" for key, value in StoryElements_obj.plot_structure.items()]
-        StoryElements_str += f"\n\nPlot Structure:\n" + "\n".join(plot_elements)
-    if StoryElements_obj.settings:
-        settings_text = []
-        for name, details in StoryElements_obj.settings.items():
-            settings_text.append(f"- {name}:")
-            for detail_key, detail_value in details.items():
-                settings_text.append(f"  - {detail_key}: {detail_value}")
-            settings_text.append("")  # Add empty line for readability
-        StoryElements_str += f"\n\nSettings:\n" + "\n".join(settings_text).strip()
-    if StoryElements_obj.conflict:
-        StoryElements_str += f"\n\nConflict: {StoryElements_obj.conflict}"
-    if StoryElements_obj.symbolism:
-        StoryElements_str += f"\n\nSymbolism:\n" + chr(10).join([f"- {symbol['symbol']}: {symbol['meaning']}" for symbol in StoryElements_obj.symbolism])
-    if StoryElements_obj.resolution:
-        StoryElements_str += f"\n\nResolution: {StoryElements_obj.resolution}"
+    # NEW: Use structured prompt generation from Pydantic model
+    StoryElements_str = StoryElements_obj.to_prompt_string()
 
     _Logger.Log("Done Generating Main Story Elements", 4)
 
@@ -103,8 +59,8 @@ Themes: {', '.join(StoryElements_obj.themes)}"""
         Writer.Config.INITIAL_OUTLINE_WRITER_MODEL,
         OutlineOutput
     )
-    # Extract text from OutlineOutput model
-    Outline: str = Outline_obj.title + "\n\n" + "\n\n".join(Outline_obj.chapters)
+    # NEW: Use structured prompt generation from OutlineOutput model
+    Outline: str = Outline_obj.to_prompt_string()
     _Logger.Log("Done Generating Initial Outline", 4)
 
     _Logger.Log("Entering Feedback/Revision Loop", 3)

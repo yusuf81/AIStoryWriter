@@ -164,6 +164,25 @@ class OutlineOutput(BaseModel):
                 raise ValueError("Character names must be at least 2 characters long")
         return v
 
+    def to_prompt_string(self) -> str:
+        """Generate prompt string from outline structure"""
+        chapters_text = "\n\n".join(self.chapters)
+        return f"{self.title}\n\n{chapters_text}"
+
+    def extract_lorebook_entries(self) -> List[Dict]:
+        """Extract plot points from outline"""
+        entries = []
+        for i, chapter in enumerate(self.chapters):
+            # Check if chapter is substantial enough (15+ characters like in tests)
+            if len(chapter.strip()) >= 15:
+                entries.append({
+                    "type": "plot_point",
+                    "name": f"chapter_{i+1}",
+                    "content": chapter.strip(),
+                    "metadata": {"source": "outline", "chapter": i+1, "type": "plot_point", "name": f"chapter_{i+1}"}
+                })
+        return entries
+
 
 class CharacterDetail(BaseModel):
     """
@@ -284,6 +303,83 @@ class StoryElements(BaseModel):
                 if not symbol_entry['symbol'].strip() or not symbol_entry['meaning'].strip():
                     raise ValueError("Symbol and meaning cannot be empty")
         return v
+
+    def extract_lorebook_entries(self) -> List[Dict]:
+        """Extract lorebook entries maintaining full structure"""
+        entries = []
+
+        # Extract characters with full details
+        if self.characters:
+            for role, char_list in self.characters.items():
+                for char in char_list:
+                    entries.append({
+                        "type": "character",
+                        "name": char.name,
+                        "role": role,
+                        "content": f"{char.name}: {char.physical_description or 'No description'}",
+                        "metadata": {"source": "story_elements", "role": role, "type": "character", "name": char.name}
+                    })
+
+        # Extract settings
+        if self.settings:
+            for name, details in self.settings.items():
+                entries.append({
+                    "type": "location",
+                    "name": name,
+                    "content": f"{name}: {details.get('mood', '')} {details.get('location', '')}".strip(),
+                    "metadata": {"source": "story_elements", "details": details, "type": "location", "name": name}
+                })
+
+        # Extract themes
+        if self.themes:
+            entries.append({
+                "type": "theme",
+                "name": "main_themes",
+                "content": ", ".join(self.themes),
+                "metadata": {"source": "story_elements", "type": "theme", "name": "main_themes"}
+            })
+
+        return entries
+
+    def to_prompt_string(self) -> str:
+        """Generate prompt string from structured data (replaces manual building)"""
+        parts = []
+        parts.append(f"Title: {self.title}")
+        parts.append(f"Genre: {self.genre}")
+
+        if self.themes:
+            parts.append(f"Themes: {', '.join(self.themes)}")
+
+        if self.characters:
+            char_parts = []
+            for role, char_list in self.characters.items():
+                for char in char_list:
+                    char_parts.append(f"- {char.name}: {char.physical_description or ''}")
+            if char_parts:
+                parts.append("Characters:\n" + "\n".join(char_parts))
+
+        if self.settings:
+            setting_parts = []
+            for name, details in self.settings.items():
+                setting_parts.append(f"- {name}:")
+                for key, value in details.items():
+                    setting_parts.append(f"  - {key}: {value}")
+            if setting_parts:
+                parts.append("Settings:\n" + "\n".join(setting_parts).strip())
+
+        if self.conflict:
+            parts.append(f"Conflict: {self.conflict}")
+
+        if self.resolution:
+            parts.append(f"Resolution: {self.resolution}")
+
+        if self.symbolism:
+            symbol_parts = []
+            for symbol in self.symbolism:
+                symbol_parts.append(f"- {symbol['symbol']}: {symbol['meaning']}")
+            parts.append("Symbolism:\n" + "\n".join(symbol_parts))
+
+        return "\n\n".join(parts)
 
 
 class ChapterGenerationRequest(BaseModel):

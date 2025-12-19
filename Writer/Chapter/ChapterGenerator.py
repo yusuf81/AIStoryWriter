@@ -531,7 +531,8 @@ def ReviseChapter(
         Writer.Config.CHAPTER_REVISION_WRITER_MODEL,
         OutlineOutput
     )
-    SummaryText: str = revision_obj.title + "\n\n" + "\n\n".join(revision_obj.chapters)
+    # NEW: Use structured method
+    SummaryText: str = revision_obj.to_prompt_string()
     NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
     # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
     _Logger.Log(

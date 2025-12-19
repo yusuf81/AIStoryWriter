@@ -811,3 +811,155 @@ class TestModelRegistry:
 
         for model_name in expected_models:
             assert model_name in MODEL_REGISTRY, f"{model_name} not found in MODEL_REGISTRY"
+
+
+class TestModelMethods:
+    """Test new Pydantic model methods for structured extraction"""
+
+    def test_story_elements_to_prompt_string(self):
+        """RED: Generate prompt string from Pydantic object directly"""
+        from Writer.Models import StoryElements, CharacterDetail
+
+        hero = CharacterDetail(
+            name="Luna",
+            physical_description="Brave warrior princess",
+            background="Raised in magical kingdom",
+            personality="Determined and kind"
+        )
+
+        story_elements = StoryElements(
+            title="Luna's Quest",
+            genre="Fantasy Adventure",
+            themes=["courage", "magic", "friendship"],
+            characters={"main": [hero]},
+            settings={
+                "Crystal Kingdom": {
+                    "location": "Floating islands in the sky",
+                    "mood": "Enchanted, peaceful",
+                    "culture": "Magical society",
+                    "time": "Age of wonders"
+                }
+            }
+        )
+
+        # This should FAIL before implementation - to_prompt_string method doesn't exist yet
+        prompt_string = story_elements.to_prompt_string()
+
+        # Validate prompt string structure
+        assert "Title: Luna's Quest" in prompt_string
+        assert "Genre: Fantasy Adventure" in prompt_string
+        assert "Themes: courage, magic, friendship" in prompt_string
+        assert "Characters:" in prompt_string
+        assert "- Luna: Brave warrior princess" in prompt_string
+        assert "Settings:" in prompt_string
+        assert "- Crystal Kingdom:" in prompt_string
+        assert "  - location: Floating islands in the sky" in prompt_string
+
+    def test_story_elements_minimal_to_prompt_string(self):
+        """RED: Prompt string with minimal story elements"""
+        from Writer.Models import StoryElements
+
+        story_elements = StoryElements(
+            title="Minimal Story",
+            genre="Test",
+            themes=["minimal"]  # Required field
+        )
+
+        # This should FAIL before implementation
+        prompt_string = story_elements.to_prompt_string()
+
+        # Should handle minimal elements gracefully
+        assert "Title: Minimal Story" in prompt_string
+        assert "Genre: Test" in prompt_string
+        assert "Themes: minimal" in prompt_string  # Has themes
+        assert "Characters:" not in prompt_string  # No characters
+        assert "Settings:" not in prompt_string    # No settings
+
+    def test_outline_output_to_prompt_string(self):
+        """RED: Generate outline prompt from OutlineOutput"""
+        from Writer.Models import OutlineOutput
+
+        outline = OutlineOutput(
+            title="The Dragon's Treasure",
+            chapters=[
+                "Chapter 1: Young hero discovers ancient map leading to dragon's lair",
+                "Chapter 2: Hero assembles fellowship of brave adventurers",
+                "Chapter 3: Journey through dangerous forests and mountains",
+                "Chapter 4: Confrontation with the ancient dragon",
+                "Chapter 5: Hero chooses wisdom over wealth, earning dragon's respect"
+            ],
+            target_chapter_count=5
+        )
+
+        # This should FAIL before implementation - to_prompt_string method doesn't exist yet
+        prompt_string = outline.to_prompt_string()
+
+        # Validate prompt string structure
+        assert "The Dragon's Treasure" in prompt_string
+        assert "Chapter 1: Young hero discovers ancient map" in prompt_string
+        assert "Chapter 2: Hero assembles fellowship" in prompt_string
+        assert "Chapter 3: Journey through dangerous forests" in prompt_string
+        assert "Chapter 4: Confrontation with the ancient dragon" in prompt_string
+        assert "Chapter 5: Hero chooses wisdom" in prompt_string
+
+    def test_outline_output_extract_lorebook_entries(self):
+        """RED: Extract plot points from OutlineOutput"""
+        from Writer.Models import OutlineOutput
+
+        outline = OutlineOutput(
+            title="Space Odyssey",
+            chapters=[
+                "Chapter 1: Captain receives mysterious distress signal from outer space",
+                "Chapter 2: Crew investigates abandoned space station",
+                "Chapter 3: Discovery of alien artifact with strange powers",
+                "Chapter 4: Space pirates attack seeking the artifact"
+            ],
+            target_chapter_count=4
+        )
+
+        # This should FAIL before implementation - extract_lorebook_entries method doesn't exist yet
+        entries = outline.extract_lorebook_entries()
+
+        # Validate plot point entries
+        assert len(entries) == 4
+
+        # Check individual entries
+        for i, entry in enumerate(entries):
+            assert entry["type"] == "plot_point"
+            assert entry["name"] == f"chapter_{i+1}"
+            assert entry["metadata"]["source"] == "outline"
+            assert entry["metadata"]["chapter"] == i+1
+
+        # Check specific content
+        assert "distress signal" in entries[0]["content"]
+        assert "abandoned space station" in entries[1]["content"]
+        assert "alien artifact" in entries[2]["content"]
+        assert "Space pirates" in entries[3]["content"]
+
+    def test_outline_output_extract_lorebook_entries_filter_short_chapters(self):
+        """RED: Filter out very short chapter outlines"""
+        from Writer.Models import OutlineOutput
+
+        outline = OutlineOutput(
+            title="Mixed Quality Outline",
+            chapters=[
+                "Chapter 1: Detailed description of hero's background and motivations for the quest ahead.",  # Long enough
+                "Chapter 2: Very short chapter that meets minimum length requirement.",  # Minimum length (20 chars)
+                "Chapter 3: Hero meets mysterious stranger who provides crucial information and warnings about dangers.",  # Long enough
+                "Chapter 4: Another short chapter that meets minimum length requirement.",  # Minimum length (20 chars)
+                "Chapter 5: Epic confrontation where hero faces ultimate challenge and makes difficult choice."  # Long enough
+            ],
+            target_chapter_count=5
+        )
+
+        # This should FAIL before implementation
+        entries = outline.extract_lorebook_entries()
+
+        # Should include chapters 1, 3, and 5 (longer), chapters 2 and 4 are exactly 20 chars (will be included)
+        # So all 5 chapters will be included since they meet minimum length
+        assert len(entries) == 5
+        assert entries[0]["metadata"]["chapter"] == 1
+        assert entries[1]["metadata"]["chapter"] == 2
+        assert entries[2]["metadata"]["chapter"] == 3
+        assert entries[3]["metadata"]["chapter"] == 4
+        assert entries[4]["metadata"]["chapter"] == 5

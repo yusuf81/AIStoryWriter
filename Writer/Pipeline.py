@@ -404,9 +404,9 @@ class StoryPipeline:
 
         # Extract lore from outline if lorebook is enabled
         if self.lorebook:
-            combined_outline = f"{Elements}\n\n{Outline}"
-            self.lorebook.extract_from_outline(combined_outline)
-            self.SysLogger.Log("Pipeline: Extracted lore from outline", 5)
+            # NEW: Direct structured extraction (preferred method)
+            self.lorebook.extract_from_structured_data(Elements, Outline)
+            self.SysLogger.Log("Pipeline: Extracted lore from structured data", 5)
 
         current_state["last_completed_step"] = "outline"
         self._save_state_wrapper(current_state, state_filepath)

@@ -288,6 +288,21 @@ class LorebookManager:
                     }
                 )
 
+    def extract_from_structured_data(self, story_elements, outline_output=None) -> None:
+        """Extract lore from Pydantic objects directly (no string conversion)"""
+        if not self.db:
+            return
+
+        # Extract from StoryElements object if provided
+        if story_elements and hasattr(story_elements, 'extract_lorebook_entries'):
+            for entry in story_elements.extract_lorebook_entries():
+                self.add_entry(entry["content"], entry["metadata"])
+
+        # Extract from OutlineOutput if provided
+        if outline_output and hasattr(outline_output, 'extract_lorebook_entries'):
+            for entry in outline_output.extract_lorebook_entries():
+                self.add_entry(entry["content"], entry["metadata"])
+
     def clear(self) -> None:
         """Clear all lore entries"""
         if self.db is None:
