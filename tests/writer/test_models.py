@@ -8,6 +8,7 @@ from pydantic import ValidationError
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
+
 class TestChapterOutput:
     """Test suite for ChapterOutput following TDD London School approach"""
 
@@ -69,7 +70,10 @@ class TestChapterOutput:
         assert "at least 100 characters" in str(exc_info.value)
 
     def test_invalid_text_with_placeholder(self):
-        """Test that text containing placeholders fails validation"""
+        """Test that text containing TODO/FIXME placeholders fails validation
+
+        Note: Ellipsis (...) is now allowed as valid punctuation
+        """
         from Writer.Models import ChapterOutput
 
         chapter_text = "Alice walked through the forest TODO add more content here. Her blue eyes scanned the area for any signs of the artifact."
@@ -151,6 +155,115 @@ class TestChapterOutput:
                 chapter_number=1,
                 chapter_title=long_title
             )
+
+
+class TestPlaceholderValidationFix:
+    """Test that ellipsis is allowed in content (not treated as placeholder)"""
+
+    def test_chapter_allows_ellipsis_in_dialogue(self):
+        """GREEN: Chapter text with ellipsis in dialogue is valid"""
+        from Writer.Models import ChapterOutput
+
+        chapter_text = '"I don\'t know..." she whispered, her voice trailing off into the darkness. The room fell silent. Only the sound of her heartbeat echoed in the stillness of the night.'
+
+        chapter = ChapterOutput(
+            text=chapter_text,
+            word_count=len(chapter_text.split()),
+            scenes=[],
+            characters_present=["she"],
+            chapter_number=1
+        )
+        assert chapter.text == chapter_text
+        assert "..." in chapter.text
+
+    def test_chapter_allows_ellipsis_for_suspense(self):
+        """GREEN: Ellipsis used for suspense is valid"""
+        from Writer.Models import ChapterOutput
+
+        chapter_text = 'Aria melangkah hati-hati di lorong gua yang gelap dan lembap.... Suara aneh bergema dari kedalaman yang tak terjangkau oleh cahaya obor.'
+
+        chapter = ChapterOutput(
+            text=chapter_text,
+            word_count=len(chapter_text.split()),
+            scenes=[],
+            characters_present=["Aria"],
+            chapter_number=1
+        )
+        assert "..." in chapter.text  # Ellipsis should be preserved
+        assert chapter.chapter_number == 1
+
+    def test_chapter_still_rejects_todo_placeholder(self):
+        """Validator still rejects actual placeholders like TODO"""
+        from Writer.Models import ChapterOutput
+
+        chapter_text = 'Valid content here TODO add more details later. This is long enough to pass minimum length requirement for validation testing purposes.'
+
+        with pytest.raises(ValidationError) as exc_info:
+            ChapterOutput(
+                text=chapter_text,
+                word_count=len(chapter_text.split()),
+                scenes=[],
+                characters_present=[],
+                chapter_number=1
+            )
+
+        assert "placeholder text" in str(exc_info.value).lower()
+        assert "TODO" in str(exc_info.value)
+
+    def test_chapter_still_rejects_fixme_placeholder(self):
+        """Validator still rejects FIXME placeholder"""
+        from Writer.Models import ChapterOutput
+
+        chapter_text = 'Valid content here FIXME need to revise this section later. This is long enough to pass minimum length requirement for validation testing purposes.'
+
+        with pytest.raises(ValidationError) as exc_info:
+            ChapterOutput(
+                text=chapter_text,
+                word_count=len(chapter_text.split()),
+                scenes=[],
+                characters_present=[],
+                chapter_number=1
+            )
+
+        assert "placeholder text" in str(exc_info.value).lower()
+        assert "FIXME" in str(exc_info.value)
+
+    def test_chapter_still_rejects_tbd_placeholder(self):
+        """Validator still rejects TBD placeholder"""
+        from Writer.Models import ChapterOutput
+
+        chapter_text = 'Valid content here TBD complete this part later. This is long enough to pass minimum length requirement for validation testing purposes.'
+
+        with pytest.raises(ValidationError) as exc_info:
+            ChapterOutput(
+                text=chapter_text,
+                word_count=len(chapter_text.split()),
+                scenes=[],
+                characters_present=[],
+                chapter_number=1
+            )
+
+        assert "placeholder text" in str(exc_info.value).lower()
+        assert "TBD" in str(exc_info.value)
+
+    def test_reasoning_allows_ellipsis(self):
+        """GREEN: ReasoningOutput allows ellipsis in reasoning text"""
+        from Writer.Models import ReasoningOutput
+
+        reasoning_text = "The character's motivation seems unclear... further development needed in later chapters."
+
+        reasoning = ReasoningOutput(reasoning=reasoning_text)
+        assert reasoning.reasoning == reasoning_text
+        assert "..." in reasoning.reasoning
+
+    def test_reasoning_still_rejects_na_placeholder(self):
+        """ReasoningOutput still rejects N/A placeholder"""
+        from Writer.Models import ReasoningOutput
+
+        with pytest.raises(ValidationError) as exc_info:
+            ReasoningOutput(reasoning="This is not applicable, so N/A for now.")
+
+        assert "placeholder text" in str(exc_info.value).lower()
 
 
 class TestOutlineOutput:

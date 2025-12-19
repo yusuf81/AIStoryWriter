@@ -48,7 +48,8 @@ class ChapterOutput(BaseModel):
             raise ValueError("Chapter text must be at least 100 characters long")
 
         # Check for incomplete or placeholder content
-        placeholder_indicators = ["TODO", "FIXME", "...", "TBD", "[PLACEHOLDER]"]
+        # NOTE: Removed "..." from list - ellipsis is valid punctuation in fiction
+        placeholder_indicators = ["TODO", "FIXME", "TBD", "[PLACEHOLDER]"]
         for indicator in placeholder_indicators:
             if indicator in v.upper():
                 raise ValueError(f"Chapter contains placeholder text: {indicator}")
@@ -440,7 +441,8 @@ class ReasoningOutput(BaseModel):
             raise ValueError("Reasoning must be at least 10 characters long")
 
         # Check for empty placeholders or minimal content
-        placeholder_indicators = ["TODO", "FIXME", "...", "TBD", "[PLACEHOLDER]", "Not applicable", "N/A"]
+        # NOTE: Removed "..." from list - ellipsis is valid in reasoning text
+        placeholder_indicators = ["TODO", "FIXME", "TBD", "[PLACEHOLDER]", "Not applicable", "N/A"]
         if any(indicator.lower() in v.lower() for indicator in placeholder_indicators):
             raise ValueError("Reasoning contains placeholder text")
 

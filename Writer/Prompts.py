@@ -158,12 +158,12 @@ Required fields:
     Example: ["String 1", "String 2"]
 
 Optional fields:
-  - characters (object, Optional): Character names and their descriptions...
-  - pacing (unknown, Optional): Story pacing speed (e.g., slow, moderate, fast)...
-  - style (unknown, Optional): Language style description...
-  - plot_structure (unknown, Optional): Plot elements (exposition, rising action, climax, ...)
-  - settings (object, Optional): Setting details with time, location, culture, mood...
-  - ... and 3 more optional fields
+  - characters (object, Optional): Character names and their descriptions
+  - pacing (unknown, Optional): Story pacing speed (e.g., slow, moderate, fast)
+  - style (unknown, Optional): Language style description
+  - plot_structure (unknown, Optional): Plot elements (exposition, rising action, climax, resolution)
+  - settings (object, Optional): Setting details with time, location, culture, mood
+  - (and 3 additional optional fields)
 
 Example format: {{
     "title": "The Dragon's Treasure Cave",
@@ -203,7 +203,8 @@ CRITICAL - Character Details Format:
 - If including character_details field, it MUST be a simple object/dict with character names as keys
 - Values MUST be simple STRING descriptions, NOT nested objects or arrays
 - Example: {{"Hero": "Brief string description", "Villain": "Brief string description"}}
-- DO NOT use nested structures like {{"name": "...", "personality": "..."}}
+- DO NOT use nested structures like {{"name": "Character Name", "personality": "brave and kind"}}
+- Use simple strings: {{"Hero": "Brave warrior seeking redemption", "Villain": "Dark sorcerer driven by revenge"}}
 
 IMPORTANT: Return ONLY the JSON data, not the schema!
 """
@@ -267,7 +268,7 @@ Produce the refined, chapter-structured outline in Markdown format. Use clear he
 - Alice decides to protect the artifact, overcoming initial fear.
 - Ends with Alice planning her next move.
 
-... (continue for all chapters)
+(Repeat this structure for all remaining chapters)
 ```
 
 # Instructions
@@ -333,7 +334,7 @@ CRITICAL - Suggestions Format Requirements:
 
 Please provide your critique in the following JSON format:
 {{
-    "feedback": "Detailed analysis of strengths and areas for improvement...",
+    "feedback": "Detailed analysis of strengths and areas for improvement",
     "rating": 7,
     "suggestions": [
         "Simple string suggestion",
@@ -770,9 +771,9 @@ Create a JSON list of each of scene from the provided outline where each element
 Ex:
 {{
     "scenes": [
-        "scene 1 content...",
-        "scene 2 content...",
-        "etc."
+        "Scene 1: The hero enters the dark forest at midnight, searching for the ancient artifact",
+        "Scene 2: A mysterious figure appears and warns the hero about the dangers ahead",
+        "Scene 3: The hero discovers the hidden temple and faces the guardian"
     ]
 }}
 
@@ -1068,10 +1069,10 @@ Base your answers on the story written in previous messages.
 
 Please respond with the following JSON object format:
 {{
-    "Title": "...",
-    "Summary": "...",
-    "Tags": "...",
-    "OverallRating": ...
+    "Title": "Your story title here",
+    "Summary": "Brief story summary",
+    "Tags": "genre1, genre2, theme1",
+    "OverallRating": 85
 }}
 
 Again, remember to make your response *only* the JSON object with no extra words or formatting. It will be fed directly to a JSON parser.

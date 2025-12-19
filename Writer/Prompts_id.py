@@ -159,12 +159,12 @@ Fields yang diperlukan:
     Example: ["String 1", "String 2"]
 
 Fields opsional:
-  - characters (object, Optional): Nama karakter dan deskripsi detail...
-  - pacing (unknown, Optional): Kecepatan alur cerita (misalnya, lambat, sedang, cepat)...
-  - style (unknown, Optional): Deskripsi gaya bahasa...
-  - plot_structure (unknown, Optional): Elemen plot (eksposisi, aksi meningkat, klimaks, ...)
-  - settings (object, Optional): Detail latar dengan waktu, lokasi, budaya, suasana...
-  - ... dan 3 field opsional lainnya
+  - characters (object, Optional): Nama karakter dan deskripsi detail
+  - pacing (unknown, Optional): Kecepatan alur cerita (misalnya, lambat, sedang, cepat)
+  - style (unknown, Optional): Deskripsi gaya bahasa
+  - plot_structure (unknown, Optional): Elemen plot (eksposisi, aksi meningkat, klimaks, resolusi)
+  - settings (object, Optional): Detail latar dengan waktu, lokasi, budaya, suasana
+  - (dan 3 field opsional tambahan)
 
 PENTING: Gunakan kunci JSON dalam Bahasa Inggris, meskipun konten bisa dalam Bahasa Indonesia!
 IMPORTANT: Use English JSON keys, even though content can be in Indonesian!
@@ -207,7 +207,8 @@ PENTING - Format Character Details:
 - Jika menyertakan field character_details, HARUS berupa objek/dict sederhana dengan nama karakter sebagai kunci
 - Nilai HARUS berupa STRING deskripsi sederhana, BUKAN objek bersarang atau array
 - Contoh: {{"Pahlawan": "Deskripsi string singkat", "Penjahat": "Deskripsi string singkat"}}
-- JANGAN gunakan struktur bersarang seperti {{"name": "...", "personality": "..."}}
+- JANGAN gunakan struktur bersarang seperti {{"name": "Nama Karakter", "personality": "berani dan baik"}}
+- Gunakan string sederhana: {{"Pahlawan": "Pejuang berani yang mencari penebusan", "Penjahat": "Penyihir gelap yang didorong balas dendam"}}
 
 PENTING: Hanya kembalikan data JSON, bukan skemanya!
 """
@@ -272,7 +273,7 @@ Hasilkan outline yang disempurnakan dan terstruktur berdasarkan bab dalam format
 - Alice memutuskan untuk melindungi artefak, mengatasi ketakutan awal.
 - Berakhir dengan Alice merencanakan langkah berikutnya.
 
-... (lanjutkan untuk semua bab)
+(Ulangi struktur ini untuk semua bab yang tersisa)
 ```
 
 # Instruksi
@@ -340,7 +341,7 @@ PENTING - Persyaratan Format Suggestions:
 
 Harap berikan kritik Anda dalam format JSON:
 {{
-    "feedback": "Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan...",
+    "feedback": "Analisis mendalam tentang kekuatan dan area yang perlu ditingkatkan",
     "rating": 7,
     "suggestions": [
         "Saran sederhana string",
@@ -789,9 +790,9 @@ Buat daftar JSON dari setiap adegan dari outline yang disediakan di mana setiap 
 Contoh:
 {{
     "scenes": [
-        "konten adegan 1...",
-        "konten adegan 2...",
-        "dll."
+        "Adegan 1: Pahlawan memasuki hutan gelap pada tengah malam, mencari artefak kuno",
+        "Adegan 2: Sosok misterius muncul dan memperingatkan pahlawan tentang bahaya di depan",
+        "Adegan 3: Pahlawan menemukan kuil tersembunyi dan menghadapi penjaga"
     ]
 }}
 
@@ -1103,10 +1104,10 @@ Pastikan semua nilai teks dalam JSON (khususnya 'Title', 'Summary', 'Tags') ditu
 
 Harap balas dengan format objek JSON berikut:
 {{
-    "Title": "...",
-    "Summary": "...",
-    "Tags": "...",
-    "OverallRating": ...
+    "Title": "Judul cerita Anda di sini",
+    "Summary": "Ringkasan singkat cerita",
+    "Tags": "genre1, genre2, tema1",
+    "OverallRating": 85
 }}
 
 Sekali lagi, ingatlah untuk membuat respons Anda *hanya* objek JSON tanpa kata atau format tambahan. Ini akan langsung dimasukkan ke parser JSON.
