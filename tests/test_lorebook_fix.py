@@ -171,9 +171,12 @@ class TestLorebookStructuredExtraction:
             assert neo_args[1]['type'] == 'location'
             assert neo_args[1]['name'] == 'Neo-City'
             assert 'Dystopian, neon-lit' in neo_args[0]
-            assert 'details' in neo_args[1]
-            assert neo_args[1]['details']['location'] == 'Metropolitan area with towering skyscrapers'
-            assert neo_args[1]['details']['time'] == 'Year 2077'
+            # After flattening, we should have flattened fields instead of nested "details"
+            assert 'details' not in neo_args[1]  # Should NOT have nested details
+            assert 'details_location' in neo_args[1]
+            assert 'details_time' in neo_args[1]
+            assert neo_args[1]['details_location'] == 'Metropolitan area with towering skyscrapers'
+            assert neo_args[1]['details_time'] == 'Year 2077'
 
             # Check Underground entry
             underground_call = [call for call in calls if 'Underground' in str(call)][0]
@@ -182,7 +185,8 @@ class TestLorebookStructuredExtraction:
             assert underground_args[1]['type'] == 'location'
             assert underground_args[1]['name'] == 'Underground'
             assert 'Hopeful, secretive' in underground_args[0]
-            assert underground_args[1]['details']['mood'] == 'Hopeful, secretive'
+            # Check flattened fields instead of nested details
+            assert underground_args[1]['details_mood'] == 'Hopeful, secretive'
 
     def test_lorebook_extract_outline_plot_points(self, mock_logger, sample_outline_output):
         """RED: Extract plot points directly from outline without string parsing"""
@@ -266,3 +270,26 @@ class TestLorebookStructuredExtraction:
 
             # The key test: structured extraction should work without any regex patterns
             # being applied to the Pydantic object string representation
+
+    def test_extract_lorebook_entries_flat_metadata(self, sample_story_elements):
+        """RED: extract_lorebook_entries produces flat metadata for locations"""
+        entries = sample_story_elements.extract_lorebook_entries()
+
+        # Find location entries
+        location_entries = [e for e in entries if e["type"] == "location"]
+        assert len(location_entries) == 2
+
+        # Check Neo-City entry has flattened metadata
+        neo_city = next(e for e in location_entries if e["name"] == "Neo-City")
+        metadata = neo_city["metadata"]
+
+        # Should have flattened fields, not nested "details"
+        assert "details_time" in metadata
+        assert "details_location" in metadata
+        assert "details_culture" in metadata
+        assert "details_mood" in metadata
+        assert "details" not in metadata  # Critical: NO nested details
+
+        # All values must be primitive types
+        for key, value in metadata.items():
+            assert isinstance(value, (str, int, float, bool)) or value is None

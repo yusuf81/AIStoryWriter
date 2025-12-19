@@ -963,3 +963,83 @@ class TestModelMethods:
         assert entries[2]["metadata"]["chapter"] == 3
         assert entries[3]["metadata"]["chapter"] == 4
         assert entries[4]["metadata"]["chapter"] == 5
+
+
+class TestMetadataFlattening:
+    """TDD London School: Test metadata flattening for ChromaDB compatibility"""
+
+    def test_flatten_simple_nested_dict(self):
+        """RED: Flatten simple nested dictionary"""
+        from Writer.Models import _flatten_metadata
+
+        metadata = {
+            "type": "location",
+            "details": {"time": "2024", "mood": "dark"}
+        }
+
+        result = _flatten_metadata(metadata)
+
+        expected = {
+            "type": "location",
+            "details_time": "2024",
+            "details_mood": "dark"
+        }
+
+        assert result == expected
+
+    def test_flatten_preserves_primitives(self):
+        """RED: Preserve primitive types"""
+        from Writer.Models import _flatten_metadata
+
+        metadata = {
+            "string": "test",
+            "integer": 42,
+            "float": 3.14,
+            "boolean": True,
+            "none_value": None,
+            "nested": {"nested_int": 100}
+        }
+
+        result = _flatten_metadata(metadata)
+
+        expected = {
+            "string": "test",
+            "integer": 42,
+            "float": 3.14,
+            "boolean": True,
+            "none_value": None,
+            "nested_nested_int": 100
+        }
+
+        assert result == expected
+
+    def test_flatten_handles_complex_types(self):
+        """RED: Convert complex types to strings"""
+        from Writer.Models import _flatten_metadata
+
+        metadata = {
+            "list": [1, 2, 3],
+            "tuple": ("a", "b"),
+            "object": object()
+        }
+
+        result = _flatten_metadata(metadata)
+
+        # All non-primitive/non-dict types should be converted to strings
+        assert isinstance(result["list"], str)
+        assert isinstance(result["tuple"], str)
+        assert isinstance(result["object"], str)
+
+    def test_flatten_empty_and_edge_cases(self):
+        """RED: Handle empty dictionaries and edge cases"""
+        from Writer.Models import _flatten_metadata
+
+        # Empty dictionary
+        assert _flatten_metadata({}) == {}
+
+        # Empty nested dictionaries
+        metadata = {"empty": {}, "nested": {"empty": {}}}
+        result = _flatten_metadata(metadata)
+        assert result == {"empty": {}, "nested_empty": {}}
+
+    

@@ -1,6 +1,6 @@
 # Writer/Models.py - Pydantic data models for structured output
 from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional, Dict, Union
+from typing import List, Optional, Dict, Union, Any
 from datetime import datetime
 import Writer.Config as Config
 
@@ -179,9 +179,42 @@ class OutlineOutput(BaseModel):
                     "type": "plot_point",
                     "name": f"chapter_{i+1}",
                     "content": chapter.strip(),
-                    "metadata": {"source": "outline", "chapter": i+1, "type": "plot_point", "name": f"chapter_{i+1}"}
+                    "metadata": {"source": "outline", "chapter": i + 1, "type": "plot_point", "name": f"chapter_{i+1}"}
                 })
         return entries
+
+
+def _flatten_metadata(metadata: Dict[str, Any], prefix: str = "", separator: str = "_") -> Dict[str, Any]:
+    """
+    Flatten nested metadata dictionaries with auto-prefixing for ChromaDB compatibility.
+
+    ChromaDB only supports primitive types (str, int, float, bool, None) in metadata.
+    This function recursively flattens nested dictionaries while preserving all information.
+    """
+    if not isinstance(metadata, dict):
+        return {prefix: metadata} if prefix else {}
+
+    flattened = {}
+    for key, value in metadata.items():
+        # Build new key with prefix
+        new_key = f"{prefix}{separator}{key}" if prefix else key
+
+        if isinstance(value, dict):
+            if value:  # Only process non-empty dicts
+                # Recursively flatten nested dictionaries
+                nested = _flatten_metadata(value, new_key, separator)
+                flattened.update(nested)
+            else:
+                # Empty dict - preserve as empty dict at current level
+                flattened[new_key] = value
+        elif isinstance(value, (str, int, float, bool)) or value is None:
+            # Primitive types - store as-is
+            flattened[new_key] = value
+        else:
+            # Convert other types to string (lists, objects, etc.)
+            flattened[new_key] = str(value)
+
+    return flattened
 
 
 class CharacterDetail(BaseModel):
@@ -323,11 +356,22 @@ class StoryElements(BaseModel):
         # Extract settings
         if self.settings:
             for name, details in self.settings.items():
+                # Create base metadata
+                base_metadata = {
+                    "source": "story_elements",
+                    "type": "location",
+                    "name": name
+                }
+
+                # Add flattened details instead of nested
+                flat_details = _flatten_metadata(details, "details")
+                base_metadata.update(flat_details)
+
                 entries.append({
                     "type": "location",
                     "name": name,
                     "content": f"{name}: {details.get('mood', '')} {details.get('location', '')}".strip(),
-                    "metadata": {"source": "story_elements", "details": details, "type": "location", "name": name}
+                    "metadata": base_metadata  # Now flat instead of nested
                 })
 
         # Extract themes
