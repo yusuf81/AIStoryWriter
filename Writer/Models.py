@@ -339,6 +339,17 @@ class StoryElements(BaseModel):
                 "metadata": {"source": "story_elements", "type": "theme", "name": "main_themes"}
             })
 
+        # Extract plot structure (full narratives from outline)
+        if self.plot_structure:
+            for phase, narrative in self.plot_structure.items():
+                if narrative and len(narrative.strip()) > 10:  # Only extract substantial narratives
+                    entries.append({
+                        "type": "plot_point",
+                        "name": phase,
+                        "content": narrative.strip(),
+                        "metadata": {"source": "story_elements", "phase": phase, "type": "plot_point", "name": phase}
+                    })
+
         return entries
 
     def to_prompt_string(self) -> str:
