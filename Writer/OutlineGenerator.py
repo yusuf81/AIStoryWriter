@@ -164,7 +164,38 @@ def GeneratePerChapterOutline(
         Writer.Config.CHAPTER_OUTLINE_WRITER_MODEL,
         ChapterOutlineOutput
     )
-    SummaryText: str = Chapter_obj.outline_summary  # Extract outline summary from ChapterOutlineOutput model
+    # Extract full scenes content instead of just summary to avoid MegaOutline fallback
+    if hasattr(Chapter_obj, 'scenes') and Chapter_obj.scenes:
+        # Combine all scenes into comprehensive outline
+        scenes_text = []
+        for scene in Chapter_obj.scenes:
+            if isinstance(scene, str):
+                # Simple string scene
+                scenes_text.append(scene)
+            else:
+                # EnhancedSceneOutline object - extract all fields
+                scene_parts = []
+                if hasattr(scene, 'title') and scene.title:
+                    scene_parts.append(f"Scene: {scene.title}")
+                if hasattr(scene, 'characters_and_setting') and scene.characters_and_setting:
+                    scene_parts.append(f"Characters & Setting: {scene.characters_and_setting}")
+                if hasattr(scene, 'conflict_and_tone') and scene.conflict_and_tone:
+                    scene_parts.append(f"Conflict & Tone: {scene.conflict_and_tone}")
+                if hasattr(scene, 'key_events') and scene.key_events:
+                    scene_parts.append(f"Key Events: {scene.key_events}")
+                if hasattr(scene, 'literary_devices') and scene.literary_devices:
+                    scene_parts.append(f"Literary Devices: {scene.literary_devices}")
+                if hasattr(scene, 'resolution') and scene.resolution:
+                    scene_parts.append(f"Resolution: {scene.resolution}")
+
+                # Join scene parts or use fallback
+                scene_text = "\n".join(scene_parts) if scene_parts else str(scene)
+                scenes_text.append(scene_text)
+
+        SummaryText = "\n\n".join(scenes_text)
+    else:
+        # Fallback to outline_summary if scenes not available
+        SummaryText = Chapter_obj.outline_summary  # Extract outline summary from ChapterOutlineOutput model
     # Modifikasi pesan log ini
     _Logger.Log(
         f"Done Generating Outline For Chapter {_Chapter} from {_TotalChapters}", 5
