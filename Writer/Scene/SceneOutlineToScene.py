@@ -1,5 +1,5 @@
 import Writer.Config
-from Writer.Models import SceneOutline
+from Writer.Models import SceneOutline, SceneContent
 from typing import Union
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
@@ -60,12 +60,12 @@ Aim for approximately {scene_word_target} words."""
         _Logger,
         MesssageHistory,
         Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
-        SceneOutline
+        SceneContent
     )
     _Logger.Log(
         f"Finished SceneOutline->Scene Generation for Scene {_SceneNum}/{_TotalScenes}",
         5,
     )
 
-    # Extract text from validated SceneOutline model
-    return Scene_obj.action
+    # Extract text from validated SceneContent model
+    return Scene_obj.text

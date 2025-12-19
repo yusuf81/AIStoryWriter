@@ -460,6 +460,56 @@ class SceneOutline(BaseModel):
         return v
 
 
+class SceneContent(BaseModel):
+    """
+    Model for generated scene prose content.
+
+    This model enforces quality standards for full scene narratives,
+    ensuring they are complete prose (not summaries) with proper length.
+    Designed for scene-by-scene generation pipeline.
+    """
+    text: str = Field(
+        min_length=150,
+        description="The full scene prose content (200-300 words). "
+                    "This must be complete narrative prose, NOT a summary or outline. "
+                    "Include detailed descriptions, character actions, dialogue, and setting details."
+    )
+    word_count: int = Field(
+        gt=0,
+        description="Total word count of the scene"
+    )
+
+    @field_validator('text')
+    @classmethod
+    def validate_content(cls, v):
+        """Validate scene text quality - reuses pattern from ChapterOutput"""
+        v = v.strip()
+        if len(v) < 150:
+            raise ValueError("Scene text must be at least 150 characters long")
+
+        # Check for incomplete or placeholder content
+        # NOTE: Ellipsis (...) is valid punctuation in fiction
+        placeholder_indicators = ["TODO", "FIXME", "TBD", "[PLACEHOLDER]"]
+        for indicator in placeholder_indicators:
+            if indicator in v.upper():
+                raise ValueError(f"Scene contains placeholder text: {indicator}")
+
+        return v
+
+    @field_validator('word_count')
+    @classmethod
+    def validate_word_count_consistency(cls, v, info):
+        """Ensure word count matches actual text - reuses pattern from ChapterOutput"""
+        if 'text' in info.data:
+            actual_word_count = len(info.data['text'].split())
+            tolerance = getattr(Config, 'PYDANTIC_WORD_COUNT_TOLERANCE', 50)
+            if abs(v - actual_word_count) > tolerance:
+                raise ValueError(
+                    f"Word count {v} doesn't match actual word count {actual_word_count} (tolerance: ±{tolerance})"
+                )
+        return v
+
+
 class SceneOutlineList(BaseModel):
     """Wrapper model for multiple SceneOutline objects following SceneListSchema pattern"""
     scenes: List[SceneOutline] = Field(description="List of scenes for chapter outline conversion")
@@ -746,6 +796,7 @@ MODEL_REGISTRY = {
     'GenerationStats': GenerationStats,
     'QualityMetrics': QualityMetrics,
     'SceneOutline': SceneOutline,
+    'SceneContent': SceneContent,
     'ChapterWithScenes': ChapterWithScenes,
     'TitleOutput': TitleOutput,
     'ReasoningOutput': ReasoningOutput,

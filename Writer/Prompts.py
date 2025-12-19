@@ -835,6 +835,28 @@ Make sure your response is well thought out and creative. Take a moment to make 
 
 When scene metadata is provided (setting, characters, purpose, word count), use it to guide your writing and ensure consistency with the story structure.
 ###############
+
+# OUTPUT FORMAT #
+**CRITICAL**: You MUST return your response as a JSON object matching this exact schema:
+
+{{
+  "text": "FULL SCENE PROSE GOES HERE",
+  "word_count": <actual word count of the text field>
+}}
+
+**IMPORTANT REQUIREMENTS:**
+1. The "text" field must contain **FULL PROSE** (200-300 words), **NOT a summary or outline**
+2. Write actual narrative prose with:
+   - Detailed character actions and emotions
+   - Rich sensory descriptions (sights, sounds, smells, textures)
+   - Natural dialogue if appropriate
+   - Setting and atmosphere details
+3. Do NOT use placeholder text like TODO, FIXME, TBD, or [PLACEHOLDER]
+4. The "word_count" field must accurately reflect the word count of "text"
+5. Minimum length: 150 characters for the text field
+
+**Remember**: You are writing the ACTUAL SCENE CONTENT, not a plan or summary.
+###############
 """
 
 SUMMARY_CHECK_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."

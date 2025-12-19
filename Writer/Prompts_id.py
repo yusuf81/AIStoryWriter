@@ -856,6 +856,28 @@ Pastikan respons Anda dipikirkan dengan matang dan kreatif. Luangkan waktu sejen
 Ketika metadata adegan disediakan (latar, karakter, tujuan, jumlah kata), gunakan untuk memandu penulisan Anda dan pastikan konsistensi dengan struktur cerita.
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 ###############
+
+# FORMAT OUTPUT #
+**PENTING**: Anda HARUS mengembalikan respons sebagai objek JSON yang sesuai dengan skema ini:
+
+{{
+  "text": "PROSA ADEGAN LENGKAP DI SINI",
+  "word_count": <jumlah kata aktual dari field text>
+}}
+
+**PERSYARATAN PENTING:**
+1. Field "text" harus berisi **PROSA LENGKAP** (200-300 kata), **BUKAN ringkasan atau outline**
+2. Tulis prosa naratif aktual dengan:
+   - Aksi dan emosi karakter yang detail
+   - Deskripsi sensorik yang kaya (penglihatan, suara, bau, tekstur)
+   - Dialog alami jika sesuai
+   - Detail latar dan atmosfer
+3. JANGAN gunakan teks placeholder seperti TODO, FIXME, TBD, atau [PLACEHOLDER]
+4. Field "word_count" harus akurat mencerminkan jumlah kata di "text"
+5. Panjang minimum: 150 karakter untuk field text
+
+**Ingat**: Anda menulis KONTEN ADEGAN AKTUAL, bukan rencana atau ringkasan.
+###############
 """
 
 SUMMARY_CHECK_INTRO = "Anda adalah Asisten AI yang membantu. Jawab prompt pengguna sebaik mungkin. Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia."

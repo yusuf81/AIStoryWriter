@@ -8,7 +8,7 @@ and uses their metadata to enhance scene generation prompts.
 import pytest
 import sys
 from unittest.mock import MagicMock, Mock
-from Writer.Models import SceneOutline
+from Writer.Models import SceneOutline, SceneContent
 
 # Mock termcolor before imports
 sys.modules['termcolor'] = MagicMock()
@@ -34,7 +34,7 @@ class TestSceneOutlineToSceneMetadata:
         # Mock interface to return scene text
         mock_iface = mock_interface()
         mock_scene_result = Mock()
-        mock_scene_result.action = "Rian stepped into the dark cave...\n\nMock scene text here."
+        mock_scene_result.text = "Rian stepped into the dark cave...\n\nMock scene text here."
         mock_iface.SafeGeneratePydantic.return_value = (
             [{"role": "assistant", "content": "mock"}],
             mock_scene_result,
@@ -75,7 +75,7 @@ class TestSceneOutlineToSceneMetadata:
 
         mock_iface = mock_interface()
         mock_scene_result = Mock()
-        mock_scene_result.action = "Scene text"
+        mock_scene_result.text = "Scene text"
         mock_iface.SafeGeneratePydantic.return_value = (
             [{"role": "assistant", "content": "mock"}],
             mock_scene_result,
@@ -117,7 +117,7 @@ class TestSceneOutlineToSceneMetadata:
 
         mock_iface = mock_interface()
         mock_scene_result = Mock()
-        mock_scene_result.action = "Scene text from string outline"
+        mock_scene_result.text = "Scene text from string outline"
         mock_iface.SafeGeneratePydantic.return_value = (
             [{"role": "assistant", "content": "mock"}],
             mock_scene_result,
@@ -159,7 +159,7 @@ class TestSceneOutlineToSceneMetadata:
         mock_iface2 = mock_interface()
 
         mock_result = Mock()
-        mock_result.action = "Scene text"
+        mock_result.text = "Scene text"
 
         mock_iface1.SafeGeneratePydantic.return_value = ([], mock_result, {})
         mock_iface2.SafeGeneratePydantic.return_value = ([], mock_result, {})
@@ -185,3 +185,66 @@ class TestSceneOutlineToSceneMetadata:
         # should be more detailed than string-only version
         assert len(prompt1_text) > 0
         assert len(prompt2_text) > 0
+
+    def test_scene_outline_to_scene_returns_full_prose(self, mock_interface, mock_logger):
+        """Test that SceneOutlineToScene uses SceneContent model and returns full prose, not summary"""
+        from Writer.Scene.SceneOutlineToScene import SceneOutlineToScene
+
+        # Arrange: Create mock SceneContent response with full prose
+        mock_scene_content = SceneContent(
+            text="Alex walked through the misty forest, his heart pounding with anticipation. "
+                 "The ancient trees loomed overhead, their branches creating intricate patterns "
+                 "against the twilight sky. He could hear the distant sound of water flowing, "
+                 "a reminder of the river he needed to cross. Sarah's words echoed in his mind: "
+                 "'Meet me where the old bridge stands.' As he pushed through the underbrush, "
+                 "thorns caught at his cloak, but he pressed on. The atmosphere grew heavier "
+                 "with each step, the mist thickening around him like a living thing. Strange "
+                 "sounds whispered through the trees, making him question whether he was truly "
+                 "alone. The bridge appeared suddenly, its weathered planks spanning the rushing "
+                 "water below. There, on the far side, he saw her silhouette against the dying "
+                 "light. She stood motionless, waiting. Alex took a deep breath and stepped "
+                 "onto the first plank, feeling it creak beneath his weight.",
+            word_count=155
+        )
+
+        # Mock interface to return SceneContent
+        mock_iface = mock_interface()
+        mock_iface.SafeGeneratePydantic.return_value = (
+            [{"role": "assistant", "content": "mock"}],
+            mock_scene_content,
+            {"tokens": 200}
+        )
+
+        # Create scene outline for input
+        scene_obj = SceneOutline(
+            scene_number=1,
+            setting="Misty forest with old bridge",
+            characters_present=["Alex", "Sarah"],
+            action="Alex meets Sarah at the bridge",
+            purpose="Establish tension and setting",
+            estimated_word_count=200
+        )
+
+        # Act: Call SceneOutlineToScene
+        result = SceneOutlineToScene(
+            mock_iface,
+            mock_logger(),
+            _SceneNum=1,
+            _TotalScenes=3,
+            _ThisSceneOutline=scene_obj,
+            _Outline="Test outline",
+            _BaseContext="Test context"
+        )
+
+        # Assert: Should return full prose from SceneContent.text
+        assert isinstance(result, str), "Should return string"
+        assert len(result) > 500, "Should be full prose (500+ chars), not summary"
+        assert "walked through the misty forest" in result
+        assert "SafeGeneratePydantic" in str(mock_iface.method_calls)
+
+        # Verify SceneContent was used (not SceneOutline)
+        call_args = mock_iface.SafeGeneratePydantic.call_args
+        assert call_args is not None, "SafeGeneratePydantic should have been called"
+        # The 4th argument (index 0, position 3) should be SceneContent class
+        model_arg = call_args[0][3]
+        assert model_arg == SceneContent, f"Expected SceneContent model, got {model_arg}"
