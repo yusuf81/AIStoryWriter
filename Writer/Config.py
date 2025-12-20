@@ -1,6 +1,8 @@
 #ollamasemua="ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
 #ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
-ollamasemua="aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
+#ollamasemua="aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
+#ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
+ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:q8_0"
 INITIAL_OUTLINE_WRITER_MODEL = (
     #"ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
@@ -95,6 +97,9 @@ NATIVE_LANGUAGE = "id"
 
 # Maximum retries for Pydantic validation
 MAX_PYDANTIC_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk Pydantic validation
+
+# Maximum retries for OpenRouter API
+MAX_OPENROUTER_RETRIES = 2  # Maximum retries for OpenRouter API calls
 
 # Configuration comment removed - SafeGenerateText is no longer used
 # MAX_TEXT_RETRIES = 5  # This is deprecated as SafeGenerateText is replaced

@@ -197,7 +197,7 @@ class OpenRouter:
         body = {
             "model": self.model,
             "messages": messages,
-            "max_token": (
+            "max_tokens": (
                 self.max_tokens if self.max_tokens > 0 else None
             ),  # Kirim None jika 0
             "temperature": self.temperature,

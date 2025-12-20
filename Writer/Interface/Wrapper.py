@@ -97,6 +97,33 @@ class Interface:
             except Exception as e:
                 print(f"Failed to install {package_name}: {e}", file=sys.stderr)
 
+    def _build_response_format(self, FormatSchema_dict: dict = None) -> dict:
+        """
+        Build response_format dict for providers that support structured outputs.
+        Supports both JSON Schema and basic JSON object formats.
+
+        Args:
+            FormatSchema_dict: JSON Schema dict or basic format specification
+
+        Returns:
+            dict: response_format configuration for API call
+        """
+        if FormatSchema_dict is None:
+            return {}
+
+        if (isinstance(FormatSchema_dict, dict) and
+            'properties' in FormatSchema_dict and
+            FormatSchema_dict['properties']):
+            # Full JSON Schema support (only if has non-empty properties)
+            return {
+                "type": "json_schema",
+                "json_schema": FormatSchema_dict,
+                "strict": True
+            }
+        else:
+            # Basic JSON object format (existing behavior) - for empty dict or non-schema
+            return {"type": "json_object"}
+
     def LoadModels(self, Models: list):
         for Model in Models:
             if Model in self.Clients: continue
@@ -645,9 +672,17 @@ For example:
 
         ReqOptions = ModelOptions_dict.copy() if ModelOptions_dict is not None else {}
         if Seed_int is not None: ReqOptions["seed"] = Seed_int
-        if _FormatSchema_dict: ReqOptions.update({"response_format": {"type": "json_object"}, "temperature": ReqOptions.get("temperature", 0.0)})
 
-        MaxRetries = getattr(Writer.Config, "MAX_OPENROUTER_RETRIES", 2)
+        # Enhanced FormatSchema handling for JSON Schema support (using DRY helper)
+        if _FormatSchema_dict is not None:
+            response_format = self._build_response_format(_FormatSchema_dict)
+            if response_format:
+                ReqOptions.update({"response_format": response_format})
+                # Apply temperature adjustment for basic JSON object mode only
+                if response_format.get("type") == "json_object":
+                    ReqOptions.update({"temperature": ReqOptions.get("temperature", 0.0)})
+
+        MaxRetries = Writer.Config.MAX_OPENROUTER_RETRIES
         for attempt in range(MaxRetries):
             try:
                 # Always use non-streaming mode (streaming removed)
