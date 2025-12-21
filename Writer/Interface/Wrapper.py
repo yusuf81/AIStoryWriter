@@ -192,7 +192,7 @@ class Interface:
         raise DeprecationWarning("SafeGenerateText is deprecated. Use SafeGeneratePydantic instead.")
 
     def SafeGenerateJSON(self, _Logger, _Messages, _Model: str, _SeedOverride: int = -1, _FormatSchema: dict = None, _max_retries_override: int = None):
-        CurrentMessages = self.RemoveThinkTagFromAssistantMessages([m.copy() for m in _Messages])
+        CurrentMessages = [m.copy() for m in _Messages]
         Retries = 0
         max_r = self._get_retry_limit(_max_retries_override)
 
@@ -605,9 +605,13 @@ For example:
         if _FormatSchema_dict:
             chat_params["format"] = "json"
 
-        # Disable thinking for Qwen models to prevent infinite loops
-        if "qwen" in ProviderModel_name.lower():
+        # Control LLM reasoning mode via config
+        # This controls native reasoning at model level, not app reasoning chain
+        # Universal approach: send think=False for ALL models when reasoning is disabled
+        # Non-reasoning models will simply ignore this parameter
+        if not getattr(Writer.Config, 'ENABLE_LLM_REASONING_MODE', True):
             chat_params["think"] = False
+            _Logger.Log(f"LLM reasoning mode DISABLED for {ProviderModel_name} (ENABLE_LLM_REASONING_MODE=False)", 6)
 
         MaxRetries = getattr(Writer.Config, "MAX_OLLAMA_RETRIES", 2)
         for attempt in range(MaxRetries):
@@ -937,50 +941,6 @@ For example:
         if not _Messages or not isinstance(_Messages, list): return ""
         return str(_Messages[-1].get("content", "")) if isinstance(_Messages[-1], dict) else ""
 
-    def RemoveThinkTagFromAssistantMessages(self, _Messages: list):
-        """
-        Remove <thinking> tags and their content from assistant messages.
-        Handles both paired and unpaired thinking tags.
-
-        Args:
-            _Messages: List of message dictionaries with 'role' and 'content' keys
-
-        Returns:
-            List of messages with thinking tags removed from assistant messages
-        """
-        if not _Messages or not isinstance(_Messages, list):
-            return _Messages
-
-        result = []
-        for message in _Messages:
-            if not isinstance(message, dict):
-                result.append(message)
-                continue
-
-            # Create a copy to avoid modifying original
-            cleaned_msg = message.copy()
-
-            # Only process assistant messages
-            if cleaned_msg.get("role") == "assistant" and "content" in cleaned_msg:
-                content = str(cleaned_msg["content"])
-                # Use regex to remove thinking tags and everything between them
-                import re
-                # Remove paired thinking tags first
-                pattern = r'<thinking>.*?</thinking>'
-                cleaned_content = re.sub(pattern, '', content, flags=re.DOTALL)
-                # Also handle unclosed thinking tags (edge case)
-                if "<thinking>" in cleaned_content:
-                    # For unpaired tag, remove everything from <thinking> to the end
-                    # since we can't reliably determine thinking section boundaries
-                    cleaned_content = re.sub(r'<thinking>.*', '', cleaned_content, flags=re.DOTALL)
-                # Clean up any extra whitespace at start and multiple newlines
-                cleaned_content = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned_content)
-                cleaned_content = cleaned_content.lstrip('\n\r ')
-                cleaned_msg["content"] = cleaned_content
-
-            result.append(cleaned_msg)
-
-        return result
 
     def _ollama_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
         """Generate embeddings using Ollama"""

@@ -99,6 +99,16 @@ NATIVE_LANGUAGE = "id"
 MAX_PYDANTIC_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk Pydantic validation
 PYDANTIC_RETRY_DELAY = 3  # Delay in seconds before retry (helps Ollama model unload)
 
+# LLM Native Reasoning Mode Control
+#
+# CONTROLS native LLM-level reasoning (NOT app reasoning chain)
+# Applies to models that support Ollama's 'think' parameter:
+# - Llama-SEA-LION-v3.5-8B-R (models ending with -R suffix)
+# - Qwen2.5-coder models (native reasoning variants)
+#
+# Setting to False prevents reasoning-related timeout/stuck issues
+ENABLE_LLM_REASONING_MODE = False  # False = disable LLM native reasoning, True = allow reasoning
+
 # Maximum retries for OpenRouter API
 MAX_OPENROUTER_RETRIES = 2  # Maximum retries for OpenRouter API calls
 
