@@ -88,6 +88,8 @@ def extract_story_content(markdown_content):
     Returns:
         Cleaned content with only title and chapters
     """
+    from Writer.FieldConstants import is_metadata_section
+
     lines = markdown_content.split('\n')
     in_yaml = False
     in_metadata = False
@@ -111,8 +113,8 @@ def extract_story_content(markdown_content):
             cleaned_lines.append(line)
             continue
 
-        # Skip metadata sections
-        if line.startswith('## Summary') or line.startswith('## Tags'):
+        # Skip metadata sections - use robust FieldConstants detection
+        if is_metadata_section(line):
             in_metadata = True
             continue
         elif line.startswith('---') and story_started and in_metadata:
@@ -144,6 +146,13 @@ def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
     Returns:
         tuple: (success: bool, message: str)
     """
+    # Import FieldConstants functions for robust section detection
+    from Writer.FieldConstants import (
+        is_metadata_section,
+        is_story_outline_section,
+        is_generation_statistics_section
+    )
+
     try:
         # Extract story-only content
         story_content = extract_story_content(MDContent)
@@ -183,8 +192,8 @@ def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
                 title_processed = True
                 continue
 
-            # Chapter headings
-            if line.startswith('## ') and not line.startswith('## Summary') and not line.startswith('## Tags'):
+            # Chapter headings - use robust FieldConstants detection
+            if line.startswith('## ') and not is_metadata_section(line):
                 # Save previous chapter content using MarkdownProcessor
                 if current_chapter:
                     chapter_text = '\n'.join(current_chapter).strip()
@@ -204,8 +213,8 @@ def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
                 formatted_title = _format_chapter_title(ch_num, ch_title)
                 story.append(Paragraph(formatted_title, chapter_style))
                 current_chapter = []
-            # Story Outline section handling
-            elif line.startswith('# Story Outline'):
+            # Story Outline section handling - use robust FieldConstants detection
+            elif is_story_outline_section(line):
                 # Save previous chapter content using MarkdownProcessor
                 if current_chapter:
                     chapter_text = '\n'.join(current_chapter).strip()
@@ -219,8 +228,8 @@ def GeneratePDF(Interface, _Logger, MDContent, OutputPath, Title):
 
                 # Add Story Outline header with different styling
                 story.append(Paragraph(line[2:].strip(), chapter_style))
-            # Generation Statistics section handling
-            elif line.startswith('# Generation Statistics'):
+            # Generation Statistics section handling - use robust FieldConstants detection
+            elif is_generation_statistics_section(line):
                 # Save previous chapter content using MarkdownProcessor
                 if current_chapter:
                     chapter_text = '\n'.join(current_chapter).strip()

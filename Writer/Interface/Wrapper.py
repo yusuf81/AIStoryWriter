@@ -19,6 +19,29 @@ except ImportError:
     PYDANTIC_AVAILABLE = False
 
 
+def _is_validation_or_missing_error(error) -> bool:
+    """
+    Robust error classification using FieldConstants.
+
+    Args:
+        error: Exception to classify
+
+    Returns:
+        bool: True if error is validation or missing field error
+    """
+    try:
+        from Writer.FieldConstants import classify_error
+
+        error_types = classify_error(str(error))
+        return "missing_field" in error_types or "validation_error" in error_types
+    except (ImportError, Exception):
+        # Fallback to simple check if FieldConstants not available
+        if error is None:
+            return False
+        error_str = str(error).lower()
+        return "missing" in error_str or "validation" in error_str
+
+
 def get_pydantic_format_instructions(model_class: type) -> str:
     """
     Generate format instructions for Pydantic models.
@@ -375,7 +398,7 @@ class Interface:
                     # Keep existing generic hints for other error types
                     if isinstance(e, TypeError) and "list" in str(e):
                         _Logger.Log("Hint: Ensure response is single JSON object, not multiple objects. DO NOT include schema in response.", 5)
-                    elif "missing" in str(e).lower() or "validation" in str(e).lower():
+                    elif _is_validation_or_missing_error(e):
                         _Logger.Log("Hint: Ensure all required fields are present and correct.", 5)
 
                     # Add delay before retry to allow model unload (prevents Ollama "Stopping..." stuck)
@@ -415,8 +438,9 @@ class Interface:
                     "Be accurate but don't obsess over exact counts."
                 )
 
-            # Character name minimum length
-            if 'character' in field_name.lower() and 'minLength' in field_info:
+            # Character name minimum length - use robust field detection
+            from Writer.FieldConstants import is_character_field
+            if is_character_field(field_name) and 'minLength' in field_info:
                 min_len = field_info['minLength']
                 explanations.append(
                     f"'{field_name}': Each name must be at least {min_len} characters. "
