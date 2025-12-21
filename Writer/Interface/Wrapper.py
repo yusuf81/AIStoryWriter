@@ -350,6 +350,11 @@ class Interface:
                         "content": error_message
                     })
 
+                    # Add delay before retry to allow model unload (prevents Ollama "Stopping..." stuck)
+                    retry_delay = getattr(Writer.Config, 'PYDANTIC_RETRY_DELAY', 3)
+                    _Logger.Log(f"Waiting {retry_delay}s before retry to allow model unload...", 6)
+                    time.sleep(retry_delay)
+
                     continue
                 else:
                     # Final attempt failed - format and raise
@@ -372,6 +377,11 @@ class Interface:
                         _Logger.Log("Hint: Ensure response is single JSON object, not multiple objects. DO NOT include schema in response.", 5)
                     elif "missing" in str(e).lower() or "validation" in str(e).lower():
                         _Logger.Log("Hint: Ensure all required fields are present and correct.", 5)
+
+                    # Add delay before retry to allow model unload (prevents Ollama "Stopping..." stuck)
+                    retry_delay = getattr(Writer.Config, 'PYDANTIC_RETRY_DELAY', 3)
+                    _Logger.Log(f"Waiting {retry_delay}s before retry to allow model unload...", 6)
+                    time.sleep(retry_delay)
 
                     continue
                 else:

@@ -97,6 +97,7 @@ NATIVE_LANGUAGE = "id"
 
 # Maximum retries for Pydantic validation
 MAX_PYDANTIC_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk Pydantic validation
+PYDANTIC_RETRY_DELAY = 3  # Delay in seconds before retry (helps Ollama model unload)
 
 # Maximum retries for OpenRouter API
 MAX_OPENROUTER_RETRIES = 2  # Maximum retries for OpenRouter API calls
