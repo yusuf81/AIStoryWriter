@@ -580,7 +580,8 @@ For example:
             if key not in ValidParameters: del CurrentModelOptions[key]
         CurrentModelOptions.setdefault("num_ctx", getattr(Writer.Config, "OLLAMA_CTX", 4096))
         CurrentModelOptions["seed"] = Seed_int
-        if _FormatSchema_dict: CurrentModelOptions.update({"format": "json", "temperature": CurrentModelOptions.get("temperature", 0.0)})
+        if _FormatSchema_dict:
+            CurrentModelOptions.update({"temperature": CurrentModelOptions.get("temperature", 0.0)})
 
         # Prepare chat parameters - always non-streaming
         chat_params = {
@@ -589,6 +590,10 @@ For example:
             "stream": False,
             "options": CurrentModelOptions
         }
+
+        # Add format parameter at TOP level if structured output is needed
+        if _FormatSchema_dict:
+            chat_params["format"] = "json"
 
         # Disable thinking for Qwen models to prevent infinite loops
         if "qwen" in ProviderModel_name.lower():
@@ -634,36 +639,72 @@ For example:
                 time.sleep(random.uniform(0.5,1.5) * (attempt + 1))
         raise Exception(f"Ollama chat failed for {_Model_key} after {MaxRetries} attempts.")
 
-    def _google_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
-        from google.genai.types import HarmCategory, HarmBlockThreshold
-        Messages_transformed = [{"role": "user" if m["role"] == "system" else ("model" if m["role"] == "assistant" else m["role"]),
-                                 "parts": [m["content"]]} for m in _Messages_list]
-
-        safety_settings = {cat: HarmBlockThreshold.BLOCK_NONE for cat in HarmCategory if cat != HarmCategory.HARM_CATEGORY_UNSPECIFIED}
-        gen_config = ModelOptions_dict.copy() if ModelOptions_dict is not None else {}
-        gen_config["safety_settings"] = safety_settings
-        if _FormatSchema_dict: gen_config.update({"response_mime_type": "application/json", "response_schema": _FormatSchema_dict, "temperature": gen_config.get("temperature", 0.0)})
-
-        MaxRetries = getattr(Writer.Config, "MAX_GOOGLE_RETRIES", 2)
+    def _execute_with_retry(self, _Logger, operation, _Model_key, operation_name="API call"):
+        """DRY helper: Execute operation with retry logic"""
+        MaxRetries = Writer.Config.MAX_GOOGLE_RETRIES
         for attempt in range(MaxRetries):
             try:
-                client = self.Clients[_Model_key]
-                GenResponse = client.generate_content(contents=Messages_transformed, stream=False, generation_config=gen_config)
-
-                # Always use non-streaming mode (streaming removed)
-                AssistantMessage = {"role": "assistant", "content": GenResponse.text}
-
-                # Append assistant message to the original _Messages_list structure for consistency
-                FinalMessages = _Messages_list + [AssistantMessage]
-                TokenUsage = None
-                usage_meta = getattr(GenResponse, 'usage_metadata', None)
-                if usage_meta: TokenUsage = {"prompt_tokens": usage_meta.prompt_token_count, "completion_tokens": usage_meta.candidates_token_count}
-                return FinalMessages, TokenUsage
+                return operation()
             except Exception as e:
-                _Logger.Log(f"Google API Error ({_Model_key}, Attempt {attempt+1}/{MaxRetries}): {e}", 7)
-                if attempt + 1 >= MaxRetries: raise
+                _Logger.Log(f"Google {operation_name} error ({_Model_key}, Attempt {attempt+1}/{MaxRetries}): {e}", 7)
+                if attempt + 1 >= MaxRetries:
+                    raise
                 time.sleep(random.uniform(0.5,1.5) * (attempt + 1))
-        raise Exception(f"Google chat failed for {_Model_key} after {MaxRetries} attempts.")
+        raise Exception(f"Google {operation_name} failed for {_Model_key} after {MaxRetries} attempts.")
+
+    def _transform_messages_for_google(self, _Messages_list):
+        """Transform messages for Google Gemini API compatibility"""
+        return [
+            {
+                "role": "user" if m["role"] == "system" else ("model" if m["role"] == "assistant" else m["role"]),
+                "parts": [m["content"]]
+            }
+            for m in _Messages_list
+        ]
+
+    def _google_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
+        from google.genai.types import HarmCategory, HarmBlockThreshold, SafetySetting
+
+        # Use helper methods
+        Messages_transformed = self._transform_messages_for_google(_Messages_list)
+
+        # Optimized safety settings
+        safety_settings = [
+            SafetySetting(category=cat, threshold=HarmBlockThreshold.BLOCK_NONE)
+            for cat in HarmCategory if cat != HarmCategory.HARM_CATEGORY_UNSPECIFIED
+        ]
+
+        gen_config = ModelOptions_dict.copy() if ModelOptions_dict is not None else {}
+        gen_config["safety_settings"] = safety_settings
+        if _FormatSchema_dict:
+            gen_config.update({
+                "response_mime_type": "application/json",
+                "response_schema": _FormatSchema_dict,
+                "temperature": gen_config.get("temperature", 0.0)
+            })
+
+        client = self.Clients[_Model_key]
+
+        # Use retry helper
+        def operation():
+            GenResponse = client.generate_content(
+                contents=Messages_transformed,
+                stream=False,
+                generation_config=gen_config
+            )
+
+            AssistantMessage = {"role": "assistant", "content": GenResponse.text}
+            FinalMessages = _Messages_list + [AssistantMessage]
+            TokenUsage = None
+            usage_meta = getattr(GenResponse, 'usage_metadata', None)
+            if usage_meta:
+                TokenUsage = {
+                    "prompt_tokens": usage_meta.prompt_token_count,
+                    "completion_tokens": usage_meta.candidates_token_count
+                }
+            return FinalMessages, TokenUsage
+
+        return self._execute_with_retry(_Logger, operation, _Model_key, "chat")
 
     def _openrouter_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
         Client = self.Clients[_Model_key]
@@ -956,29 +997,36 @@ For example:
         return embeddings, {"prompt_tokens": total_tokens, "completion_tokens": 0}
 
     def _google_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
-        """Generate embeddings using Gemini"""
-        import google.genai as genai
+        """Generate embeddings using Gemini with retry logic and client pattern"""
+        from google.genai import types
 
         client = self.Clients[_Model_key]
         embeddings = []
         total_tokens = 0
 
-        for text in _Texts:
+        MaxRetries = Writer.Config.MAX_GOOGLE_RETRIES
+        for attempt in range(MaxRetries):
             try:
-                # Use Gemini's embedding API
-                result = genai.embed_content(
-                    model=f'models/{ProviderModel_name}',
-                    content=text,
-                    task_type="retrieval_document"
-                )
-                embeddings.append(result['embedding'])
-                # Gemini doesn't provide token count, rough estimate
-                total_tokens += len(text.split())
-            except Exception as e:
-                _Logger.Log(f"Gemini embedding error: {e}", 7)
-                raise
+                for text in _Texts:
+                    # Use client pattern (latest SDK)
+                    result = client.models.embed_content(
+                        model=f'models/{ProviderModel_name}',
+                        content=text,
+                        config=types.EmbedContentConfig(task_type="retrieval_document")
+                    )
+                    # Use object attribute access (not dictionary)
+                    embeddings.append(result.embedding)
+                    total_tokens += len(text.split())
 
-        return embeddings, {"prompt_tokens": total_tokens, "completion_tokens": 0}
+                return embeddings, {"prompt_tokens": total_tokens, "completion_tokens": 0}
+
+            except Exception as e:
+                _Logger.Log(f"Gemini embedding error ({_Model_key}, Attempt {attempt+1}/{MaxRetries}): {e}", 7)
+                if attempt + 1 >= MaxRetries:
+                    raise
+                time.sleep(random.uniform(0.5,1.5) * (attempt + 1))
+
+        raise Exception(f"Google embedding failed for {_Model_key} after {MaxRetries} attempts.")
 
     def _openrouter_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
         """Generate embeddings using OpenRouter (OpenAI-compatible)"""

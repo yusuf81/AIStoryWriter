@@ -1,8 +1,8 @@
 #ollamasemua="ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
 #ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
 #ollamasemua="aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
-#ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
-ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:q8_0"
+ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:latest"
+#ollamasemua="aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
 INITIAL_OUTLINE_WRITER_MODEL = (
     #"ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
@@ -101,6 +101,9 @@ MAX_PYDANTIC_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk Pydantic valid
 # Maximum retries for OpenRouter API
 MAX_OPENROUTER_RETRIES = 2  # Maximum retries for OpenRouter API calls
 
+# Maximum retries for Google API calls
+MAX_GOOGLE_RETRIES = 2
+
 # Configuration comment removed - SafeGenerateText is no longer used
 # MAX_TEXT_RETRIES = 5  # This is deprecated as SafeGenerateText is replaced
 
@@ -166,4 +169,4 @@ EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback
 
 # Example model URLs for reference (not actively used)
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"
-"google://gemini-1.5-pro"
+"google://gemini-3-flash-preview"  # Updated to current model series

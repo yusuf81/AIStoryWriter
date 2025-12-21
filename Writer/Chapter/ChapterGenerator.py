@@ -529,7 +529,7 @@ def ReviseChapter(
         _Logger,
         Messages,
         Writer.Config.CHAPTER_REVISION_WRITER_MODEL,
-        OutlineOutput
+        ChapterOutput
     )
     # NEW: Use structured method
     SummaryText: str = revision_obj.to_prompt_string()
