@@ -105,20 +105,12 @@ class TestChapterGeneratorPydanticConversion:
         # Arrange
         mock_iface = mock_interface()
 
-        # Use OutlineOutput for revision
-        from Writer.Models import OutlineOutput
-        revision = OutlineOutput(
-            title="Revised Chapter",
-            genre="Fantasy",
-            chapters=["Revised chapter content with more details and better flow"],
-            character_list=["Hero"],
-            setting={
-                "time": "Fantasy era",
-                "location": "Fantasy world",
-                "culture": "Magical society with heroes and mythical creatures",
-                "mood": "Adventurous and mysterious"
-            },
-            target_chapter_count=5
+        # Use ChapterOutput for revision (fixed: was OutlineOutput)
+        from Writer.Models import ChapterOutput
+        revision = ChapterOutput(
+            text="Revised chapter content with more details and better flow that meets the minimum length requirement for validation.",
+            word_count=20,
+            chapter_number=1
         )
 
         mock_iface.SafeGeneratePydantic.return_value = (
@@ -157,7 +149,7 @@ class TestChapterGeneratorPydanticConversion:
         mock_iface = mock_interface()
 
         # Mock models
-        from Writer.Models import ChapterOutput, OutlineOutput
+        from Writer.Models import ChapterOutput
         segment = ChapterOutput(
             text="Segment content that is long enough to meet validation requirements. This text is repeated multiple times to ensure it meets the minimum length requirement of 100 characters for the ChapterOutput model validation.",
             word_count=30,
@@ -168,18 +160,10 @@ class TestChapterGeneratorPydanticConversion:
             word_count=25,
             chapter_number=1
         )
-        revision = OutlineOutput(
-            title="Revision",
-            genre="Test",
-            chapters=["Revised chapter content"],
-            character_list=["Character"],
-            setting={
-                "time": "Test era",
-                "location": "Test setting",
-                "culture": "Test culture with traditions",
-                "mood": "Test mood and atmosphere"
-            },
-            target_chapter_count=1
+        revision = ChapterOutput(
+            text="Revised chapter content that meets the minimum length requirements for the ChapterOutput model validation.",
+            word_count=15,
+            chapter_number=1
         )
 
         # Set up different returns for each call
