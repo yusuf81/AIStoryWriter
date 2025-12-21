@@ -1,12 +1,10 @@
-import json
-
 import Writer.LLMEditor
 import Writer.PrintUtils
 import Writer.Config
 import Writer.Chapter.ChapterGenSummaryCheck
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 import Writer.Statistics  # Add near other imports at the top
-from Writer.Models import ChapterOutput, OutlineOutput
+from Writer.Models import ChapterOutput
 
 import Writer.Scene.ChapterByScene
 
@@ -531,8 +529,8 @@ def ReviseChapter(
         Writer.Config.CHAPTER_REVISION_WRITER_MODEL,
         ChapterOutput
     )
-    # NEW: Use structured method
-    SummaryText: str = revision_obj.to_prompt_string()
+    # Use .text attribute from ChapterOutput
+    SummaryText: str = revision_obj.text
     NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
     # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
     _Logger.Log(
