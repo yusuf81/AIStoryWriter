@@ -1,8 +1,9 @@
 #ollamasemua="ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
 #ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
 #ollamasemua="aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
-ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:latest"
+#ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:latest"
 #ollamasemua="aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
+ollamasemua="aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
 INITIAL_OUTLINE_WRITER_MODEL = (
     #"ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
@@ -107,7 +108,7 @@ PYDANTIC_RETRY_DELAY = 3  # Delay in seconds before retry (helps Ollama model un
 # - Qwen2.5-coder models (native reasoning variants)
 #
 # Setting to False prevents reasoning-related timeout/stuck issues
-ENABLE_LLM_REASONING_MODE = False  # False = disable LLM native reasoning, True = allow reasoning
+ENABLE_LLM_REASONING_MODE = True  # False = disable LLM native reasoning, True = allow reasoning
 
 # Maximum retries for OpenRouter API
 MAX_OPENROUTER_RETRIES = 2  # Maximum retries for OpenRouter API calls
@@ -166,15 +167,17 @@ LOREBOOK_AUTO_CLEAR = True  # Auto-clear lorebook for fresh runs (not resume)
 USE_PYDANTIC_PARSING = True  # Enable/disable structured output
 PYDANTIC_WORD_COUNT_TOLERANCE = 100  # Tolerance for word count validation (±N words)
 
-USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning
+#USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning
+USE_REASONING_CHAIN = False  # Enable/disable two-pass reasoning
 REASONING_MODEL = CHAPTER_STAGE1_WRITER_MODEL  # Model to use for reasoning generation
 REASONING_LOG_SEPARATE = True  # Log reasoning to separate file
 REASONING_CACHE_RESULTS = False  # Cache reasoning results
 
 # Embedding Model Configuration
-EMBEDDING_MODEL = "ollama://nomic-embed-text:latest@10.23.82.116"  # Embedding model string (provider://format). Must be explicitly set.
+#EMBEDDING_MODEL = "ollama://nomic-embed-text:latest@10.23.82.116"  # Embedding model string (provider://format). Must be explicitly set.
+EMBEDDING_MODEL = "ollama://qwen3-embedding:latest@10.23.82.116"  # Embedding model string (provider://format). Must be explicitly set.
 EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for nomic-embed-text)
-EMBEDDING_CTX = 8192  # Context window for embeddings
+EMBEDDING_CTX = 8192  # Context window for embeddings (match nomic-embed-text-v2-moe capabilities)
 EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback
 
 

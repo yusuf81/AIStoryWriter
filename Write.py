@@ -241,6 +241,11 @@ Parser.add_argument(
     help="Path to a .state.json file to resume a previous run.",
 )
 Parser.add_argument(
+    "-ForceResume",
+    action="store_true",
+    help="Skip status check when resuming (use to resume from error_in_main or other states)",
+)
+Parser.add_argument(
     "-GeneratePDF",
     action="store_true",
     help="Generate PDF output with story content only (title and chapters)",
@@ -387,7 +392,7 @@ def main():
         try:
             print(f"Attempting to resume from state file: {state_filepath}")
             current_state = load_state(state_filepath)
-            if current_state.get("status") != "in_progress":
+            if current_state.get("status") != "in_progress" and not Args.ForceResume:
                 print(
                     f"Run already completed or in unknown state ({current_state.get('status')}). Exiting."
                 )
