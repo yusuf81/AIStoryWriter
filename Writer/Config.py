@@ -1,9 +1,9 @@
 # ollamasemua="ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
 # ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
-# ollamasemua="aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
+ollamasemua="aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
 # ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:latest"
 # ollamasemua="aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
-ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
+#ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
 INITIAL_OUTLINE_WRITER_MODEL = (
     # "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
