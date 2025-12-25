@@ -1,8 +1,9 @@
 """Test LangChain deprecation warnings are handled properly."""
 
 import warnings
-import pytest
-from unittest.mock import patch, MagicMock, PropertyMock
+import pytest  # type: ignore # Needed for pytest fixtures
+from unittest.mock import patch
+
 
 def test_lorebook_imports_chroma_without_deprecation():
     """Test that Lorebook initializes without LangChain deprecation warnings."""
@@ -11,7 +12,7 @@ def test_lorebook_imports_chroma_without_deprecation():
         warnings.simplefilter("always")
 
         # Import the module first
-        import Writer.Lorebook
+        import Writer.Lorebook  # type: ignore # Loaded to check for deprecation warnings
 
         # Mock the dependencies to avoid actual initialization
         with patch('Writer.Lorebook.LANGCHAIN_AVAILABLE', True):
@@ -21,19 +22,20 @@ def test_lorebook_imports_chroma_without_deprecation():
                         from Writer.Lorebook import LorebookManager
                         lorebook = LorebookManager(persist_dir="./test_lorebook_db")
 
-                            # Check that no deprecation warnings were raised
+                        # Check that no deprecation warnings were raised
         deprecation_warnings = [warning for warning in w
-                              if issubclass(warning.category, DeprecationWarning)]
+                                if issubclass(warning.category, DeprecationWarning)]
         langchain_warnings = [warning for warning in deprecation_warnings
-                            if 'langchain' in str(warning.message).lower()]
+                              if 'langchain' in str(warning.message).lower()]
 
         assert len(langchain_warnings) == 0, \
             f"LangChain deprecation warnings found: {[str(w.message) for w in langchain_warnings]}"
 
+
 def test_lorebook_uses_langchain_chroma_preferentially():
     """Test that Lorebook uses Chroma correctly when imported."""
     # Import the module first
-    import Writer.Lorebook
+    import Writer.Lorebook  # type: ignore # Loaded to check for deprecation warnings
 
     # Mock to check which Chroma import is used
     with patch('Writer.Lorebook.Chroma') as mock_chroma:

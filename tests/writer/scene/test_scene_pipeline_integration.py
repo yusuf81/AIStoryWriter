@@ -5,10 +5,10 @@ These tests verify the full pipeline works correctly with metadata preservation
 and redundant LLM call removal.
 """
 
-import pytest
+import pytest  # type: ignore # Needed for pytest fixtures
 import sys
-from unittest.mock import MagicMock, Mock, patch
-from Writer.Models import SceneOutline, SceneOutlineList
+from unittest.mock import MagicMock, patch
+from Writer.Models import SceneOutline
 
 # Mock termcolor before imports
 sys.modules['termcolor'] = MagicMock()

@@ -1,4 +1,6 @@
 # Writer/Lorebook.py - Vector-based lorebook management
+from Writer import PrintUtils
+from Writer import Config
 import os
 import re
 import json
@@ -7,16 +9,10 @@ from typing import Dict
 
 # Import from langchain-chroma exclusively (no fallback to deprecated langchain_community)
 from langchain_chroma import Chroma
-try:
-    from langchain_core.documents import Document
-except ImportError:
-    from langchain.docstore.document import Document
+from langchain_core.documents import Document
 LANGCHAIN_AVAILABLE = True
 CHROMA_SOURCE = "langchain_chroma"
 chroma_version = getattr(Chroma, '__version__', 'unknown')
-
-from Writer import Config
-from Writer import PrintUtils
 
 
 class LorebookManager:

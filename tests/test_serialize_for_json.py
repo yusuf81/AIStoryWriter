@@ -27,7 +27,13 @@ class TestSerializeForJson:
             title="Test Story",
             genre="Fantasy",
             themes=["magic", "adventure"],
-            characters={}
+            characters={},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         result = serialize_for_json(story)
@@ -61,7 +67,18 @@ class TestSerializeForJson:
         from Writer.Models import StoryElements, TitleOutput
         from Writer.StateManager import serialize_for_json
 
-        story = StoryElements(title="Test Story", genre="Fantasy", themes=["test"], characters={})
+        story = StoryElements(
+            title="Test Story",
+            genre="Fantasy",
+            themes=["test"],
+            characters={},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
+        )
         title = TitleOutput(title="Chapter 1")
 
         data = {
@@ -117,7 +134,18 @@ class TestSerializeForJson:
         from Writer.Models import StoryElements
         from Writer.StateManager import serialize_for_json
 
-        story = StoryElements(title="Test Story", genre="Fantasy", themes=["test"], characters={})
+        story = StoryElements(
+            title="Test Story",
+            genre="Fantasy",
+            themes=["test"],
+            characters={},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
+        )
 
         # Simulates Pipeline.py structure
         deeply_nested = {
@@ -162,7 +190,18 @@ class TestSerializeForJson:
         from Writer.Models import StoryElements
         from Writer.StateManager import serialize_for_json
 
-        story_elements = StoryElements(title="Test Story", genre="Fantasy", themes=["test"], characters={})
+        story_elements = StoryElements(
+            title="Test Story",
+            genre="Fantasy",
+            themes=["test"],
+            characters={},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
+        )
 
         # Exact structure from Pipeline.py:505-512
         StoryInfoJSON = {

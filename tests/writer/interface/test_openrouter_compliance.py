@@ -11,7 +11,7 @@ Phase 3 - REFACTOR: Tests will continue passing with improved code.
 
 import pytest
 import inspect
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import Writer.Config
 
 

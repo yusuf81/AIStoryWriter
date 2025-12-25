@@ -1,5 +1,8 @@
-import json, requests, time, sys  # Add sys for stderr
-from typing import Any, List, Mapping, Optional, Literal, Union, TypedDict
+import json
+import requests
+import time
+import sys  # Add sys for stderr
+from typing import List, Mapping, Optional, Literal, Union, TypedDict
 
 
 class OpenRouter:
@@ -8,11 +11,11 @@ class OpenRouter:
     https://openrouter.ai/docs#llm-parameters
     """
 
-    Message_Type = TypedDict(
+    Message_Type = TypedDict(  # type: ignore[misc]
         "Message",
         {"role": Literal["user", "assistant", "system", "tool"], "content": str},
     )
-    ProviderPreferences_Type = TypedDict(
+    ProviderPreferences_Type = TypedDict(  # type: ignore[misc]
         "ProviderPreferences",
         {
             "allow_fallbacks": Optional[bool],
@@ -62,7 +65,7 @@ class OpenRouter:
         model: str = "microsoft/wizardlm-2-7b",
         max_tokens: int = 0,
         temperature: Optional[float] | None = 1.0,
-        top_k: Optional[int] | None = 0.0,
+        top_k: Optional[int] | None = 0.0,  # type: ignore[assignment]
         top_p: Optional[float] = 1.0,
         presence_penalty: Optional[float] = 0.0,
         frequency_penalty: Optional[float] = 0.0,
@@ -185,10 +188,10 @@ class OpenRouter:
         self,
         messages: Message_Type,
         max_retries: int = 10,
-        seed: int = None,
+        seed: int = None,  # type: ignore[assignment]
         stream: bool = False,
     ):  # Tambahkan stream
-        messages = self.ensure_array(messages)
+        messages = self.ensure_array(messages)  # type: ignore
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "HTTP-Referer": "https://github.com/datacrystals/AIStoryWriter",  # Opsional, bisa dipertimbangkan untuk dihapus jika tidak diperlukan
@@ -214,7 +217,7 @@ class OpenRouter:
             "stop": self.stop,
             "provider": self.provider,
             "stream": stream,  # Atur stream secara dinamis
-            "usage": {"include": True} # <-- TAMBAHKAN BARIS INI
+            "usage": {"include": True}  # <-- TAMBAHKAN BARIS INI
         }
 
         # Hapus kunci dengan nilai None dari body untuk menghindari error dari beberapa model/provider
@@ -234,7 +237,7 @@ class OpenRouter:
                     if line:
                         decoded_line = line.decode("utf-8")
                         if decoded_line.startswith("data: "):
-                            json_data_string = decoded_line[len("data: ") :].strip()
+                            json_data_string = decoded_line[len("data: "):].strip()
                             if json_data_string == "[DONE]":
                                 break
                             try:

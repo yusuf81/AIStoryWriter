@@ -2,13 +2,11 @@
 TDD Tests for Enhanced StoryElements Model - London School Approach
 Tests for CharacterDetail model and enhanced StoryElements to fix prompt-model conflicts
 """
+from pydantic import ValidationError
 import pytest
-from unittest.mock import Mock, patch
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
-from pydantic import ValidationError
 
 
 class TestCharacterDetailModel:
@@ -24,7 +22,13 @@ class TestCharacterDetailModel:
         from Writer.Models import CharacterDetail
 
         # Should be able to create with just name (required field)
-        character = CharacterDetail(name="Rian")
+        character = CharacterDetail(
+            name="Rian",
+            physical_description=None,
+            personality=None,
+            background=None,
+            motivation=None
+        )
 
         assert character.name == "Rian"
         assert character.physical_description is None
@@ -50,10 +54,10 @@ class TestCharacterDetailModel:
         )
 
         assert character.name == "Rian"
-        assert "Tinggi" in character.physical_description
-        assert "Berani" in character.personality
-        assert "petualang" in character.background
-        assert "kekayaan" in character.motivation
+        assert "Tinggi" in (character.physical_description or "")
+        assert "Berani" in (character.personality or "")
+        assert "petualang" in (character.background or "")
+        assert "kekayaan" in (character.motivation or "")
 
     def test_character_detail_validation(self):
         """
@@ -66,7 +70,13 @@ class TestCharacterDetailModel:
 
         # Empty name should fail validation
         with pytest.raises(ValidationError) as exc_info:
-            CharacterDetail(name="")
+            CharacterDetail(
+                name="",
+                physical_description=None,
+                personality=None,
+                background=None,
+                motivation=None
+            )
 
         assert "name" in str(exc_info.value)
 
@@ -88,8 +98,8 @@ class TestCharacterDetailModel:
         )
 
         assert character.name == "Naga Kecil"
-        assert "hijau" in character.physical_description
-        assert "Cerdas" in character.personality
+        assert "hijau" in (character.physical_description or "")
+        assert "Cerdas" in (character.personality or "")
 
 
 class TestEnhancedStoryElements:
@@ -128,7 +138,13 @@ class TestEnhancedStoryElements:
             characters={
                 "karakter_utama": [main_character],
                 "karakter_pendukung": [supporting_character]
-            }
+            },
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         assert story_elements.title == "Harta Karun Naga Kecil"
@@ -149,13 +165,43 @@ class TestEnhancedStoryElements:
         from Writer.Models import StoryElements, CharacterDetail
 
         # Multiple main characters
-        protagonist = CharacterDetail(name="Alex", motivation="Save the kingdom")
-        companion = CharacterDetail(name="Sam", motivation="Help Alex")
+        protagonist = CharacterDetail(
+            name="Alex",
+            physical_description=None,
+            personality=None,
+            background=None,
+            motivation="Save the kingdom"
+        )
+        companion = CharacterDetail(
+            name="Sam",
+            physical_description=None,
+            personality=None,
+            background=None,
+            motivation="Help Alex"
+        )
 
         # Multiple supporting characters
-        mentor = CharacterDetail(name="Gandalf", motivation="Guide the heroes")
-        villain = CharacterDetail(name="Dark Lord", motivation="Conquer the world")
-        ally = CharacterDetail(name="King", motivation="Support the heroes")
+        mentor = CharacterDetail(
+            name="Gandalf",
+            physical_description=None,
+            personality=None,
+            background=None,
+            motivation="Guide the heroes"
+        )
+        villain = CharacterDetail(
+            name="Dark Lord",
+            physical_description=None,
+            personality=None,
+            background=None,
+            motivation="Conquer the world"
+        )
+        ally = CharacterDetail(
+            name="King",
+            physical_description=None,
+            personality=None,
+            background=None,
+            motivation="Support the heroes"
+        )
 
         story_elements = StoryElements(
             title="The Great Quest",
@@ -165,7 +211,13 @@ class TestEnhancedStoryElements:
                 "protagonists": [protagonist, companion],
                 "supporting_characters": [mentor, ally],
                 "antagonists": [villain]
-            }
+            },
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         assert len(story_elements.characters["protagonists"]) == 2
@@ -206,14 +258,26 @@ class TestEnhancedStoryElements:
             title="Petualangan Rian",
             genre="Fantasi",
             themes=["Petualangan", "Keberanian"],
-            characters={"main_character": [main_char]}
+            characters={"main_character": [main_char]},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         story_elements_en = StoryElements(
             title="John's Adventure",
             genre="Fantasy",
             themes=["Adventure", "Courage"],
-            characters={"main_character": [english_main_char]}
+            characters={"main_character": [english_main_char]},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         assert story_elements_id.characters["main_character"][0].name == "Rian"
@@ -228,7 +292,13 @@ class TestEnhancedStoryElements:
         """
         from Writer.Models import StoryElements, CharacterDetail
 
-        character = CharacterDetail(name="Hero")
+        character = CharacterDetail(
+            name="Hero",
+            physical_description=None,
+            personality=None,
+            background=None,
+            motivation=None
+        )
 
         story_elements = StoryElements(
             title="Test Story",
@@ -259,10 +329,10 @@ class TestEnhancedStoryElements:
 
         assert story_elements.pacing == "Moderate"
         assert story_elements.style == "Literary"
-        assert len(story_elements.plot_structure) == 5
-        assert "forest" in story_elements.settings
+        assert len(story_elements.plot_structure or {}) == 5
+        assert "forest" in (story_elements.settings or {})
         assert story_elements.conflict == "Hero vs villain"
-        assert len(story_elements.symbolism) == 1
+        assert len(story_elements.symbolism or []) == 1
         assert story_elements.resolution == "Hero wins"
 
 
@@ -278,13 +348,25 @@ class TestStoryElementsJsonSerialization:
         """
         from Writer.Models import StoryElements, CharacterDetail
 
-        character = CharacterDetail(name="Test Character", personality="Brave")
+        character = CharacterDetail(
+            name="Test Character",
+            physical_description=None,
+            personality="Brave",
+            background=None,
+            motivation=None
+        )
 
         story_elements = StoryElements(
             title="Test Story",
             genre="Fantasy",
             themes=["test"],
-            characters={"main": [character]}
+            characters={"main": [character]},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         # Should serialize without errors

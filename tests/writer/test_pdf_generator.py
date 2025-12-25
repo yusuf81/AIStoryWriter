@@ -4,9 +4,8 @@ import sys
 import os
 import tempfile
 import types
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
-import Writer.Config
 from Writer.PDFGenerator import GeneratePDF, extract_story_content
 
 
@@ -276,8 +275,8 @@ class TestPDFGenerationIntegration:
         """Test the complete PDF generation flow with all dependencies mocked"""
         # Mock the entire reportlab module chain
         with patch('Writer.PDFGenerator.SimpleDocTemplate') as mock_doc, \
-             patch('Writer.PDFGenerator.NumberedCanvas'), \
-             patch('Writer.PDFGenerator.os.makedirs'):
+                patch('Writer.PDFGenerator.NumberedCanvas'), \
+                patch('Writer.PDFGenerator.os.makedirs'):
 
             mock_doc.return_value.build = mocker.MagicMock()
 

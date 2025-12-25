@@ -8,11 +8,10 @@ This fixes the bug where expanded outlines with rich scene data were being
 rejected as "too short" because only the summary was counted.
 """
 
+import Writer.Statistics as Statistics
+from Writer.Pipeline import _calculate_total_chapter_outline_words
 import sys
 sys.path.insert(0, '/var/www/AIStoryWriter')
-
-from Writer.Pipeline import _calculate_total_chapter_outline_words
-import Writer.Statistics as Statistics
 
 
 def test_counts_outline_summary_only():

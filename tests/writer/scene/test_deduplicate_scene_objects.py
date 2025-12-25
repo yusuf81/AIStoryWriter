@@ -4,7 +4,7 @@ Phase 6.4 Tests: deduplicate_scene_objects() utility function
 Test the utility function for deduplicating SceneOutline objects.
 """
 
-import pytest
+import pytest  # type: ignore # Needed for pytest fixtures
 from Writer.Models import SceneOutline
 from Writer.Scene.ScenesToJSON import deduplicate_scene_objects
 

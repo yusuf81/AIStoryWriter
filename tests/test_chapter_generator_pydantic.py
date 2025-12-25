@@ -2,8 +2,7 @@
 ChapterGenerator TDD Tests - London School Approach
 Tests for migrating all SafeGenerateText usage to SafeGeneratePydantic
 """
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -24,7 +23,8 @@ class TestChapterGeneratorPydanticConversion:
         chapter_segment = ChapterOutput(
             text="This is the chapter outline segment that provides specific guidance for writing this chapter focusing on the key events and character developments.",
             word_count=20,
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
 
         mock_iface.SafeGeneratePydantic.return_value = (
@@ -67,7 +67,8 @@ class TestChapterGeneratorPydanticConversion:
         chapter_summary = ChapterOutput(
             text="This is a summary of the previous chapter focusing on the major plot points and character developments that will influence the current chapter.",
             word_count=20,
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
 
         mock_iface.SafeGeneratePydantic.return_value = (
@@ -110,7 +111,8 @@ class TestChapterGeneratorPydanticConversion:
         revision = ChapterOutput(
             text="Revised chapter content with more details and better flow that meets the minimum length requirement for validation.",
             word_count=20,
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
 
         mock_iface.SafeGeneratePydantic.return_value = (
@@ -130,12 +132,10 @@ class TestChapterGeneratorPydanticConversion:
         # Act
         result = ReviseChapter(
             mock_iface, mock_logger(),
+            1,  # _ChapterNum
+            5,  # _TotalChapters
             "Original chapter content",
-            "Feedback suggests adding more description",
-            "Chapter outline for reference",
-            1,
-            mock_config,
-            mock_prompts
+            "Feedback suggests adding more description"
         )
 
         # Assert: SafeGeneratePydantic was called
@@ -153,17 +153,20 @@ class TestChapterGeneratorPydanticConversion:
         segment = ChapterOutput(
             text="Segment content that is long enough to meet validation requirements. This text is repeated multiple times to ensure it meets the minimum length requirement of 100 characters for the ChapterOutput model validation.",
             word_count=30,
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
         summary = ChapterOutput(
             text="Summary content that meets the minimum length requirements for validation. This is a summary of the chapter that includes all major plot points and character developments in sufficient detail.",
             word_count=25,
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
         revision = ChapterOutput(
             text="Revised chapter content that meets the minimum length requirements for the ChapterOutput model validation.",
             word_count=15,
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
 
         # Set up different returns for each call
@@ -193,13 +196,15 @@ class TestChapterGeneratorPydanticConversion:
         )
         ReviseChapter(
             mock_iface, mock_logger(),
-            "content", "feedback", "outline", 1,
-            mock_config, mock_prompts
+            1,  # _ChapterNum
+            2,  # _TotalChapters
+            "content",
+            "feedback"
         )
 
         # Assert: SafeGenerateText should not be called
         assert not hasattr(mock_iface, 'SafeGenerateText') or \
-               not getattr(mock_iface, 'SafeGenerateText', Mock()).called
+            not mock_iface.SafeGenerateText.called
 
         # Assert: SafeGeneratePydantic was called multiple times
         assert mock_iface.SafeGeneratePydantic.call_count >= 2

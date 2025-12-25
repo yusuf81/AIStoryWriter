@@ -5,7 +5,7 @@ These tests verify that ChapterOutlineToScenes returns full SceneOutline objects
 not just action strings, to preserve metadata for downstream processing.
 """
 
-import pytest
+import pytest  # type: ignore # Needed for pytest fixtures (pyright can't track fixture usage)
 from Writer.Models import SceneOutline, SceneOutlineList
 
 

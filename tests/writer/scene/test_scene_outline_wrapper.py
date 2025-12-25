@@ -4,8 +4,9 @@ RED Tests for SceneOutlineList wrapper model (Error 4)
 These tests should fail with current implementation because SceneOutlineList doesn't exist yet.
 """
 
-import pytest
+import pytest  # type: ignore # Needed for pytest fixtures
 from pydantic import ValidationError
+from unittest.mock import patch  # type: ignore # Not used but kept for future tests
 
 
 class TestSceneOutlineWrapper:
@@ -13,7 +14,7 @@ class TestSceneOutlineWrapper:
 
     def test_scene_outline_list_model_validation(self):
         """RED: Test SceneOutlineList model accepts multiple SceneOutline objects"""
-        from Writer.Models import SceneOutline, SceneOutlineList
+        from Writer.Models import SceneOutlineList
 
         # Test that wrapper model can handle multiple scenes
         scene_data = [
@@ -44,7 +45,7 @@ class TestSceneOutlineWrapper:
         ]
 
         # Should validate successfully with wrapper model
-        wrapper = SceneOutlineList(scenes=scene_data)
+        wrapper = SceneOutlineList(scenes=scene_data)  # type: ignore[arg-type]  # Pydantic validates dict input
         assert len(wrapper.scenes) == 3
         assert wrapper.scenes[0].scene_number == 1
         assert wrapper.scenes[0].setting == "Desa kecil di pinggiran hutan"
@@ -53,7 +54,7 @@ class TestSceneOutlineWrapper:
 
     def test_scene_outline_list_single_scene(self):
         """RED: Test SceneOutlineList works with single scene"""
-        from Writer.Models import SceneOutline, SceneOutlineList
+        from Writer.Models import SceneOutlineList
 
         # Single scene should also work
         scene_data = [{
@@ -65,7 +66,7 @@ class TestSceneOutlineWrapper:
             "estimated_word_count": 100
         }]
 
-        wrapper = SceneOutlineList(scenes=scene_data)
+        wrapper = SceneOutlineList(scenes=scene_data)  # type: ignore[arg-type]  # Pydantic validates dict input
         assert len(wrapper.scenes) == 1
         assert wrapper.scenes[0].scene_number == 1
 
@@ -127,7 +128,6 @@ class TestChapterOutlineToScenesIntegration:
         """RED: Test ChapterOutlineToScenes maintains backward compatibility after fix"""
         from Writer.Scene.ChapterOutlineToScenes import ChapterOutlineToScenes
         from Writer.Models import SceneOutline, SceneOutlineList
-        from unittest.mock import patch
 
         # This test will pass after GREEN implementation
         # For now, it's in RED to verify expected behavior

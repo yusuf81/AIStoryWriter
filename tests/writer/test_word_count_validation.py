@@ -2,8 +2,7 @@
 
 import pytest
 from pydantic import ValidationError
-from Writer.Models import ChapterOutput, OutlineOutput
-from Writer.Config import PYDANTIC_WORD_COUNT_TOLERANCE
+from Writer.Models import ChapterOutput
 
 
 def test_word_count_validation_default_tolerance():
@@ -14,7 +13,8 @@ def test_word_count_validation_default_tolerance():
     chapter = ChapterOutput(
         text=text,
         word_count=10,
-        chapter_number=1
+        chapter_number=1,
+        chapter_title=None
     )
     assert chapter.word_count == 10
 
@@ -23,7 +23,8 @@ def test_word_count_validation_default_tolerance():
     chapter = ChapterOutput(
         text=text_long,
         word_count=10,  # 5 words difference, should be within default tolerance
-        chapter_number=1
+        chapter_number=1,
+        chapter_title=None
     )
     assert chapter.word_count == 10
 
@@ -33,7 +34,8 @@ def test_word_count_validation_default_tolerance():
         ChapterOutput(
             text=text_very_long,
             word_count=10,  # Large difference, should exceed tolerance
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
     assert "Word count" in str(exc_info.value)
     assert "doesn't match actual word count" in str(exc_info.value)
@@ -54,7 +56,8 @@ def test_custom_word_count_tolerance():
             ChapterOutput(
                 text=text,
                 word_count=10,  # 5 words difference, should exceed strict tolerance
-                chapter_number=1
+                chapter_number=1,
+                chapter_title=None
             )
         assert "Word count" in str(exc_info.value)
 
@@ -62,7 +65,8 @@ def test_custom_word_count_tolerance():
         chapter = ChapterOutput(
             text=text,
             word_count=14,  # 1 word difference, within strict tolerance
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
         assert chapter.word_count == 14
 
@@ -86,7 +90,8 @@ def test_word_count_validation_can_be_disabled():
         chapter = ChapterOutput(
             text=text_short,
             word_count=1000,  # Huge difference, but validation is disabled
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
         assert chapter.word_count == 1000
 
@@ -106,7 +111,8 @@ def test_word_count_validation_with_non_ascii_text():
     chapter = ChapterOutput(
         text=text,
         word_count=actual_count,
-        chapter_number=1
+        chapter_number=1,
+        chapter_title=None
     )
     assert chapter.word_count == actual_count
 
@@ -114,7 +120,8 @@ def test_word_count_validation_with_non_ascii_text():
     chapter = ChapterOutput(
         text=text,
         word_count=actual_count - 2,  # Within tolerance
-        chapter_number=1
+        chapter_number=1,
+        chapter_title=None
     )
     assert chapter.word_count == actual_count - 2
 
@@ -149,7 +156,8 @@ def test_word_count_validator_error_message():
             ChapterOutput(
                 text=text,
                 word_count=10,
-                chapter_number=1
+                chapter_number=1,
+                chapter_title=None
             )
 
         error_msg = str(exc_info.value)

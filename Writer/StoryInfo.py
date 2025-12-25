@@ -1,7 +1,6 @@
 from pydantic import BaseModel  # Ditambahkan
 import Writer.Config
 # import Writer.Prompts  # Dihapus untuk pemuatan dinamis
-import json
 
 
 # Definisikan Skema Pydantic
@@ -13,9 +12,9 @@ class StoryInfoSchema(BaseModel):
 
 
 def GetStoryInfo(
-    Interface, _Logger, _Messages: list, _Model: str = None
+    Interface, _Logger, _Messages: list, _Model: str = None  # type: ignore[assignment]
 ):  # Tambahkan parameter _Model opsional
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
 
     Prompt: str = ActivePrompts.STATS_PROMPT
 

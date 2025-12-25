@@ -5,10 +5,9 @@ These tests verify that ChapterByScene removes the redundant ScenesToJSON LLM ca
 while preserving deduplication functionality.
 """
 
-import pytest
 import sys
-from unittest.mock import patch, Mock, MagicMock
-from Writer.Models import SceneOutline, SceneOutlineList
+from unittest.mock import patch, MagicMock
+from Writer.Models import SceneOutline
 
 # Mock termcolor before imports to avoid ModuleNotFoundError
 sys.modules['termcolor'] = MagicMock()

@@ -1,43 +1,43 @@
-#ollamasemua="ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
-#ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
-#ollamasemua="aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
-#ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:latest"
-#ollamasemua="aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
-ollamasemua="aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
+# ollamasemua="ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
+# ollamasemua="huihui_ai/qwen2.5-abliterate:32b"
+# ollamasemua="aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
+# ollamasemua="aisingapore/Llama-SEA-LION-v3.5-8B-R:latest"
+# ollamasemua="aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
+ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
 INITIAL_OUTLINE_WRITER_MODEL = (
-    #"ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    # "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
 )
 CHAPTER_OUTLINE_WRITER_MODEL = (
-#    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    #    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
 )
 CHAPTER_STAGE1_WRITER_MODEL = (
-#    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    #    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
 )
 CHAPTER_STAGE2_WRITER_MODEL = (
-#    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    #    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
 )
 CHAPTER_STAGE3_WRITER_MODEL = (
-#    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
+    #    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
 )
-#FINAL_NOVEL_EDITOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
+# FINAL_NOVEL_EDITOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
 FINAL_NOVEL_EDITOR_MODEL = ollamasemua
 
 # Model for the final novel-wide edit pass (used by NovelEditor.py) # Note this value is overridden by the argparser
-#CHAPTER_REVISION_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
+# CHAPTER_REVISION_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
 CHAPTER_REVISION_WRITER_MODEL = ollamasemua  # Note this value is overridden by the argparser
 REVISION_MODEL = ollamasemua  # Note this value is overridden by the argparser
 EVAL_MODEL = ollamasemua  # Note this value is overridden by the argparser
 INFO_MODEL = ollamasemua  # Note this value is overridden by the argparser
 SCRUB_MODEL = ollamasemua  # Note this value is overridden by the argparser
-CHECKER_MODEL = ollamasemua # Model used to check results
+CHECKER_MODEL = ollamasemua  # Model used to check results
 TRANSLATOR_MODEL = ollamasemua
 FAST_MODEL = (
-#    "ollama://gemma3:27b@10.23.82.116"  # Default fast model for tasks like titling
+    #    "ollama://gemma3:27b@10.23.82.116"  # Default fast model for tasks like titling
     ollamasemua  # Default fast model for tasks like titling
 )
 
@@ -167,14 +167,14 @@ LOREBOOK_AUTO_CLEAR = True  # Auto-clear lorebook for fresh runs (not resume)
 USE_PYDANTIC_PARSING = True  # Enable/disable structured output
 PYDANTIC_WORD_COUNT_TOLERANCE = 100  # Tolerance for word count validation (±N words)
 
-#USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning
+# USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning
 USE_REASONING_CHAIN = False  # Enable/disable two-pass reasoning
 REASONING_MODEL = CHAPTER_STAGE1_WRITER_MODEL  # Model to use for reasoning generation
 REASONING_LOG_SEPARATE = True  # Log reasoning to separate file
 REASONING_CACHE_RESULTS = False  # Cache reasoning results
 
 # Embedding Model Configuration
-#EMBEDDING_MODEL = "ollama://nomic-embed-text:latest@10.23.82.116"  # Embedding model string (provider://format). Must be explicitly set.
+# EMBEDDING_MODEL = "ollama://nomic-embed-text:latest@10.23.82.116"  # Embedding model string (provider://format). Must be explicitly set.
 EMBEDDING_MODEL = "ollama://qwen3-embedding:latest@10.23.82.116"  # Embedding model string (provider://format). Must be explicitly set.
 EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for nomic-embed-text)
 EMBEDDING_CTX = 8192  # Context window for embeddings (match nomic-embed-text-v2-moe capabilities)

@@ -45,7 +45,8 @@ class TestChapterOutput:
             word_count=len(chapter_text.split()),
             scenes=[],
             characters_present=[],
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
 
         assert chapter.text == chapter_text
@@ -64,7 +65,8 @@ class TestChapterOutput:
                 word_count=2,
                 scenes=[],
                 characters_present=[],
-                chapter_number=1
+                chapter_number=1,
+                chapter_title=None
             )
 
         assert "at least 100 characters" in str(exc_info.value)
@@ -84,7 +86,8 @@ class TestChapterOutput:
                 word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=["Alice"],
-                chapter_number=1
+                chapter_number=1,
+                chapter_title=None
             )
 
         assert "placeholder text" in str(exc_info.value).lower()
@@ -100,7 +103,8 @@ class TestChapterOutput:
                 word_count=0,
                 scenes=[],
                 characters_present=[],
-                chapter_number=1
+                chapter_number=1,
+                chapter_title=None
             )
 
         assert "greater than 0" in str(exc_info.value)
@@ -117,7 +121,8 @@ class TestChapterOutput:
                 word_count=150,  # Outside ±100 tolerance (actual: 34)
                 scenes=[],
                 characters_present=["Alice"],
-                chapter_number=1
+                chapter_number=1,
+                chapter_title=None
             )
 
         assert "doesn't match actual word count" in str(exc_info.value)
@@ -135,7 +140,8 @@ class TestChapterOutput:
                 word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=[],
-                chapter_number=0
+                chapter_number=0,
+                chapter_title=None
             )
 
     def test_chapter_title_too_long(self):
@@ -171,7 +177,8 @@ class TestPlaceholderValidationFix:
             word_count=len(chapter_text.split()),
             scenes=[],
             characters_present=["she"],
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
         assert chapter.text == chapter_text
         assert "..." in chapter.text
@@ -187,7 +194,8 @@ class TestPlaceholderValidationFix:
             word_count=len(chapter_text.split()),
             scenes=[],
             characters_present=["Aria"],
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
         assert "..." in chapter.text  # Ellipsis should be preserved
         assert chapter.chapter_number == 1
@@ -204,7 +212,8 @@ class TestPlaceholderValidationFix:
                 word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=[],
-                chapter_number=1
+                chapter_number=1,
+                chapter_title=None
             )
 
         assert "placeholder text" in str(exc_info.value).lower()
@@ -222,7 +231,8 @@ class TestPlaceholderValidationFix:
                 word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=[],
-                chapter_number=1
+                chapter_number=1,
+                chapter_title=None
             )
 
         assert "placeholder text" in str(exc_info.value).lower()
@@ -240,7 +250,8 @@ class TestPlaceholderValidationFix:
                 word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=[],
-                chapter_number=1
+                chapter_number=1,
+                chapter_title=None
             )
 
         assert "placeholder text" in str(exc_info.value).lower()
@@ -283,6 +294,7 @@ class TestOutlineOutput:
                 "Chapter 3: Alice discovers the hidden temple where the artifact is located"
             ],
             character_list=["Alice", "Merlin", "Dark Lord"],
+            character_details=None,
             setting={
                 "time": "Medieval era",
                 "location": "Medieval kingdom of Eldoria",
@@ -305,7 +317,12 @@ class TestOutlineOutput:
 
         outline = OutlineOutput(
             title="Test Story",
+            genre=None,
+            theme=None,
             chapters=["Chapter 1: The beginning of an adventure where our hero discovers their destiny."],
+            character_list=[],
+            character_details=None,
+            setting=None,
             target_chapter_count=1
         )
 
@@ -322,7 +339,12 @@ class TestOutlineOutput:
         with pytest.raises(ValidationError) as exc_info:
             OutlineOutput(
                 title="T",
+                genre=None,
+                theme=None,
                 chapters=["Chapter 1: Some content"],
+                character_list=[],
+                character_details=None,
+                setting=None,
                 target_chapter_count=1
             )
 
@@ -337,7 +359,12 @@ class TestOutlineOutput:
         with pytest.raises(ValidationError):
             OutlineOutput(
                 title=long_title,
+                genre=None,
+                theme=None,
                 chapters=["Chapter 1: Some content"],
+                character_list=[],
+                character_details=None,
+                setting=None,
                 target_chapter_count=1
             )
 
@@ -348,7 +375,12 @@ class TestOutlineOutput:
         with pytest.raises(ValidationError):
             OutlineOutput(
                 title="Test Story",
+                genre=None,
+                theme=None,
                 chapters=[],
+                character_list=[],
+                character_details=None,
+                setting=None,
                 target_chapter_count=1
             )
 
@@ -359,7 +391,12 @@ class TestOutlineOutput:
         with pytest.raises(ValidationError) as exc_info:
             OutlineOutput(
                 title="Test Story",
+                genre=None,
+                theme=None,
                 chapters=["Short"],
+                character_list=[],
+                character_details=None,
+                setting=None,
                 target_chapter_count=1
             )
 
@@ -372,8 +409,12 @@ class TestOutlineOutput:
         with pytest.raises(ValidationError):
             OutlineOutput(
                 title="Test Story",
+                genre=None,
+                theme=None,
                 chapters=["Chapter 1: Valid chapter outline"],
                 character_list=["A"],
+                character_details=None,
+                setting=None,
                 target_chapter_count=1
             )
 
@@ -385,7 +426,12 @@ class TestOutlineOutput:
         with pytest.raises(ValidationError):
             OutlineOutput(
                 title="Test Story",
+                genre=None,
+                theme=None,
                 chapters=["Chapter 1: Content"],
+                character_list=[],
+                character_details=None,
+                setting=None,
                 target_chapter_count=0
             )
 
@@ -393,7 +439,12 @@ class TestOutlineOutput:
         with pytest.raises(ValidationError):
             OutlineOutput(
                 title="Test Story",
+                genre=None,
+                theme=None,
                 chapters=["Chapter 1: Content"],
+                character_list=[],
+                character_details=None,
+                setting=None,
                 target_chapter_count=101
             )
 
@@ -412,14 +463,16 @@ class TestOutlineOutput:
         # Should pass after model change to accept Dict[str, str]
         outline = OutlineOutput(
             title="Gua Harta Karun Naga",
+            genre="Fantasi Petualangan",
+            theme=None,
             chapters=[
                 "Chapter 1: Rian, seorang petualang berani dari desa kecil di pinggiran hutan, mendengar legenda tentang gua yang dipenuhi harta karun dan dijaga oleh naga kecil. Dengan semangat petualangan, ia memutuskan untuk mencari gua tersebut.",
                 "Chapter 2: Setelah menemukan gua, Rian menghadapi Naga Kecil yang menjaga harta karun. Terjadi konflik yang kemudian berubah menjadi persahabatan."
             ],
-            target_chapter_count=2,
-            genre="Fantasi Petualangan",
             character_list=["Rian", "Naga Kecil"],
-            setting=structured_setting  # Dict should now be accepted
+            character_details=None,
+            setting=structured_setting,  # Dict should now be accepted
+            target_chapter_count=2
         )
 
         # Verify dict structure is preserved
@@ -438,9 +491,13 @@ class TestOutlineOutput:
         # Should work fine with None
         outline = OutlineOutput(
             title="Test Story",
+            genre=None,
+            theme=None,
             chapters=["Chapter 1: This is a long enough chapter outline that meets the minimum length requirement."],
-            target_chapter_count=1,
-            setting=None
+            character_list=[],
+            character_details=None,
+            setting=None,
+            target_chapter_count=1
         )
 
         assert outline.setting is None
@@ -455,9 +512,13 @@ class TestOutlineOutput:
         with pytest.raises(ValidationError) as exc_info:
             OutlineOutput(
                 title="Test Story",
+                genre=None,
+                theme=None,
                 chapters=["Chapter 1: This is a long enough chapter outline that meets the minimum length requirement."],
-                target_chapter_count=1,
-                setting="A mystical forest setting in ancient times"
+                character_list=[],
+                character_details=None,
+                setting="A mystical forest setting in ancient times",  # type: ignore[arg-type]
+                target_chapter_count=1
             )
 
         # Should fail expecting dict
@@ -513,14 +574,18 @@ class TestStoryElements:
                 }
             },
             themes=["courage", "friendship", "good vs evil"],
+            pacing=None,
+            style=None,
+            plot_structure=None,
             conflict="Alice must find the artifact before the Dark Lord does",
+            symbolism=None,
             resolution="Alice defeats the Dark Lord and restores peace to Eldoria"
         )
 
         assert "main_character" in elements.characters
         assert len(elements.characters["main_character"]) == 1
         assert elements.characters["main_character"][0].name == "Alice"
-        assert "blue eyes" in elements.characters["main_character"][0].physical_description
+        assert "blue eyes" in (elements.characters["main_character"][0].physical_description or "")
         assert "mentor" in elements.characters
         assert elements.characters["mentor"][0].name == "Merlin"
         assert len(elements.themes) == 3
@@ -533,7 +598,13 @@ class TestStoryElements:
         elements = StoryElements(
             title="Test Story",
             genre="Test Genre",
-            themes=["theme1"]
+            themes=["theme1"],
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         assert elements.title == "Test Story"
@@ -617,7 +688,8 @@ class TestQualityMetrics:
         metrics_min = QualityMetrics(
             coherence_score=0.0,
             relevance_score=0.0,
-            completeness_score=0.0
+            completeness_score=0.0,
+            feedback=None
         )
         assert metrics_min.coherence_score == 0.0
 
@@ -625,7 +697,8 @@ class TestQualityMetrics:
         metrics_max = QualityMetrics(
             coherence_score=1.0,
             relevance_score=1.0,
-            completeness_score=1.0
+            completeness_score=1.0,
+            feedback=None
         )
         assert metrics_max.coherence_score == 1.0
 
@@ -638,7 +711,8 @@ class TestQualityMetrics:
             QualityMetrics(
                 coherence_score=-0.1,
                 relevance_score=0.5,
-                completeness_score=0.5
+                completeness_score=0.5,
+                feedback=None
             )
 
         # Test score > 1
@@ -646,7 +720,8 @@ class TestQualityMetrics:
             QualityMetrics(
                 coherence_score=0.5,
                 relevance_score=1.1,
-                completeness_score=0.5
+                completeness_score=0.5,
+                feedback=None
             )
 
     def test_minimum_valid_metrics(self):
@@ -656,7 +731,8 @@ class TestQualityMetrics:
         metrics = QualityMetrics(
             coherence_score=0.5,
             relevance_score=0.5,
-            completeness_score=0.5
+            completeness_score=0.5,
+            feedback=None
         )
 
         assert metrics.feedback is None
@@ -726,11 +802,12 @@ class TestReviewOutputSuggestions:
         review = ReviewOutput(
             feedback="Outline ini memiliki kekuatan dalam menggambarkan karakter dan setting yang menarik.",
             suggestions=[
-                {
-                    "detail": "Tambahkan lebih banyak detail tentang tantangan yang dihadapi Rian dalam menemukan gua tersebut. Misalnya, apa saja rintangannya dan bagaimana ia mengatasinya?",
-                    "laju": "Perlu diperhatikan laju cerita agar tidak terlalu cepat melewati poin plot tertentu. Misalnya, tambahkan lebih banyak detail tentang hubungan antara Rian dengan Naga Kecil.",
-                    "alur": "Pastikan setiap bab mengalir ke bab berikutnya dan memiliki struktur naratif yang konsisten di seluruh cerita."
-                },
+                EnhancedSuggestion(
+                    description="Tambahkan lebih banyak detail tentang tantangan yang dihadapi Rian dalam menemukan gua tersebut. Misalnya, apa saja rintangannya dan bagaimana ia mengatasinya?",
+                    pacing="Perlu diperhatikan laju cerita agar tidak terlalu cepat melewati poin plot tertentu. Misalnya, tambahkan lebih banyak detail tentang hubungan antara Rian dengan Naga Kecil.",
+                    flow="Pastikan setiap bab mengalir ke bab berikutnya dan memiliki struktur naratif yang konsisten di seluruh cerita.",
+                    other_criteria=None
+                ),
                 "Saran sederhana tentang pengembangan karakter"
             ],
             rating=7
@@ -738,6 +815,7 @@ class TestReviewOutputSuggestions:
 
         # Should validate successfully with structured suggestions
         assert review.feedback is not None
+        assert review.suggestions is not None
         assert len(review.suggestions) == 2
         assert review.rating == 7
 
@@ -824,7 +902,8 @@ class TestModelMethods:
             name="Luna",
             physical_description="Brave warrior princess",
             background="Raised in magical kingdom",
-            personality="Determined and kind"
+            personality="Determined and kind",
+            motivation=None
         )
 
         story_elements = StoryElements(
@@ -839,7 +918,13 @@ class TestModelMethods:
                     "culture": "Magical society",
                     "time": "Age of wonders"
                 }
-            }
+            },
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         # This should FAIL before implementation - to_prompt_string method doesn't exist yet
@@ -862,7 +947,13 @@ class TestModelMethods:
         story_elements = StoryElements(
             title="Minimal Story",
             genre="Test",
-            themes=["minimal"]  # Required field
+            themes=["minimal"],  # Required field
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         # This should FAIL before implementation
@@ -881,6 +972,8 @@ class TestModelMethods:
 
         outline = OutlineOutput(
             title="The Dragon's Treasure",
+            genre=None,
+            theme=None,
             chapters=[
                 "Chapter 1: Young hero discovers ancient map leading to dragon's lair",
                 "Chapter 2: Hero assembles fellowship of brave adventurers",
@@ -888,6 +981,9 @@ class TestModelMethods:
                 "Chapter 4: Confrontation with the ancient dragon",
                 "Chapter 5: Hero chooses wisdom over wealth, earning dragon's respect"
             ],
+            character_list=[],
+            character_details=None,
+            setting=None,
             target_chapter_count=5
         )
 
@@ -908,12 +1004,17 @@ class TestModelMethods:
 
         outline = OutlineOutput(
             title="Space Odyssey",
+            genre=None,
+            theme=None,
             chapters=[
                 "Chapter 1: Captain receives mysterious distress signal from outer space",
                 "Chapter 2: Crew investigates abandoned space station",
                 "Chapter 3: Discovery of alien artifact with strange powers",
                 "Chapter 4: Space pirates attack seeking the artifact"
             ],
+            character_list=[],
+            character_details=None,
+            setting=None,
             target_chapter_count=4
         )
 
@@ -928,7 +1029,7 @@ class TestModelMethods:
             assert entry["type"] == "plot_point"
             assert entry["name"] == f"chapter_{i+1}"
             assert entry["metadata"]["source"] == "outline"
-            assert entry["metadata"]["chapter"] == i+1
+            assert entry["metadata"]["chapter"] == i + 1
 
         # Check specific content
         assert "distress signal" in entries[0]["content"]
@@ -942,6 +1043,8 @@ class TestModelMethods:
 
         outline = OutlineOutput(
             title="Mixed Quality Outline",
+            genre=None,
+            theme=None,
             chapters=[
                 "Chapter 1: Detailed description of hero's background and motivations for the quest ahead.",  # Long enough
                 "Chapter 2: Very short chapter that meets minimum length requirement.",  # Minimum length (20 chars)
@@ -949,6 +1052,9 @@ class TestModelMethods:
                 "Chapter 4: Another short chapter that meets minimum length requirement.",  # Minimum length (20 chars)
                 "Chapter 5: Epic confrontation where hero faces ultimate challenge and makes difficult choice."  # Long enough
             ],
+            character_list=[],
+            character_details=None,
+            setting=None,
             target_chapter_count=5
         )
 
@@ -1041,5 +1147,3 @@ class TestMetadataFlattening:
         metadata = {"empty": {}, "nested": {"empty": {}}}
         result = _flatten_metadata(metadata)
         assert result == {"empty": {}, "nested_empty": {}}
-
-    

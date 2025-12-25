@@ -5,11 +5,9 @@ This test suite follows the TDD London School methodology where tests are writte
 to fail first (RED), then implemented to pass (GREEN), then refactored for clarity.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import tempfile
 import json
-import os
 from pathlib import Path
 
 

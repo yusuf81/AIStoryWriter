@@ -3,13 +3,12 @@
 TDD tests for expanded StoryElements Pydantic model.
 Tests that the enhanced model captures all fields requested by GENERATE_STORY_ELEMENTS prompt.
 """
+from pydantic import ValidationError
+from unittest.mock import patch, MagicMock
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
-from pydantic import ValidationError
 
 
 class TestStoryElementsExpansion:
@@ -18,15 +17,15 @@ class TestStoryElementsExpansion:
     def test_expanded_story_elements_minimal(self, mock_logger):
         """Test creating expanded StoryElements with minimal required data"""
         # This should fail at first since we haven't expanded the model yet
-        from Writer.Models import StoryElements
+        from Writer.Models import StoryElements, CharacterDetail
 
         elements_data = {
             "title": "Harta Karun Gua Naga",
             "genre": "Fantasy Adventure",
             "themes": ["friendship", "courage", "self-discovery"],
             "characters": {
-                "Rian": [{"name": "Rian", "physical_description": "Petualang berani yang mencari harta karun legendaris"}],
-                "Bang Jaga": [{"name": "Bang Jaga", "physical_description": "Naga kecil bijaksana yang menjaga gua mistis"}]
+                "Rian": [CharacterDetail(name="Rian", physical_description="Petualang berani yang mencari harta karun legendaris", personality=None, background=None, motivation=None)],
+                "Bang Jaga": [CharacterDetail(name="Bang Jaga", physical_description="Naga kecil bijaksana yang menjaga gua mistis", personality=None, background=None, motivation=None)]
             }
         }
 
@@ -39,7 +38,7 @@ class TestStoryElementsExpansion:
 
     def test_expanded_story_elements_full(self, mock_logger):
         """Test creating expanded StoryElements with all fields populated"""
-        from Writer.Models import StoryElements
+        from Writer.Models import StoryElements, CharacterDetail
 
         elements_data = {
             "title": "Harta Karun Gua Naga",
@@ -74,8 +73,8 @@ class TestStoryElementsExpansion:
                 {"symbol": "The treasure", "meaning": "Not material wealth but friendship and knowledge"}
             ],
             "characters": {
-                "Rian": [{"name": "Rian", "physical_description": "Young adventurer driven by curiosity and courage"}],
-                "Bang Jaga": [{"name": "Bang Jaga", "physical_description": "Ancient dragon guardian, wise but initially wary"}]
+                "Rian": [CharacterDetail(name="Rian", physical_description="Young adventurer driven by curiosity and courage", personality=None, background=None, motivation=None)],
+                "Bang Jaga": [CharacterDetail(name="Bang Jaga", physical_description="Ancient dragon guardian, wise but initially wary", personality=None, background=None, motivation=None)]
             },
             "resolution": "True treasure is the friendship formed and lessons learned"
         }
@@ -83,16 +82,16 @@ class TestStoryElementsExpansion:
         story_elements = StoryElements(**elements_data)
         assert story_elements.title == "Harta Karun Gua Naga"
         assert story_elements.pacing == "Moderate with moments of tension"
-        assert len(story_elements.plot_structure) == 5
-        assert "exposition" in story_elements.plot_structure
+        assert len(story_elements.plot_structure or {}) == 5
+        assert story_elements.plot_structure and "exposition" in story_elements.plot_structure
         assert len(story_elements.settings) == 2
         assert "Forbidden Forest" in story_elements.settings
-        assert len(story_elements.symbolism) == 2
+        assert len(story_elements.symbolism or []) == 2
         assert story_elements.resolution is not None
 
     def test_model_validation_boundaries(self, mock_logger):
         """Test that validation errors are raised for boundary conditions"""
-        from Writer.Models import StoryElements
+        from Writer.Models import StoryElements, CharacterDetail
 
         # Test title too short
         with pytest.raises(ValidationError) as exc_info:
@@ -100,7 +99,13 @@ class TestStoryElementsExpansion:
                 title="H1",  # Too short (min 5)
                 genre="Fantasy",
                 themes=["theme1"],
-                characters={"Character": "Description"}
+                characters={"Character": [CharacterDetail(name="Character", physical_description=None, personality=None, background=None, motivation=None)]},
+                pacing=None,
+                style=None,
+                plot_structure=None,
+                conflict=None,
+                symbolism=None,
+                resolution=None
             )
         assert "at least 5 characters" in str(exc_info.value)
 
@@ -110,7 +115,13 @@ class TestStoryElementsExpansion:
                 title="A" * 201,  # Too long (max 200)
                 genre="Fantasy",
                 themes=["theme1"],
-                characters={"Character": "Description"}
+                characters={"Character": [CharacterDetail(name="Character", physical_description=None, personality=None, background=None, motivation=None)]},
+                pacing=None,
+                style=None,
+                plot_structure=None,
+                conflict=None,
+                symbolism=None,
+                resolution=None
             )
         assert "at most 200 characters" in str(exc_info.value)
 
@@ -120,13 +131,19 @@ class TestStoryElementsExpansion:
                 title="Valid Title",
                 genre="Fantasy",
                 themes=[],  # Empty themes not allowed
-                characters={"Character": "Description"}
+                characters={"Character": [CharacterDetail(name="Character", physical_description=None, personality=None, background=None, motivation=None)]},
+                pacing=None,
+                style=None,
+                plot_structure=None,
+                conflict=None,
+                symbolism=None,
+                resolution=None
             )
         assert "at least 1 item" in str(exc_info.value)
 
     def test_integration_with_safe_generate_pydantic(self, mock_logger):
         """Test StoryElements integration with SafeGeneratePydantic"""
-        from Writer.Models import StoryElements
+        from Writer.Models import StoryElements, CharacterDetail
         from Writer.Interface.Wrapper import Interface
 
         # Create mock interface
@@ -137,8 +154,13 @@ class TestStoryElementsExpansion:
             title="Test Story",
             genre="Test Genre",
             themes=["theme1", "theme2"],
-            characters={"Hero": [{"name": "Hero", "physical_description": "Brave protagonist"}]},
-            conflict="Hero must overcome obstacles"
+            characters={"Hero": [CharacterDetail(name="Hero", physical_description="Brave protagonist", personality=None, background=None, motivation=None)]},
+            conflict="Hero must overcome obstacles",
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            symbolism=None,
+            resolution=None
         )
 
         with patch.object(interface, 'SafeGeneratePydantic') as mock_generate:
@@ -149,8 +171,8 @@ class TestStoryElementsExpansion:
             )
 
             # Simulate the call from GenerateMainStoryElements
-            messages, result, tokens = interface.SafeGeneratePydantic(
-                mock_logger(),
+            messages, result, tokens = interface.SafeGeneratePydantic(  # type: ignore[misc]
+                MagicMock(name='mock_logger'),
                 [{"role": "user", "content": "test"}],
                 "test_model",
                 StoryElements
@@ -162,15 +184,15 @@ class TestStoryElementsExpansion:
 
     def test_enhanced_story_elements_with_settings(self, mock_logger):
         """Test enhanced StoryElements with settings field containing location details"""
-        from Writer.Models import StoryElements
+        from Writer.Models import StoryElements, CharacterDetail
 
         # Test with enhanced data using settings field instead of locations
         enhanced_data = {
             "title": "Harta Karun Naga Penjaga",
             "genre": "Fantasy Petualangan",
             "characters": {
-                "Rian": [{"name": "Rian", "physical_description": "Petualang berani"}],
-                "Bang Jaga": [{"name": "Bang Jaga", "physical_description": "Naga penjaga"}]
+                "Rian": [CharacterDetail(name="Rian", physical_description="Petualang berani", personality=None, background=None, motivation=None)],
+                "Bang Jaga": [CharacterDetail(name="Bang Jaga", physical_description="Naga penjaga", personality=None, background=None, motivation=None)]
             },
             "settings": {
                 "Gua Naga": {
@@ -196,27 +218,33 @@ class TestStoryElementsExpansion:
 
     def test_new_required_fields_enforced(self, mock_logger):
         """Test that new required fields are properly enforced"""
-        from Writer.Models import StoryElements
+        from Writer.Models import StoryElements, CharacterDetail
 
         # Should fail without required new fields
         with pytest.raises(ValidationError) as exc_info:
-            StoryElements(
+            StoryElements(  # type: ignore[arg-type]  # Intentionally missing title, genre to test required fields
                 # Missing title, genre - new required fields
-                characters={"Character": [{"name": "Character", "physical_description": "Description"}]},
-                themes=["theme1"]
+                characters={"Character": [CharacterDetail(name="Character", physical_description=None, personality=None, background=None, motivation=None)]},
+                themes=["theme1"],
+                pacing=None,
+                style=None,
+                plot_structure=None,
+                conflict=None,
+                symbolism=None,
+                resolution=None
             )
         error_msg = str(exc_info.value)
         assert "title" in error_msg or "genre" in error_msg
 
     def test_optional_fields_can_be_none(self, mock_logger):
         """Test that optional fields can be None (backwards compatibility)"""
-        from Writer.Models import StoryElements
+        from Writer.Models import StoryElements, CharacterDetail
 
         elements_data = {
             "title": "Valid Title",
             "genre": "Fantasy",
             "themes": ["theme1"],
-            "characters": {"Character": [{"name": "Character", "physical_description": "Description"}]}
+            "characters": {"Character": [CharacterDetail(name="Character", physical_description="Description", personality=None, background=None, motivation=None)]}
             # All optional fields omitted - should work
         }
 

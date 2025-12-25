@@ -28,13 +28,15 @@ def save_state_pipeline(state_data, filepath, logger):
             print(f"Error: Failed to save state to {filepath} from pipeline: {e}")
 
 # Helper: Builds the comprehensive outline string used for chapter generation context.
+
+
 def _build_mega_outline_pipeline_version(SysLogger, Config, ActivePrompts, current_state, chapter_index_for_context=None):
     SysLogger.Log(f"Pipeline: Building Mega Outline (Chapter Context: {chapter_index_for_context}).", 6)
 
     FullOutline = current_state.get("full_outline", "")
     StoryElements = current_state.get("story_elements", "")
-    ExpandedChapterOutlines = current_state.get("expanded_chapter_outlines", []) # List of strings
-    RefinedGlobalOutline = current_state.get("refined_global_outline", "") # Added
+    ExpandedChapterOutlines = current_state.get("expanded_chapter_outlines", [])  # List of strings
+    RefinedGlobalOutline = current_state.get("refined_global_outline", "")  # Added
 
     # Use refined global outline if available and EXPAND_OUTLINE is true, otherwise use original full_outline
     base_outline_to_use = FullOutline
@@ -42,7 +44,7 @@ def _build_mega_outline_pipeline_version(SysLogger, Config, ActivePrompts, curre
         base_outline_to_use = RefinedGlobalOutline
         SysLogger.Log(f"Pipeline: Using refined_global_outline for Mega Outline base.", 6)
     elif Config.EXPAND_OUTLINE:
-         SysLogger.Log(f"Pipeline: EXPAND_OUTLINE is true, but no refined_global_outline found. Using original full_outline for Mega Outline base.", 6)
+        SysLogger.Log(f"Pipeline: EXPAND_OUTLINE is true, but no refined_global_outline found. Using original full_outline for Mega Outline base.", 6)
     else:
         SysLogger.Log(f"Pipeline: Using original full_outline for Mega Outline base (EXPAND_OUTLINE is false or no refined_global_outline).", 6)
 
@@ -50,10 +52,10 @@ def _build_mega_outline_pipeline_version(SysLogger, Config, ActivePrompts, curre
     ChapterOutlineFormat = ActivePrompts.MEGA_OUTLINE_CHAPTER_FORMAT
 
     MegaOutline = Preamble + "\n\n"
-    if StoryElements: # Only add if StoryElements exist
+    if StoryElements:  # Only add if StoryElements exist
         MegaOutline += f"# Story Elements\n{StoryElements}\n\n"
 
-    MegaOutline += f"# Base Narrative Outline\n{base_outline_to_use}\n\n" # Use the determined base
+    MegaOutline += f"# Base Narrative Outline\n{base_outline_to_use}\n\n"  # Use the determined base
 
     if Config.EXPAND_OUTLINE and ExpandedChapterOutlines:
         MegaOutline += "# Expanded Per-Chapter Outlines\n"
@@ -185,10 +187,10 @@ def _get_current_context_for_chapter_gen_pipeline_version(SysLogger, Config, Sta
 
     # 3. Previous Chapter Text (if enabled and available)
     if Config.CHAPTER_MEMORY_WORDS > 0 and chapter_num > 1:
-        completed_chapters_data = current_state.get("completed_chapters_data", []) # Expects list of dicts
-        if len(completed_chapters_data) >= (chapter_num - 1) and chapter_num - 2 < len(completed_chapters_data): # Ensure index is valid
+        completed_chapters_data = current_state.get("completed_chapters_data", [])  # Expects list of dicts
+        if len(completed_chapters_data) >= (chapter_num - 1) and chapter_num - 2 < len(completed_chapters_data):  # Ensure index is valid
             # completed_chapters_data stores dicts: {"number": N, "title": "T", "text": "actual chapter text"}
-            previous_chapter_info = completed_chapters_data[chapter_num - 2] # -2 because list is 0-indexed and chapter_num is 1-indexed
+            previous_chapter_info = completed_chapters_data[chapter_num - 2]  # -2 because list is 0-indexed and chapter_num is 1-indexed
             previous_chapter_text = previous_chapter_info.get("text", "")
 
             if previous_chapter_text:
@@ -210,7 +212,7 @@ def _get_current_context_for_chapter_gen_pipeline_version(SysLogger, Config, Sta
                 previous_chapter_segment = " ".join(previous_chapter_words[-context_words_count:])
 
                 formatted_prev_chapter_text = ActivePrompts.PREVIOUS_CHAPTER_CONTEXT_FORMAT.format(
-                    chapter_num=previous_chapter_info.get("number", chapter_num -1), # Use actual number from data if available
+                    chapter_num=previous_chapter_info.get("number", chapter_num - 1),  # Use actual number from data if available
                     previous_chapter_title=previous_chapter_info.get("title", f"Chapter {chapter_num-1}"),
                     previous_chapter_text=previous_chapter_segment
                 )
@@ -219,7 +221,7 @@ def _get_current_context_for_chapter_gen_pipeline_version(SysLogger, Config, Sta
             else:
                 SysLogger.Log(f"Pipeline: Previous Chapter {chapter_num - 1} text was empty. Not added to context.", 6)
         else:
-            SysLogger.Log(f"Pipeline: Chapter {chapter_num -1} data not found in completed_chapters_data for context.",6)
+            SysLogger.Log(f"Pipeline: Chapter {chapter_num -1} data not found in completed_chapters_data for context.", 6)
 
     # 4. Specific Outline for the Current Chapter
     # This uses _get_outline_for_chapter_pipeline_version, which might return a detailed chapter outline or the MegaOutline.
@@ -233,14 +235,16 @@ def _get_current_context_for_chapter_gen_pipeline_version(SysLogger, Config, Sta
     )
     context_components.append(formatted_chapter_outline)
 
-    final_context = "\n\n---\n\n".join(filter(None, context_components)) # Join non-empty components with a separator
+    final_context = "\n\n---\n\n".join(filter(None, context_components))  # Join non-empty components with a separator
     SysLogger.Log(f"Pipeline: Final context for Chapter {chapter_num} length: {len(final_context)} chars, Word Count: {Statistics.GetWordCount(final_context)}.", 6)
     return final_context.strip()
 
 # Helper: Handles chapter title generation.
+
+
 def _handle_chapter_title_generation_pipeline_version(SysLogger, Interface, Config, ActivePrompts, chapter_text, chapter_num, base_context_for_title, current_chapter_outline_for_title, Statistics):
     SysLogger.Log(f"Pipeline: Generating title for Chapter {chapter_num}.", 6)
-    if not Config.AUTO_CHAPTER_TITLES: # Changed from GENERATE_CHAPTER_TITLES
+    if not Config.AUTO_CHAPTER_TITLES:  # Changed from GENERATE_CHAPTER_TITLES
         SysLogger.Log("Pipeline: Chapter title generation is disabled by config (AUTO_CHAPTER_TITLES=False).", 6)
         return f"{Config.DEFAULT_CHAPTER_TITLE_PREFIX}{chapter_num}"
 
@@ -253,7 +257,7 @@ def _handle_chapter_title_generation_pipeline_version(SysLogger, Interface, Conf
             base_story_context=base_context_for_title,
             current_chapter_outline=current_chapter_outline_for_title,
             chapter_num=chapter_num,
-            chapter_text_segment=chapter_text_segment_for_title, # Use segmented text
+            chapter_text_segment=chapter_text_segment_for_title,  # Use segmented text
             word_count=Statistics.GetWordCount(chapter_text_segment_for_title)
         )
 
@@ -273,26 +277,28 @@ def _handle_chapter_title_generation_pipeline_version(SysLogger, Interface, Conf
             SysLogger.Log(f"Pipeline: Warning: Generated title for Chapter {chapter_num} is invalid ('{ChapterTitle}'). Using default.", 6)
             return f"{Config.DEFAULT_CHAPTER_TITLE_PREFIX}{chapter_num}"
 
-        SysLogger.Log(f"Pipeline: Generated title for Chapter {chapter_num}: '{ChapterTitle}'.", 5) # Changed log level
+        SysLogger.Log(f"Pipeline: Generated title for Chapter {chapter_num}: '{ChapterTitle}'.", 5)  # Changed log level
         return ChapterTitle
 
     except Exception as e:
         SysLogger.Log(f"Pipeline: Error during chapter title generation for Chapter {chapter_num}: {e}. Using default title.", 7)
         import traceback
-        SysLogger.Log(traceback.format_exc(), 1) # Log stack trace at debug level
+        SysLogger.Log(traceback.format_exc(), 1)  # Log stack trace at debug level
         return f"{Config.DEFAULT_CHAPTER_TITLE_PREFIX}{chapter_num}"
 
 # Helper: Compiles all chapter texts into a single string for editing or final output.
+
+
 def _get_full_story_text_pipeline_version(chapters_data_list, Config, add_titles_to_body):
     FullStory = ""
-    for chapter_info in chapters_data_list: # Expects list of dicts
+    for chapter_info in chapters_data_list:  # Expects list of dicts
         title = chapter_info.get("title", f"{Config.DEFAULT_CHAPTER_TITLE_PREFIX}{chapter_info.get('number', 'N/A')}")
         text = chapter_info.get("text", "")
-        if add_titles_to_body: # Use the passed boolean
+        if add_titles_to_body:  # Use the passed boolean
             # Use CHAPTER_HEADER_FORMAT from Config for consistency
             FullStory += f"{Config.CHAPTER_HEADER_FORMAT.replace('{chapter_title}', title).replace('{chapter_num}', str(chapter_info.get('number', 'N/A')))}\n{text}\n\n"
         else:
-            FullStory += f"{text}\n\n" # Just text and newlines if not adding titles
+            FullStory += f"{text}\n\n"  # Just text and newlines if not adding titles
     return FullStory.strip()
 
 
@@ -352,7 +358,7 @@ class StoryPipeline:
                     # Auto-clear logic remains for fresh runs
                     if (self.lorebook and
                         self.is_fresh_run and
-                        getattr(self.Config, 'LOREBOOK_AUTO_CLEAR', True)):
+                            getattr(self.Config, 'LOREBOOK_AUTO_CLEAR', True)):
                         self.lorebook.clear()
                         self.SysLogger.Log("Lorebook auto-cleared for fresh run", 5)
 
@@ -400,7 +406,7 @@ class StoryPipeline:
         current_state["full_outline"] = Outline
         current_state["story_elements"] = Elements
         current_state["rough_chapter_outline"] = RoughChapterOutline
-        current_state["base_context"] = BaseContext # This is crucial for subsequent steps
+        current_state["base_context"] = BaseContext  # This is crucial for subsequent steps
 
         # Extract lore from outline if lorebook is enabled
         if self.lorebook:
@@ -433,8 +439,8 @@ class StoryPipeline:
 
         # Sub-step: High-Level Chapter Outline Refinement (Global Refinement)
         # This refined outline becomes the basis for per-chapter expansion if enabled.
-        refined_global_outline = base_outline_for_expansion # Start with the current best outline
-        if self.Config.ENABLE_GLOBAL_OUTLINE_REFINEMENT: # New config flag
+        refined_global_outline = base_outline_for_expansion  # Start with the current best outline
+        if self.Config.ENABLE_GLOBAL_OUTLINE_REFINEMENT:  # New config flag
             self.SysLogger.Log("Pipeline: Starting High-Level Global Outline Refinement sub-step...", 3)
             if not base_outline_for_expansion:
                 self.SysLogger.Log("PIPELINE _expand_chapter_outlines_stage FATAL: Base outline for expansion is missing.", 7)
@@ -445,16 +451,16 @@ class StoryPipeline:
                 self.Interface, self.SysLogger, base_outline_for_expansion, "global_chapter_structure"
             )
             current_state["refined_global_outline"] = refined_global_outline
-            current_state["last_completed_step"] = "refine_global_outline" # Intermediate step
+            current_state["last_completed_step"] = "refine_global_outline"  # Intermediate step
             self._save_state_wrapper(current_state, state_filepath)
             self.SysLogger.Log("Pipeline: High-Level Global Outline Refinement sub-step Complete. State Saved.", 4)
         else:
             self.SysLogger.Log("Pipeline: Skipping High-Level Global Outline Refinement (disabled by Config.ENABLE_GLOBAL_OUTLINE_REFINEMENT).", 4)
-            current_state["refined_global_outline"] = base_outline_for_expansion # Store original as "refined" to simplify downstream logic
+            current_state["refined_global_outline"] = base_outline_for_expansion  # Store original as "refined" to simplify downstream logic
 
         # Per-Chapter Expansion using the (potentially) refined global outline
         GeneratedChapterOutlines = []
-        if num_chapters > 0 : # Only proceed if there are chapters to outline
+        if num_chapters > 0:  # Only proceed if there are chapters to outline
             for ChapterIdx in range(1, num_chapters + 1):
                 self.SysLogger.Log(f"Pipeline: Generating outline for chapter {ChapterIdx}/{num_chapters}...", 6)
                 ChapterOutlineText, ChapterTitle = self.OutlineGenerator.GeneratePerChapterOutline(
@@ -466,25 +472,25 @@ class StoryPipeline:
             self.SysLogger.Log(f"Pipeline: Skipping per-chapter outline generation as num_chapters is {num_chapters}.", 4)
 
         current_state["expanded_chapter_outlines"] = GeneratedChapterOutlines
-        current_state["last_completed_step"] = "expand_chapters" # Main step completion
+        current_state["last_completed_step"] = "expand_chapters"  # Main step completion
         self._save_state_wrapper(current_state, state_filepath)
         self.SysLogger.Log("Pipeline: Per-Chapter Outline Expansion Stage Complete (or skipped). State Saved.", 4)
-        return GeneratedChapterOutlines # Return only the list of chapter outlines
+        return GeneratedChapterOutlines  # Return only the list of chapter outlines
 
     def _write_chapters_stage(self, current_state, state_filepath, total_num_chapters_overall, base_context_text):
         self.SysLogger.Log("Pipeline: Starting Chapter Writing Stage...", 3)
 
         # completed_chapters_data stores: [{"number": 1, "title": "T", "text": "C1"}, {"number": 2, ...}]
         completed_chapters_data = current_state.get("completed_chapters_data", [])
-        next_chapter_to_generate_num = current_state.get("next_chapter_index", 1) # 1-based index
+        next_chapter_to_generate_num = current_state.get("next_chapter_index", 1)  # 1-based index
 
         self.SysLogger.Log(f"Pipeline: Chapter writing from number {next_chapter_to_generate_num} up to {total_num_chapters_overall}.", 4)
 
-        if total_num_chapters_overall is None or total_num_chapters_overall < next_chapter_to_generate_num :
+        if total_num_chapters_overall is None or total_num_chapters_overall < next_chapter_to_generate_num:
             self.SysLogger.Log(f"Pipeline: No chapters to generate (total_num_chapters_overall: {total_num_chapters_overall}, next_chapter_to_generate_num: {next_chapter_to_generate_num}). Skipping chapter writing.", 4)
             current_state["last_completed_step"] = "chapter_generation_complete"
             self._save_state_wrapper(current_state, state_filepath)
-            return completed_chapters_data # Return existing data
+            return completed_chapters_data  # Return existing data
 
         for current_chap_num in range(next_chapter_to_generate_num, total_num_chapters_overall + 1):
             self.SysLogger.Log(f"--- Pipeline: Generating Chapter {current_chap_num}/{total_num_chapters_overall} ---", 3)
@@ -513,32 +519,32 @@ class StoryPipeline:
                 self.Interface,              # Interface
                 self.SysLogger,             # _Logger
                 current_chap_num,           # _ChapterNum
-                total_num_chapters_overall, # _TotalChapters
+                total_num_chapters_overall,  # _TotalChapters
                 current_gen_context,        # _Outline (full context string)
                 completed_chapters_data,    # _Chapters (list of prior chapters)
                 "",                         # _BaseContext (empty for now)
                 current_gen_context,        # _FullOutlineForSceneGen (same as outline)
-                expanded_chapter_outline_dict # _ExpandedChapterOutline (dict with scenes)
+                expanded_chapter_outline_dict  # type: ignore # _ExpandedChapterOutline (dict with scenes)
             )
 
             # Get specific outline for title generation (can be different from full gen context)
             current_chapter_specific_outline_for_title = _get_outline_for_chapter_pipeline_version(
-                 self.SysLogger, self.Config, self.Statistics, self.ActivePrompts, current_state, current_chap_num
+                self.SysLogger, self.Config, self.Statistics, self.ActivePrompts, current_state, current_chap_num
             )
 
             # Generate chapter title using helper
             chapter_title = _handle_chapter_title_generation_pipeline_version(
                 self.SysLogger, self.Interface, self.Config, self.ActivePrompts,
                 raw_chapter_content, current_chap_num,
-                base_context_text, # Base outline/elements for broader context
-                current_chapter_specific_outline_for_title, # Specific outline for this chapter
+                base_context_text,  # Base outline/elements for broader context
+                current_chapter_specific_outline_for_title,  # Specific outline for this chapter
                 self.Statistics
             )
 
             chapter_data_entry = {
                 "number": current_chap_num,
                 "title": chapter_title,
-                "text": raw_chapter_content, # Store raw text, formatting applied at higher levels if needed
+                "text": raw_chapter_content,  # Store raw text, formatting applied at higher levels if needed
                 "word_count": self.Statistics.GetWordCount(raw_chapter_content)
             }
 
@@ -552,11 +558,11 @@ class StoryPipeline:
 
             current_state["completed_chapters_data"] = completed_chapters_data
             current_state["next_chapter_index"] = current_chap_num + 1
-            current_state["last_completed_step"] = "chapter_generation" # Mark as in-progress
+            current_state["last_completed_step"] = "chapter_generation"  # Mark as in-progress
             self._save_state_wrapper(current_state, state_filepath)
             self.SysLogger.Log(f"--- Pipeline: Chapter {current_chap_num} (Title: '{chapter_title}') Generation Complete. Word Count: {chapter_data_entry['word_count']}. State Saved. ---", 4)
 
-        current_state["last_completed_step"] = "chapter_generation_complete" # All chapters for this run done
+        current_state["last_completed_step"] = "chapter_generation_complete"  # All chapters for this run done
         self._save_state_wrapper(current_state, state_filepath)
         self.SysLogger.Log("Pipeline: All Chapters Generated for this run. State Saved.", 5)
         return completed_chapters_data
@@ -565,23 +571,23 @@ class StoryPipeline:
         self.SysLogger.Log("Pipeline: Starting Post-Processing Stage...", 3)
 
         # Retrieve necessary data from current_state
-        FinalChaptersData = current_state.get("completed_chapters_data", []) # This is list of dicts
+        FinalChaptersData = current_state.get("completed_chapters_data", [])  # This is list of dicts
         FullOutlineForInfo = current_state.get("full_outline", "")
         StoryElementsForInfo = current_state.get("story_elements", "")
-        RoughChapterOutlineForInfo = current_state.get("rough_chapter_outline", "") # Potentially less used if full_outline is primary
+        RoughChapterOutlineForInfo = current_state.get("rough_chapter_outline", "")  # Potentially less used if full_outline is primary
         BaseContextForInfo = current_state.get("base_context", "")
-        NumChaptersActual = len(FinalChaptersData) # Actual number of chapters generated
+        NumChaptersActual = len(FinalChaptersData)  # Actual number of chapters generated
 
-        StoryInfoJSON = current_state.get("StoryInfoJSON", {}) # Load existing or init
-        StoryInfoJSON.update({ # Update with latest structural info if not already there
+        StoryInfoJSON = current_state.get("StoryInfoJSON", {})  # Load existing or init
+        StoryInfoJSON.update({  # Update with latest structural info if not already there
             "Outline": FullOutlineForInfo, "StoryElements": StoryElementsForInfo,
             "RoughChapterOutline": RoughChapterOutlineForInfo, "BaseContext": BaseContextForInfo,
-            "TotalChaptersDetected": current_state.get("total_chapters"), # From detection phase
+            "TotalChaptersDetected": current_state.get("total_chapters"),  # From detection phase
             "TotalChaptersGenerated": NumChaptersActual,
-            "UnprocessedChaptersData": [ch.copy() for ch in FinalChaptersData] # Save a copy before processing
+            "UnprocessedChaptersData": [ch.copy() for ch in FinalChaptersData]  # Save a copy before processing
         })
 
-        current_working_chapters_data = [ch.copy() for ch in FinalChaptersData] # Work on a copy
+        current_working_chapters_data = [ch.copy() for ch in FinalChaptersData]  # Work on a copy
 
         # --- Sub-step: Mark start of post-processing ---
         if current_state.get("last_completed_step") == "chapter_generation_complete":
@@ -651,7 +657,7 @@ class StoryPipeline:
 
         # 3. Translate Novel (if enabled)
         target_translation_lang = self.Config.TRANSLATE_LANGUAGE
-        native_lang = self.Config.NATIVE_LANGUAGE # Assuming this is the current language of chapters
+        native_lang = self.Config.NATIVE_LANGUAGE  # Assuming this is the current language of chapters
         if target_translation_lang and target_translation_lang.lower() != native_lang.lower() and \
            current_state.get("last_completed_step") not in ["post_processing_final_translate_complete", "complete"]:
             self.SysLogger.Log(f"Pipeline: Starting Final Translation from '{native_lang}' to '{target_translation_lang}'...", 3)
@@ -680,20 +686,20 @@ class StoryPipeline:
                     self.SysLogger.Log(f"Pipeline: Final story translation to '{target_translation_lang}' complete.", 4)
                 except Exception as e:
                     self.SysLogger.Log(f"Pipeline: ERROR during final story translation: {e}. Outputting in native language '{native_lang}'.", 7)
-                    StoryInfoJSON["FinalOutputLanguage"] = native_lang # Record that translation failed
+                    StoryInfoJSON["FinalOutputLanguage"] = native_lang  # Record that translation failed
             current_state["last_completed_step"] = "post_processing_final_translate_complete"
             self._save_state_wrapper(current_state, state_filepath)
         else:
-            StoryInfoJSON["FinalOutputLanguage"] = native_lang # If not translated
+            StoryInfoJSON["FinalOutputLanguage"] = native_lang  # If not translated
 
-        current_state["FinalProcessedChaptersData"] = current_working_chapters_data # list of dicts
+        current_state["FinalProcessedChaptersData"] = current_working_chapters_data  # list of dicts
 
         # Generate Story Info (Title, Summary, Tags) using StoryInfo module
         self.SysLogger.Log("Pipeline: Generating Story Info (Title, Summary, Tags)...", 5)
         # Use the final processed chapter data to build a body of text for summary, if appropriate, or use outline
         # For now, using outline as per original logic
         info_query_text = FullOutlineForInfo if FullOutlineForInfo else StoryElementsForInfo
-        if not info_query_text and current_working_chapters_data: # Fallback to using first chapter text
+        if not info_query_text and current_working_chapters_data:  # Fallback to using first chapter text
             info_query_text = current_working_chapters_data[0].get("text", "No content available for story info generation.")
 
         GeneratedInfo = {}
@@ -703,21 +709,21 @@ class StoryPipeline:
             GeneratedInfo, _ = self.StoryInfo.GetStoryInfo(
                 self.Interface, self.SysLogger, info_messages
             )
-            StoryInfoJSON.update(GeneratedInfo) # Add Title, Summary, Tags
+            StoryInfoJSON.update(GeneratedInfo)  # Add Title, Summary, Tags
             self.SysLogger.Log("Pipeline: Story Info Generation Complete.", 5)
         except Exception as e:
             self.SysLogger.Log(f"Pipeline: Error generating story info: {e}. Using defaults.", 7)
-            GeneratedInfo = {"Title": "Untitled Story", "Summary": "Error generating summary.", "Tags": ""} # Ensure keys exist
+            GeneratedInfo = {"Title": "Untitled Story", "Summary": "Error generating summary.", "Tags": ""}  # Ensure keys exist
             StoryInfoJSON.update(GeneratedInfo)
 
-        Title = StoryInfoJSON.get("Title", "Untitled Story") # Get from StoryInfoJSON now
+        Title = StoryInfoJSON.get("Title", "Untitled Story")  # Get from StoryInfoJSON now
 
         # Compile final story body text using the final processed chapters
         # Use _get_full_story_text_pipeline_version with final data
         FinalStoryBodyText = _get_full_story_text_pipeline_version(current_working_chapters_data, self.Config, self.Config.ADD_CHAPTER_TITLES_TO_NOVEL_BODY_TEXT)
 
         # Calculate Elapsed Time & Stats
-        ElapsedTime = time.time() - StartTime # StartTime passed from Write.py
+        ElapsedTime = time.time() - StartTime  # StartTime passed from Write.py
         TotalWords = self.Statistics.GetWordCount(FinalStoryBodyText)
         self.SysLogger.Log(f"Pipeline: Story Total Word Count: {TotalWords}, Elapsed Time: {ElapsedTime:.2f}s", 4)
 
@@ -740,27 +746,27 @@ class StoryPipeline:
             StatsString += f" - Generation Prompt Language: {self.Config.NATIVE_LANGUAGE}\n"
         StatsString += f"\nGeneration Configuration:\n"
         for key in dir(self.Config):
-            if not key.startswith("_") and key.isupper(): # Only public config variables
+            if not key.startswith("_") and key.isupper():  # Only public config variables
                 StatsString += f" - {key}: {getattr(self.Config, key)}\n"
-        StoryInfoJSON["StatsString"] = StatsString # Save comprehensive stats string
+        StoryInfoJSON["StatsString"] = StatsString  # Save comprehensive stats string
 
         # Save The Story To Disk
         self.SysLogger.Log("Pipeline: Saving Final Story To Disk", 3)
-        os.makedirs(self.Config.STORIES_DIR, exist_ok=True) # Use config for stories directory
+        os.makedirs(self.Config.STORIES_DIR, exist_ok=True)  # Use config for stories directory
         safe_title = "".join(c for c in Title if c.isalnum() or c in (" ", "_")).rstrip().replace(" ", "_")
         run_timestamp_str = datetime.datetime.fromtimestamp(StartTime).strftime("%Y%m%d%H%M%S")
 
         FNameBase = os.path.join(self.Config.STORIES_DIR, f"Story_{safe_title if safe_title else 'Untitled'}_{run_timestamp_str}")
-        if Args and Args.Output: # Use command-line arg for output name if provided
-             base_output_path = Args.Output
-             # Ensure directory exists for custom output path
-             output_dir = os.path.dirname(base_output_path)
-             if output_dir:
-                 os.makedirs(output_dir, exist_ok=True)
-             FNameBase = base_output_path # No extension, will be added
+        if Args and Args.Output:  # Use command-line arg for output name if provided
+            base_output_path = Args.Output
+            # Ensure directory exists for custom output path
+            output_dir = os.path.dirname(base_output_path)
+            if output_dir:
+                os.makedirs(output_dir, exist_ok=True)
+            FNameBase = base_output_path  # No extension, will be added
 
         FinalMDPath = f"{FNameBase}.md"
-        FinalJSONPath = f"{FNameBase}_info.json" # Changed suffix for clarity
+        FinalJSONPath = f"{FNameBase}_info.json"  # Changed suffix for clarity
 
         try:
             with open(FinalMDPath, "w", encoding="utf-8") as F:
@@ -769,20 +775,24 @@ class StoryPipeline:
                 # Escape quotes for YAML
                 escaped_title = Title.replace('"', '\\"')
                 OutMD += f"title: \"{escaped_title}\"\n"
-                if self.Config.INCLUDE_SUMMARY_IN_MD: 
+                if self.Config.INCLUDE_SUMMARY_IN_MD:
                     escaped_summary = StoryInfoJSON.get('Summary', 'N/A').replace('"', '\\"').replace('\n', ' ')
                     OutMD += f"summary: \"{escaped_summary}\"\n"
-                if self.Config.INCLUDE_TAGS_IN_MD: 
+                if self.Config.INCLUDE_TAGS_IN_MD:
                     escaped_tags = StoryInfoJSON.get('Tags', 'N/A').replace('"', '\\"')
                     OutMD += f"tags: \"{escaped_tags}\"\n"
                 OutMD += "---\n\n"
                 OutMD += f"# {Title}\n\n"
-                if self.Config.INCLUDE_SUMMARY_IN_MD: OutMD += f"## Summary\n{StoryInfoJSON.get('Summary', 'N/A')}\n\n"
-                if self.Config.INCLUDE_TAGS_IN_MD: OutMD += f"**Tags:** {StoryInfoJSON.get('Tags', 'N/A')}\n\n"
+                if self.Config.INCLUDE_SUMMARY_IN_MD:
+                    OutMD += f"## Summary\n{StoryInfoJSON.get('Summary', 'N/A')}\n\n"
+                if self.Config.INCLUDE_TAGS_IN_MD:
+                    OutMD += f"**Tags:** {StoryInfoJSON.get('Tags', 'N/A')}\n\n"
                 OutMD += "---\n\n"
-                OutMD += FinalStoryBodyText # Already has chapter titles if configured
-                if self.Config.INCLUDE_OUTLINE_IN_MD: OutMD += f"\n\n---\n# Story Outline\n```text\n{FullOutlineForInfo if FullOutlineForInfo else 'No outline generated.'}\n```\n"
-                if self.Config.INCLUDE_STATS_IN_MD: OutMD += f"\n\n---\n# Generation Statistics\n```text\n{StatsString}\n```\n"
+                OutMD += FinalStoryBodyText  # Already has chapter titles if configured
+                if self.Config.INCLUDE_OUTLINE_IN_MD:
+                    OutMD += f"\n\n---\n# Story Outline\n```text\n{FullOutlineForInfo if FullOutlineForInfo else 'No outline generated.'}\n```\n"
+                if self.Config.INCLUDE_STATS_IN_MD:
+                    OutMD += f"\n\n---\n# Generation Statistics\n```text\n{StatsString}\n```\n"
                 F.write(OutMD)
             self.SysLogger.Log(f"Pipeline: Final story saved to {FinalMDPath}", 5)
         except Exception as e:
@@ -792,7 +802,7 @@ class StoryPipeline:
             "Markdown": FinalMDPath, "JSONInfo": FinalJSONPath,
             "StateFile": state_filepath, "LogDirectory": self.Config.LOG_DIRECTORY,
         }
-        current_state["StoryInfoJSON"] = StoryInfoJSON # Save updated StoryInfoJSON to state
+        current_state["StoryInfoJSON"] = StoryInfoJSON  # Save updated StoryInfoJSON to state
         try:
             with open(FinalJSONPath, "w", encoding="utf-8") as F:
                 # Serialize Pydantic objects to JSON-compatible dicts before dumping
@@ -805,7 +815,7 @@ class StoryPipeline:
         # PDF Generation (if enabled)
         # Early exit check - avoid heavy imports if PDF generation is disabled in args
         if (self.Config.ENABLE_PDF_GENERATION or
-            (Args and getattr(Args, 'GeneratePDF', False))):
+                (Args and getattr(Args, 'GeneratePDF', False))):
             try:
                 self.SysLogger.Log("Pipeline: Starting PDF generation...", 5)
                 pdf_path = f"{FNameBase}.pdf"
@@ -826,20 +836,20 @@ class StoryPipeline:
         current_state["status"] = "completed"
         current_state["final_story_path"] = FinalMDPath
         current_state["final_json_path"] = FinalJSONPath
-        current_state["last_completed_step"] = "complete" # Final step
+        current_state["last_completed_step"] = "complete"  # Final step
         self._save_state_wrapper(current_state, state_filepath)
         self.SysLogger.Log("Pipeline: Post-Processing Stage Finished. Final State Saved. Run COMPLETED.", 5)
         return current_state
 
-    def run_pipeline(self, current_state, state_filepath, initial_prompt_for_outline, Args, StartTime): # Added Args, StartTime
+    def run_pipeline(self, current_state, state_filepath, initial_prompt_for_outline, Args, StartTime):  # Added Args, StartTime
         self.SysLogger.Log("Pipeline: Starting run_pipeline method.", 3)
         last_completed_step = current_state.get("last_completed_step", "init")
 
         Outline = current_state.get("full_outline")
-        BaseContext = current_state.get("base_context") # Elements, Rough Outline, etc.
+        BaseContext = current_state.get("base_context")  # Elements, Rough Outline, etc.
         NumChapters = current_state.get("total_chapters")
 
-        try: # Wrap entire pipeline in try-except for robust error logging of unexpected issues
+        try:  # Wrap entire pipeline in try-except for robust error logging of unexpected issues
             # --- Outline Generation ---
             if last_completed_step == "init":
                 self.SysLogger.Log("Pipeline: 'init' step. Executing Outline Generation.", 4)
@@ -847,7 +857,7 @@ class StoryPipeline:
                     self._generate_outline_stage(current_state, initial_prompt_for_outline, state_filepath)
                 last_completed_step = current_state.get("last_completed_step")
 
-            if Outline is None and last_completed_step not in ["init"]: # Outline must exist beyond init
+            if Outline is None and last_completed_step not in ["init"]:  # Outline must exist beyond init
                 self.SysLogger.Log("PIPELINE run_pipeline FATAL: Outline data is missing after 'init' stage.", 7)
                 raise Exception("Pipeline Error: Outline missing in state where it's expected.")
 
@@ -862,7 +872,7 @@ class StoryPipeline:
                 raise Exception("Pipeline Error: NumChapters missing in state where it's expected.")
 
             # --- Chapter Outline Expansion (includes optional global refinement) ---
-            if last_completed_step == "detect_chapters" or last_completed_step == "refine_global_outline": # Allow resume from internal step
+            if last_completed_step == "detect_chapters" or last_completed_step == "refine_global_outline":  # Allow resume from internal step
                 if self.Config.EXPAND_OUTLINE:
                     self.SysLogger.Log(f"Pipeline: '{last_completed_step}' step complete. Executing Chapter Outline Expansion.", 4)
                     # Use current_state["full_outline"] which might have been refined if refine_global_outline was run
@@ -871,10 +881,10 @@ class StoryPipeline:
                         self.SysLogger.Log("PIPELINE run_pipeline FATAL: Outline for expansion is missing.", 7)
                         raise ValueError("Full outline for expansion stage is missing.")
                     self._expand_chapter_outlines_stage(current_state, outline_for_expansion, NumChapters, state_filepath)
-                else: # EXPAND_OUTLINE is false
+                else:  # EXPAND_OUTLINE is false
                     self.SysLogger.Log("Pipeline: Skipping Per-Chapter Outline Expansion (Config.EXPAND_OUTLINE=False).", 4)
-                    current_state["expanded_chapter_outlines"] = [] # Ensure it's an empty list
-                    current_state["last_completed_step"] = "expand_chapters" # Mark as logically complete
+                    current_state["expanded_chapter_outlines"] = []  # Ensure it's an empty list
+                    current_state["last_completed_step"] = "expand_chapters"  # Mark as logically complete
                     self._save_state_wrapper(current_state, state_filepath)
                 last_completed_step = current_state.get("last_completed_step")
 
@@ -884,7 +894,7 @@ class StoryPipeline:
                 if NumChapters is None:
                     self.SysLogger.Log("PIPELINE run_pipeline FATAL: Total number of chapters (NumChapters) is None before chapter writing stage.", 7)
                     raise ValueError("NumChapters is None before chapter writing.")
-                if BaseContext is None: # BaseContext comes from _generate_outline_stage, should be in state
+                if BaseContext is None:  # BaseContext comes from _generate_outline_stage, should be in state
                     self.SysLogger.Log("PIPELINE run_pipeline FATAL: BaseContext is None before chapter writing stage. State may be corrupted.", 7)
                     raise ValueError("BaseContext is None before chapter writing. Check if base_context exists in state file.")
                 self.SysLogger.Log(f"Pipeline: '{last_completed_step}' step complete. Executing Chapter Writing.", 4)
@@ -894,7 +904,7 @@ class StoryPipeline:
             # --- Post-Processing ---
             # Can start if chapter_generation_complete, or if resuming any post_processing_ sub-step
             if last_completed_step == "chapter_generation_complete" or \
-            (last_completed_step.startswith("post_processing_") and last_completed_step != "complete"):
+                    (last_completed_step.startswith("post_processing_") and last_completed_step != "complete"):
                 self.SysLogger.Log(f"Pipeline: '{last_completed_step}' step complete. Executing Post-Processing.", 4)
                 current_state = self._perform_post_processing_stage(current_state, state_filepath, Args, StartTime)
                 last_completed_step = current_state.get("last_completed_step")
@@ -907,7 +917,7 @@ class StoryPipeline:
         except Exception as e:
             self.SysLogger.Log(f"PIPELINE run_pipeline CRITICAL ERROR: An unhandled exception occurred: {e}", 7)
             import traceback
-            self.SysLogger.Log(f"Traceback:\n{traceback.format_exc()}", 1) # Log stack trace at debug
+            self.SysLogger.Log(f"Traceback:\n{traceback.format_exc()}", 1)  # Log stack trace at debug
             current_state["error"] = str(e)
             current_state["error_traceback"] = traceback.format_exc()
             current_state["last_known_step_before_error"] = last_completed_step

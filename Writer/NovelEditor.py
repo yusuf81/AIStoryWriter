@@ -16,26 +16,26 @@ except ImportError:
 def validate_chapter_editing(original_chapter, edited_chapter, logger):
     """
     Validate chapter editing using 2-layer approach:
-    Layer 1: TF-IDF Content Similarity 
+    Layer 1: TF-IDF Content Similarity
     Layer 2: Length Change Detection
     """
-    
+
     if not SKLEARN_AVAILABLE:
         logger.Log("SKLEARN not available, skipping TF-IDF validation", 4)
         # Fallback to simple length check
         char_ratio = len(edited_chapter) / len(original_chapter) if original_chapter else 0
         word_ratio = len(edited_chapter.split()) / len(original_chapter.split()) if original_chapter.split() else 0
-        
+
         is_valid = char_ratio >= 0.7 and word_ratio >= 0.7
         return is_valid, {
             'is_valid': is_valid,
             'content_similarity': 'N/A (SKLEARN unavailable)',
-            'key_preservation': 'N/A (SKLEARN unavailable)', 
+            'key_preservation': 'N/A (SKLEARN unavailable)',
             'char_ratio': char_ratio,
             'word_ratio': word_ratio,
             'validation_method': 'fallback_length_only'
         }
-    
+
     try:
         # Preprocessing function
         def preprocess(text):
@@ -43,46 +43,46 @@ def validate_chapter_editing(original_chapter, edited_chapter, logger):
             # Indonesian stop words
             stop_words = {'dan', 'atau', 'yang', 'ini', 'itu', 'adalah', 'dengan', 'pada', 'untuk', 'dari', 'ke', 'di', 'ia', 'dia', 'mereka', 'tidak', 'akan', 'sudah', 'juga', 'ada'}
             return ' '.join([w for w in words if w not in stop_words and len(w) > 2])
-        
+
         # Preprocess both texts
         original_processed = preprocess(original_chapter)
         edited_processed = preprocess(edited_chapter)
-        
+
         if not original_processed or not edited_processed:
             logger.Log("Warning: Empty processed text, using fallback validation", 4)
             char_ratio = len(edited_chapter) / len(original_chapter) if original_chapter else 0
             return char_ratio >= 0.7, {'validation_method': 'empty_text_fallback'}
-        
+
         texts = [original_processed, edited_processed]
-        
+
         # Layer 1: TF-IDF Analysis
         vectorizer = TfidfVectorizer(
             ngram_range=(1, 3),  # Capture single words and phrases
             min_df=1,            # Include all terms
             max_features=5000    # Limit vocabulary size
         )
-        
+
         tfidf_matrix = vectorizer.fit_transform(texts)
-        
+
         # Calculate overall similarity
         content_similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-        
+
         # Get feature names and scores for key preservation analysis
         feature_names = vectorizer.get_feature_names_out()
         original_scores = tfidf_matrix[0].toarray()[0]  # type: ignore
         edited_scores = tfidf_matrix[1].toarray()[0]    # type: ignore
-        
+
         # Get top important terms from original (top 20)
         top_indices = np.argsort(original_scores)[-20:]
         original_key_elements = [feature_names[i] for i in top_indices if original_scores[i] > 0]
         preserved_elements = [feature_names[i] for i in top_indices if edited_scores[i] > 0]
-        
+
         key_preservation = len(preserved_elements) / len(original_key_elements) if original_key_elements else 0
-        
+
         # Layer 2: Length Change Detection
         char_ratio = len(edited_chapter) / len(original_chapter) if original_chapter else 0
         word_ratio = len(edited_chapter.split()) / len(original_chapter.split()) if original_chapter.split() else 0
-        
+
         # Decision Logic
         is_valid = (
             content_similarity >= 0.6 and      # 60% content similarity threshold
@@ -90,7 +90,7 @@ def validate_chapter_editing(original_chapter, edited_chapter, logger):
             char_ratio >= 0.7 and             # Max 30% character reduction
             word_ratio >= 0.7                  # Max 30% word reduction
         )
-        
+
         validation_report = {
             'is_valid': is_valid,
             'content_similarity': content_similarity,
@@ -102,7 +102,7 @@ def validate_chapter_editing(original_chapter, edited_chapter, logger):
             'validation_method': 'tfidf_plus_length',
             'failure_reasons': []
         }
-        
+
         # Detailed failure analysis
         if not is_valid:
             if content_similarity < 0.6:
@@ -113,15 +113,15 @@ def validate_chapter_editing(original_chapter, edited_chapter, logger):
                 validation_report['failure_reasons'].append(f'Content too short (chars): {char_ratio:.2%}')
             if word_ratio < 0.7:
                 validation_report['failure_reasons'].append(f'Content too short (words): {word_ratio:.2%}')
-        
+
         return is_valid, validation_report
-        
+
     except Exception as e:
         logger.Log(f"Error in TF-IDF validation: {e}, using fallback", 3)
         # Fallback to simple length check
         char_ratio = len(edited_chapter) / len(original_chapter) if original_chapter else 0
         word_ratio = len(edited_chapter.split()) / len(original_chapter.split()) if original_chapter.split() else 0
-        
+
         is_valid = char_ratio >= 0.7 and word_ratio >= 0.7
         return is_valid, {
             'is_valid': is_valid,
@@ -185,11 +185,11 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
 
         # Extract text from validated ChapterOutput model
         NewChapter = Chapter_obj.text
-        
+
         # Validate the editing result
         original_chapter = OriginalChapters[current_chapter_index]
         is_valid, validation_report = validate_chapter_editing(original_chapter, NewChapter, _Logger)
-        
+
         if is_valid:
             # Validation passed - use edited chapter
             EditedChapters[current_chapter_index] = NewChapter
@@ -206,7 +206,7 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
                 _Logger.Log(f"Original key elements: {validation_report['original_key_elements']}", 5)
             if validation_report.get('preserved_elements'):
                 _Logger.Log(f"Preserved key elements: {validation_report['preserved_elements']}", 5)
-        
+
         _Logger.Log(
             f"Word Count Change (Edit): Chapter {i} {OriginalWordCount} -> {NewWordCount}",
             3,

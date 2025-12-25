@@ -3,7 +3,6 @@ TDD Tests for Pydantic State Serialization - London School Approach
 Tests for fixing StoryElements JSON serialization error in save/load state
 """
 import pytest
-import tempfile
 import json
 import os
 import sys
@@ -22,7 +21,7 @@ class TestStatePydanticSerialization:
         - Uses container format to separate Pydantic from regular data
         - No more TypeError when saving Pydantic objects
         """
-        from Writer.Models import StoryElements, TitleOutput
+        from Writer.Models import StoryElements, TitleOutput, CharacterDetail
         from Writer.StateManager import StateManager
 
         # Create Pydantic objects
@@ -30,8 +29,24 @@ class TestStatePydanticSerialization:
             title="Petualangan Naga",
             genre="Petualangan Fantasi",
             characters={
-                "pemain": [{"name": "petualang", "physical_description": "A brave adventurer"}],
-                "penjahat": [{"name": "naga", "physical_description": "A fearsome dragon"}]
+                "pemain": [
+                    CharacterDetail(
+                        name="petualang",
+                        physical_description="A brave adventurer",
+                        personality=None,
+                        background=None,
+                        motivation=None
+                    )
+                ],
+                "penjahat": [
+                    CharacterDetail(
+                        name="naga",
+                        physical_description="A fearsome dragon",
+                        personality=None,
+                        background=None,
+                        motivation=None
+                    )
+                ]
             },
             settings={
                 "gua": {
@@ -47,6 +62,10 @@ class TestStatePydanticSerialization:
                     "mood": "Peaceful"
                 }
             },
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            symbolism=None,
             themes=["petualangan", "keberanian"],
             conflict="petualang vs naga",
             resolution="petualang menang"
@@ -190,11 +209,32 @@ class TestStatePydanticSerialization:
         - StateManager preserves all data types correctly
         - Separates Pydantic from regular data properly
         """
-        from Writer.Models import StoryElements
+        from Writer.Models import StoryElements, CharacterDetail
         from Writer.StateManager import StateManager
 
         mixed_state = {
-            "pydantic_obj": StoryElements(title="Test Story", genre="Test", themes=["test"], characters={"hero": [{"name": "brave", "physical_description": "A brave hero"}]}),
+            "pydantic_obj": StoryElements(
+                title="Test Story",
+                genre="Test",
+                themes=["test"],
+                characters={
+                    "hero": [
+                        CharacterDetail(
+                            name="brave",
+                            physical_description="A brave hero",
+                            personality=None,
+                            background=None,
+                            motivation=None
+                        )
+                    ]
+                },
+                pacing=None,
+                style=None,
+                plot_structure=None,
+                conflict=None,
+                symbolism=None,
+                resolution=None
+            ),
             "string": "test string",
             "number": 42,
             "list": [1, 2, 3],
@@ -272,7 +312,7 @@ class TestStatePydanticSerialization:
                     # This might need adjustment based on actual model requirements
                     try:
                         instance = model_class()
-                    except:
+                    except BaseException:
                         continue  # Skip models that require specific params
 
                 all_models_state[model_name] = instance

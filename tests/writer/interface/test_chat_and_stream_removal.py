@@ -3,7 +3,7 @@ TDD Tests for ChatAndStreamResponse Removal - London School Approach
 Tests for completely removing deprecated ChatAndStreamResponse method
 """
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -26,7 +26,7 @@ class TestChatAndStreamRemoval:
         # RED: This should fail initially because method still exists
         # After cleanup: This should pass because method is removed
         with pytest.raises(AttributeError):
-            interface.ChatAndStreamResponse
+            _ = interface.ChatAndStreamResponse  # type: ignore[attr-defined] # RED test - expects attribute to not exist
 
         # But ChatResponse should still exist
         assert hasattr(interface, 'ChatResponse'), "ChatResponse should still exist"
@@ -78,9 +78,6 @@ class TestChatAndStreamRemoval:
         This test ensures that ChatAndStreamResponse is only used in tests,
         making it safe to remove completely.
         """
-        import Writer
-        import Writer.Interface.Wrapper
-
         # Check main modules don't use the deprecated method
         main_files_to_check = [
             'Write.py',

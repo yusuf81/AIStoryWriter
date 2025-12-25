@@ -3,7 +3,6 @@ TDD tests for PDFGenerator internationalization support.
 
 Tests that PDFGenerator correctly handles both English and Indonesian sections.
 """
-import pytest
 import sys
 import os
 

@@ -2,8 +2,7 @@
 Pipeline Title Generation Tests - TDD London School Approach
 Tests for migrating _handle_chapter_title_generation to SafeGeneratePydantic
 """
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -61,8 +60,8 @@ class TestChapterTitleGenerationPydantic:
             mock_iface.SafeGeneratePydantic.assert_called_once()
 
             # CRITICAL: Verify SafeGenerateText was NEVER called
-            assert not hasattr(mock_iface, 'SafeGenerateText') or \
-                   not getattr(mock_iface, 'SafeGenerateText', Mock()).called
+            has_sgt = hasattr(mock_iface, 'SafeGenerateText')
+            assert not has_sgt or not mock_iface.SafeGenerateText.called
 
             # Verify result is the title string from Pydantic model
             assert result == "Chapter 1: The Beginning"

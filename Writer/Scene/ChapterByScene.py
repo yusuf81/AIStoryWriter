@@ -84,7 +84,7 @@ def ChapterByScene(
     _ThisChapterOutline: str,
     _Outline: str,
     _BaseContext: str = "",
-    _ExpandedChapterOutline: dict = None,
+    _ExpandedChapterOutline: dict = None,  # type: ignore[assignment]
 ):  # Added _ExpandedChapterOutline parameter
 
     # This function calls all other scene-by-scene generation functions and creates a full chapter based on the new scene pipeline.

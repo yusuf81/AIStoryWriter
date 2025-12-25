@@ -2,7 +2,6 @@
 Test StateManager.save_state with nested Pydantic objects
 Bug fix verification for: "Object of type StoryElements is not JSON serializable"
 """
-import pytest
 import tempfile
 import json
 from pathlib import Path
@@ -19,11 +18,20 @@ class TestStateManagerNestedPydantic:
         story_elements = StoryElements(
             title="Test Story",
             genre="Fantasy",
-            themes=["magic", "adventure"]
+            themes=["magic", "adventure"],
+            characters={},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         character = CharacterDetail(
             name="Hero",
+            physical_description="Brave warrior with a mysterious past",
+            personality=None,
             background="Brave warrior with a mysterious past",
             motivation="Seeks to protect the kingdom"
         )
@@ -78,7 +86,14 @@ class TestStateManagerNestedPydantic:
         story_elements = StoryElements(
             title="Gua Harta Karun Naga",
             genre="Adventure",
-            themes=["treasure", "dragons"]
+            themes=["treasure", "dragons"],
+            characters={},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         state_data = {
@@ -115,6 +130,8 @@ class TestStateManagerNestedPydantic:
         # Arrange: Create deeply nested structure
         character = CharacterDetail(
             name="Rian",
+            physical_description="Young adventurer seeking treasure",
+            personality=None,
             background="Young adventurer seeking treasure",
             motivation="Find the dragon's treasure"
         )

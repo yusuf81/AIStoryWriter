@@ -5,9 +5,9 @@ These tests verify that SceneOutlineToScene can accept SceneOutline objects
 and uses their metadata to enhance scene generation prompts.
 """
 
-import pytest
+import pytest  # type: ignore # Needed for pytest fixtures
 import sys
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock, MagicMock
 from Writer.Models import SceneOutline, SceneContent
 
 # Mock termcolor before imports

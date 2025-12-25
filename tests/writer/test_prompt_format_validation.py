@@ -5,7 +5,6 @@ Ensures prompts generate responses that match Pydantic model structure.
 """
 
 import json
-import re
 from typing import Dict, Any
 
 import pytest
@@ -596,9 +595,9 @@ class TestPromptJSONBraceFormat:
 
         # Get all prompt attributes (strings only)
         english_prompts = {k: v for k, v in vars(EnglishPrompts).items()
-                          if not k.startswith('_') and isinstance(v, str)}
+                           if not k.startswith('_') and isinstance(v, str)}
         indonesian_prompts = {k: v for k, v in vars(get_indonesian_prompts()).items()
-                             if not k.startswith('_') and isinstance(v, str)}
+                              if not k.startswith('_') and isinstance(v, str)}
 
         all_prompts = [('English', english_prompts), ('Indonesian', indonesian_prompts)]
         found_issues = []
@@ -622,7 +621,7 @@ class TestPromptJSONBraceFormat:
                     if (('{' in line and '}' in line and
                          not line.count('{') == line.count('{{') and
                          '"' in line and (':' in line or ']' in line)) or
-                        (line.strip() == '{' or line.strip() == '}')):
+                            (line.strip() == '{' or line.strip() == '}')):
 
                         # Check if this is actually JSON (has keys/colons)
                         if any(key in line for key in ['"feedback":', '"rating":', '"suggestions":', '"detail":', '"laju":', '"alur":']):
@@ -643,7 +642,6 @@ class TestEnhancedSceneOutlineFieldNames:
         """
         # Arrange
         from Writer.Prompts import CHAPTER_OUTLINE_PROMPT
-        from Writer.Models import EnhancedSceneOutline
         from Writer.PromptsHelper import validate_prompt_format
 
         # Act & Assert - Prompt can be formatted but teaches wrong field names

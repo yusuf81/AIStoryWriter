@@ -2,8 +2,7 @@
 Outline Generator TDD Tests - London School Approach
 Tests for migrating remaining SafeGenerateText usage to SafeGeneratePydantic
 """
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -17,16 +16,35 @@ class TestOutlineGeneratorPydanticConversion:
         from Writer.OutlineGenerator import GenerateOutline
 
         # Arrange: Create real BaseContext model
-        from Writer.Models import BaseContext as BaseContextModel, StoryElements
+        from Writer.Models import BaseContext as BaseContextModel, StoryElements, CharacterDetail
 
         base_context = BaseContextModel(context="Important story elements extracted from prompt")
         story_elements = StoryElements(
             title="Hero's Journey",
             genre="Fantasy Adventure",
             characters={
-                "Hero": [{"name": "Hero", "physical_description": "Brave protagonist"}],
-                "Villain": [{"name": "Dark wizard", "physical_description": "Evil antagonist"}]
+                "Hero": [
+                    CharacterDetail(
+                        name="Hero",
+                        physical_description="Brave protagonist",
+                        personality=None,
+                        background=None,
+                        motivation=None
+                    )
+                ],
+                "Villain": [
+                    CharacterDetail(
+                        name="Dark wizard",
+                        physical_description="Evil antagonist",
+                        personality=None,
+                        background=None,
+                        motivation=None
+                    )
+                ]
             },
+            pacing=None,
+            style=None,
+            plot_structure=None,
             settings={
                 "Castle": {
                     "location": "Magical fortress",
@@ -41,6 +59,7 @@ class TestOutlineGeneratorPydanticConversion:
                     "mood": "Dangerous"
                 }
             },
+            symbolism=None,
             themes=["Courage", "Good vs Evil"],
             conflict="Hero must defeat dark wizard",
             resolution="Hero saves the kingdom"
@@ -64,8 +83,10 @@ class TestOutlineGeneratorPydanticConversion:
         outline_model = OutlineOutput(
             title="Hero's Journey",
             genre="Fantasy",
+            theme=None,
             chapters=["Chapter 1: Beginning where the hero starts his journey", "Chapter 2: Journey through the dark forest"],
             character_list=["Hero"],
+            character_details=None,
             setting={
                 "time": "Fantasy era",
                 "location": "Fantasy world",
@@ -83,8 +104,10 @@ class TestOutlineGeneratorPydanticConversion:
         revised_outline = OutlineOutput(
             title="Revised Hero's Journey",
             genre="Fantasy",
+            theme=None,
             chapters=["Revised Chapter 1: Beginning where the hero starts his journey with more detail", "Revised Chapter 2: Journey through the dark forest with challenges"],
             character_list=["Hero"],
+            character_details=None,
             setting={
                 "time": "Fantasy era",
                 "location": "Fantasy world",
@@ -117,7 +140,7 @@ class TestOutlineGeneratorPydanticConversion:
             mock_iface,
             mock_logger(),
             "A story about a hero's journey",
-            "Fantasy"
+            "Fantasy"  # type: ignore[arg-type]  # _QualityThreshold - test passes string for testing
         )
 
         # Assert: SafeGeneratePydantic was called 4 times (BaseContext, StoryElements, Outline, ReviseOutline)
@@ -137,6 +160,7 @@ class TestOutlineGeneratorPydanticConversion:
             theme="Good vs Evil",
             chapters=["Chapter 1: Beginning where the hero starts his journey", "Chapter 2: Journey through the dark forest"],
             character_list=["Alice", "Bob"],
+            character_details=None,
             setting={
                 "time": "Fairytale era",
                 "location": "Fairy land",
@@ -186,11 +210,13 @@ class TestOutlineGeneratorPydanticConversion:
         outline_with_structured_setting = OutlineOutput(
             title="Story with Structured Setting",
             genre="Fantasy Adventure",
+            theme=None,
             chapters=[
                 "Chapter 1: The hero begins their journey in a mystical land",
                 "Chapter 2: Challenges arise in the enchanted forest"
             ],
             character_list=["Hero", "Mentor"],
+            character_details=None,
             setting={
                 "time": "Medieval fantasy era",
                 "location": "Enchanted kingdom with magical creatures",
@@ -211,17 +237,37 @@ class TestOutlineGeneratorPydanticConversion:
         mock_iface = mock_interface()
 
         # Create proper mocks for BaseContext and StoryElements
-        from Writer.Models import BaseContext, StoryElements
+        from Writer.Models import BaseContext, StoryElements, CharacterDetail
 
         mock_base_context = BaseContext(context="Important context extracted")
         mock_story_elements = StoryElements(
             title="Fantasy Adventure",
             genre="Fantasy",
             characters={
-                "Hero": [{"name": "Hero", "description": "Main protagonist"}],
-                "Mentor": [{"name": "Mentor", "description": "Guide character"}]
+                "Hero": [
+                    CharacterDetail(
+                        name="Hero",
+                        physical_description="Main protagonist",
+                        personality=None,
+                        background=None,
+                        motivation=None
+                    )
+                ],
+                "Mentor": [
+                    CharacterDetail(
+                        name="Mentor",
+                        physical_description="Guide character",
+                        personality=None,
+                        background=None,
+                        motivation=None
+                    )
+                ]
             },
+            pacing=None,
+            style=None,
+            plot_structure=None,
             settings={},
+            symbolism=None,
             themes=["Courage", "Good vs Evil"],
             conflict="Hero faces challenges",
             resolution="Hero succeeds"
@@ -250,7 +296,7 @@ class TestOutlineGeneratorPydanticConversion:
             mock_iface,
             mock_logger(),
             "Create a fantasy story with detailed setting",
-            "Fantasy"
+            "Fantasy"  # type: ignore[arg-type]  # _QualityThreshold - test passes string for testing
         )
 
         # Assert: Generation succeeded without validation errors

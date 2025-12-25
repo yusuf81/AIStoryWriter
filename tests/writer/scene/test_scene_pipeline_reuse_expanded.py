@@ -5,10 +5,9 @@ Verifies that ChapterByScene can reuse scenes from expanded chapter outlines
 when available, falling back to ChapterOutlineToScenes when not.
 """
 
+from Writer.Models import SceneOutline
 import sys
 sys.path.insert(0, '/var/www/AIStoryWriter')
-
-from Writer.Models import SceneOutline
 
 
 def test_can_use_expanded_scenes_with_dict():

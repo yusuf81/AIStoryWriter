@@ -1,15 +1,14 @@
-import Writer.PrintUtils
 import Writer.Config
 # Writer.Prompts akan diimpor sebagai ActivePrompts di dalam fungsi
 import Writer.Statistics  # Add this import
 from Writer.Models import ChapterOutput
 
 
-def TranslatePrompt(Interface, _Logger, _Prompt: str, _SourceLanguage: str, TargetLang: str = "English"): # Tambahkan TargetLang
-    import Writer.Prompts as ActivePrompts # Impor ulang untuk memastikan kita mendapatkan yang di-patch
+def TranslatePrompt(Interface, _Logger, _Prompt: str, _SourceLanguage: str, TargetLang: str = "English"):  # Tambahkan TargetLang
+    import Writer.Prompts as ActivePrompts  # Impor ulang untuk memastikan kita mendapatkan yang di-patch
 
     translation_prompt_template = ActivePrompts.TRANSLATE_PROMPT
-    
+
     PromptFormatted: str = translation_prompt_template.format(
         _Prompt=_Prompt, _Language=_SourceLanguage, TargetLang=TargetLang
     )
@@ -29,12 +28,12 @@ def TranslatePrompt(Interface, _Logger, _Prompt: str, _SourceLanguage: str, Targ
 
 
 def TranslateNovel(
-    Interface, _Logger, _Chapters: list, _TotalChapters: int, _TargetLanguage: str, _SourceLanguage: str = "English" # Tambahkan _SourceLanguage
+    Interface, _Logger, _Chapters: list, _TotalChapters: int, _TargetLanguage: str, _SourceLanguage: str = "English"  # Tambahkan _SourceLanguage
 ):
-    import Writer.Prompts as ActivePrompts # Impor ulang untuk memastikan kita mendapatkan yang di-patch
+    import Writer.Prompts as ActivePrompts  # Impor ulang untuk memastikan kita mendapatkan yang di-patch
     translation_chapter_prompt_template = ActivePrompts.CHAPTER_TRANSLATE_PROMPT
 
-    EditedChapters = _Chapters[:] # Salin list
+    EditedChapters = _Chapters[:]  # Salin list
 
     for i in range(_TotalChapters):
 

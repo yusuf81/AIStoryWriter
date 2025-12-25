@@ -3,7 +3,6 @@ Tests for MarkdownProcessor module
 """
 
 import pytest
-from unittest.mock import MagicMock
 from Writer.MarkdownProcessor import MarkdownProcessor
 
 

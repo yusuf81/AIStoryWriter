@@ -1,13 +1,12 @@
 # tests/writer/interface/test_wrapper_embedding.py
 """Test embedding functionality in Interface Wrapper"""
+from Writer.Interface.Wrapper import Interface
 import os
 import sys
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-
-from Writer.Interface.Wrapper import Interface
 
 
 class TestGenerateEmbedding:

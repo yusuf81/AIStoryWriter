@@ -3,8 +3,8 @@
 Error handling tests for save/load state operations.
 Tests various error scenarios and recovery mechanisms.
 """
+from Write import save_state, load_state
 import pytest
-from pytest_mock import MockerFixture
 import json
 import os
 import tempfile
@@ -15,8 +15,6 @@ import errno
 # Add project root to path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
-
-from Write import save_state, load_state
 
 
 class TestSaveStateErrorHandling:
@@ -49,7 +47,7 @@ class TestSaveStateErrorHandling:
                 # Cleanup: restore write permission so cleanup can delete directory
                 try:
                     os.chmod(readonly_dir, 0o755)
-                except:
+                except BaseException:
                     pass
 
     def test_save_state_disk_full(self, capsys):
@@ -76,12 +74,12 @@ class TestSaveStateErrorHandling:
     def test_save_state_directory_not_exists_and_cannot_create(self, capsys):
         """Test save_state when parent directory doesn't exist and can't be created."""
         test_data = {"test": "data"}
-        
+
         # Try to save to a path where parent directory cannot be created
         invalid_path = "/root/restricted/test.json"  # Assuming /root/restricted doesn't exist and can't be created
-        
+
         save_state(test_data, invalid_path)
-        
+
         # Should handle the error gracefully
         captured = capsys.readouterr()
         assert "FATAL: Failed to save state" in captured.err
@@ -91,15 +89,15 @@ class TestSaveStateErrorHandling:
         # Create data that can't be JSON serialized
         class NonSerializable:
             pass
-        
+
         test_data = {"non_serializable": NonSerializable()}
-        
+
         with tempfile.NamedTemporaryFile(delete=False) as f:
             temp_path = f.name
-        
+
         try:
             save_state(test_data, temp_path)
-            
+
             # Should handle JSON serialization error
             captured = capsys.readouterr()
             assert "FATAL:" in captured.err and "saving state" in captured.err
@@ -110,17 +108,17 @@ class TestSaveStateErrorHandling:
     def test_save_state_atomic_move_fails(self, capsys):
         """Test save_state when atomic move operation fails."""
         test_data = {"test": "data"}
-        
+
         with tempfile.NamedTemporaryFile(delete=False) as f:
             temp_path = f.name
-        
+
         try:
             with patch('shutil.move') as mock_move:
                 # Simulate move failure
                 mock_move.side_effect = OSError("Move operation failed")
-                
+
                 save_state(test_data, temp_path)
-                
+
                 # Verify error was handled
                 captured = capsys.readouterr()
                 assert "FATAL: Failed to save state" in captured.err
@@ -134,18 +132,18 @@ class TestSaveStateErrorHandling:
     def test_save_state_cleans_up_temp_file_on_error(self):
         """Test that save_state cleans up temporary file when error occurs."""
         test_data = {"test": "data"}
-        
+
         with tempfile.NamedTemporaryFile(delete=False) as f:
             temp_path = f.name
             temp_file_path = temp_path + ".tmp"
-        
+
         try:
             with patch('shutil.move') as mock_move:
                 # Simulate move failure
                 mock_move.side_effect = OSError("Move failed")
-                
+
                 save_state(test_data, temp_path)
-                
+
                 # Verify temp file was cleaned up
                 assert not os.path.exists(temp_file_path)
         finally:
@@ -161,10 +159,10 @@ class TestLoadStateErrorHandling:
     def test_load_state_file_not_found(self):
         """Test load_state raises FileNotFoundError for missing files."""
         non_existent = "/tmp/non_existent_file_12345.json"
-        
+
         with pytest.raises(FileNotFoundError) as exc_info:
             load_state(non_existent)
-        
+
         assert non_existent in str(exc_info.value)
 
     def test_load_state_permission_denied(self):
@@ -172,11 +170,11 @@ class TestLoadStateErrorHandling:
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
             temp_path = f.name
             json.dump({"test": "data"}, f)
-        
+
         try:
             # Change file permissions to make it unreadable
             os.chmod(temp_path, 0o000)
-            
+
             with pytest.raises(IOError):
                 load_state(temp_path)
         finally:
@@ -189,11 +187,11 @@ class TestLoadStateErrorHandling:
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
             f.write('{"key": "value", invalid}')  # Invalid JSON syntax
             temp_path = f.name
-        
+
         try:
             with pytest.raises(ValueError) as exc_info:
                 load_state(temp_path)
-            
+
             # Verify it's a wrapped JSON decode error
             assert "Failed to decode state file" in str(exc_info.value)
         finally:
@@ -204,7 +202,7 @@ class TestLoadStateErrorHandling:
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
             f.write('{"key": "value"')  # Missing closing brace
             temp_path = f.name
-        
+
         try:
             with pytest.raises(ValueError):
                 load_state(temp_path)
@@ -241,7 +239,7 @@ class TestLoadStateErrorHandling:
         with tempfile.NamedTemporaryFile(mode='wb', delete=False) as f:
             f.write(b'\x00\x01\x02\x03\x04\x05')  # Binary data
             temp_path = f.name
-        
+
         try:
             with pytest.raises((ValueError, IOError)):
                 load_state(temp_path)
@@ -255,21 +253,21 @@ class TestStateOperationRecovery:
     def test_save_state_handles_temporary_failure(self, capsys):
         """Test save_state documents behavior with temporary failures."""
         test_data = {"test": "data"}
-        
+
         # Test that current implementation doesn't have retry logic
         # This is a documentation test for expected behavior
-        
+
         with tempfile.NamedTemporaryFile(delete=False) as f:
             temp_path = f.name
-        
+
         try:
             # Normal save should work
             save_state(test_data, temp_path)
-            
+
             # Verify no error output for successful save
             captured = capsys.readouterr()
             assert captured.err == ""
-            
+
             # Verify data was saved correctly
             loaded_data = load_state(temp_path)
             assert loaded_data == test_data
@@ -280,11 +278,11 @@ class TestStateOperationRecovery:
     def test_load_state_with_backup_recovery(self):
         """Test load_state recovery using backup files."""
         test_data = {"test": "data", "backup": True}
-        
+
         with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as f:
             main_path = f.name
             backup_path = main_path + ".backup"
-        
+
         try:
             # Create a valid backup file using save_state
             save_state(test_data, backup_path)
@@ -300,7 +298,7 @@ class TestStateOperationRecovery:
             # But backup file should be loadable
             backup_data = load_state(backup_path)
             assert backup_data == test_data
-            
+
         finally:
             for path in [main_path, backup_path]:
                 if os.path.exists(path):
@@ -309,26 +307,26 @@ class TestStateOperationRecovery:
     def test_concurrent_access_to_state_file(self):
         """Test behavior when multiple processes access state file simultaneously."""
         test_data = {"concurrent": "test"}
-        
+
         with tempfile.NamedTemporaryFile(delete=False) as f:
             temp_path = f.name
-        
+
         try:
             # Save initial state
             save_state(test_data, temp_path)
-            
+
             # Simulate concurrent read while another process might be writing
             # This tests that atomic operations prevent corruption
             loaded_data = load_state(temp_path)
             assert loaded_data == test_data
-            
+
             # Test multiple saves don't interfere
             test_data2 = {"concurrent": "test2"}
             save_state(test_data2, temp_path)
-            
+
             loaded_data2 = load_state(temp_path)
             assert loaded_data2 == test_data2
-            
+
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
@@ -340,28 +338,28 @@ class TestStateFileConsistency:
     def test_state_file_atomic_operation_consistency(self):
         """Test that atomic operations ensure file consistency."""
         test_data = {"atomic": "test"}
-        
+
         with tempfile.NamedTemporaryFile(delete=False) as f:
             temp_path = f.name
-        
+
         try:
             # Test that partial writes don't leave corrupted files
             with patch('shutil.move') as mock_move:
                 # If move fails, original file should remain unchanged
                 mock_move.side_effect = OSError("Move failed")
-                
+
                 # First save a valid state
                 save_state(test_data, temp_path)
-                
+
                 # Now try to save different data that will fail
                 test_data2 = {"atomic": "test2"}
                 save_state(test_data2, temp_path)
-                
+
                 # Original file should be preserved (if it existed)
                 # Since move failed, temp file should be cleaned up
                 temp_file = temp_path + ".tmp"
                 assert not os.path.exists(temp_file)
-                
+
         finally:
             for path in [temp_path, temp_path + ".tmp"]:
                 if os.path.exists(path):
@@ -375,19 +373,19 @@ class TestStateFileConsistency:
             "emoji_test": "🎭🎨🎪",
             "special_chars": "àáâãäåæçèéêë"
         }
-        
+
         with tempfile.NamedTemporaryFile(delete=False) as f:
             temp_path = f.name
-        
+
         try:
             save_state(test_data, temp_path)
             loaded_data = load_state(temp_path)
-            
+
             # Verify Unicode is preserved exactly
             assert loaded_data == test_data
             assert loaded_data["unicode_test"] == "测试中文"
             assert loaded_data["emoji_test"] == "🎭🎨🎪"
-            
+
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)

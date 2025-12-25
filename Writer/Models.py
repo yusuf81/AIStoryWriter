@@ -770,6 +770,9 @@ class ReviewOutput(BaseModel):
                     if not suggestion_data['other_criteria']:
                         suggestion_data.pop('other_criteria', None)
                     normalized.append(suggestion_data)
+                else:
+                    # Already a valid model instance, preserve as-is
+                    normalized.append(item)
             return normalized
         return v
 

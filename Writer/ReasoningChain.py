@@ -1,5 +1,4 @@
 # Writer/ReasoningChain.py - Two-pass reasoning for cleaner generation
-import Writer.Config as Config
 from Writer.Interface.Wrapper import Interface
 from Writer.PrintUtils import Logger
 from Writer.Models import ReasoningOutput
@@ -100,9 +99,9 @@ class ReasoningChain:
         return reasoning
 
     def _reason_about_plot(self,
-                          context: str,
-                          additional_context: Optional[str] = None,
-                          chapter_number: Optional[int] = None) -> str:
+                           context: str,
+                           additional_context: Optional[str] = None,
+                           chapter_number: Optional[int] = None) -> str:
         """Generate reasoning about plot development."""
         additional_text = ""
         if additional_context:
@@ -130,17 +129,17 @@ Do not write the chapter content, only reason about the approach.
         messages = [self.interface.BuildSystemQuery("You are a skilled story analyst providing structured reasoning for plot development.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(  # type: ignore[misc]
             self.logger, messages, self.config.REASONING_MODEL,
             ReasoningOutput
         )
 
-        return reasoning_obj.reasoning
+        return reasoning_obj.reasoning  # type: ignore[reportOptionalMemberAccess]
 
     def _reason_about_character(self,
-                               context: str,
-                               additional_context: Optional[str] = None,
-                               chapter_number: Optional[int] = None) -> str:
+                                context: str,
+                                additional_context: Optional[str] = None,
+                                chapter_number: Optional[int] = None) -> str:
         """Generate reasoning about character development."""
         additional_text = ""
         if additional_context:
@@ -168,17 +167,17 @@ Do not write the chapter content, only reason about the character approach.
         messages = [self.interface.BuildSystemQuery("You are a skilled character analyst providing structured reasoning for character development.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(  # type: ignore[misc]
             self.logger, messages, self.config.REASONING_MODEL,
             ReasoningOutput
         )
 
-        return reasoning_obj.reasoning
+        return reasoning_obj.reasoning  # type: ignore[reportOptionalMemberAccess]
 
     def _reason_about_dialogue(self,
-                              context: str,
-                              additional_context: Optional[str] = None,
-                              chapter_number: Optional[int] = None) -> str:
+                               context: str,
+                               additional_context: Optional[str] = None,
+                               chapter_number: Optional[int] = None) -> str:
         """Generate reasoning about dialogue enhancement."""
         additional_text = ""
         if additional_context:
@@ -206,12 +205,12 @@ Do not write the dialogue, only reason about the approach.
         messages = [self.interface.BuildSystemQuery("You are a skilled dialogue analyst providing structured reasoning for dialogue enhancement.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(  # type: ignore[misc]
             self.logger, messages, self.config.REASONING_MODEL,
             ReasoningOutput
         )
 
-        return reasoning_obj.reasoning
+        return reasoning_obj.reasoning  # type: ignore[reportOptionalMemberAccess]
 
     def _reason_about_outline(self, context: str) -> str:
         """Generate reasoning about outline creation."""
@@ -235,18 +234,18 @@ Focus on structure, pacing, and narrative arc.
         messages = [self.interface.BuildSystemQuery("You are a skilled story structure analyst providing reasoning for outline creation.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(  # type: ignore[misc]
             self.logger, messages, self.config.REASONING_MODEL,
             ReasoningOutput
         )
 
-        return reasoning_obj.reasoning
+        return reasoning_obj.reasoning  # type: ignore[reportOptionalMemberAccess]
 
     def _reason_general(self,
-                       context: str,
-                       task_type: str,
-                       additional_context: Optional[str] = None,
-                       chapter_number: Optional[int] = None) -> str:
+                        context: str,
+                        task_type: str,
+                        additional_context: Optional[str] = None,
+                        chapter_number: Optional[int] = None) -> str:
         """Generate general reasoning for other task types."""
         additional_text = ""
         if additional_context:
@@ -267,12 +266,12 @@ Focus on providing actionable guidance that will improve the quality of the outp
         messages = [self.interface.BuildSystemQuery(f"You are a skilled AI assistant providing structured reasoning for {task_type} tasks.")]
         messages.append(self.interface.BuildUserQuery(prompt))
 
-        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(
+        messages, reasoning_obj, _ = self.interface.SafeGeneratePydantic(  # type: ignore[misc]
             self.logger, messages, self.config.REASONING_MODEL,
             ReasoningOutput
         )
 
-        return reasoning_obj.reasoning
+        return reasoning_obj.reasoning  # type: ignore[reportOptionalMemberAccess]
 
     def _log_reasoning(self, task_type: str, chapter_number: Optional[int], reasoning: str):
         """Log reasoning to separate file if configured."""

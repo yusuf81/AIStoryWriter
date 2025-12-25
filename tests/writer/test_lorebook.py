@@ -1,5 +1,5 @@
 # tests/writer/test_lorebook.py
-import pytest
+import pytest  # type: ignore # Needed for pytest fixtures
 import tempfile
 import shutil
 import os
@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 # Import the module we're testing
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
 
 class TestLorebookManager:
     """Test suite for LorebookManager class following TDD London School approach"""
@@ -103,7 +104,7 @@ class TestLorebookManager:
         # Setup mock to return specific content using fixture
         self.mock_db.similarity_search.return_value = [
             mock_document("Alice has blue eyes and is a brave knight.",
-                         {"type": "character", "name": "Alice"})
+                          {"type": "character", "name": "Alice"})
         ]
 
         lorebook = LorebookManager(persist_dir=self.test_persist_dir)
@@ -218,10 +219,10 @@ class TestLorebookManager:
         def mock_similarity_search(query, k=None):
             if "Alice" in query:
                 return [mock_document("Alice: A brave knight with blue eyes, searching for the artifact.",
-                                     {"type": "character", "name": "Alice"})]
+                                      {"type": "character", "name": "Alice"})]
             elif "magic" in query:
                 return [mock_document("Magic requires blood sacrifice to work.",
-                                     {"type": "magic_system", "name": "Blood Magic"})]
+                                      {"type": "magic_system", "name": "Blood Magic"})]
             return []
 
         self.mock_db.similarity_search.side_effect = mock_similarity_search

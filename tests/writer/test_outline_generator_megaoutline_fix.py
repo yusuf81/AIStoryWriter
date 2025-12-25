@@ -3,7 +3,6 @@ Tests for MegaOutline fallback fix in OutlineGenerator.py
 Ensuring full scene content is extracted instead of just summary
 """
 
-import pytest
 from unittest.mock import Mock
 from Writer.Models import ChapterOutlineOutput, EnhancedSceneOutline
 from Writer.OutlineGenerator import GeneratePerChapterOutline
@@ -34,7 +33,10 @@ class TestMegaOutlineFix:
             chapter_number=1,
             chapter_title="Pengakuan di Kafe",
             scenes=[enhanced_scene],
-            outline_summary="Alex mengakui perasaannya pada Sarah di kafe"  # This is only 40 words
+            outline_summary="Alex mengakui perasaannya pada Sarah di kafe",  # This is only 40 words
+            estimated_word_count=None,
+            setting=None,
+            main_conflict=None
         )
 
         # Mock the SafeGeneratePydantic to return our test object
@@ -76,7 +78,10 @@ class TestMegaOutlineFix:
                 "Scene pertama: Alex dan Sarah bertemu di kafe lama yang telah menjadi saksi berbagai kenangan mereka selama bertahun-tahun."
                 " Langit senja yang kemerahan memasuki jendela kaca, menciptakan bayangan panjang di lantai kayu yang sudah usang."
             ],
-            outline_summary="This is a longer summary that meets the 20 character minimum requirement for validation."  # Fix validation error
+            outline_summary="This is a longer summary that meets the 20 character minimum requirement for validation.",  # Fix validation error
+            estimated_word_count=None,
+            setting=None,
+            main_conflict=None
         )
 
         # Mock the SafeGeneratePydantic to return our test object
@@ -109,21 +114,28 @@ class TestMegaOutlineFix:
             title="Scene 1",
             characters_and_setting="Alex berjalan sendirian",
             key_events="Alex memikirkan Sarah",
-            resolution="Alex memutuskan untuk mengakui perasaannya"
+            resolution="Alex memutuskan untuk mengakui perasaannya",
+            conflict_and_tone=None,
+            literary_devices=None
         )
 
         scene2 = EnhancedSceneOutline(
             title="Scene 2",
             characters_and_setting="Alex bertemu Sarah di kafe",
             key_events="Alex mengakui perasaannya",
-            resolution="Sarah menerima perasaan Alex"
+            resolution="Sarah menerima perasaan Alex",
+            conflict_and_tone=None,
+            literary_devices=None
         )
 
         chapter_outline = ChapterOutlineOutput(
             chapter_number=1,
             chapter_title="Chapter One",
             scenes=[scene1, scene2],
-            outline_summary="Alex finally confesses to Sarah after gathering his courage"
+            outline_summary="Alex finally confesses to Sarah after gathering his courage",
+            estimated_word_count=None,
+            setting=None,
+            main_conflict=None
         )
 
         # Mock the SafeGeneratePydantic to return our test object

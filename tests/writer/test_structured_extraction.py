@@ -5,12 +5,10 @@ directly without converting to strings and parsing with regex.
 
 RED PHASE: All tests should FAIL before implementation.
 """
+from Writer.Models import StoryElements, CharacterDetail
 import os
-import pytest
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
-from Writer.Models import StoryElements, OutlineOutput, CharacterDetail
 
 
 class TestStoryElementsStructuredExtraction:
@@ -50,7 +48,13 @@ class TestStoryElementsStructuredExtraction:
                     "culture": "Arthurian legend",
                     "time": "Medieval era"
                 }
-            }
+            },
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         # This should FAIL before implementation - extract_lorebook_entries method doesn't exist yet
@@ -92,7 +96,13 @@ class TestStoryElementsStructuredExtraction:
                     "culture": "Wyvern culture",
                     "time": "Medieval era"
                 }
-            }
+            },
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         # This should FAIL before implementation
@@ -118,7 +128,13 @@ class TestStoryElementsStructuredExtraction:
         story_elements = StoryElements(
             title="Test Story",
             genre="Fantasy",
-            themes=["courage", "friendship", "redemption", "sacrifice"]
+            themes=["courage", "friendship", "redemption", "sacrifice"],
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         # This should FAIL before implementation
@@ -141,7 +157,13 @@ class TestStoryElementsStructuredExtraction:
         story_elements = StoryElements(
             title="Minimal Story",
             genre="Test",
-            themes=["minimal"]  # Required field with at least 1 theme
+            themes=["minimal"],  # Required field with at least 1 theme
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         # This should FAIL before implementation
@@ -154,14 +176,26 @@ class TestStoryElementsStructuredExtraction:
 
     def test_extract_partial_story_elements(self):
         """RED: Handle partial data gracefully"""
-        hero = CharacterDetail(name="Solo", physical_description="Lone warrior")
+        hero = CharacterDetail(
+            name="Solo",
+            physical_description="Lone warrior",
+            personality=None,
+            background=None,
+            motivation=None
+        )
 
         story_elements = StoryElements(
             title="Partial Story",
             genre="Adventure",
             themes=["survival"],
-            characters={"main": [hero]}
+            characters={"main": [hero]},
             # No settings
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            conflict=None,
+            symbolism=None,
+            resolution=None
         )
 
         # This should FAIL before implementation

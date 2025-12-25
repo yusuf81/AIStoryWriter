@@ -1,4 +1,3 @@
-import Writer.PrintUtils
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 import Writer.Config  # Add this
 import Writer.Statistics  # Add this import
@@ -6,7 +5,7 @@ from Writer.Models import ChapterOutput
 
 
 def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
 
     EditedChapters = _Chapters
 

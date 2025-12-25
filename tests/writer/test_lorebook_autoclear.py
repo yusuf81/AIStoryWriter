@@ -1,10 +1,9 @@
 """Test suite for lorebook auto-clear functionality - TDD RED Phase"""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+import pytest  # type: ignore # Needed for pytest fixtures
+from unittest.mock import Mock, patch
 import tempfile
 import os
-import shutil
 
 
 class TestLorebookAutoClear:

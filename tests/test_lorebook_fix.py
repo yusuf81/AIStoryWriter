@@ -4,15 +4,13 @@ Tests complete lorebook extraction without converting Pydantic objects to string
 
 RED PHASE: All tests should FAIL before implementation.
 """
+from Writer.Lorebook import LorebookManager
+from Writer.Models import StoryElements, OutlineOutput, CharacterDetail
+from unittest.mock import Mock, patch
+import pytest
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
-import pytest
-from unittest.mock import Mock, patch
-
-from Writer.Models import StoryElements, OutlineOutput, CharacterDetail
-from Writer.Lorebook import LorebookManager
 
 
 class TestLorebookStructuredExtraction:
@@ -33,14 +31,16 @@ class TestLorebookStructuredExtraction:
             name="Zara",
             physical_description="Rebel fighter with cybernetic arm",
             background="Former corporate security",
-            personality="Resourceful and determined"
+            personality="Resourceful and determined",
+            motivation=None
         )
 
         villain = CharacterDetail(
             name="Dr. Nexus",
             physical_description="AI overlord with holographic interface",
             background="Created to manage city systems",
-            personality="Logical yet ruthless"
+            personality="Logical yet ruthless",
+            motivation=None
         )
 
         return StoryElements(
@@ -51,6 +51,9 @@ class TestLorebookStructuredExtraction:
                 "protagonist": [hero],
                 "antagonist": [villain]
             },
+            pacing=None,
+            style=None,
+            plot_structure=None,
             settings={
                 "Neo-City": {
                     "location": "Metropolitan area with towering skyscrapers",
@@ -66,6 +69,7 @@ class TestLorebookStructuredExtraction:
                 }
             },
             conflict="Freedom fighter battles AI overlord for control of the city",
+            symbolism=None,  # Optional field
             resolution="Human choice prevails over perfect logic, finding balance between technology and humanity"
         )
 
@@ -74,6 +78,8 @@ class TestLorebookStructuredExtraction:
         """Sample OutlineOutput for testing"""
         return OutlineOutput(
             title="Neon Dreams",
+            genre=None,
+            theme=None,
             chapters=[
                 "Chapter 1: Zara discovers corporate conspiracy and joins resistance",
                 "Chapter 2: infiltration of corporate tower to gather evidence",
@@ -81,6 +87,9 @@ class TestLorebookStructuredExtraction:
                 "Chapter 4: Alliance with underground hackers and data liberation",
                 "Chapter 5: Final battle for control of Neo-City's central AI"
             ],
+            character_list=[],
+            character_details=None,
+            setting=None,
             target_chapter_count=5
         )
 
@@ -239,8 +248,29 @@ class TestLorebookStructuredExtraction:
 
     def test_lorebook_handles_empty_objects(self, mock_logger):
         """RED: Handle empty Pydantic objects gracefully"""
-        empty_elements = StoryElements(title="Empty", genre="Test", themes=["minimal"])  # Add required field
-        empty_outline = OutlineOutput(title="Empty", chapters=["Empty chapter story but longer", "Another empty chapter longer text"], target_chapter_count=2)
+        empty_elements = StoryElements(
+            title="Empty",
+            genre="Test",
+            themes=["minimal"],
+            characters={},
+            pacing=None,
+            style=None,
+            plot_structure=None,
+            settings={},
+            conflict=None,
+            symbolism=None,
+            resolution=None
+        )
+        empty_outline = OutlineOutput(
+            title="Empty",
+            genre=None,
+            theme=None,
+            chapters=["Empty chapter story but longer", "Another empty chapter longer text"],
+            character_list=[],
+            character_details=None,
+            setting=None,
+            target_chapter_count=2
+        )
 
         with patch('Writer.Lorebook.LorebookManager.__init__', return_value=None):
             lorebook = LorebookManager()

@@ -3,13 +3,12 @@
 TDD tests for ReviewOutput prompt enhancement.
 Tests that the enhanced CRITIC prompts explicitly request structured feedback.
 """
+from pydantic import ValidationError
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
-from pydantic import ValidationError
 
 
 class TestReviewOutputEnhancement:
@@ -28,16 +27,16 @@ class TestReviewOutputEnhancement:
         # Should contain explicit requests for structured feedback (language-agnostic)
         prompt_lower = critique_prompt.lower()
         has_format = ("structured format" in prompt_lower or
-                     "format terstruktur" in prompt_lower)
+                      "format terstruktur" in prompt_lower)
         has_suggestions = ("specific suggestions" in prompt_lower or
-                          "saran spesifik" in prompt_lower or
-                          "suggestions" in prompt_lower or
-                          "rekomendasi" in prompt_lower)
+                           "saran spesifik" in prompt_lower or
+                           "suggestions" in prompt_lower or
+                           "rekomendasi" in prompt_lower)
         has_rating = ("rating" in prompt_lower or
-                     "peringkat" in prompt_lower or
-                     "skor" in prompt_lower)
+                      "peringkat" in prompt_lower or
+                      "skor" in prompt_lower)
         has_feedback = ("feedback" in prompt_lower or
-                       "umpan balik" in prompt_lower)
+                        "umpan balik" in prompt_lower)
 
         assert has_format or has_suggestions, "Prompt should request structured format or specific suggestions"
         assert has_rating, "Prompt should request rating"
@@ -56,16 +55,16 @@ class TestReviewOutputEnhancement:
         # Should contain explicit requests for structured feedback (language-agnostic)
         prompt_lower = critique_prompt.lower()
         has_format = ("structured format" in prompt_lower or
-                     "format terstruktur" in prompt_lower)
+                      "format terstruktur" in prompt_lower)
         has_suggestions = ("specific suggestions" in prompt_lower or
-                          "saran spesifik" in prompt_lower or
-                          "suggestions" in prompt_lower or
-                          "rekomendasi" in prompt_lower)
+                           "saran spesifik" in prompt_lower or
+                           "suggestions" in prompt_lower or
+                           "rekomendasi" in prompt_lower)
         has_rating = ("rating" in prompt_lower or
-                     "peringkat" in prompt_lower or
-                     "skor" in prompt_lower)
+                      "peringkat" in prompt_lower or
+                      "skor" in prompt_lower)
         has_feedback = ("feedback" in prompt_lower or
-                       "umpan balik" in prompt_lower)
+                        "umpan balik" in prompt_lower)
 
         assert has_format or has_suggestions, "Prompt should request structured format or specific suggestions"
         assert has_rating, "Prompt should request rating"
@@ -112,7 +111,7 @@ class TestReviewOutputEnhancement:
             )
 
             # Simulate the call from GetFeedbackOnOutline
-            messages, result, tokens = interface.SafeGeneratePydantic(
+            messages, result, tokens = interface.SafeGeneratePydantic(  # type: ignore[misc] # Mock returns tuple
                 mock_logger(),
                 [{"role": "user", "content": "test"}],
                 "test_model",

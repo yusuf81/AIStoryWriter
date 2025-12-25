@@ -1,7 +1,8 @@
 """Test actual prompt usage in Indonesian."""
 
-import pytest
+import pytest  # type: ignore # Needed for pytest fixtures
 from Writer.PromptsHelper import get_prompts, ensure_prompts_language
+
 
 def test_indonesian_prompts_are_used(indonesian_language_config):
     """Verify Indonesian prompts are loaded when NATIVE_LANGUAGE is 'id'."""
@@ -16,6 +17,7 @@ def test_indonesian_prompts_are_used(indonesian_language_config):
 
     print("✓ Indonesian prompts are correctly loaded")
 
+
 def test_english_prompts_are_used(english_language_config):
     """Verify English prompts are loaded when NATIVE_LANGUAGE is 'en'."""
 
@@ -27,6 +29,7 @@ def test_english_prompts_are_used(english_language_config):
     assert 'Please revise the following outline' in prompts.OUTLINE_REVISION_PROMPT
 
     print("✓ English prompts are correctly loaded")
+
 
 def test_prompt_helper_ensures_consistency():
     """Test that the helper ensures language consistency."""

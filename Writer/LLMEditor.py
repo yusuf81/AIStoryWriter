@@ -15,7 +15,7 @@ class ChapterCompleteSchema(BaseModel):
 
 
 def GetFeedbackOnOutline(Interface, _Logger, _Outline: str):
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
 
     # Setup Initial Context History
     History = []
@@ -42,7 +42,7 @@ def GetOutlineRating(
     _Logger,
     _Outline: str,
 ):
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
 
     # Setup Initial Context History
     History = []
@@ -69,7 +69,7 @@ def GetOutlineRating(
 
 
 def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
 
     # Setup Initial Context History
     History = []
@@ -93,7 +93,7 @@ def GetFeedbackOnChapter(Interface, _Logger, _Chapter: str, _Outline: str):
 
 # Switch this to iscomplete true/false (similar to outline)
 def GetChapterRating(Interface, _Logger, _Chapter: str):
-    import Writer.Prompts as ActivePrompts # Ditambahkan untuk pemuatan dinamis
+    import Writer.Prompts as ActivePrompts  # Ditambahkan untuk pemuatan dinamis
 
     # Setup Initial Context History
     History = []

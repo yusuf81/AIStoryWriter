@@ -3,13 +3,12 @@
 TDD tests for ChapterOutlineOutput Pydantic model.
 Tests that the new model correctly handles chapter outline data structure.
 """
+from pydantic import ValidationError
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
-from pydantic import ValidationError
 
 
 class TestChapterOutlineOutput:
@@ -63,45 +62,53 @@ class TestChapterOutlineOutput:
         assert outline.chapter_number == 2
         assert outline.estimated_word_count == 2500
         assert outline.setting == "Inside the mystical dragon cave"
-        assert "prove his courage" in outline.main_conflict
+        assert "prove his courage" in (outline.main_conflict or "")
 
     def test_validation_minimum_requirements(self, mock_logger):
         """Test that validation errors are raised for minimum requirements"""
         from Writer.Models import ChapterOutlineOutput
 
         # Test missing required fields
-        with pytest.raises(ValidationError) as exc_info:
-            ChapterOutlineOutput(chapter_number=1)  # Missing required fields
+        with pytest.raises(ValidationError):
+            ChapterOutlineOutput(chapter_number=1)  # type: ignore[arg-type] # Missing required fields for validation test
 
         # Test invalid chapter number
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValidationError):
             ChapterOutlineOutput(
                 chapter_number=0,  # Should be >= 1
                 chapter_title="Test",
                 scenes=["Scene 1"],
                 characters_present=["Character"],
-                outline_summary="Summary"
+                outline_summary="Summary",
+                estimated_word_count=None,
+                setting=None,
+                main_conflict=None
             )
 
         # Test too few scenes (min 1)
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValidationError):
             ChapterOutlineOutput(
                 chapter_number=1,
                 chapter_title="Test",
                 scenes=[],  # Too few
                 characters_present=["Character"],
-                outline_summary="Summary"
+                outline_summary="Summary",
+                estimated_word_count=None,
+                setting=None,
+                main_conflict=None
             )
 
         # Test invalid estimated word count
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValidationError):
             ChapterOutlineOutput(
                 chapter_number=1,
                 chapter_title="Test",
                 scenes=["Scene 1", "Scene 2"],
                 characters_present=["Character"],
                 outline_summary="Summary",
-                estimated_word_count=0  # Should be > 0
+                estimated_word_count=0,  # Should be > 0
+                setting=None,
+                main_conflict=None
             )
 
     def test_integration_with_safe_generate_pydantic(self, mock_logger):
@@ -122,7 +129,10 @@ class TestChapterOutlineOutput:
                 "Bang Jaga explains the trials that await brave adventurers"
             ],
             characters_present=["Rian", "Bang Jaga"],
-            outline_summary="Pertemuan awal yang menentukan antara petualang dan naga penjaga gua"
+            outline_summary="Pertemuan awal yang menentukan antara petualang dan naga penjaga gua",
+            estimated_word_count=None,
+            setting=None,
+            main_conflict=None
         )
 
         with patch.object(interface, 'SafeGeneratePydantic') as mock_generate:
@@ -134,7 +144,7 @@ class TestChapterOutlineOutput:
 
             # Simulate the call from GeneratePerChapterOutline
             messages, result, tokens = interface.SafeGeneratePydantic(
-                mock_logger(),
+                mock_logger(),  # type: ignore[arg-type] # fixture factory returns MagicMock
                 [{"role": "user", "content": "test"}],
                 "test_model",
                 ChapterOutlineOutput
@@ -177,7 +187,10 @@ class TestChapterOutlineOutput:
                 chapter_title="B1",  # Too short (min 5)
                 scenes=["Scene 1", "Scene 2"],
                 characters_present=["Character"],
-                outline_summary="Valid summary with enough characters"
+                outline_summary="Valid summary with enough characters",
+                estimated_word_count=None,
+                setting=None,
+                main_conflict=None
             )
         assert "at least 5 characters" in str(exc_info.value)
 
@@ -191,6 +204,9 @@ class TestChapterOutlineOutput:
                 chapter_title="Valid Chapter Title",
                 scenes=["Scene 1", "Scene 2"],
                 characters_present=["Character"],
-                outline_summary="Too short"  # Too short (min 20)
+                outline_summary="Too short",  # Too short (min 20)
+                estimated_word_count=None,
+                setting=None,
+                main_conflict=None
             )
         assert "at least 20 characters" in str(exc_info.value)

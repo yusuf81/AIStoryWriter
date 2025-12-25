@@ -4,10 +4,8 @@ Phase 2 RED Tests: PDF Advanced Styling Features
 These tests verify advanced PDF formatting for professional book appearance.
 """
 
-import pytest
-from unittest.mock import MagicMock, Mock, patch, mock_open
+from unittest.mock import MagicMock, Mock, patch
 import tempfile
-import os
 
 # Mock termcolor before imports
 import sys
@@ -66,7 +64,7 @@ This is chapter 2 content."""
 
     def test_page_numbers_appear_correctly(self, mock_logger):
         """Test that page numbers appear on all pages except title page"""
-        from Writer.PDFGenerator import GeneratePDF, NumberedCanvas
+        from Writer.PDFGenerator import GeneratePDF
 
         markdown_content = """# My Title
 

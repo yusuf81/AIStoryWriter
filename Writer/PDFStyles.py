@@ -23,7 +23,7 @@ def _get_eye_comfort_font():
             from reportlab.pdfbase import pdfmetrics
             pdfmetrics.getFont('Georgia')  # Check if Georgia is available
             return "Georgia"
-        except:
+        except BaseException:
             pass
 
     # Try Palatino as second choice
@@ -31,7 +31,7 @@ def _get_eye_comfort_font():
         from reportlab.pdfbase import pdfmetrics
         pdfmetrics.getFont('Palatino')  # Check if Palatino is available
         return "Palatino"
-    except:
+    except BaseException:
         pass
 
     # Always available fallback

@@ -1,7 +1,8 @@
 """Test OLLAMA host parsing and fallback to config."""
 
-import pytest
+import pytest  # type: ignore # Needed for pytest fixtures
 from Writer.Interface.Wrapper import Interface
+
 
 def test_ollama_host_fallback_to_config():
     """Test model string without host uses OLLAMA_HOST from config."""
@@ -19,6 +20,7 @@ def test_ollama_host_fallback_to_config():
     expected_host = getattr(Config, 'OLLAMA_HOST', None)
     assert result[2] == expected_host
 
+
 def test_ollama_host_in_model_string():
     """Test model string with host should use that host, not OLLAMA_HOST."""
     interface = Interface([])
@@ -28,6 +30,7 @@ def test_ollama_host_in_model_string():
     assert result[0] == "ollama"  # provider
     assert result[1] == "llama3:70b"  # model
     assert result[2] == "custom.host:1234"  # host from model string
+
 
 def test_ollama_model_without_provider():
     """Test that plain model name defaults to ollama and uses config host."""
@@ -40,6 +43,7 @@ def test_ollama_model_without_provider():
     from Writer import Config
     expected_host = getattr(Config, 'OLLAMA_HOST', None)
     assert result[2] == expected_host
+
 
 def test_ollama_host_with_config_override():
     """Test that model string host overrides OLLAMA_HOST config."""

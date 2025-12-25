@@ -84,7 +84,7 @@ def validate_all_prompts() -> tuple[bool, list]:
     # Check both English and Indonesian prompts
     from Writer import Prompts as EnglishPrompts
     english_prompts = {k: v for k, v in vars(EnglishPrompts).items()
-                      if not k.startswith('_') and isinstance(v, str)}
+                       if not k.startswith('_') and isinstance(v, str)}
 
     # Get Indonesian prompts
     if getattr(Config, 'NATIVE_LANGUAGE', 'en') == 'id':
@@ -93,7 +93,7 @@ def validate_all_prompts() -> tuple[bool, list]:
         from Writer import Prompts_id as IndonesianPrompts
 
     indonesian_prompts = {k: v for k, v in vars(IndonesianPrompts).items()
-                         if not k.startswith('_') and isinstance(v, str)}
+                          if not k.startswith('_') and isinstance(v, str)}
 
     all_prompts = [
         ('English', english_prompts),

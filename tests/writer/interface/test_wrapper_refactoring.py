@@ -84,11 +84,11 @@ class TestFragilePatternReplacement:
                 {
                     "type": "string_too_short",
                     "loc": ("title",),
-                    "msg": "String should have at least 1 character",
+                    "msg": "String should have at least 1 character",  # type: ignore[misc]
                     "input": "",
-                    "ctx": {"min_length": 1}
-                }
-            ]
+                    "ctx": {"min_length": 1}  # type: ignore[misc]
+                }  # type: ignore[misc]
+            ]  # type: ignore[arg-type]
         )
         is_validation = _is_validation_or_missing_error(validation_error)
 
@@ -159,6 +159,3 @@ class TestFragilePatternReplacement:
         assert is_character_field('characters_present')
         assert not is_character_field('title')
         assert 'missing_field' in classify_error('field missing error')
-
-
-

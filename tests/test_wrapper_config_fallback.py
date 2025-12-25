@@ -2,8 +2,7 @@
 Test Wrapper.py config fallback behavior - TDD London School Approach
 Tests for MAX_JSON_RETRIES bug fix using MAX_PYDANTIC_RETRIES as fallback
 """
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -51,7 +50,7 @@ class TestWrapperConfigFallback:
                 mock_logger(),
                 [{'role': 'user', 'content': 'test'}],
                 "ollama://test",
-                _max_retries_override=None  # Triggers config fallback
+                _max_retries_override=None  # type: ignore[arg-type]  # Triggers config fallback
             )
 
             # Assert: Should return valid 3-tuple without crashing

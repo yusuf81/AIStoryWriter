@@ -2,8 +2,8 @@
 TDD Tests for Non-Streaming Pydantic Display - London School Approach
 Tests for removing streaming logic and implementing user-friendly content display
 """
-import pytest
-from unittest.mock import Mock, patch
+import pytest  # type: ignore # Needed for pytest fixtures
+from unittest.mock import patch
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))

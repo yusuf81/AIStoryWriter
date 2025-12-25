@@ -1,7 +1,4 @@
-import Writer.LLMEditor
-import Writer.PrintUtils
 import Writer.Config
-import Writer.Chapter.ChapterGenSummaryCheck
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 import Writer.Statistics  # Add near other imports at the top
 from Writer.Models import ChapterOutput
@@ -9,6 +6,7 @@ from Writer.Models import ChapterOutput
 import Writer.Scene.ChapterByScene
 
 # Helper method declarations (skeletons initially, will be filled)
+
 
 def _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module):
     """
@@ -33,7 +31,7 @@ def _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_modu
 
 def _generate_reasoning_for_stage(Interface, _Logger, Config_module, reasoning_type: str,
                                   ThisChapterOutline: str, FormattedLastChapterSummary: str = "",
-                                  _BaseContext: str = "", _ChapterNum: int = None,
+                                  _BaseContext: str = "", _ChapterNum: int = None,  # type: ignore[assignment]
                                   existing_content: str = "") -> str:
     """
     Generate reasoning for a specific chapter generation stage.
@@ -98,10 +96,10 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
     """Prepares initial context, chapter-specific outline, and last chapter summary."""
     _Logger.Log(f"Stage 0: Preparing initial generation context for Chapter {_ChapterNum}/{_TotalChapters}", 3)
 
-    MessageHistory = [Interface.BuildSystemQuery(ActivePrompts.CHAPTER_GENERATION_INTRO)] # Corrected variable name
+    MessageHistory = [Interface.BuildSystemQuery(ActivePrompts.CHAPTER_GENERATION_INTRO)]  # Corrected variable name
     ContextHistoryInsert = ""
 
-    if _Chapters: # Check if list is not empty
+    if _Chapters:  # Check if list is not empty
         ContextHistoryInsert += ActivePrompts.CHAPTER_HISTORY_INSERT.format(_Outline=_Outline)
 
     # Extract ThisChapterOutline
@@ -121,7 +119,7 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
 
     # Generate Summary of Last Chapter If Applicable
     FormattedLastChapterSummary = ""
-    if _Chapters: # Check if list is not empty
+    if _Chapters:  # Check if list is not empty
         _Logger.Log(f"Creating Summary Of Last Chapter Info for Chapter {_ChapterNum}/{_TotalChapters}", 3)
         ChapterSummaryMessages = [
             Interface.BuildSystemQuery(ActivePrompts.CHAPTER_SUMMARY_INTRO),
@@ -152,7 +150,7 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
     # and the calling stages can format them into prompts as needed.
     # The original DetailedChapterOutline was used by LLMSummaryCheck.
     # Let's reconstruct it as it was:
-    DetailedChapterOutlineForCheck = ThisChapterOutline # Default
+    DetailedChapterOutlineForCheck = ThisChapterOutline  # Default
     if FormattedLastChapterSummary != "":
         # This was the original logic for DetailedChapterOutline, which seems to just be ThisChapterOutline
         # It was then used in LLMSummaryCheck.
@@ -167,10 +165,10 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
         # However, to maintain original behavior first, I will stick to the direct assignment.
         # The variable `DetailedChapterOutline` was directly passed to `LLMSummaryCheck`.
         # The prompt for stages used `ThisChapterOutline` and `FormattedLastChapterSummary` separately.
-        pass # No change to ThisChapterOutline based on FormattedLastChapterSummary for DetailedChapterOutlineForCheck
+        pass  # No change to ThisChapterOutline based on FormattedLastChapterSummary for DetailedChapterOutlineForCheck
 
     _Logger.Log(f"Stage 0: Initial generation context prepared for Chapter {_ChapterNum}", 3)
-    return MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, ThisChapterOutline # Returning ThisChapterOutline as DetailedChapterOutlineForCheck
+    return MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, ThisChapterOutline  # Returning ThisChapterOutline as DetailedChapterOutlineForCheck
 
 
 def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, _BaseContext, DetailedChapterOutlineForCheck, Config_module, ChapterGenSummaryCheck_module):
@@ -209,7 +207,7 @@ def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _Total
         )
         _Logger.Log(f"Generating Initial Chapter (Stage 1: Plot) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
 
-        CurrentMessages = MessageHistory[:] # Use a copy for each iteration
+        CurrentMessages = MessageHistory[:]  # Use a copy for each iteration
         CurrentMessages.append(Interface.BuildUserQuery(Prompt))
 
         # Use Pydantic model for structured output
@@ -233,6 +231,7 @@ def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _Total
             _Logger.Log(f"Done Generating Initial Chapter (Stage 1: Plot) {_ChapterNum}/{_TotalChapters} after {IterCounter} iteration(s).", 5)
             break
     return Stage1Chapter
+
 
 def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, Stage1Chapter, _BaseContext, DetailedChapterOutlineForCheck, Config_module, ChapterGenSummaryCheck_module):
     """Generates Stage 2: Character Development, including feedback loop."""
@@ -264,14 +263,14 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
             _TotalChapters=_TotalChapters,
             ThisChapterOutline=ThisChapterOutline,
             FormattedLastChapterSummary=FormattedLastChapterSummary,
-            Stage1Chapter=Stage1Chapter, # Output from previous stage
+            Stage1Chapter=Stage1Chapter,  # Output from previous stage
             Feedback=Feedback,
             _BaseContext=EnhancedBaseContext,
             PydanticFormatInstructions=PydanticFormatInstructions,
         )
         _Logger.Log(f"Generating Character Development (Stage 2) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
 
-        CurrentMessages = MessageHistory[:] # Use a copy
+        CurrentMessages = MessageHistory[:]  # Use a copy
         CurrentMessages.append(Interface.BuildUserQuery(Prompt))
 
         # Use Pydantic model for structured output
@@ -295,6 +294,7 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
             _Logger.Log(f"Done Generating Character Development (Stage 2) for Chapter {_ChapterNum}/{_TotalChapters} after {IterCounter} iteration(s).", 5)
             break
     return Stage2Chapter
+
 
 def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, Stage2Chapter, _BaseContext, DetailedChapterOutlineForCheck, Config_module, ChapterGenSummaryCheck_module):
     """Generates Stage 3: Dialogue, including feedback loop."""
@@ -326,14 +326,14 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
             _TotalChapters=_TotalChapters,
             ThisChapterOutline=ThisChapterOutline,
             FormattedLastChapterSummary=FormattedLastChapterSummary,
-            Stage2Chapter=Stage2Chapter, # Output from previous stage
+            Stage2Chapter=Stage2Chapter,  # Output from previous stage
             Feedback=Feedback,
             _BaseContext=EnhancedBaseContext,
             PydanticFormatInstructions=PydanticFormatInstructions,
         )
         _Logger.Log(f"Generating Dialogue (Stage 3) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
 
-        CurrentMessages = MessageHistory[:] # Use a copy
+        CurrentMessages = MessageHistory[:]  # Use a copy
         CurrentMessages.append(Interface.BuildUserQuery(Prompt))
 
         # Use Pydantic model for structured output
@@ -358,20 +358,21 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
             break
     return Stage3Chapter
 
+
 def _run_final_chapter_revision_loop(Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, ChapterToRevise, OverallOutline, MessageHistoryForRevision, Config_module, LLMEditor_module, ReviseChapter_func_local):
     """Runs the final chapter revision loop (Stage 5)."""
     _Logger.Log(f"Stage 5: Entering Feedback/Revision Loop For Chapter {_ChapterNum}/{_TotalChapters}", 4)
 
     CurrentChapterContent = ChapterToRevise
-    CurrentWritingHistory = MessageHistoryForRevision[:] # Use a copy
-    Rating = False # Original code implies boolean, though it was assigned int later. Let's use False.
+    CurrentWritingHistory = MessageHistoryForRevision[:]  # Use a copy
+    Rating = False  # Original code implies boolean, though it was assigned int later. Let's use False.
     Iterations = 0
     RevisionLoopExitReason = "Unknown"
 
     while True:
         Iterations += 1
         Feedback = LLMEditor_module.GetFeedbackOnChapter(
-            Interface, _Logger, CurrentChapterContent, OverallOutline # OverallOutline is _Outline from GenerateChapter
+            Interface, _Logger, CurrentChapterContent, OverallOutline  # OverallOutline is _Outline from GenerateChapter
         )
         Rating = LLMEditor_module.GetChapterRating(Interface, _Logger, CurrentChapterContent)
 
@@ -379,7 +380,7 @@ def _run_final_chapter_revision_loop(Interface, _Logger, ActivePrompts, _Chapter
             RevisionLoopExitReason = "Max Revisions Reached"
             break
         # Original code used Rating as boolean for this check
-        if (Iterations > Config_module.CHAPTER_MIN_REVISIONS) and Rating: # Rating should be boolean True if good
+        if (Iterations > Config_module.CHAPTER_MIN_REVISIONS) and Rating:  # Rating should be boolean True if good
             RevisionLoopExitReason = "Quality Standard Met"
             break
 
@@ -390,7 +391,7 @@ def _run_final_chapter_revision_loop(Interface, _Logger, ActivePrompts, _Chapter
             _TotalChapters,
             CurrentChapterContent,
             Feedback,
-            CurrentWritingHistory, # Pass the potentially modified history
+            CurrentWritingHistory,  # Pass the potentially modified history
             _Iteration=Iterations,
             # ActivePrompts is implicitly handled by ReviseChapter_func_local as it imports it.
         )
@@ -409,16 +410,14 @@ def _run_scene_generation_pipeline_for_initial_plot(Interface, _Logger, ActivePr
         _Logger,
         _ChapterNum,
         _TotalChapters,
-        ThisChapterOutline, # This is the chapter-specific outline
-        _FullOutlineForSceneGen, # This is the overall story outline
+        ThisChapterOutline,  # This is the chapter-specific outline
+        _FullOutlineForSceneGen,  # This is the overall story outline
         _BaseContext,
-        _ExpandedChapterOutline, # Pass expanded chapter outline with scenes
+        _ExpandedChapterOutline,  # type: ignore # Pass expanded chapter outline with scenes
         # Config_module is implicitly used by ChapterByScene if it imports Writer.Config directly
     )
     _Logger.Log(f"Stage 1 (Alternative): Scene Generation Pipeline COMPLETE for Chapter {_ChapterNum}/{_TotalChapters}", 3)
     return Stage1Chapter
-
-
 
 
 def GenerateChapter(
@@ -430,14 +429,14 @@ def GenerateChapter(
     _Chapters: list = [],
     # _QualityThreshold: int = 85, # Removed as it's unused
     _BaseContext: str = "",
-    _FullOutlineForSceneGen: str = "", # Added to pass the full outline if needed by scene gen
-    _ExpandedChapterOutline: dict = None # Added to pass expanded chapter outline with scenes
+    _FullOutlineForSceneGen: str = "",  # Added to pass the full outline if needed by scene gen
+    _ExpandedChapterOutline: dict = None  # type: ignore[assignment]  # Added to pass expanded chapter outline with scenes
 ):
     from Writer.PromptsHelper import get_prompts
-    ActivePrompts = get_prompts() # Use language-aware import
-    import Writer.Config as Config # Import Config
-    import Writer.Chapter.ChapterGenSummaryCheck as ChapterGenSummaryCheck # Import for helpers
-    import Writer.LLMEditor as LLMEditor # Import for helpers
+    ActivePrompts = get_prompts()  # Use language-aware import
+    import Writer.Config as Config  # Import Config
+    import Writer.Chapter.ChapterGenSummaryCheck as ChapterGenSummaryCheck  # Import for helpers
+    import Writer.LLMEditor as LLMEditor  # Import for helpers
     # Scene.ChapterByScene is imported where _run_scene_generation_pipeline_for_initial_plot is defined/called
 
     # Stage 0: Prepare initial context, chapter-specific outline, and last chapter summary
@@ -455,17 +454,17 @@ def GenerateChapter(
 
     # Stage 1: Create Initial Plot (either via scene pipeline or direct generation)
     Stage1Chapter = ""
-    if Config.SCENE_GENERATION_PIPELINE: # Use Config from import
+    if Config.SCENE_GENERATION_PIPELINE:  # Use Config from import
         Stage1Chapter = _run_scene_generation_pipeline_for_initial_plot(
             Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters,
-            ThisChapterOutline, _FullOutlineForSceneGen, _BaseContext, Config, # Pass Config module
-            _ExpandedChapterOutline # Pass expanded chapter outline with scenes
+            ThisChapterOutline, _FullOutlineForSceneGen, _BaseContext, Config,  # Pass Config module
+            _ExpandedChapterOutline  # Pass expanded chapter outline with scenes
         )
     else:
         Stage1Chapter = _generate_stage1_plot(
-            Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, MessageHistory, # Pass MessageHistory
+            Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, MessageHistory,  # Pass MessageHistory
             ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary,
-            _BaseContext, DetailedChapterOutlineForCheck, Config, ChapterGenSummaryCheck # Pass Config and ChapterGenSummaryCheck modules
+            _BaseContext, DetailedChapterOutlineForCheck, Config, ChapterGenSummaryCheck  # Pass Config and ChapterGenSummaryCheck modules
         )
 
     # Stage 2: Add Character Development
@@ -485,12 +484,12 @@ def GenerateChapter(
     Chapter = Stage3Chapter
 
     # Stage 5: Revision Cycle
-    if Config.CHAPTER_NO_REVISIONS: # Use Config from import
+    if Config.CHAPTER_NO_REVISIONS:  # Use Config from import
         _Logger.Log(f"Chapter Revision Disabled In Config, Exiting Now", 5)
     else:
         Chapter = _run_final_chapter_revision_loop(
             Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters,
-            Chapter, _Outline, MessageHistory, Config, LLMEditor, ReviseChapter # Pass imported modules and local ReviseChapter
+            Chapter, _Outline, MessageHistory, Config, LLMEditor, ReviseChapter  # Pass imported modules and local ReviseChapter
         )
 
     return Chapter
@@ -507,7 +506,7 @@ def ReviseChapter(
     _Iteration: int = 0,
 ):  # Tambahkan _ChapterNum, _TotalChapters
     from Writer.PromptsHelper import get_prompts
-    ActivePrompts = get_prompts() # Use language-aware import
+    ActivePrompts = get_prompts()  # Use language-aware import
 
     # Get original word count before revising
     OriginalWordCount = Writer.Statistics.GetWordCount(_Chapter)

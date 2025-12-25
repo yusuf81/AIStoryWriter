@@ -1,7 +1,6 @@
 """RED tests for KeyError: 'chapter_title' issue in Pipeline.py"""
 
 import pytest
-from unittest.mock import Mock
 
 
 class TestKeyErrorChapterTitle:
@@ -35,7 +34,10 @@ class TestKeyErrorChapterTitle:
             chapter_title="Test Chapter Title",
             scenes=["This is scene 1 with proper description", "This is scene 2 with proper description"],
             characters_present=["Character 1"],
-            outline_summary="Test chapter summary"
+            outline_summary="Test chapter summary",
+            estimated_word_count=None,
+            setting=None,
+            main_conflict=None
         )
 
         # Create mock interface instance

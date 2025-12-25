@@ -4,7 +4,6 @@ TDD tests for PDFGenerator.py fragile pattern detection.
 These tests verify that PDFGenerator now uses robust FieldConstants
 instead of fragile string patterns.
 """
-import pytest
 import sys
 import os
 

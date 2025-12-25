@@ -4,9 +4,9 @@ TDD tests for PDFGenerator.py fragile pattern refactoring.
 Tests for replacing hardcoded string patterns with robust FieldConstants section detection.
 Following TDD London School approach - tests written first (RED phase).
 """
-import pytest
 import sys
 import os
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
@@ -17,7 +17,6 @@ class TestPDFGeneratorSectionDetection:
     def test_extract_story_content_skips_metadata_sections(self):
         """Test that extract_story_content uses FieldConstants to skip metadata sections"""
         from Writer.PDFGenerator import extract_story_content
-        from Writer.FieldConstants import is_metadata_section
 
         # Test content with metadata sections
         content = """---
@@ -65,7 +64,6 @@ The adventure continues...
     def test_extract_story_content_includes_story_outline(self):
         """Test that extract_story_content includes Story Outline section"""
         from Writer.PDFGenerator import extract_story_content
-        from Writer.FieldConstants import is_story_outline_section
 
         content = """# My Story
 
@@ -88,7 +86,6 @@ The story begins...
     def test_extract_story_content_includes_generation_statistics(self):
         """Test that extract_story_content includes Generation Statistics section"""
         from Writer.PDFGenerator import extract_story_content
-        from Writer.FieldConstants import is_generation_statistics_section
 
         content = """# My Story
 

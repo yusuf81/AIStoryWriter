@@ -22,9 +22,9 @@ class TestValidationErrorMessageBuilder:
 
         interface = Interface(Models=[])
 
-        # Create ValidationError with missing field
+        # Create ValidationError with invalid word_count (0 violates gt=0)
         try:
-            ChapterOutput(text="Valid text content here", chapter_number=1)  # Missing word_count
+            ChapterOutput(text="Valid text content here", chapter_number=1, chapter_title=None, word_count=0)
         except ValidationError as ve:
             message = interface._build_validation_error_message(ve, 'ChapterOutput')
 
@@ -45,7 +45,7 @@ class TestValidationErrorMessageBuilder:
 
         # Create ValidationError with too short text
         try:
-            ChapterOutput(text="short", word_count=1, chapter_number=1)  # text min_length: 100
+            ChapterOutput(text="short", word_count=1, chapter_number=1, chapter_title=None)  # text min_length: 100
         except ValidationError as ve:
             message = interface._build_validation_error_message(ve, 'ChapterOutput')
 
@@ -66,7 +66,7 @@ class TestValidationErrorMessageBuilder:
 
         # Claim different word count
         try:
-            ChapterOutput(text=text, word_count=500, chapter_number=1)  # Mismatch > tolerance
+            ChapterOutput(text=text, word_count=500, chapter_number=1, chapter_title=None)  # Mismatch > tolerance
         except ValidationError as ve:
             message = interface._build_validation_error_message(ve, 'ChapterOutput')
 
@@ -85,8 +85,9 @@ class TestValidationErrorMessageBuilder:
         try:
             ChapterOutput(
                 text="Valid text with at least 100 characters to meet the minimum length requirement for this field.",
-                word_count="not_a_number",  # Should be int
-                chapter_number=1
+                word_count="not_a_number",  # type: ignore[arg-type]  # Should be int
+                chapter_number=1,
+                chapter_title=None
             )
         except ValidationError as ve:
             message = interface._build_validation_error_message(ve, 'ChapterOutput')
@@ -106,8 +107,9 @@ class TestValidationErrorMessageBuilder:
         try:
             ChapterOutput(
                 text="short",  # Too short
-                word_count="invalid",  # Wrong type
-                # Missing chapter_number (required)
+                word_count=0,  # Invalid (violates gt=0)
+                chapter_number=0,  # Invalid (violates ge=1)
+                chapter_title=None
             )
         except ValidationError as ve:
             message = interface._build_validation_error_message(ve, 'ChapterOutput')
@@ -126,7 +128,7 @@ class TestValidationErrorMessageBuilder:
 
         # Create any ValidationError
         try:
-            ChapterOutput(text="short", chapter_number=1)
+            ChapterOutput(text="short", word_count=0, chapter_number=1, chapter_title=None)
         except ValidationError as ve:
             message = interface._build_validation_error_message(ve, 'ChapterOutput')
 
@@ -188,7 +190,7 @@ class TestSafeGeneratePydanticErrorFeedback:
                 'test',
                 ChapterOutput,
                 _max_retries_override=2
-            )
+            )  # type: ignore[misc]  # Tests guarantee success with mock data
 
             # Should have retried
             assert mock_json.call_count == 2
@@ -237,7 +239,7 @@ class TestSafeGeneratePydanticErrorFeedback:
                 'test',
                 ChapterOutput,
                 _max_retries_override=2
-            )
+            )  # type: ignore[misc]  # Tests guarantee success with mock data
 
             # Should have retried
             assert mock_json.call_count == 2
@@ -280,7 +282,7 @@ class TestSafeGeneratePydanticErrorFeedback:
                 'test',
                 ChapterOutput,
                 _max_retries_override=3
-            )
+            )  # type: ignore[misc]  # Tests guarantee success with mock data
 
             # Key assertion: only 2 attempts (not 3-4 like blind retry)
             assert mock_json.call_count == 2

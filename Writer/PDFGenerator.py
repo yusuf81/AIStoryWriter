@@ -11,13 +11,14 @@ from Writer.PDFStyles import get_pdf_styles
 
 class NumberedCanvas(canvas.Canvas):
     """Canvas for adding page numbers"""
+
     def __init__(self, *args, **kwargs):
         canvas.Canvas.__init__(self, *args, **kwargs)
         self._saved_page_states = []
 
     def showPage(self):
         self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
+        self._startPage()  # type: ignore[reportAttributeAccessIssue]
 
     def save(self):
         """Add page numbers to each page and save"""
@@ -34,7 +35,7 @@ class NumberedCanvas(canvas.Canvas):
         self.drawRightString(
             defaultPageSize[0] - inch,
             0.75 * inch,
-            f"Page {self._pageNumber} of {page_count}"
+            f"Page {self._pageNumber} of {page_count}"  # type: ignore[reportAttributeAccessIssue]
         )
 
 

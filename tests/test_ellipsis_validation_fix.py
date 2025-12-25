@@ -24,7 +24,8 @@ class TestEllipsisAllowedInContent:
             word_count=len(text.split()),
             scenes=["Opening scene"],
             characters_present=["Protagonist"],
-            chapter_number=1
+            chapter_number=1,
+            chapter_title=None
         )
 
         assert "..." in chapter.text
@@ -39,7 +40,8 @@ class TestEllipsisAllowedInContent:
             word_count=len(text.split()),
             scenes=["Cave exploration"],
             characters_present=["Aria"],
-            chapter_number=2
+            chapter_number=2,
+            chapter_title=None
         )
 
         assert chapter.text.count("....") >= 1  # Four dots for emphasis
@@ -64,7 +66,8 @@ class TestEllipsisAllowedInContent:
                     word_count=len(text.split()),
                     scenes=[],
                     characters_present=[],
-                    chapter_number=1
+                    chapter_number=1,
+                    chapter_title=None
                 )
 
             assert "placeholder text" in str(exc_info.value).lower()

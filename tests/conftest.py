@@ -1,13 +1,12 @@
 # conftest.py for shared pytest fixtures
 
 # Set environment variables to fix NumPy 2.0 compatibility with SciPy
+from unittest.mock import Mock, patch
+import glob
+import pytest
 import os
 os.environ['NUMPY_EXPERIMENTAL_ARRAY_FUNCTION'] = '1'
 os.environ['NPY_DISABLE_CPU_FEATURES'] = 'AVX2'
-
-import pytest
-import glob
-from unittest.mock import Mock, patch
 
 
 @pytest.fixture

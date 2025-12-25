@@ -3,10 +3,11 @@ Tests for JSON format fix to prevent schema echoing and improve retry logic.
 Tests that the new prompt format and retry handling work correctly.
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
 
 class TestJSONFormatFix:
     """Test the JSON format handling fix for schema echoing issue"""
@@ -86,7 +87,7 @@ class TestJSONFormatFix:
                 'test',
                 ChapterOutput,
                 _max_retries_override=2
-            )
+            )  # type: ignore[misc]  # Tests guarantee success with mock data
 
             # Should succeed
             assert isinstance(result, ChapterOutput)
@@ -192,7 +193,7 @@ class TestJSONFormatFix:
                 'test',
                 ChapterOutput,
                 _max_retries_override=3
-            )
+            )  # type: ignore[misc]  # Tests guarantee success with mock data
 
             # Success validation
             assert isinstance(result, ChapterOutput)

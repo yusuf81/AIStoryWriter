@@ -3,7 +3,7 @@ ReasoningChain TDD Tests - London School Approach
 Tests for migrating all SafeGenerateText usage to SafeGeneratePydantic
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -176,8 +176,8 @@ class TestReasoningChainPydanticConversion:
         rc.reason("test context", "editing", additional_context="extra", chapter_number=4)
 
         # Assert: SafeGenerateText should not be called
-        assert not hasattr(mock_iface, 'SafeGenerateText') or \
-               not getattr(mock_iface, 'SafeGenerateText', Mock()).called
+        has_sgt = hasattr(mock_iface, 'SafeGenerateText')
+        assert not has_sgt or not mock_iface.SafeGenerateText.called
 
         # Assert: All 5 private methods called SafeGeneratePydantic
         assert mock_iface.SafeGeneratePydantic.call_count == 5
@@ -217,5 +217,5 @@ class TestReasoningOutputModel:
         try:
             ReasoningOutput(reasoning="Too")
             assert False, "Should have raised validation error for too short reasoning"
-        except:
+        except BaseException:
             pass  # Expected to fail validation

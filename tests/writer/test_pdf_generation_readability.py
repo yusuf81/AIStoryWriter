@@ -4,10 +4,8 @@ Phase 1 RED Tests: PDF Generation Readability Issues
 These tests verify the real problems with PDF generation that users find eye-straining.
 """
 
-import pytest
-from unittest.mock import MagicMock, Mock, patch, mock_open
+from unittest.mock import MagicMock, Mock, patch
 import tempfile
-import os
 
 # Mock termcolor before imports
 import sys
@@ -19,7 +17,7 @@ class TestPDFGenerationReadability:
 
     def test_first_chapter_starts_on_new_page_after_title(self, mock_logger):
         """Test that first chapter starts on a new page after title (current implementation doesn't)"""
-        from Writer.PDFGenerator import GeneratePDF, SimpleDocTemplate
+        from Writer.PDFGenerator import GeneratePDF
 
         # Create markdown content with title and first chapter
         markdown_content = """# My Story Title
@@ -163,7 +161,7 @@ Content with proper margins."""
         try:
             pdfmetrics.getFont('Georgia')
             georgia_available = True
-        except:
+        except BaseException:
             georgia_available = False
 
         # If Georgia is available, it should be used as primary

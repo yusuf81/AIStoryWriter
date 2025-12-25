@@ -5,8 +5,7 @@ These tests verify that MarkdownProcessor preserves paragraph breaks and support
 first-line indentation and spacing between paragraphs.
 """
 
-import pytest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock
 import sys
 
 # Mock termcolor before imports

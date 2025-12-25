@@ -113,9 +113,9 @@ class TestFieldConstantsInternationalization:
 
         # Should contain both language variants
         eng_sections = [s for s in METADATA_SECTIONS if s.startswith("## ") and
-                       any(word in s.lower() for word in ["summary", "tags"])]
+                        any(word in s.lower() for word in ["summary", "tags"])]
         ind_sections = [s for s in METADATA_SECTIONS if s.startswith("## ") and
-                       any(word in s.lower() for word in ["ringkasan", "label"])]
+                        any(word in s.lower() for word in ["ringkasan", "label"])]
 
         assert len(eng_sections) >= 2, "Should have at least English sections"
         assert len(ind_sections) >= 2, "Should have at least Indonesian sections"
