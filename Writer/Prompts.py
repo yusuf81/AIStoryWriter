@@ -8,18 +8,22 @@ Please extract any important information from the user's prompt below:
 </USER_PROMPT>
 
 Just write down any information that wouldn't be covered in an outline.
-Please use the below template for formatting your response.
 This would be things like instructions for chapter length, overall vision, instructions for formatting, etc.
-(Don't use the xml tags though - those are for example only)
 
-<EXAMPLE>
-# Important Additional Context
-- Important point 1
-- Important point 2
-</EXAMPLE>
+# JSON OUTPUT FORMAT
+Please return your response in valid JSON format:
+{{
+  "context": "Important additional context (e.g., chapter length, vision, formatting)"
+}}
 
-Do NOT write the outline itself, just some extra context. Keep your responses short.
+Focus on:
+- Chapter length requirements
+- Overall vision or style
+- Formatting preferences
+- Any other meta-instructions not part of the plot
 
+Write in English.
+Return ONLY valid JSON, no other text.
 """
 
 GENERATE_STORY_ELEMENTS = """
@@ -29,121 +33,6 @@ Here's the prompt for my story.
 <PROMPT>
 {_OutlinePrompt}
 </PROMPT>
-
-Please make your response have the following format:
-
-<RESPONSE_TEMPLATE>
-# Story Title
-
-## Genre
-- **Category**: (e.g., romance, mystery, science fiction, fantasy, horror)
-
-## Theme
-- **Central Idea or Message**:
-
-## Pacing
-- **Speed**: (e.g., slow, fast)
-
-## Style
-- **Language Use**: (e.g., sentence structure, vocabulary, tone, figurative language)
-
-## Plot
-- **Exposition**:
-- **Rising Action**:
-- **Climax**:
-- **Falling Action**:
-- **Resolution**:
-
-## Setting
-### Setting 1
-- **Time**: (e.g., present day, future, past)
-- **Location**: (e.g., city, countryside, another planet)
-- **Culture**: (e.g., modern, medieval, alien)
-- **Mood**: (e.g., gloomy, high-tech, dystopian)
-
-(Repeat the above structure for additional settings)
-
-## Conflict
-- **Description**: (type and description of the main conflict)
-
-## Symbolism
-- **Symbols and Meanings**: (list of symbols and their meanings)
-
-## Characters
-### Main Character(s)
-#### Main Character 1
-- **Name**:
-- **Physical Description**:
-- **Personality**:
-- **Background**:
-- **Motivation**:
-
-(Repeat the above structure for additional main characters)
-
-
-### Supporting Characters
-#### Character 1
-- **Name**:
-- **Physical Description**:
-- **Personality**:
-- **Background**:
-- **Role in the story**:
-
-#### Character 2
-- **Name**:
-- **Physical Description**:
-- **Personality**:
-- **Background**:
-- **Role in the story**:
-
-#### Character 3
-- **Name**:
-- **Physical Description**:
-- **Personality**:
-- **Background**:
-- **Role in the story**:
-
-#### Character 4
-- **Name**:
-- **Physical Description**:
-- **Personality**:
-- **Background**:
-- **Role in the story**:
-
-#### Character 5
-- **Name**:
-- **Physical Description**:
-- **Personality**:
-- **Background**:
-- **Role in the story**:
-
-#### Character 6
-- **Name**:
-- **Physical Description**:
-- **Personality**:
-- **Background**:
-- **Role in the story**:
-
-#### Character 7
-- **Name**:
-- **Physical Description**:
-- **Personality**:
-- **Background**:
-- **Role in the story**:
-
-#### Character 8
-- **Name**:
-- **Physical Description**:
-- **Personality**:
-- **Background**:
-- **Role in the story**:
-
-(Repeat the above structure for additional supporting character)
-
-</RESPONSE_TEMPLATE>
-
-Of course, don't include the XML tags - those are just to indicate the example.
-Also, the items in parenthesis are just to give you a better idea of what to write about, and should also be omitted from your response.
 
 === JSON SCHEMA (REFERENCE ONLY) ===
 This defines the structure. DO NOT repeat the schema in your response!
@@ -234,7 +123,46 @@ Please keep your outline clear as to what content is in what chapter.
 Make sure to add lots of detail as you write.
 
 Also, include information about the different characters, and how they change over the course of the story.
-We want to have rich and complex character development!"""
+We want to have rich and complex character development!
+
+# JSON OUTPUT FORMAT
+Please return your response in valid JSON format with the following structure:
+
+{{
+  "title": "Story Title",
+  "genre": "Story Genre",
+  "theme": "Central theme (optional)",
+  "chapters": [
+    "Chapter 1: Detailed outline of first chapter with at least 100 characters describing key events, character development, and plot progression",
+    "Chapter 2: Detailed outline of second chapter..."
+  ],
+  "character_list": ["Character1", "Character2"],
+  "character_details": {{
+    "Character1": "Brief description",
+    "Character2": "Brief description"
+  }},
+  "setting": {{
+    "time": "Time period",
+    "location": "Primary location",
+    "culture": "Cultural context",
+    "mood": "Overall atmosphere"
+  }},
+  "target_chapter_count": 10
+}}
+
+Required fields:
+  - title (string, min 5 characters): Story title
+  - genre (string): Story genre
+  - chapters (array of strings): Each chapter outline must be at least 100 characters
+  - target_chapter_count (integer): Number of chapters planned
+
+Optional fields:
+  - theme (string): Central theme or message
+  - character_list (array of strings): List of character names
+  - character_details (object): Character name to description mapping
+  - setting (object): Setting details with time, location, culture, mood
+
+IMPORTANT: Return ONLY the JSON data, not the schema or any explanations!"""
 
 EXPAND_OUTLINE_CHAPTER_BY_CHAPTER = """
 # Objective
@@ -417,6 +345,28 @@ Please help me extract the part of this outline that is just for chapter {_Chapt
 </OUTLINE>
 
 Do not include anything else in your response except just the content for chapter {_ChapterNum}.
+
+# JSON OUTPUT FORMAT
+Please return your response in valid JSON format with the following structure:
+
+{{
+  "text": "The extracted outline content for chapter {_ChapterNum}",
+  "word_count": 100,
+  "chapter_number": {_ChapterNum},
+  "chapter_title": "Chapter Title (optional)"
+}}
+
+Required fields:
+  - text (string): The extracted chapter outline content (minimum 100 characters)
+  - word_count (integer): Word count of the extracted text
+  - chapter_number (integer): The chapter number
+
+Optional fields:
+  - chapter_title (string): Chapter title if present in outline
+  - scenes (array of strings): Scene descriptions if identifiable
+  - characters_present (array of strings): Characters mentioned in this chapter
+
+IMPORTANT: Return ONLY valid JSON data, no other text or markdown!
 """
 
 CHAPTER_HISTORY_INSERT = """
@@ -638,44 +588,44 @@ Remember to follow the provided outline when creating your chapter outline.
 
 Don't answer these questions directly, instead make your outline implicitly answer them. (Show, don't tell)
 
-Please break your response into scenes, which each have the following format (please repeat the scene format for each scene in the chapter (min of 3):
-
-# Chapter {_Chapter}
-
-## Scene: [Brief Scene Title]
-
-- **Characters & Setting:**
-  - Character: [Character Name] - [Brief Description]
-  - Location: [Scene Location]
-  - Time: [When the scene takes place]
-
-- **Conflict & Tone:**
-  - Conflict: [Type & Description]
-  - Tone: [Emotional tone]
-
-- **Key Events & Dialogue:**
-  - [Briefly describe important events, actions, or dialogue]
-
-- **Literary Devices:**
-  - [Foreshadowing, symbolism, or other devices, if any]
-
-- **Resolution & Lead-in:**
-  - [How the scene ends and connects to the next one]
-
-When generating structured JSON responses (optional), use these field names to match the expected schema:
-Example JSON scene structure:
-{{
-    "title": "Brief scene title",
-    "characters_and_setting": "Characters present and where the scene takes place",
-    "conflict_and_tone": "Type of conflict and emotional tone",
-    "key_events": "Important plot points and actions",
-    "literary_devices": "Literary techniques used (optional)",
-    "resolution": "How the scene ends and connects to the next"
-}}
-
 Again, don't write the chapter itself, just create a detailed outline of the chapter.
 
-Make sure your chapter has a markdown-formatted name!
+# JSON OUTPUT FORMAT
+Please return your response in valid JSON format with the following structure:
+
+{{
+  "chapter_number": 1,
+  "chapter_title": "Chapter Title",
+  "scenes": [
+    {{
+      "title": "Brief scene title",
+      "characters_and_setting": "Detailed description of characters present and setting",
+      "conflict_and_tone": "Type of conflict and emotional tone",
+      "key_events": "Important plot points, actions, and dialogue hints",
+      "literary_devices": "Foreshadowing, symbolism, or other literary techniques (optional)",
+      "resolution": "How the scene ends and connects to next scene"
+    }}
+  ],
+  "outline_summary": "Brief summary of the chapter (min 40 characters)"
+}}
+
+Required fields:
+  - chapter_number (integer): Chapter number
+  - chapter_title (string): Chapter title
+  - scenes (array of objects): Minimum 2-3 detailed scenes per chapter
+    Each scene must have:
+    - title (string): Scene title
+    - characters_and_setting (string): Characters and location details
+    - conflict_and_tone (string): Conflict type and emotional tone
+    - key_events (string): Plot points and key actions
+    - resolution (string): How scene ends and transitions
+  - outline_summary (string): Brief chapter summary
+
+Optional fields:
+  - literary_devices (string): Literary techniques used in the scene
+
+IMPORTANT: Each scene should be detailed enough to guide chapter writing.
+IMPORTANT: Return ONLY the JSON data, not the schema or any markdown formatting!
 """
 
 CHAPTER_TO_SCENES = """

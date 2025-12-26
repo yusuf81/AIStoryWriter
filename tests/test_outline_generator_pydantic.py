@@ -12,13 +12,12 @@ class TestOutlineGeneratorPydanticConversion:
     """Test complete conversion of OutlineGenerator to Pydantic"""
 
     def test_extract_base_context_uses_pydantic(self, mock_interface, mock_logger, mocker):
-        """Verify ExtractBaseContext uses SafeGeneratePydantic with BaseContext model"""
+        """Verify ExtractBaseContext uses SafeGenerateJSON for flexible extraction"""
         from Writer.OutlineGenerator import GenerateOutline
 
-        # Arrange: Create real BaseContext model
-        from Writer.Models import BaseContext as BaseContextModel, StoryElements, CharacterDetail
+        # Arrange: Create StoryElements model (BaseContext now uses SafeGenerateJSON)
+        from Writer.Models import StoryElements, CharacterDetail
 
-        base_context = BaseContextModel(context="Important story elements extracted from prompt")
         story_elements = StoryElements(
             title="Hero's Journey",
             genre="Fantasy Adventure",
@@ -66,13 +65,18 @@ class TestOutlineGeneratorPydanticConversion:
         )
 
         mock_iface = mock_interface()
-        # Mock SafeGeneratePydantic to return BaseContext first
+        # Mock SafeGenerateJSON for base context (new behavior)
+        base_context_json = {
+            'context': 'Important story elements extracted from prompt'
+        }
         base_context_return = (
             [{"role": "assistant", "content": "Response"}],
-            base_context,
+            base_context_json,
             {"tokens": 50}
         )
-        # Then return StoryElements with all required attributes
+        mock_iface.SafeGenerateJSON.return_value = base_context_return
+
+        # Mock SafeGeneratePydantic for StoryElements and Outline
         story_elements_return = (
             [{"role": "assistant", "content": "Response"}],
             story_elements,
@@ -122,8 +126,8 @@ class TestOutlineGeneratorPydanticConversion:
             {"tokens": 50}
         )
 
-        # Set up the mock to return our Pydantic objects in sequence
-        mock_iface.SafeGeneratePydantic.side_effect = [base_context_return, story_elements_return, outline_return, revised_outline_return]
+        # Set up the mock to return our Pydantic objects in sequence (StoryElements, Outline, ReviseOutline)
+        mock_iface.SafeGeneratePydantic.side_effect = [story_elements_return, outline_return, revised_outline_return]
 
         # Mock LLMEditor methods
         mock_llm_editor = mocker.patch('Writer.LLMEditor')
@@ -143,8 +147,10 @@ class TestOutlineGeneratorPydanticConversion:
             "Fantasy"  # type: ignore[arg-type]  # _QualityThreshold - test passes string for testing
         )
 
-        # Assert: SafeGeneratePydantic was called 4 times (BaseContext, StoryElements, Outline, ReviseOutline)
-        assert mock_iface.SafeGeneratePydantic.call_count == 4
+        # Assert: SafeGenerateJSON was called once for base context
+        assert mock_iface.SafeGenerateJSON.call_count == 1
+        # SafeGeneratePydantic was called 3 times (StoryElements, Outline, ReviseOutline)
+        assert mock_iface.SafeGeneratePydantic.call_count == 3
 
     def test_revise_outline_uses_pydantic(self, mock_interface, mock_logger):
         """Verify ReviseOutline uses SafeGeneratePydantic with OutlineOutput model"""
@@ -236,10 +242,12 @@ class TestOutlineGeneratorPydanticConversion:
         # Arrange: Mock the full GenerateOutline process
         mock_iface = mock_interface()
 
-        # Create proper mocks for BaseContext and StoryElements
-        from Writer.Models import BaseContext, StoryElements, CharacterDetail
+        # Create proper mocks for base context (JSON) and StoryElements (Pydantic)
+        from Writer.Models import StoryElements, CharacterDetail
 
-        mock_base_context = BaseContext(context="Important context extracted")
+        # Base context now uses SafeGenerateJSON
+        base_context_json = {"context": "Important context extracted"}
+
         mock_story_elements = StoryElements(
             title="Fantasy Adventure",
             genre="Fantasy",
@@ -273,9 +281,15 @@ class TestOutlineGeneratorPydanticConversion:
             resolution="Hero succeeds"
         )
 
-        # Set up the mock to return our structured objects in sequence
+        # Set up SafeGenerateJSON for base context
+        mock_iface.SafeGenerateJSON.return_value = (
+            [{"role": "assistant", "content": "Base context extracted"}],
+            base_context_json,
+            {"tokens": 50}
+        )
+
+        # Set up SafeGeneratePydantic for StoryElements and Outline
         mock_iface.SafeGeneratePydantic.side_effect = [
-            ([{"role": "assistant", "content": "Base context extracted"}], mock_base_context, {"tokens": 50}),
             ([{"role": "assistant", "content": "Story elements generated"}], mock_story_elements, {"tokens": 100}),
             ([{"role": "assistant", "content": "Outline generated"}], outline_with_structured_setting, {"tokens": 150}),
             ([{"role": "assistant", "content": "Outline revised"}], outline_with_structured_setting, {"tokens": 100})
@@ -304,8 +318,10 @@ class TestOutlineGeneratorPydanticConversion:
         assert isinstance(final_outline, str)
         assert "Story with Structured Setting" in final_outline
 
-        # Verify SafeGeneratePydantic was called 4 times, accepting our structured setting
-        assert mock_iface.SafeGeneratePydantic.call_count == 4
+        # Verify SafeGenerateJSON was called once for base context
+        assert mock_iface.SafeGenerateJSON.call_count == 1
+        # Verify SafeGeneratePydantic was called 3 times (StoryElements, Outline, ReviseOutline)
+        assert mock_iface.SafeGeneratePydantic.call_count == 3
 
 
 class TestBaseContextModel:

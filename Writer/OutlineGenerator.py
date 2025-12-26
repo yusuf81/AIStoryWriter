@@ -1,7 +1,40 @@
 import Writer.LLMEditor
 import Writer.Config
-from Writer.Models import OutlineOutput, StoryElements, BaseContext, ChapterOutlineOutput
+from Writer.Models import OutlineOutput, StoryElements, ChapterOutlineOutput
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
+
+
+def _extract_base_context(context_json) -> str:
+    """Extract base context from JSON response with fallback options.
+
+    Handles multiple possible JSON structures from different LLM responses.
+    Pattern: SafeGenerateJSON with fallback extraction (similar to _extract_chapter_summary).
+
+    Args:
+        context_json: Dictionary from SafeGenerateJSON response
+
+    Returns:
+        str: Extracted context text, empty string if not found
+
+    Extraction priority:
+    1. Direct 'context' field (expected field name)
+    2. Any string field longer than 10 chars (fallback)
+    """
+    if not isinstance(context_json, dict):
+        return ""
+
+    # Priority 1: Direct 'context' field
+    if 'context' in context_json:
+        context_val = context_json.get('context', '')
+        if isinstance(context_val, str) and len(context_val) > 0:
+            return context_val
+
+    # Priority 2: Fallback to any string field longer than 10 chars
+    for value in context_json.values():
+        if isinstance(value, str) and len(value) > 10:
+            return value
+
+    return ""
 
 
 # We should probably do outline generation in stages, allowing us to go back and add foreshadowing, etc back to previous segments
@@ -18,10 +51,10 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
 
     _Logger.Log("Extracting Important Base Context", 4)
     Messages = [Interface.BuildUserQuery(Prompt)]
-    Messages, BaseContext_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
-        _Logger, Messages, Writer.Config.INITIAL_OUTLINE_WRITER_MODEL, BaseContext
+    Messages, context_json, _ = Interface.SafeGenerateJSON(
+        _Logger, Messages, Writer.Config.INITIAL_OUTLINE_WRITER_MODEL
     )
-    BaseContext_str: str = BaseContext_obj.context
+    BaseContext_str: str = _extract_base_context(context_json)
     _Logger.Log("Done Extracting Important Base Context", 4)
 
     # Generate Story Elements using Pydantic model

@@ -303,63 +303,48 @@ class TestPromptFormatValidation:
 
     def test_response_template_conflict_structure_english(self, mock_logger):
         """
-        RED: Test that English response template's conflict section expects free text, not nested keys
+        Test that English prompt no longer has markdown template (Phase 2 cleanup)
 
         Arrange: Get English GENERATE_STORY_ELEMENTS prompt
-        Act: Check the conflict section in RESPONSE_TEMPLATE
-        Assert: Template should expect free text, not structured object
+        Act: Check that RESPONSE_TEMPLATE is removed
+        Assert: Prompt should only have JSON format, no markdown template
         """
         # Arrange
         prompt = Prompts.GENERATE_STORY_ELEMENTS
 
-        # Act - Find the conflict section
-        conflict_start = prompt.find('## Conflict')
-        assert conflict_start != -1, "Prompt should have Conflict section"
-
-        # Extract conflict section
-        conflict_section = prompt[conflict_start:conflict_start + 500]
-
-        # Assert - Now PASSES because we simplified the structure
-        # Should have single bullet point, not separate Type and Description
-        assert '- **' in conflict_section, "Conflict section should have bullet points"
-        assert '**Type**:' not in conflict_section, \
-            "Conflict section should not have separate Type key - this creates nested structure"
-        # Note: **Description** is now used as a single field, not separate from Type
+        # Act & Assert - Markdown template should be removed (Phase 2)
+        assert '<RESPONSE_TEMPLATE>' not in prompt, "Prompt should not have markdown template tag"
+        assert '## Conflict' not in prompt, "Prompt should not have markdown headers"
+        # Should have JSON format instead
+        assert 'JSON' in prompt, "Prompt should have JSON format instructions"
+        assert '"conflict"' in prompt, "Prompt should have conflict in JSON example"
 
     def test_response_template_symbolism_structure_english(self, mock_logger):
         """
-        RED: Test that English response template's symbolism section expects list, not nested object
+        Test that English prompt no longer has markdown symbolism template (Phase 2 cleanup)
 
         Arrange: Get English GENERATE_STORY_ELEMENTS prompt
-        Act: Check the symbolism section in RESPONSE_TEMPLATE
-        Assert: Template should not create nested object with numbered symbols
+        Act: Check that markdown symbolism section is removed
+        Assert: Prompt should only have JSON format with symbolism array
         """
         # Arrange
         prompt = Prompts.GENERATE_STORY_ELEMENTS
 
-        # Act - Find the symbolism section
-        symbolism_start = prompt.find('## Symbolism')
-        assert symbolism_start != -1, "Prompt should have Symbolism section"
-
-        # Extract symbolism section
-        symbolism_section = prompt[symbolism_start:symbolism_start + 500]
-
-        # Assert - This will FAIL because template uses numbered symbols with sub-keys
-        # Should NOT have nested structure with "Symbol 1", "Symbol 2" keys
-        assert '### Symbol 1' not in symbolism_section, \
-            "Symbolism section should not create numbered symbols with nested structure"
-        assert '**Symbol**:' not in symbolism_section, \
-            "Symbolism section should not have Symbol key - this creates nested structure"
-        assert '**Meaning**:' not in symbolism_section, \
-            "Symbolism section should not have Meaning key - this creates nested structure"
+        # Act & Assert - Markdown template should be removed (Phase 2)
+        assert '## Symbolism' not in prompt, "Prompt should not have markdown Symbolism header"
+        assert '### Symbol 1' not in prompt, "Prompt should not have numbered markdown symbols"
+        # Should have JSON format instead
+        assert '"symbolism"' in prompt, "Prompt should have symbolism in JSON example"
+        assert '"symbol"' in prompt, "Prompt should have symbol key in JSON example"
+        assert '"meaning"' in prompt, "Prompt should have meaning key in JSON example"
 
     def test_response_template_conflict_structure_indonesian(self, mock_logger):
         """
-        RED: Test that Indonesian response template's conflict section expects free text, not nested keys
+        Test that Indonesian prompt no longer has markdown template (Phase 2 cleanup)
 
         Arrange: Get Indonesian GENERATE_STORY_ELEMENTS prompt
-        Act: Check the conflict section in RESPONSE_TEMPLATE
-        Assert: Template should expect free text, not structured object
+        Act: Check that RESPONSE_TEMPLATE is removed
+        Assert: Prompt should only have JSON format, no markdown template
         """
         # Arrange
         import Writer.Config as Config
@@ -369,19 +354,12 @@ class TestPromptFormatValidation:
         prompt = indonesian_prompts.GENERATE_STORY_ELEMENTS
         Config.NATIVE_LANGUAGE = original_lang  # Restore
 
-        # Act - Find the conflict section
-        conflict_start = prompt.find('## Konflik')
-        assert conflict_start != -1, "Indonesian prompt should have Konflik section"
-
-        # Extract conflict section
-        conflict_section = prompt[conflict_start:conflict_start + 500]
-
-        # Assert - Now PASSES because we simplified the structure
-        # Should have single bullet point, not separate Jenis and Deskripsi
-        assert '- **' in conflict_section, "Konflik section should have bullet points"
-        assert '**Jenis**:' not in conflict_section, \
-            "Konflik section should not have separate Jenis key - this creates nested structure"
-        # Note: **Deskripsi** is now used as a single field, not separate from Jenis
+        # Act & Assert - Markdown template should be removed (Phase 2)
+        assert '<RESPONSE_TEMPLATE>' not in prompt, "Indonesian prompt should not have markdown template tag"
+        assert '## Konflik' not in prompt, "Indonesian prompt should not have markdown headers"
+        # Should have JSON format instead
+        assert 'JSON' in prompt, "Indonesian prompt should have JSON format instructions"
+        assert '"conflict"' in prompt, "Indonesian prompt should have conflict in JSON example"
 
     def test_response_template_symbolism_structure_indonesian(self, mock_logger):
         """
@@ -399,21 +377,13 @@ class TestPromptFormatValidation:
         prompt = indonesian_prompts.GENERATE_STORY_ELEMENTS
         Config.NATIVE_LANGUAGE = original_lang  # Restore
 
-        # Act - Find the symbolism section
-        symbolism_start = prompt.find('## Simbolisme')
-        assert symbolism_start != -1, "Indonesian prompt should have Simbolisme section"
-
-        # Extract symbolism section
-        symbolism_section = prompt[symbolism_start:symbolism_start + 500]
-
-        # Assert - This will FAIL because template uses numbered symbols with sub-keys
-        # Should NOT have nested structure with "Simbol 1", "Simbol 2" keys
-        assert '### Simbol 1' not in symbolism_section, \
-            "Simbolisme section should not create numbered symbols with nested structure"
-        assert '**Simbol**:' not in symbolism_section, \
-            "Simbolisme section should not have Simbol key - this creates nested structure"
-        assert '**Makna**:' not in symbolism_section, \
-            "Simbolisme section should not have Makna key - this creates nested structure"
+        # Act & Assert - Markdown template should be removed (Phase 2)
+        assert '## Simbolisme' not in prompt, "Indonesian prompt should not have markdown Simbolisme header"
+        assert '### Simbol 1' not in prompt, "Indonesian prompt should not have numbered markdown symbols"
+        # Should have JSON format instead
+        assert '"symbolism"' in prompt, "Indonesian prompt should have symbolism in JSON example"
+        assert '"symbol"' in prompt, "Indonesian prompt should have symbol key in JSON example"
+        assert '"meaning"' in prompt, "Indonesian prompt should have meaning key in JSON example"
 
 
 class TestFormatInstructionBuilder:
@@ -637,51 +607,48 @@ class TestEnhancedSceneOutlineFieldNames:
 
     def test_enhanced_scene_outline_field_names_mismatch_english(self, mock_logger):
         """
-        RED: Test that English CHAPTER_OUTLINE_PROMPT teaches wrong field names
-        that don't match EnhancedSceneOutline model
+        FIXED: Verify English CHAPTER_OUTLINE_PROMPT no longer has problematic markdown templates
+        (Previously RED test - now passes after Phase 4 fix)
         """
         # Arrange
         from Writer.Prompts import CHAPTER_OUTLINE_PROMPT
         from Writer.PromptsHelper import validate_prompt_format
 
-        # Act & Assert - Prompt can be formatted but teaches wrong field names
+        # Act & Assert - Prompt can be formatted
         is_valid, error = validate_prompt_format(CHAPTER_OUTLINE_PROMPT, ['Chapter', 'Outline'])
-        assert is_valid == True, "Prompt should format successfully"
+        assert is_valid is True, "Prompt should format successfully"
 
-        # Check presence of problematic field instructions that cause mismatch
-        assert "## Scene: [Brief Scene Title]" in CHAPTER_OUTLINE_PROMPT, \
-            "Contains Scene title template that causes LLM to generate 'scene_title'"
-        assert "**Characters & Setting:**" in CHAPTER_OUTLINE_PROMPT, \
-            "Contains Characters & Setting template that causes field name confusion"
-        assert "**Conflict & Tone:**" in CHAPTER_OUTLINE_PROMPT, \
-            "Contains Conflict & Tone template that causes field name confusion"
-        assert "**Key Events & Dialogue:**" in CHAPTER_OUTLINE_PROMPT, \
-            "Contains Key Events template that might cause 'key_events' but in wrong location"
+        # Verify problematic markdown templates have been REMOVED (Phase 4 fix)
+        assert "## Scene: [Brief Scene Title]" not in CHAPTER_OUTLINE_PROMPT, \
+            "Should NOT contain Scene title markdown template (removed in Phase 4)"
+        assert "**Characters & Setting:**" not in CHAPTER_OUTLINE_PROMPT, \
+            "Should NOT contain Characters & Setting markdown template (removed in Phase 4)"
+        assert "**Conflict & Tone:**" not in CHAPTER_OUTLINE_PROMPT, \
+            "Should NOT contain Conflict & Tone markdown template (removed in Phase 4)"
+        assert "**Key Events & Dialogue:**" not in CHAPTER_OUTLINE_PROMPT, \
+            "Should NOT contain Key Events markdown template (removed in Phase 4)"
 
-        # These markdown templates will cause LLM to generate mismatched field names
-        # when the SafeGeneratePydantic appends JSON schema instructions
-
-        # RED: This test shows the prompt teaches field names that don't match
-        # EnhancedSceneOutline model (title, characters_and_setting, conflict_and_tone, etc.)
+        # FIXED: Markdown templates removed, now uses JSON format with correct field names
+        # (See test_enhanced_scene_outline_green_fixes_english for JSON format verification)
 
     def test_enhanced_scene_outline_field_names_mismatch_indonesian(self, mock_logger):
         """
-        RED: Test that Indonesian CHAPTER_OUTLINE_PROMPT teaches wrong field names
-        that don't match EnhancedSceneOutline model
+        FIXED: Verify Indonesian CHAPTER_OUTLINE_PROMPT no longer has problematic markdown templates
+        (Previously RED test - now passes after Phase 4 fix)
         """
         # Arrange
         from Writer.Prompts_id import CHAPTER_OUTLINE_PROMPT
 
-        # Act & Assert - Indonesian prompt has same field name issues
-        assert "## Adegan: [Judul Adegan Singkat]" in CHAPTER_OUTLINE_PROMPT, \
-            "Contains Indonesian Scene title template that causes 'scene_title'"
-        assert "**Karakter & Latar:**" in CHAPTER_OUTLINE_PROMPT, \
-            "Contains Indonesian Characters & Setting template"
-        assert "**Konflik & Nada:**" in CHAPTER_OUTLINE_PROMPT, \
-            "Contains Indonesian Conflict & Tone template"
+        # Act & Assert - Verify problematic markdown templates have been REMOVED
+        assert "## Adegan: [Judul Adegan Singkat]" not in CHAPTER_OUTLINE_PROMPT, \
+            "Should NOT contain Indonesian Scene title markdown template (removed in Phase 4)"
+        assert "**Karakter & Latar:**" not in CHAPTER_OUTLINE_PROMPT, \
+            "Should NOT contain Indonesian Characters & Setting markdown template (removed in Phase 4)"
+        assert "**Konflik & Nada:**" not in CHAPTER_OUTLINE_PROMPT, \
+            "Should NOT contain Indonesian Conflict & Tone markdown template (removed in Phase 4)"
 
-        # RED: Indonesian prompt teaches field names that don't match
-        # EnhancedSceneOutline model expectations
+        # FIXED: Markdown templates removed, now uses JSON format with correct field names
+        # (See test_enhanced_scene_outline_green_fixes_indonesian for JSON format verification)
 
     def test_enhanced_scene_outline_model_expected_fields(self, mock_logger):
         """

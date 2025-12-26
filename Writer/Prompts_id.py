@@ -8,18 +8,22 @@ Harap ekstrak informasi penting apa pun dari prompt pengguna di bawah ini:
 </USER_PROMPT>
 
 Cukup tuliskan informasi apa pun yang tidak akan tercakup dalam outline.
-Harap gunakan templat di bawah ini untuk memformat respons Anda.
 Ini akan menjadi hal-hal seperti instruksi untuk panjang bab, visi keseluruhan, instruksi untuk format, dll.
-(Jangan gunakan tag xml - itu hanya contoh)
 
-<EXAMPLE>
-# Konteks Tambahan Penting
-- Poin penting 1
-- Poin penting 2
-</EXAMPLE>
+# FORMAT OUTPUT JSON
+Harap kembalikan respons dalam format JSON yang valid:
+{{
+  "context": "Konteks tambahan penting (mis: panjang bab, visi, format)"
+}}
 
-Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
-JANGAN tulis outline itu sendiri, hanya beberapa konteks tambahan. Buat respons Anda singkat.
+Fokus pada:
+- Persyaratan panjang bab
+- Visi atau gaya keseluruhan
+- Preferensi format
+- Instruksi meta lainnya yang bukan bagian dari plot
+
+Tuliskan dalam bahasa Indonesia.
+HANYA kembalikan JSON yang valid, tanpa teks lain.
 """
 
 GENERATE_STORY_ELEMENTS = """
@@ -30,121 +34,7 @@ Berikut adalah prompt untuk cerita saya.
 {_OutlinePrompt}
 </PROMPT>
 
-Harap buat respons Anda memiliki format berikut:
-
-<RESPONSE_TEMPLATE>
-# Judul Cerita
-
-## Genre
-- **Kategori**: (misalnya, romansa, misteri, fiksi ilmiah, fantasi, horor)
-
-## Tema
-- **Ide atau Pesan Sentral**:
-
-## Laju
-- **Kecepatan**: (misalnya, lambat, cepat)
-
-## Gaya
-- **Penggunaan Bahasa**: (misalnya, struktur kalimat, kosakata, nada, bahasa kiasan)
-
-## Plot
-- **Eksposisi**:
-- **Aksi Meningkat**:
-- **Klimaks**:
-- **Aksi Menurun**:
-- **Resolusi**:
-
-## Latar
-### Latar 1
-- **Waktu**: (misalnya, sekarang, masa depan, masa lalu)
-- **Lokasi**: (misalnya, kota, pedesaan, planet lain)
-- **Budaya**: (misalnya, modern, abad pertengahan, alien)
-- **Suasana Hati**: (misalnya, suram, teknologi tinggi, distopia)
-
-(Ulangi struktur di atas untuk latar tambahan)
-
-## Konflik
-- **Deskripsi**: (jenis dan deskripsi konflik utama)
-
-## Simbolisme
-- **Simbol dan Makna**: (daftar simbol dan artinya)
-
-## Karakter
-### Karakter Utama
-#### Karakter Utama 1
-- **Nama**:
-- **Deskripsi Fisik**:
-- **Kepribadian**:
-- **Latar Belakang**:
-- **Motivasi**:
-
-(Ulangi struktur di atas untuk karakter utama tambahan)
-
-
-### Karakter Pendukung
-#### Karakter 1
-- **Nama**:
-- **Deskripsi Fisik**:
-- **Kepribadian**:
-- **Latar Belakang**:
-- **Peran dalam cerita**:
-
-#### Karakter 2
-- **Nama**:
-- **Deskripsi Fisik**:
-- **Kepribadian**:
-- **Latar Belakang**:
-- **Peran dalam cerita**:
-
-#### Karakter 3
-- **Nama**:
-- **Deskripsi Fisik**:
-- **Kepribadian**:
-- **Latar Belakang**:
-- **Peran dalam cerita**:
-
-#### Karakter 4
-- **Nama**:
-- **Deskripsi Fisik**:
-- **Kepribadian**:
-- **Latar Belakang**:
-- **Peran dalam cerita**:
-
-#### Karakter 5
-- **Nama**:
-- **Deskripsi Fisik**:
-- **Kepribadian**:
-- **Latar Belakang**:
-- **Peran dalam cerita**:
-
-#### Karakter 6
-- **Nama**:
-- **Deskripsi Fisik**:
-- **Kepribadian**:
-- **Latar Belakang**:
-- **Peran dalam cerita**:
-
-#### Karakter 7
-- **Nama**:
-- **Deskripsi Fisik**:
-- **Kepribadian**:
-- **Latar Belakang**:
-- **Peran dalam cerita**:
-
-#### Karakter 8
-- **Nama**:
-- **Deskripsi Fisik**:
-- **Kepribadian**:
-- **Latar Belakang**:
-- **Peran dalam cerita**:
-
-(Ulangi struktur di atas untuk karakter pendukung tambahan)
-
-</RESPONSE_TEMPLATE>
-
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
-Tentu saja, jangan sertakan tag XML - itu hanya untuk menunjukkan contoh.
-Juga, item dalam tanda kurung hanya untuk memberi Anda gambaran yang lebih baik tentang apa yang harus ditulis, dan juga harus dihilangkan dari respons Anda.
 
 === FORMAT JSON (HANYA REFERENSI) ===
 Ini mendefinisikan struktur. JANGAN ulangi skema dalam respons Anda!
@@ -239,7 +129,47 @@ Harap jaga agar outline Anda jelas mengenai konten apa yang ada di bab mana.
 Pastikan untuk menambahkan banyak detail saat Anda menulis.
 
 Juga, sertakan informasi tentang karakter yang berbeda, dan bagaimana mereka berubah selama cerita.
-Kami ingin memiliki pengembangan karakter yang kaya dan kompleks!"""
+Kami ingin memiliki pengembangan karakter yang kaya dan kompleks!
+
+# FORMAT OUTPUT JSON
+Harap kembalikan respons Anda dalam format JSON yang valid dengan struktur berikut:
+
+{{
+  "title": "Judul Cerita",
+  "genre": "Genre Cerita",
+  "theme": "Tema sentral (opsional)",
+  "chapters": [
+    "Bab 1: Outline detail bab pertama dengan minimal 100 karakter yang menjelaskan peristiwa kunci, pengembangan karakter, dan perkembangan plot",
+    "Bab 2: Outline detail bab kedua..."
+  ],
+  "character_list": ["Karakter1", "Karakter2"],
+  "character_details": {{
+    "Karakter1": "Deskripsi singkat",
+    "Karakter2": "Deskripsi singkat"
+  }},
+  "setting": {{
+    "time": "Periode waktu",
+    "location": "Lokasi utama",
+    "culture": "Konteks budaya",
+    "mood": "Suasana keseluruhan"
+  }},
+  "target_chapter_count": 10
+}}
+
+Fields yang diperlukan:
+  - title (string, min 5 karakter): Judul cerita
+  - genre (string): Genre cerita
+  - chapters (array of strings): Setiap outline bab harus minimal 100 karakter
+  - target_chapter_count (integer): Jumlah bab yang direncanakan
+
+Fields opsional:
+  - theme (string): Tema atau pesan sentral
+  - character_list (array of strings): Daftar nama karakter
+  - character_details (object): Pemetaan nama karakter ke deskripsi
+  - setting (object): Detail latar dengan waktu, lokasi, budaya, suasana
+
+PENTING: Gunakan kunci JSON dalam Bahasa Inggris (seperti "title", "genre"), meskipun konten bisa dalam Bahasa Indonesia!
+PENTING: HANYA kembalikan data JSON, bukan skema atau penjelasan apa pun!"""
 
 EXPAND_OUTLINE_CHAPTER_BY_CHAPTER = """
 # Objektif
@@ -428,6 +358,28 @@ Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 </OUTLINE>
 
 Jangan sertakan hal lain dalam respons Anda kecuali hanya konten untuk bab {_ChapterNum}.
+
+# FORMAT OUTPUT JSON
+Harap kembalikan respons Anda dalam format JSON yang valid dengan struktur berikut:
+
+{{
+  "text": "Konten outline yang diekstrak untuk bab {_ChapterNum}",
+  "word_count": 100,
+  "chapter_number": {_ChapterNum},
+  "chapter_title": "Judul Bab (opsional)"
+}}
+
+Field yang wajib:
+  - text (string): Konten outline bab yang diekstrak (minimal 100 karakter)
+  - word_count (integer): Jumlah kata dari teks yang diekstrak
+  - chapter_number (integer): Nomor bab
+
+Field opsional:
+  - chapter_title (string): Judul bab jika ada dalam outline
+  - scenes (array of strings): Deskripsi adegan jika dapat diidentifikasi
+  - characters_present (array of strings): Karakter yang disebutkan dalam bab ini
+
+PENTING: Kembalikan HANYA data JSON yang valid, tanpa teks atau markdown lain!
 """
 
 CHAPTER_HISTORY_INSERT = """
@@ -648,45 +600,44 @@ Ingatlah untuk mengikuti outline yang disediakan saat membuat outline bab Anda.
 
 Jangan menjawab pertanyaan-pertanyaan ini secara langsung, sebaliknya buat outline Anda secara implisit menjawabnya. (Tunjukkan, jangan beri tahu)
 
-Harap bagi respons Anda menjadi adegan-adegan, yang masing-masing memiliki format berikut (harap ulangi format adegan untuk setiap adegan dalam bab (minimal 3):
-
-# Bab {_Chapter}
-
-## Adegan: [Judul Adegan Singkat]
-
-- **Karakter & Latar:**
-  - Karakter: [Nama Karakter] - [Deskripsi Singkat]
-  - Lokasi: [Lokasi Adegan]
-  - Waktu: [Kapan adegan berlangsung]
-
-- **Konflik & Nada:**
-  - Konflik: [Jenis & Deskripsi]
-  - Nada: [Nada emosional]
-
-- **Peristiwa & Dialog Kunci:**
-  - [Jelaskan secara singkat peristiwa, tindakan, atau dialog penting]
-
-- **Perangkat Sastra:**
-  - [Firasat, simbolisme, atau perangkat lain, jika ada]
-
-- **Resolusi & Pengantar:**
-  - [Bagaimana adegan berakhir dan terhubung ke adegan berikutnya]
-
-Ketika menghasilkan respons JSON terstruktur (opsional), gunakan nama field yang sesuai dengan skema yang diharapkan:
-Contoh struktur JSON adegan:
-{{
-    "title": "Judul adegan singkat",
-    "characters_and_setting": "Karakter yang hadir dan tempat adegan berlangsung",
-    "conflict_and_tone": "Jenis konflik dan nada emosional",
-    "key_events": "Poin plot penting dan tindakan",
-    "literary_devices": "Perangkat sastra yang digunakan (opsional)",
-    "resolution": "Bagaimana adegan berakhir dan terhubung ke berikutnya"
-}}
-
-Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 Sekali lagi, jangan menulis bab itu sendiri, cukup buat outline bab yang detail.
 
-Pastikan bab Anda memiliki nama berformat markdown!
+# FORMAT OUTPUT JSON
+Harap kembalikan respons Anda dalam format JSON yang valid dengan struktur berikut:
+
+{{
+  "chapter_number": 1,
+  "chapter_title": "Judul Bab",
+  "scenes": [
+    {{
+      "title": "Judul adegan singkat",
+      "characters_and_setting": "Deskripsi detail tentang karakter yang hadir dan latar",
+      "conflict_and_tone": "Jenis konflik dan nada emosional",
+      "key_events": "Poin plot penting, tindakan, dan petunjuk dialog",
+      "literary_devices": "Firasat, simbolisme, atau teknik sastra lainnya (opsional)",
+      "resolution": "Bagaimana adegan berakhir dan terhubung ke adegan berikutnya"
+    }}
+  ],
+  "outline_summary": "Ringkasan singkat bab (minimal 40 karakter)"
+}}
+
+Field yang wajib:
+  - chapter_number (integer): Nomor bab
+  - chapter_title (string): Judul bab
+  - scenes (array of objects): Minimal 2-3 adegan detail per bab
+    Setiap adegan harus memiliki:
+    - title (string): Judul adegan
+    - characters_and_setting (string): Detail karakter dan lokasi
+    - conflict_and_tone (string): Jenis konflik dan nada emosional
+    - key_events (string): Poin plot dan tindakan kunci
+    - resolution (string): Bagaimana adegan berakhir dan transisinya
+  - outline_summary (string): Ringkasan singkat bab
+
+Field opsional:
+  - literary_devices (string): Teknik sastra yang digunakan dalam adegan
+
+PENTING: Setiap adegan harus cukup detail untuk memandu penulisan bab.
+PENTING: Kembalikan HANYA data JSON, bukan skema atau format markdown!
 """
 
 CHAPTER_TO_SCENES = """
