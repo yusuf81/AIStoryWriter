@@ -889,8 +889,13 @@ Harap ringkas bab berikut:
 {_Work}
 </CHAPTER>
 
+PENTING: Respons Anda harus berupa objek JSON yang valid dengan format ini:
+{{
+    "summary": "Teks ringkasan Anda di sini"
+}}
+
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
-Jangan sertakan apa pun dalam respons Anda kecuali ringkasan."""
+Kembalikan HANYA objek JSON, tanpa teks lain."""
 
 SUMMARY_OUTLINE_INTRO = "Anda adalah Asisten AI yang membantu. Jawab prompt pengguna sebaik mungkin. Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia."
 
@@ -901,8 +906,13 @@ Harap ringkas outline bab berikut:
 {_RefSummary}
 </OUTLINE>
 
+PENTING: Respons Anda harus berupa objek JSON yang valid dengan format ini:
+{{
+    "summary": "Teks ringkasan Anda di sini"
+}}
+
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
-Jangan sertakan apa pun dalam respons Anda kecuali ringkasan."""
+Kembalikan HANYA objek JSON, tanpa teks lain."""
 
 SUMMARY_COMPARE_INTRO = "Anda adalah Asisten AI yang membantu. Jawab prompt pengguna sebaik mungkin. Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia."
 

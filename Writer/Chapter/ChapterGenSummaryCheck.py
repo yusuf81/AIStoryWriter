@@ -1,6 +1,5 @@
-from pydantic import BaseModel  # Ditambahkan
+from pydantic import BaseModel
 import Writer.Config
-from Writer.Models import ChapterOutput
 # import Writer.Prompts # Dihapus untuk pemuatan dinamis
 
 # Cache untuk outline summaries - untuk menghindari summary ulang outline yang sama
@@ -37,17 +36,16 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
             ActivePrompts.SUMMARY_CHECK_PROMPT.format(_Work=_Work)
         )
     )
-    # Tambahkan log sebelum memanggil SafeGeneratePydantic pertama
+    # Tambahkan log sebelum memanggil SafeGenerateJSON pertama
     _Logger.Log(
         "Generating summary of generated work for comparison.", 6
     )  # Tambahkan log ini
-    SummaryLangchain, chapter_obj, _ = (
-        Interface.SafeGeneratePydantic(  # Use Pydantic model
-            _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
-            ChapterOutput
+    SummaryLangchain, summary_json, _ = (
+        Interface.SafeGenerateJSON(
+            _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
         )
-    )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
-    WorkSummary: str = chapter_obj.text
+    )
+    WorkSummary: str = summary_json.get('summary', '') or summary_json.get('text', '')
     _Logger.Log(
         "Finished generating summary of generated work.", 6
     )  # Tambahkan log ini
@@ -70,17 +68,16 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
                 ActivePrompts.SUMMARY_OUTLINE_PROMPT.format(_RefSummary=_RefSummary)
             )
         )
-        # Tambahkan log sebelum memanggil SafeGeneratePydantic kedua
+        # Tambahkan log sebelum memanggil SafeGenerateJSON kedua
         _Logger.Log(
             "Generating summary of reference outline for comparison.", 6
         )  # Tambahkan log ini
-        SummaryLangchain, outline_obj, _ = (
-            Interface.SafeGeneratePydantic(  # Use Pydantic model
-                _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL,
-                ChapterOutput
+        SummaryLangchain, summary_json, _ = (
+            Interface.SafeGenerateJSON(
+                _Logger, SummaryLangchain, Writer.Config.CHAPTER_STAGE1_WRITER_MODEL
             )
-        )  # CHANGE THIS MODEL EVENTUALLY - BUT IT WORKS FOR NOW!!!
-        OutlineSummary: str = outline_obj.text
+        )
+        OutlineSummary: str = summary_json.get('summary', '') or summary_json.get('text', '')
         # Cache the summary for future use
         _outline_summary_cache[outline_hash] = OutlineSummary
         _Logger.Log(

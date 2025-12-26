@@ -868,7 +868,12 @@ Please summarize the following chapter:
 {_Work}
 </CHAPTER>
 
-Do not include anything in your response except the summary."""
+IMPORTANT: Your response must be a valid JSON object with this exact format:
+{{
+    "summary": "Your summary text here"
+}}
+
+Return ONLY the JSON object, no other text."""
 
 SUMMARY_OUTLINE_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
 
@@ -879,7 +884,12 @@ Please summarize the following chapter outline:
 {_RefSummary}
 </OUTLINE>
 
-Do not include anything in your response except the summary."""
+IMPORTANT: Your response must be a valid JSON object with this exact format:
+{{
+    "summary": "Your summary text here"
+}}
+
+Return ONLY the JSON object, no other text."""
 
 SUMMARY_COMPARE_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
 
