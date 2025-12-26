@@ -445,31 +445,25 @@ And what I've written in the last chapter:
 {_LastChapter}
 </PREVIOUS_CHAPTER>
 
-Please create a list of important summary points from the last chapter so that I know what to keep in mind as I write this chapter.
-Also make sure to add a summary of the previous chapter, and focus on noting down any important plot points, and the state of the story as the chapter ends.
-That way, when I'm writing, I'll know where to pick up again.
+Please create a summary of the previous chapter to use as context for the next chapter.
 
-Here's some formatting guidelines:
+# JSON OUTPUT FORMAT
+Please return your response in valid JSON format:
+{{
+  "summary": "Concise summary 50-100 words connecting previous chapter to next",
+  "previous_chapter_number": {_ChapterNum},
+  "key_points": ["important plot point", "character and their state"],
+  "setting": "where the previous chapter ended",
+  "characters_mentioned": ["character names"]
+}}
 
-```
-Previous Chapter:
-    - Plot:
-        - Your bullet point summary here with as much detail as needed
-    - Setting:
-        - some stuff here
-    - Characters:
-        - character 1
-            - info about them, from that chapter
-            - if they changed, how so
+Focus on:
+- Plot: Important events from previous chapter
+- Setting: Place and mood where chapter ended
+- Characters: Main characters and their state
 
-Things to keep in Mind:
-    - something that the previous chapter did to advance the plot, so we incorporate it into the next chapter
-    - something else that is important to remember when writing the next chapter
-    - another thing
-    - etc.
-```
-
-Thank you for helping me write my story! Please only include your summary and things to keep in mind, don't write anything else.
+Write in English.
+Return ONLY valid JSON, no other text.
 """
 
 CHAPTER_GENERATION_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."

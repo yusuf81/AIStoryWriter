@@ -47,7 +47,7 @@ class TestChapterGeneratorPydanticConversion:
         mock_config.MIN_WORDS_CHAPTER_SUMMARY = 50
 
         # Act
-        result = _prepare_initial_generation_context(
+        _ = _prepare_initial_generation_context(
             mock_iface, mock_logger(), mock_prompts,
             "Full outline", [], 1, 5, mock_config
         )
@@ -56,24 +56,40 @@ class TestChapterGeneratorPydanticConversion:
         mock_iface.SafeGeneratePydantic.assert_called_once()
 
     def test_prepare_initial_context_summary_uses_pydantic(self, mock_interface, mock_logger):
-        """Verify _prepare_initial_generation_context uses SafeGeneratePydantic for chapter summary"""
+        """Verify _prepare_initial_generation_context uses SafeGenerateJSON for chapter summary (Level 1 fix)"""
         from Writer.Chapter.ChapterGenerator import _prepare_initial_generation_context
 
         # Arrange
         mock_iface = mock_interface()
 
-        # Use ChapterOutput model for chapter summary
+        # Use JSON for chapter summary (Level 1 fix: SafeGeneratePydantic -> SafeGenerateJSON)
+        summary_json = {
+            "summary": "This is a summary of the previous chapter focusing on the major plot points and character developments that will influence the current chapter.",
+            "previous_chapter_number": 1,
+            "key_points": ["plot point 1", "plot point 2"],
+            "setting": "previous setting",
+            "characters_mentioned": ["character 1"]
+        }
+
+        # Set up SafeGeneratePydantic for chapter segment
         from Writer.Models import ChapterOutput
-        chapter_summary = ChapterOutput(
-            text="This is a summary of the previous chapter focusing on the major plot points and character developments that will influence the current chapter.",
-            word_count=20,
+        chapter_segment = ChapterOutput(
+            text="This is the chapter segment outline that provides guidance for writing this specific chapter, focusing on the key events and character developments that need to be covered in this chapter.",
+            word_count=30,
             chapter_number=1,
             chapter_title=None
         )
 
         mock_iface.SafeGeneratePydantic.return_value = (
             [{"role": "assistant", "content": "Response"}],
-            chapter_summary,
+            chapter_segment,
+            {"prompt_tokens": 100}
+        )
+
+        # Set up SafeGenerateJSON for summary (Level 1 fix)
+        mock_iface.SafeGenerateJSON.return_value = (
+            [{"role": "assistant", "content": "JSON response"}],
+            summary_json,
             {"prompt_tokens": 100}
         )
 
@@ -83,7 +99,7 @@ class TestChapterGeneratorPydanticConversion:
         mock_prompts.CHAPTER_GENERATION_PROMPT = "Prompt {_Outline} {_ChapterNum}"
         mock_prompts.CHAPTER_HISTORY_INSERT = "History insert {_Outline}"
         mock_prompts.CHAPTER_SUMMARY_INTRO = "Summary Intro"
-        mock_prompts.CHAPTER_SUMMARY_PROMPT = "Summary prompt"
+        mock_prompts.CHAPTER_SUMMARY_PROMPT = "Summary prompt with {_ChapterNum} {_Outline} {_LastChapter} {_TotalChapters}"
 
         mock_config = Mock()
         mock_config.CHAPTER_STAGE1_WRITER_MODEL = "test_model"
@@ -91,13 +107,16 @@ class TestChapterGeneratorPydanticConversion:
         mock_config.MIN_WORDS_CHAPTER_SUMMARY = 50
 
         # Act with previous chapters
-        result = _prepare_initial_generation_context(
+        _ = _prepare_initial_generation_context(
             mock_iface, mock_logger(), mock_prompts,
             "Full outline", [{"text": "Previous chapter"}], 2, 5, mock_config
         )
 
-        # Assert: SafeGeneratePydantic was called twice (segment and summary)
-        assert mock_iface.SafeGeneratePydantic.call_count == 2
+        # Assert: SafeGeneratePydantic was called once (segment only)
+        # Level 1 fix: Summary now uses SafeGenerateJSON instead of SafeGeneratePydantic
+        assert mock_iface.SafeGeneratePydantic.call_count == 1
+        # SafeGenerateJSON should be called for summary
+        assert mock_iface.SafeGenerateJSON.call_count == 1
 
     def test_revise_chapter_uses_pydantic(self, mock_interface, mock_logger):
         """Verify ReviseChapter uses SafeGeneratePydantic with appropriate model"""
@@ -130,7 +149,7 @@ class TestChapterGeneratorPydanticConversion:
         mock_config.CHAPTER_REVISION_MODEL = "test_model"
 
         # Act
-        result = ReviseChapter(
+        _ = ReviseChapter(
             mock_iface, mock_logger(),
             1,  # _ChapterNum
             5,  # _TotalChapters
@@ -156,12 +175,7 @@ class TestChapterGeneratorPydanticConversion:
             chapter_number=1,
             chapter_title=None
         )
-        summary = ChapterOutput(
-            text="Summary content that meets the minimum length requirements for validation. This is a summary of the chapter that includes all major plot points and character developments in sufficient detail.",
-            word_count=25,
-            chapter_number=1,
-            chapter_title=None
-        )
+        # summary = ChapterOutput(...)  # Not used in this test (kept for documentation)
         revision = ChapterOutput(
             text="Revised chapter content that meets the minimum length requirements for the ChapterOutput model validation.",
             word_count=15,

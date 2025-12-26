@@ -29,6 +29,98 @@ def _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_modu
         return ""
 
 
+def _extract_chapter_summary(summary_json: dict) -> str:
+    """Extract chapter summary from JSON response with fallback options.
+
+    Handles multiple possible JSON structures from different LLM responses.
+    Pattern: SafeGenerateJSON with fallback extraction (as used in ChapterGenSummaryCheck).
+
+    Args:
+        summary_json: Dictionary from SafeGenerateJSON response
+
+    Returns:
+        str: Extracted summary text, empty string if not found
+
+    Extraction priority:
+    1. Direct 'text' or 'summary' field (Qwen/new prompt style)
+    2. Prompt-structured format "Bab Sebelumnya" / "Previous Chapter" (Gemma/old prompt style)
+    3. Any string field longer than 10 chars (fallback)
+    """
+    if not isinstance(summary_json, dict):
+        return ""
+
+    # Priority 1: Direct text/summary field (Qwen style, new prompt)
+    if 'text' in summary_json:
+        text_val = summary_json.get('text', '')
+        if isinstance(text_val, str) and len(text_val) > 0:
+            return text_val
+    if 'summary' in summary_json:
+        summary_val = summary_json.get('summary', '')
+        if isinstance(summary_val, str) and len(summary_val) > 0:
+            return summary_val
+
+    # Priority 2: Prompt-structured format (Gemma style, old prompt)
+    if 'Bab Sebelumnya' in summary_json or 'Previous Chapter' in summary_json:
+        return _format_structured_summary(summary_json)
+
+    # Priority 3: Fallback to any string field
+    for value in summary_json.values():
+        if isinstance(value, str) and len(value) > 10:
+            return value
+
+    return ""
+
+
+def _format_structured_summary(data: dict) -> str:
+    """Format structured summary from prompt-style JSON response.
+
+    Handles both Indonesian ("Bab Sebelumnya") and English ("Previous Chapter") formats.
+
+    Args:
+        data: Dictionary with structured summary data
+
+    Returns:
+        str: Formatted summary as string
+    """
+    sections = []
+
+    # Indonesian format
+    for key in ['Bab Sebelumnya']:
+        if key in data and isinstance(data[key], dict):
+            sections.append(f"{key}:")
+            for subkey, values in data[key].items():
+                if isinstance(values, list):
+                    sections.append(f"- {subkey}: {', '.join(str(v) for v in values)}")
+                elif isinstance(values, str):
+                    sections.append(f"- {subkey}: {values}")
+
+    # English format
+    for key in ['Previous Chapter']:
+        if key in data and isinstance(data[key], dict):
+            sections.append(f"{key}:")
+            for subkey, values in data[key].items():
+                if isinstance(values, list):
+                    sections.append(f"- {subkey}: {', '.join(str(v) for v in values)}")
+                elif isinstance(values, str):
+                    sections.append(f"- {subkey}: {values}")
+
+    # Indonesian "Hal yang Perlu Diingat"
+    for key in ['Hal yang Perlu Diingat']:
+        if key in data and isinstance(data[key], list):
+            sections.append(f"{key}:")
+            for item in data[key]:
+                sections.append(f"- {item}")
+
+    # English "Things to Remember"
+    for key in ['Things to Remember']:
+        if key in data and isinstance(data[key], list):
+            sections.append(f"{key}:")
+            for item in data[key]:
+                sections.append(f"- {item}")
+
+    return "\n".join(sections)
+
+
 def _generate_reasoning_for_stage(Interface, _Logger, Config_module, reasoning_type: str,
                                   ThisChapterOutline: str, FormattedLastChapterSummary: str = "",
                                   _BaseContext: str = "", _ChapterNum: int = None,  # type: ignore[assignment]
@@ -125,16 +217,15 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
             Interface.BuildSystemQuery(ActivePrompts.CHAPTER_SUMMARY_INTRO),
             Interface.BuildUserQuery(
                 ActivePrompts.CHAPTER_SUMMARY_PROMPT.format(
-                    _ChapterNum=_ChapterNum, _TotalChapters=_TotalChapters,
+                    _ChapterNum=_ChapterNum - 1, _TotalChapters=_TotalChapters,
                     _Outline=_Outline, _LastChapter=_Chapters[-1].get("text", "")
                 )
             )
         ]
-        ChapterSummaryMessages, summary_obj, _ = Interface.SafeGeneratePydantic(
-            _Logger, ChapterSummaryMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL,
-            ChapterOutput
+        ChapterSummaryMessages, summary_json, _ = Interface.SafeGenerateJSON(
+            _Logger, ChapterSummaryMessages, Config_module.CHAPTER_STAGE1_WRITER_MODEL
         )
-        FormattedLastChapterSummary = summary_obj.text
+        FormattedLastChapterSummary = _extract_chapter_summary(summary_json)
         _Logger.Log("Created Summary Of Last Chapter Info", 3)
 
     # DetailedChapterOutline combines ThisChapterOutline and FormattedLastChapterSummary (as per original logic)
@@ -150,7 +241,7 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
     # and the calling stages can format them into prompts as needed.
     # The original DetailedChapterOutline was used by LLMSummaryCheck.
     # Let's reconstruct it as it was:
-    DetailedChapterOutlineForCheck = ThisChapterOutline  # Default
+    _ = ThisChapterOutline  # DetailedChapterOutlineForCheck (not used, kept for compatibility)
     if FormattedLastChapterSummary != "":
         # This was the original logic for DetailedChapterOutline, which seems to just be ThisChapterOutline
         # It was then used in LLMSummaryCheck.
@@ -485,7 +576,7 @@ def GenerateChapter(
 
     # Stage 5: Revision Cycle
     if Config.CHAPTER_NO_REVISIONS:  # Use Config from import
-        _Logger.Log(f"Chapter Revision Disabled In Config, Exiting Now", 5)
+        _Logger.Log("Chapter Revision Disabled In Config, Exiting Now", 5)
     else:
         Chapter = _run_final_chapter_revision_loop(
             Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters,

@@ -445,44 +445,32 @@ Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 CHAPTER_SUMMARY_INTRO = "Anda adalah Asisten AI yang membantu. Jawab prompt pengguna sebaik mungkin. Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia."
 
 CHAPTER_SUMMARY_PROMPT = """
-Saya sedang menulis bab berikutnya dalam novel saya (bab {_ChapterNum}), dan saya telah menulis sejauh ini.
+Saya sedang menulis bab berikutnya dalam novel saya (bab {_ChapterNum}),
+dan saya telah menulis sejauh ini.
 
-Outline saya:
-<OUTLINE>
-{_Outline}
-</OUTLINE>
-
-Dan apa yang telah saya tulis di bab terakhir:
 <PREVIOUS_CHAPTER>
 {_LastChapter}
 </PREVIOUS_CHAPTER>
 
-Harap buat daftar poin ringkasan penting dari bab terakhir sehingga saya tahu apa yang harus diingat saat menulis bab ini.
-Pastikan juga untuk menambahkan ringkasan dari bab sebelumnya, dan fokus pada pencatatan poin plot penting, dan keadaan cerita saat bab berakhir.
-Dengan begitu, ketika saya menulis, saya akan tahu di mana harus melanjutkannya.
+Harap buat ringkasan chapter sebelumnya untuk digunakan sebagai konteks chapter berikutnya.
 
-Berikut beberapa panduan format:
+# FORMAT OUTPUT JSON
+Harap kembalikan respons dalam format JSON yang valid:
+{{
+  "summary": "Ringkasan singkat 50-100 kata yang menghubungkan chapter sebelumnya ke berikutnya",
+  "previous_chapter_number": {_ChapterNum},
+  "key_points": ["poin plot penting", "karakter dan state mereka"],
+  "setting": "tempat chapter sebelumnya berakhir",
+  "characters_mentioned": ["nama karakter"]
+}}
 
-```
-Bab Sebelumnya:
-    - Plot:
-        - Ringkasan poin Anda di sini dengan detail sebanyak yang dibutuhkan
-    - Latar:
-        - beberapa hal di sini
-    - Karakter:
-        - karakter 1
-            - info tentang mereka, dari bab itu
-            - jika mereka berubah, bagaimana caranya
+Fokus pada:
+- Plot: Event penting dari chapter sebelumnya
+- Latar: Tempat dan suasana chapter berakhir
+- Karakter: Karakter utama dan state mereka
 
-Hal yang Perlu Diingat:
-    - sesuatu yang dilakukan bab sebelumnya untuk memajukan plot, jadi kita memasukkannya ke bab berikutnya
-    - sesuatu yang lain yang penting untuk diingat saat menulis bab berikutnya
-    - hal lain
-    - dll.
-```
-
-Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
-Terima kasih telah membantu saya menulis cerita saya! Harap hanya sertakan ringkasan Anda dan hal-hal yang perlu diingat, jangan menulis hal lain.
+Tuliskan dalam bahasa Indonesia.
+HANYA kembalikan JSON yang valid, tanpa teks lain.
 """
 
 CHAPTER_GENERATION_INTRO = "Anda adalah Asisten AI yang membantu. Jawab prompt pengguna sebaik mungkin. Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia."
