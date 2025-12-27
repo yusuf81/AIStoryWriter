@@ -12,6 +12,8 @@ def _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_modu
     """
     Get Pydantic format instructions if enabled in config.
 
+    Uses language-aware format instructions from Interface._build_format_instruction().
+
     Returns:
         str: Format instructions or empty string
     """
@@ -21,9 +23,10 @@ def _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_modu
     try:
         # Import here to avoid circular imports
         from Writer.Models import ChapterOutput
-        from Writer.Interface.Wrapper import get_pydantic_format_instructions
 
-        return get_pydantic_format_instructions(ChapterOutput)
+        # Use language-aware format instruction builder from Interface
+        schema = ChapterOutput.model_json_schema()
+        return Interface._build_format_instruction(schema)
     except Exception as e:
         _Logger.Log(f"Failed to generate Pydantic format instructions: {e}", 4)
         return ""

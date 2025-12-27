@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 class TestJSONFormatFix:
     """Test the JSON format handling fix for schema echoing issue"""
 
-    def test_build_format_instruction_prevents_schema_echoing(self, mock_logger):
+    def test_build_format_instruction_prevents_schema_echoing(self, mock_logger, english_language_config):
         """Test that format instruction doesn't include full schema"""
         from Writer.Interface.Wrapper import Interface
 
@@ -208,7 +208,7 @@ class TestJSONFormatFix:
 class TestListStrFormatInstructions:
     """Test enhanced format instructions for List[str] fields to prevent object generation"""
 
-    def test_format_instruction_detects_string_arrays(self, mock_logger):
+    def test_format_instruction_detects_string_arrays(self, mock_logger, english_language_config):
         """Test that List[str] fields get explicit examples in format instruction"""
         from Writer.Interface.Wrapper import Interface
         from Writer.Models import OutlineOutput
@@ -261,7 +261,7 @@ class TestListStrFormatInstructions:
         assert "Chapter 1: Rian menemukan gua mistis" not in instruction
         assert "The Dragon's Treasure Cave" not in instruction or "Adventure" not in instruction
 
-    def test_chapteroutput_format_instruction(self, mock_logger):
+    def test_chapteroutput_format_instruction(self, mock_logger, english_language_config):
         """Test ChapterOutput gets examples for scenes and characters_present fields"""
         from Writer.Interface.Wrapper import Interface
         from Writer.Models import ChapterOutput
@@ -278,7 +278,7 @@ class TestListStrFormatInstructions:
         # Should contain examples for these fields
         assert "Example: [\"String 1\", \"String 2\"]" in instruction
 
-    def test_non_array_fields_unchanged(self, mock_logger):
+    def test_non_array_fields_unchanged(self, mock_logger, english_language_config):
         """Test that non-array fields keep their current format"""
         from Writer.Interface.Wrapper import Interface
         from Writer.Models import OutlineOutput

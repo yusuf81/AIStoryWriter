@@ -159,7 +159,7 @@ class TestValidationErrorMessageBuilder:
 class TestSafeGeneratePydanticErrorFeedback:
     """Integration tests for SafeGeneratePydantic with error feedback"""
 
-    def test_error_feedback_appended_to_messages_on_retry(self, mock_logger):
+    def test_error_feedback_appended_to_messages_on_retry(self, mock_logger, english_language_config):
         """Test that error message is added to conversation on retry"""
         from Writer.Interface.Wrapper import Interface
         from Writer.Models import ChapterOutput

@@ -154,7 +154,7 @@ class TestChapterOutlineOutput:
             assert result.chapter_number == 1
             assert len(result.scenes) == 3
 
-    def test_format_instruction_building(self, mock_logger):
+    def test_format_instruction_building(self, mock_logger, english_language_config):
         """Test that format instructions are built correctly for ChapterOutlineOutput"""
         from Writer.Models import ChapterOutlineOutput
         from Writer.Interface.Wrapper import Interface

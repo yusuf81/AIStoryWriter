@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 class TestFragilePatternReplacement:
     """TDD tests for replacing fragile patterns in Wrapper.py"""
 
-    def test_character_field_constraint_usesconstants(self):
+    def test_character_field_constraint_usesconstants(self, english_language_config):
         """Test that character field constraint uses FIELD constants instead of string matching"""
         from Writer.Interface.Wrapper import Interface
 
@@ -102,7 +102,7 @@ class TestFragilePatternReplacement:
         'characters',
         'characters_and_setting'
     ])
-    def test_character_fields_get_minimum_length_constraints(self, field_name):
+    def test_character_fields_get_minimum_length_constraints(self, field_name, english_language_config):
         """Test that all character fields get appropriate minimum length constraints"""
         from Writer.Interface.Wrapper import Interface
 

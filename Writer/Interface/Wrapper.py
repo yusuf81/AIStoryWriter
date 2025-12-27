@@ -41,55 +41,78 @@ def _is_validation_or_missing_error(error) -> bool:
         return "missing" in error_str or "validation" in error_str
 
 
-def get_pydantic_format_instructions(model_class: type) -> str:
-    """
-    Generate format instructions for Pydantic models.
-
-    Args:
-        model_class: The Pydantic model class
-
-    Returns:
-        str: Format instructions string
-    """
-    if not PYDANTIC_AVAILABLE:
-        return ""
-
-    try:
-        if hasattr(model_class, 'model_json_schema'):
-            schema = model_class.model_json_schema()
-        else:
-            schema = model_class.schema()
-
-        # Extract field descriptions from schema
-        instructions = "\n\nPlease respond with a JSON object that follows this structure:\n"
-
-        if 'properties' in schema:
-            for field_name, field_info in schema['properties'].items():
-                field_type = field_info.get('type', 'string')
-                description = field_info.get('description', '')
-                min_length = field_info.get('minLength')
-                max_length = field_info.get('maxLength')
-
-                instructions += f"\n- {field_name}: {field_type}"
-                if description:
-                    instructions += f" - {description}"
-                if min_length is not None:
-                    instructions += f" (minimum {min_length} characters)"
-                if max_length is not None:
-                    instructions += f" (maximum {max_length} characters)"
-
-        instructions += "\n\nYour entire response must be valid JSON only. Do not include any other text or formatting."
-        return instructions
-
-    except Exception:
-        # Fallback if schema generation fails
-        return "\n\nPlease respond with valid JSON only. Do not include any other text or formatting."
-
-
 dotenv.load_dotenv()
 
 
 class Interface:
+    # Language strings for i18n support
+    # Centralized dictionary of all translatable strings used in format instructions,
+    # validation error messages, and constraint explanations.
+    _LANGUAGE_STRINGS = {
+        'en': {
+            'json_schema_header': "=== JSON SCHEMA (REFERENCE ONLY) ===",
+            'json_schema_note': "This defines the structure. DO NOT repeat the schema in your response!",
+            'your_response_header': "=== YOUR RESPONSE (JSON ONLY) ===",
+            'provide_json_only': "Provide ONLY the JSON data below. DO NOT include explanations or the schema.",
+            'required_fields': "Required fields:",
+            'optional_fields': "Optional fields:",
+            'more_optional_fields': "... and {count} more optional fields",
+            'example_format': 'Example format: {{"field1": "value", "field2": 123}}',
+            'important_return_only': "IMPORTANT: Return ONLY the JSON data, not the schema!",
+            'validation_constraints_header': "=== VALIDATION CONSTRAINTS (IMPORTANT) ===",
+            'constraint_reasoning_max': "'{field}': Maximum {max_len} characters. Keep your reasoning concise and focused - verbose explanations will be rejected. Aim for clarity over length.",
+            'constraint_word_count': "'{field}': Must match actual text word count within ±{tolerance} words. Be accurate but don't obsess over exact counts.",
+            'constraint_min_length': "'{field}': Each name must be at least {min_len} characters. Avoid single-letter placeholders.",
+            'important_constraints': "IMPORTANT CONSTRAINTS:",
+            'validation_error_header': "Your response had validation errors. Please correct these fields:",
+            'validation_error_footer': "Important: Return ONLY the corrected JSON data. Do NOT include explanations or other text.",
+            'error_missing': "This field is required but was not provided",
+            'error_too_short': "{msg} (you provided {actual_len} characters)",
+            'error_expected_type': "Expected {expected_type} (you provided: {input_val})",
+            'hint_single_json': "Hint: Ensure response is single JSON object, not multiple objects. DO NOT include schema in response.",
+            'hint_required_fields': "Hint: Ensure all required fields are present and correct.",
+            'example_string_array': '["String 1", "String 2"]',
+            'example_label': "Example",
+            'required_label': "Required",
+            'optional_label': "Optional",
+            'array_of_strings_required': "array of strings, Required",
+            'array_of_objects_required': "array of objects, Required",
+            'array_of_strings_optional': "array of strings, Optional",
+            'array_of_objects_optional': "array of objects, Optional",
+        },
+        'id': {
+            'json_schema_header': "=== SKEMA JSON (HANYA REFERENSI) ===",
+            'json_schema_note': "Ini mendefinisikan struktur. JANGAN ulangi skema dalam respons Anda!",
+            'your_response_header': "=== RESPONS ANDA (HANYA JSON) ===",
+            'provide_json_only': "Berikan HANYA data JSON di bawah. JANGAN sertakan penjelasan atau skema.",
+            'required_fields': "Field wajib:",
+            'optional_fields': "Field opsional:",
+            'more_optional_fields': "... dan {count} field opsional lainnya",
+            'example_format': 'Format contoh: {{"field1": "nilai", "field2": 123}}',
+            'important_return_only': "PENTING: Kembalikan HANYA data JSON, bukan skemanya!",
+            'validation_constraints_header': "=== BATASAN VALIDASI (PENTING) ===",
+            'constraint_reasoning_max': "'{field}': Maksimum {max_len} karakter. Buat reasoning Anda ringkas dan fokus - penjelasan yang bertele-tele akan ditolak. Utamakan kejelasan daripada panjang.",
+            'constraint_word_count': "'{field}': Harus sesuai dengan jumlah kata teks sebenarnya dalam rentang ±{tolerance} kata. Akurat tapi jangan terlalu fokus pada hitungan yang tepat.",
+            'constraint_min_length': "'{field}': Setiap nama harus minimal {min_len} karakter. Hindari placeholder satu huruf.",
+            'important_constraints': "BATASAN PENTING:",
+            'validation_error_header': "Respons Anda memiliki kesalahan validasi. Harap perbaiki field-field berikut:",
+            'validation_error_footer': "Penting: Kembalikan HANYA data JSON yang sudah diperbaiki. JANGAN sertakan penjelasan atau teks lain.",
+            'error_missing': "Field ini wajib tetapi tidak disediakan",
+            'error_too_short': "{msg} (Anda memberikan {actual_len} karakter)",
+            'error_expected_type': "Diharapkan {expected_type} (Anda memberikan: {input_val})",
+            'hint_single_json': "Petunjuk: Pastikan respons adalah objek JSON tunggal, bukan beberapa objek. JANGAN sertakan skema dalam respons.",
+            'hint_required_fields': "Petunjuk: Pastikan semua field wajib ada dan benar.",
+            'example_string_array': '["String 1", "String 2"]',
+            'example_label': "Contoh",
+            'required_label': "Wajib",
+            'optional_label': "Opsional",
+            'array_of_strings_required': "array of strings, Wajib",
+            'array_of_objects_required': "array of objects, Wajib",
+            'array_of_strings_optional': "array of strings, Opsional",
+            'array_of_objects_optional': "array of objects, Opsional",
+        }
+    }
+
     def __init__(self, Models: list = []):
         self.Clients: dict = {}
         self.LoadModels(Models)
@@ -106,6 +129,33 @@ class Interface:
         if override is not None:
             return override
         return getattr(Writer.Config, 'MAX_PYDANTIC_RETRIES', 5)
+
+    def _get_text(self, key: str, **kwargs) -> str:
+        """Get language-specific text string with optional formatting.
+
+        This helper method retrieves translated text based on the current language setting.
+        Supports string formatting with keyword arguments.
+
+        Args:
+            key: The text key to retrieve from _LANGUAGE_STRINGS
+            **kwargs: Optional keyword arguments for string formatting
+
+        Returns:
+            str: Translated text (formatted if kwargs provided), empty string if key missing
+        """
+        # Get current language, fallback to 'en' if not set or invalid
+        lang = self.language if hasattr(self, 'language') else 'en'
+
+        # Get language dict, fallback to English if language invalid
+        lang_dict = self._LANGUAGE_STRINGS.get(lang, self._LANGUAGE_STRINGS['en'])
+
+        # Get text from key, return empty string if missing
+        text = lang_dict.get(key, '')
+
+        # Apply formatting if kwargs provided
+        if kwargs:
+            return text.format(**kwargs)
+        return text
 
     def ensure_package_is_installed(self, package_name):
         try:
@@ -184,6 +234,10 @@ class Interface:
                 self.Clients[Model] = OpenRouter(api_key=os.environ["OPENROUTER_API_KEY"], model=ProviderModelName)  # type: ignore
             else:
                 raise NotImplementedError(f"Provider {Provider} not supported")
+
+        # Language detection for i18n support
+        import Writer.Config as Config
+        self.language = getattr(Config, 'NATIVE_LANGUAGE', 'en') or 'en'
 
     def GenerateEmbedding(self, _Logger, _Texts: list, _Model: str, _SeedOverride: int = -1):
         """
@@ -411,9 +465,9 @@ class Interface:
 
                     # Keep existing generic hints for other error types
                     if isinstance(e, TypeError) and "list" in str(e):
-                        _Logger.Log("Hint: Ensure response is single JSON object, not multiple objects. DO NOT include schema in response.", 5)
+                        _Logger.Log(self._get_text('hint_single_json'), 5)
                     elif _is_validation_or_missing_error(e):
-                        _Logger.Log("Hint: Ensure all required fields are present and correct.", 5)
+                        _Logger.Log(self._get_text('hint_required_fields'), 5)
 
                     # Add delay before retry to allow model unload (prevents Ollama "Stopping..." stuck)
                     retry_delay = getattr(Writer.Config, 'PYDANTIC_RETRY_DELAY', 3)
@@ -439,17 +493,14 @@ class Interface:
             if field_name == 'reasoning' and 'maxLength' in field_info:
                 max_len = field_info['maxLength']
                 explanations.append(
-                    f"'{field_name}': Maximum {max_len} characters. "
-                    "Keep your reasoning concise and focused - verbose explanations "
-                    "will be rejected. Aim for clarity over length."
+                    self._get_text('constraint_reasoning_max', field=field_name, max_len=max_len)
                 )
 
             # Word count tolerance
             if field_name == 'word_count':
                 tolerance = getattr(Config, 'PYDANTIC_WORD_COUNT_TOLERANCE', 100)
                 explanations.append(
-                    f"'{field_name}': Must match actual text word count within ±{tolerance} words. "
-                    "Be accurate but don't obsess over exact counts."
+                    self._get_text('constraint_word_count', field=field_name, tolerance=tolerance)
                 )
 
             # Character name minimum length - use robust field detection
@@ -457,12 +508,12 @@ class Interface:
             if is_character_field(field_name) and 'minLength' in field_info:
                 min_len = field_info['minLength']
                 explanations.append(
-                    f"'{field_name}': Each name must be at least {min_len} characters. "
-                    "Avoid single-letter placeholders."
+                    self._get_text('constraint_min_length', field=field_name, min_len=min_len)
                 )
 
         if explanations:
-            return "IMPORTANT CONSTRAINTS:\n" + "\n".join(f"- {exp}" for exp in explanations) + "\n\n"
+            header = self._get_text('important_constraints')
+            return header + "\n" + "\n".join(f"- {exp}" for exp in explanations) + "\n\n"
         return ""
 
     def _build_format_instruction(self, schema):
@@ -470,18 +521,18 @@ class Interface:
         properties = schema.get('properties', {})
         required_fields = schema.get('required', [])
 
-        instruction = "\n\n=== JSON SCHEMA (REFERENCE ONLY) ===\n"
-        instruction += "This defines the structure. DO NOT repeat the schema in your response!\n\n"
+        instruction = "\n\n" + self._get_text('json_schema_header') + "\n"
+        instruction += self._get_text('json_schema_note') + "\n\n"
 
         # Add constraint explanations to help LLMs understand validation rules
         constraint_explanations = self._build_constraint_explanations(properties)
         if constraint_explanations:
-            instruction += "=== VALIDATION CONSTRAINTS (IMPORTANT) ===\n"
+            instruction += self._get_text('validation_constraints_header') + "\n"
             instruction += constraint_explanations
 
-        instruction += "=== YOUR RESPONSE (JSON ONLY) ===\n"
-        instruction += "Provide ONLY the JSON data below. Do NOT include explanations or the schema.\n\n"
-        instruction += "Required fields:\n"
+        instruction += self._get_text('your_response_header') + "\n"
+        instruction += self._get_text('provide_json_only') + "\n\n"
+        instruction += self._get_text('required_fields') + "\n"
 
         for field in required_fields:
             field_info = properties.get(field, {})
@@ -492,20 +543,20 @@ class Interface:
             if field_type == 'array':
                 items_type = field_info.get('items', {}).get('type', 'unknown')
                 if items_type == 'string':
-                    instruction += f"  - {field} (array of strings, Required): {field_desc}\n"
-                    instruction += f"    Example: [\"String 1\", \"String 2\"]\n"
+                    instruction += f"  - {field} ({self._get_text('array_of_strings_required')}): {field_desc}\n"
+                    instruction += f"    {self._get_text('example_label')}: {self._get_text('example_string_array')}\n"
                 else:
-                    instruction += f"  - {field} (array of objects, Required): {field_desc}\n"
+                    instruction += f"  - {field} ({self._get_text('array_of_objects_required')}): {field_desc}\n"
             else:
                 if field_desc:
-                    instruction += f"  - {field} ({field_type}, Required): { field_desc}\n"
+                    instruction += f"  - {field} ({field_type}, {self._get_text('required_label')}): {field_desc}\n"
                 else:
-                    instruction += f"  - {field} ({field_type}, Required)\n"
+                    instruction += f"  - {field} ({field_type}, {self._get_text('required_label')})\n"
 
         # Add optional fields if any
         optional_fields = [k for k in properties.keys() if k not in required_fields]
         if optional_fields:
-            instruction += "\nOptional fields:\n"
+            instruction += "\n" + self._get_text('optional_fields') + "\n"
             for field in optional_fields[:5]:  # Limit to first 5 optional fields
                 field_info = properties.get(field, {})
                 field_type = field_info.get('type', 'unknown')
@@ -515,20 +566,20 @@ class Interface:
                 if field_type == 'array':
                     items_type = field_info.get('items', {}).get('type', 'unknown')
                     if items_type == 'string':
-                        instruction += f"  - {field} (array of strings, Optional): {field_desc[:50]}...\n"
-                        instruction += f"    Example: [\"String 1\", \"String 2\"]\n"
+                        instruction += f"  - {field} ({self._get_text('array_of_strings_optional')}): {field_desc[:50]}...\n"
+                        instruction += f"    {self._get_text('example_label')}: {self._get_text('example_string_array')}\n"
                     else:
-                        instruction += f"  - {field} (array of objects, Optional): {field_desc[:50]}...\n"
+                        instruction += f"  - {field} ({self._get_text('array_of_objects_optional')}): {field_desc[:50]}...\n"
                 else:
                     if field_desc:
-                        instruction += f"  - {field} ({field_type}, Optional): { field_desc[:50]}...\n"
+                        instruction += f"  - {field} ({field_type}, {self._get_text('optional_label')}): {field_desc[:50]}...\n"
                     else:
-                        instruction += f"  - {field} ({field_type}, Optional)\n"
+                        instruction += f"  - {field} ({field_type}, {self._get_text('optional_label')})\n"
             if len(optional_fields) > 5:
-                instruction += f"  - ... and {len(optional_fields) - 5} more optional fields\n"
+                instruction += f"  - {self._get_text('more_optional_fields', count=len(optional_fields) - 5)}\n"
 
-        instruction += "\nExample format: {\"field1\": \"value\", \"field2\": 123}\n"
-        instruction += "IMPORTANT: Return ONLY the JSON data, not the schema!\n"
+        instruction += "\n" + self._get_text('example_format') + "\n"
+        instruction += self._get_text('important_return_only') + "\n"
 
         # Add specific examples for StoryElements model
         # Check for StoryElements specifically by looking for themes AND characters fields together
@@ -591,17 +642,17 @@ For example:
 
             # Format based on error type
             if error_type == 'missing':
-                line = f"- {field_path}: This field is required but was not provided"
+                line = f"- {field_path}: {self._get_text('error_missing')}"
 
             elif error_type == 'string_too_short':
                 input_val = err.get('input', '')
                 actual_len = len(str(input_val)) if input_val else 0
-                line = f"- {field_path}: {error_msg} (you provided {actual_len} characters)"
+                line = f"- {field_path}: {self._get_text('error_too_short', msg=error_msg, actual_len=actual_len)}"
 
             elif error_type in ('int_parsing', 'float_parsing', 'bool_parsing'):
                 input_val = err.get('input', 'unknown')
                 expected_type = error_type.split('_')[0]
-                line = f"- {field_path}: Expected {expected_type} (you provided: {repr(input_val)})"
+                line = f"- {field_path}: {self._get_text('error_expected_type', expected_type=expected_type, input_val=repr(input_val))}"
 
             elif error_type == 'value_error':
                 # Custom validator error (e.g., word_count mismatch) - use message as-is
@@ -614,9 +665,9 @@ For example:
             error_lines.append(line)
 
         # Build final message
-        message = "Your response had validation errors. Please correct these fields:\n\n"
+        message = self._get_text('validation_error_header') + "\n\n"
         message += '\n'.join(error_lines)
-        message += "\n\nImportant: Return ONLY the corrected JSON data. Do NOT include explanations or other text."
+        message += "\n\n" + self._get_text('validation_error_footer')
 
         return message
 
