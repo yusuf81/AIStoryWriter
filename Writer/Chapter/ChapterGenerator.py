@@ -231,38 +231,14 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
         FormattedLastChapterSummary = _extract_chapter_summary(summary_json)
         _Logger.Log("Created Summary Of Last Chapter Info", 3)
 
-    # DetailedChapterOutline combines ThisChapterOutline and FormattedLastChapterSummary (as per original logic)
-    # The original logic was:
-    # DetailedChapterOutline: str = ThisChapterOutline
-    # if FormattedLastChapterSummary != "":
-    #    DetailedChapterOutline = ThisChapterOutline # This seems like a bug, should it combine?
-    # For now, replicating the original logic. If it's a bug, it's an existing one.
-    # Let's assume the intention was to use ThisChapterOutline as the primary detailed outline for the current chapter,
-    # and FormattedLastChapterSummary is part of the broader context.
-    # The variable DetailedChapterOutline in the original code was used in LLMSummaryCheck.
-    # Let's return both ThisChapterOutline and FormattedLastChapterSummary,
-    # and the calling stages can format them into prompts as needed.
-    # The original DetailedChapterOutline was used by LLMSummaryCheck.
-    # Let's reconstruct it as it was:
-    _ = ThisChapterOutline  # DetailedChapterOutlineForCheck (not used, kept for compatibility)
-    if FormattedLastChapterSummary != "":
-        # This was the original logic for DetailedChapterOutline, which seems to just be ThisChapterOutline
-        # It was then used in LLMSummaryCheck.
-        # For clarity, we will pass ThisChapterOutline and FormattedLastChapterSummary separately to stages,
-        # and they can construct their prompts. LLMSummaryCheck will need the combined version.
-        # The original code was:
-        # DetailedChapterOutline: str = ThisChapterOutline
-        # if FormattedLastChapterSummary != "":
-        #    DetailedChapterOutline = ThisChapterOutline # This line seems to make DetailedChapterOutline always ThisChapterOutline
-        # This was likely a bug. A more logical DetailedChapterOutline for checking would be:
-        # DetailedChapterOutlineForCheck = f"{ThisChapterOutline}\n\n{FormattedLastChapterSummary}"
-        # However, to maintain original behavior first, I will stick to the direct assignment.
-        # The variable `DetailedChapterOutline` was directly passed to `LLMSummaryCheck`.
-        # The prompt for stages used `ThisChapterOutline` and `FormattedLastChapterSummary` separately.
-        pass  # No change to ThisChapterOutline based on FormattedLastChapterSummary for DetailedChapterOutlineForCheck
+    # Construct DetailedChapterOutlineForCheck for validation
+    # Combine ThisChapterOutline with FormattedLastChapterSummary for temporal consistency
+    DetailedChapterOutlineForCheck = ThisChapterOutline
+    if FormattedLastChapterSummary:
+        DetailedChapterOutlineForCheck = f"{ThisChapterOutline}\n\n### Previous Chapter Context:\n{FormattedLastChapterSummary}"
 
     _Logger.Log(f"Stage 0: Initial generation context prepared for Chapter {_ChapterNum}", 3)
-    return MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, ThisChapterOutline  # Returning ThisChapterOutline as DetailedChapterOutlineForCheck
+    return MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, DetailedChapterOutlineForCheck
 
 
 def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, _BaseContext, DetailedChapterOutlineForCheck, Config_module, ChapterGenSummaryCheck_module):

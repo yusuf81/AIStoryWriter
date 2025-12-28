@@ -222,3 +222,124 @@ class TestChapterGeneratorPydanticConversion:
 
         # Assert: SafeGeneratePydantic was called multiple times
         assert mock_iface.SafeGeneratePydantic.call_count >= 2
+
+    def test_detailed_chapter_outline_combines_previous_summary_for_chapter2(self, mock_interface, mock_logger):
+        """Verify DetailedChapterOutlineForCheck combines ThisChapterOutline with FormattedLastChapterSummary for Chapter 2+"""
+        from Writer.Chapter.ChapterGenerator import _prepare_initial_generation_context
+
+        # Arrange
+        mock_iface = mock_interface()
+
+        # Chapter segment response
+        from Writer.Models import ChapterOutput
+        chapter_segment = ChapterOutput(
+            text="Chapter 2 outline: Hero continues journey and faces new challenges in the forest. This detailed outline provides specific guidance for writing this chapter, focusing on key events and character development throughout the journey.",
+            word_count=35,
+            chapter_number=2,
+            chapter_title=None
+        )
+
+        # Summary response
+        summary_json = {
+            "summary": "Previous Chapter Summary: Hero departed village and met wise elder who gave quest.",
+            "key_points": ["departed", "met elder", "received quest"]
+        }
+
+        mock_iface.SafeGeneratePydantic.return_value = (
+            [{"role": "assistant", "content": "Response"}],
+            chapter_segment,
+            {"prompt_tokens": 100}
+        )
+
+        mock_iface.SafeGenerateJSON.return_value = (
+            [{"role": "assistant", "content": "Summary response"}],
+            summary_json,
+            {"prompt_tokens": 50}
+        )
+
+        # Mock dependencies
+        mock_prompts = Mock()
+        mock_prompts.CHAPTER_GENERATION_INTRO = "Intro"
+        mock_prompts.CHAPTER_GENERATION_PROMPT = "Prompt {_Outline} {_ChapterNum}"
+        mock_prompts.CHAPTER_HISTORY_INSERT = "History insert {_Outline}"
+        mock_prompts.CHAPTER_SUMMARY_INTRO = "Summary Intro"
+        mock_prompts.CHAPTER_SUMMARY_PROMPT = "Summary prompt {_ChapterNum} {_TotalChapters} {_Outline} {_LastChapter}"
+
+        mock_config = Mock()
+        mock_config.CHAPTER_STAGE1_WRITER_MODEL = "test_model"
+        mock_config.MIN_WORDS_CHAPTER_SEGMENT_EXTRACT = 10
+        mock_config.MIN_WORDS_CHAPTER_SUMMARY = 10
+
+        # Act - Call with Chapter 2 (has previous chapters)
+        (
+            MessageHistory,
+            ContextHistoryInsert,
+            ThisChapterOutline,
+            FormattedLastChapterSummary,
+            DetailedChapterOutlineForCheck
+        ) = _prepare_initial_generation_context(
+            mock_iface, mock_logger(), mock_prompts,
+            "Full story outline", [{"text": "Chapter 1 text content"}], 2, 5, mock_config
+        )
+
+        # Assert: DetailedChapterOutlineForCheck should combine outline + summary
+        assert DetailedChapterOutlineForCheck is not None
+        assert ThisChapterOutline in DetailedChapterOutlineForCheck
+        assert FormattedLastChapterSummary in DetailedChapterOutlineForCheck
+        # Verify it's not just ThisChapterOutline alone
+        assert DetailedChapterOutlineForCheck != ThisChapterOutline
+        # Verify it contains both components separated by newlines
+        assert "\n\n" in DetailedChapterOutlineForCheck
+
+    def test_detailed_chapter_outline_is_just_outline_for_chapter1(self, mock_interface, mock_logger):
+        """Verify DetailedChapterOutlineForCheck is just ThisChapterOutline for Chapter 1 (no previous chapters)"""
+        from Writer.Chapter.ChapterGenerator import _prepare_initial_generation_context
+
+        # Arrange
+        mock_iface = mock_interface()
+
+        # Chapter segment response
+        from Writer.Models import ChapterOutput
+        chapter_segment = ChapterOutput(
+            text="Chapter 1 outline: Hero begins journey from home village seeking adventure. This detailed outline provides specific guidance for writing the opening chapter with character introduction and setup.",
+            word_count=28,
+            chapter_number=1,
+            chapter_title=None
+        )
+
+        mock_iface.SafeGeneratePydantic.return_value = (
+            [{"role": "assistant", "content": "Response"}],
+            chapter_segment,
+            {"prompt_tokens": 100}
+        )
+
+        # Mock dependencies
+        mock_prompts = Mock()
+        mock_prompts.CHAPTER_GENERATION_INTRO = "Intro"
+        mock_prompts.CHAPTER_GENERATION_PROMPT = "Prompt {_Outline} {_ChapterNum}"
+        mock_prompts.CHAPTER_HISTORY_INSERT = "History insert {_Outline}"
+        mock_prompts.CHAPTER_SUMMARY_INTRO = "Summary Intro"
+        mock_prompts.CHAPTER_SUMMARY_PROMPT = "Summary prompt"
+
+        mock_config = Mock()
+        mock_config.CHAPTER_STAGE1_WRITER_MODEL = "test_model"
+        mock_config.MIN_WORDS_CHAPTER_SEGMENT_EXTRACT = 10
+        mock_config.MIN_WORDS_CHAPTER_SUMMARY = 10
+
+        # Act - Call with Chapter 1 (no previous chapters)
+        (
+            MessageHistory,
+            ContextHistoryInsert,
+            ThisChapterOutline,
+            FormattedLastChapterSummary,
+            DetailedChapterOutlineForCheck
+        ) = _prepare_initial_generation_context(
+            mock_iface, mock_logger(), mock_prompts,
+            "Full story outline", [], 1, 5, mock_config
+        )
+
+        # Assert: For Chapter 1, DetailedChapterOutlineForCheck should just be ThisChapterOutline
+        assert DetailedChapterOutlineForCheck == ThisChapterOutline
+        assert FormattedLastChapterSummary == ""  # No previous chapter
+        # Verify it's the same object (not combined)
+        assert DetailedChapterOutlineForCheck is ThisChapterOutline or DetailedChapterOutlineForCheck == ThisChapterOutline

@@ -19,10 +19,15 @@ class TestGenerateEmbedding:
 
     def test_get_model_and_provider_parsing_embedding(self):
         """Test that embedding model strings are parsed correctly"""
+        # Import Config to get current OLLAMA_HOST setting
+        import Writer.Config as Config
+
         test_cases = [
-            ("ollama://nomic-embed-text", "ollama", "nomic-embed-text", "10.23.82.116:11434", None),
+            # Without explicit host, should use Config.OLLAMA_HOST
+            ("ollama://nomic-embed-text", "ollama", "nomic-embed-text", Config.OLLAMA_HOST, None),
             ("google://gemini-embedding-001", "google", "gemini-embedding-001", None, None),
             ("openrouter://text-embedding-3-small", "openrouter", "text-embedding-3-small", None, None),
+            # With explicit host, should use that host
             ("ollama://nomic-embed-text@localhost:11434", "ollama", "nomic-embed-text", "localhost:11434", None),
         ]
 
@@ -98,4 +103,4 @@ class TestEmbeddingConfig:
         assert Config.EMBEDDING_MODEL == EMBEDDING_MODEL
         assert Config.EMBEDDING_DIMENSIONS == 768
         assert Config.EMBEDDING_CTX == 8192
-        assert Config.EMBEDDING_FALLBACK_ENABLED == False
+        assert Config.EMBEDDING_FALLBACK_ENABLED is False
