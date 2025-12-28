@@ -286,3 +286,94 @@ class TestFormatInstructionsI18n:
                              if k not in schema.get('required', [])])
         if optional_count > 5:
             assert 'more optional fields' in instruction or 'field opsional lainnya' in instruction
+
+    def test_story_elements_example_english(self, english_language_config):
+        """Test StoryElements example in English when NATIVE_LANGUAGE='en'."""
+        # Arrange
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import StoryElements
+
+        interface = Interface(Models=[])
+        schema = StoryElements.model_json_schema()
+
+        # Act
+        instruction = interface._build_format_instruction(schema)
+
+        # Assert - verify English example
+        assert 'For example:' in instruction
+        assert '"title": "The Dragon\'s Treasure Cave"' in instruction
+        assert '"genre": "Fantasy Adventure"' in instruction
+        assert 'Main Character(s)' in instruction
+        assert '"name": "Rian"' in instruction
+        assert 'Young explorer with determined eyes' in instruction
+
+        # Verify NO Indonesian
+        assert 'Contoh:' not in instruction
+        assert 'Gua Harta Karun Naga' not in instruction
+        assert 'Karakter Utama' not in instruction
+
+    def test_story_elements_example_indonesian(self, indonesian_language_config):
+        """Test StoryElements example in Indonesian when NATIVE_LANGUAGE='id'."""
+        # Arrange
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import StoryElements
+
+        interface = Interface(Models=[])
+        schema = StoryElements.model_json_schema()
+
+        # Act
+        instruction = interface._build_format_instruction(schema)
+
+        # Assert - verify Indonesian example
+        assert 'Contoh:' in instruction
+        assert '"title": "Gua Harta Karun Naga"' in instruction
+        assert '"genre": "Petualangan Fantasi"' in instruction
+        assert 'Karakter Utama' in instruction
+        assert '"name": "Rian"' in instruction
+        assert 'Penjelajah muda dengan mata penuh tekad' in instruction
+
+        # Verify NO English
+        assert 'For example:' not in instruction
+        assert 'The Dragon\'s Treasure Cave' not in instruction
+        assert 'Fantasy Adventure' not in instruction
+        assert 'Main Character(s)' not in instruction
+
+    def test_field_descriptions_english(self, english_language_config):
+        """Test field descriptions are in English."""
+        # Arrange
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import StoryElements
+
+        interface = Interface(Models=[])
+        schema = StoryElements.model_json_schema()
+
+        # Act
+        instruction = interface._build_format_instruction(schema)
+
+        # Assert - verify English descriptions
+        assert 'Story title' in instruction
+        assert 'Story genre category' in instruction
+        assert 'Central themes of the story' in instruction
+
+        # Verify NO Indonesian
+        assert 'Judul cerita' not in instruction
+
+    def test_field_descriptions_indonesian(self, indonesian_language_config):
+        """Test field descriptions are in Indonesian."""
+        # Arrange
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import StoryElements
+
+        interface = Interface(Models=[])
+        schema = StoryElements.model_json_schema()
+
+        # Act
+        instruction = interface._build_format_instruction(schema)
+
+        # Assert - verify Indonesian descriptions
+        assert 'Judul cerita' in instruction
+        assert 'Kategori genre cerita' in instruction
+        assert 'Tema sentral cerita' in instruction
+
+        # Verify NO English
+        assert 'Story title' not in instruction

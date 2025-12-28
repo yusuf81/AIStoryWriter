@@ -39,7 +39,8 @@ class TestJSONFormatFix:
         assert '"properties"' not in instruction
 
         # Should contain field information
-        assert "text (string, Required): The text content" in instruction
+        # Note: 'text' field gets translated description from field_descriptions
+        assert "text (string, Required): Full chapter text content" in instruction
         assert "count (integer, Required): A number" in instruction
         assert "optional_field (string, Optional): Optional info" in instruction
 

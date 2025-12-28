@@ -46,7 +46,7 @@ class TestStoryElementsPromptFormat:
         assert '## Karakter' not in prompt or '## Characters' not in prompt
 
     def test_prompts_have_json_format_only(self):
-        """Test that both prompts have clear JSON format instructions"""
+        """Test that prompts have NO hardcoded format instructions (Phase 6)"""
         # Arrange
         import Writer.Prompts as Prompts
         import Writer.Prompts_id as Prompts_id
@@ -55,16 +55,12 @@ class TestStoryElementsPromptFormat:
         en_prompt = Prompts.GENERATE_STORY_ELEMENTS
         id_prompt = Prompts_id.GENERATE_STORY_ELEMENTS
 
-        # Assert - Both should have JSON format
-        assert 'JSON' in en_prompt
-        assert 'JSON' in id_prompt
-        # Should have example JSON
-        assert '"title"' in en_prompt
-        assert '"genre"' in en_prompt
-        assert '"themes"' in en_prompt
-        # Should instruct to return ONLY JSON
-        assert 'ONLY' in en_prompt or 'only' in en_prompt
-        assert 'HANYA' in id_prompt or 'hanya' in id_prompt
+        # Assert - Should NOT have format instructions (added by SafeGeneratePydantic)
+        assert 'JSON SCHEMA' not in en_prompt, "Format instructions should not be hardcoded in English"
+        assert 'SKEMA JSON' not in id_prompt, "Format instructions should not be hardcoded in Indonesian"
+        # Should still describe the task
+        assert 'story elements' in en_prompt.lower() or 'elements' in en_prompt.lower()
+        assert 'elemen cerita' in id_prompt.lower() or 'story elements' in id_prompt.lower()
 
 
 class TestStoryElementsGeneration:

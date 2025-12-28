@@ -79,6 +79,64 @@ class Interface:
             'array_of_objects_required': "array of objects, Required",
             'array_of_strings_optional': "array of strings, Optional",
             'array_of_objects_optional': "array of objects, Optional",
+            'story_elements_example_label': 'For example:',
+            'story_elements_example': '''{
+    "title": "The Dragon's Treasure Cave",
+    "genre": "Fantasy Adventure",
+    "themes": ["courage", "friendship", "self-discovery"],
+    "characters": {
+        "Main Character(s)": [
+            {
+                "name": "Rian",
+                "physical_description": "Young explorer with determined eyes and weathered gear.",
+                "personality": "Brave, curious, and kind-hearted.",
+                "background": "Village boy seeking adventure and treasure.",
+                "motivation": "To prove himself and find the legendary dragon's treasure."
+            }
+        ],
+        "Supporting Characters": [
+            {
+                "name": "The Dragon",
+                "physical_description": "Small green dragon with gleaming emerald scales.",
+                "personality": "Wise and protective, with a playful spirit.",
+                "background": "Ancient guardian of the cave's treasure for centuries.",
+                "role in the story": "Tests the hero's worthiness and becomes an unexpected friend."
+            }
+        ]
+    },
+    "pacing": "Moderate with moments of excitement and wonder.",
+    "style": "Descriptive narrative with vivid imagery and emotional depth",
+    "conflict": "External conflict between hero and antagonist over the treasure",
+    "symbolism": [{{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}}]
+}''',
+            'field_descriptions': {
+                # StoryElements
+                'title': 'Story title',
+                'genre': 'Story genre category',
+                'themes': 'Central themes of the story',
+                'characters': 'Character lists by type with detailed information...',
+                'pacing': 'Story pacing speed (e.g., slow, moderate, fast)...',
+                'style': 'Language style description...',
+                'plot_structure': 'Plot elements (exposition, rising action, climax, ...',
+                'settings': 'Setting details with time, location, culture, mood...',
+                'conflict': 'Central conflict of the story',
+                'symbolism': 'Symbols and their meanings',
+                'resolution': 'Story resolution or ending direction',
+                # OutlineOutput
+                'theme': 'Central theme of the story',
+                'chapters': 'List of chapter outlines',
+                'character_list': 'List of main characters',
+                'character_details': 'Character descriptions',
+                'setting': 'Story setting details',
+                'target_chapter_count': 'Target number of chapters',
+                # ChapterOutput
+                'text': 'Full chapter text content',
+                'word_count': 'Total word count',
+                'scenes': 'Scene descriptions',
+                'characters_present': 'Characters in this chapter',
+                'chapter_number': 'Chapter number',
+                'chapter_title': 'Chapter title',
+            },
         },
         'id': {
             'json_schema_header': "=== SKEMA JSON (HANYA REFERENSI) ===",
@@ -110,6 +168,64 @@ class Interface:
             'array_of_objects_required': "array of objects, Wajib",
             'array_of_strings_optional': "array of strings, Opsional",
             'array_of_objects_optional': "array of objects, Opsional",
+            'story_elements_example_label': 'Contoh:',
+            'story_elements_example': '''{
+    "title": "Gua Harta Karun Naga",
+    "genre": "Petualangan Fantasi",
+    "themes": ["keberanian", "persahabatan", "penemuan-diri"],
+    "characters": {
+        "Karakter Utama": [
+            {
+                "name": "Rian",
+                "physical_description": "Penjelajah muda dengan mata penuh tekad dan peralatan yang sudah usang.",
+                "personality": "Berani, penasaran, dan baik hati.",
+                "background": "Anak desa yang mencari petualangan dan harta karun.",
+                "motivation": "Ingin membuktikan dirinya dan menemukan harta karun legendaris."
+            }
+        ],
+        "Karakter Pendukung": [
+            {
+                "name": "Naga",
+                "physical_description": "Naga hijau kecil dengan sisik zamrud yang berkilauan.",
+                "personality": "Bijaksana dan protektif, dengan semangat yang ceria.",
+                "background": "Penjaga kuno harta gua selama berabad-abad.",
+                "role in the story": "Menguji kelayakan pahlawan dan menjadi teman yang tak terduga."
+            }
+        ]
+    },
+    "pacing": "Sedang dengan momen kegembiraan dan keajaiban.",
+    "style": "Narasi deskriptif dengan citraan yang hidup dan kedalaman emosional",
+    "conflict": "Konflik eksternal antara pahlawan dan antagonis tentang harta karun",
+    "symbolism": [{{"symbol": "Harta Karun", "meaning": "Simbol pencapaian dan harga diri"}}]
+}''',
+            'field_descriptions': {
+                # StoryElements
+                'title': 'Judul cerita',
+                'genre': 'Kategori genre cerita',
+                'themes': 'Tema sentral cerita',
+                'characters': 'Daftar karakter berdasarkan tipe dengan informasi detail...',
+                'pacing': 'Kecepatan alur cerita (misalnya, lambat, sedang, cepat)...',
+                'style': 'Deskripsi gaya bahasa...',
+                'plot_structure': 'Elemen plot (eksposisi, aksi meningkat, klimaks, ...',
+                'settings': 'Detail latar dengan waktu, lokasi, budaya, suasana...',
+                'conflict': 'Konflik sentral cerita',
+                'symbolism': 'Simbol dan maknanya',
+                'resolution': 'Resolusi cerita atau arah akhir',
+                # OutlineOutput
+                'theme': 'Tema sentral cerita',
+                'chapters': 'Daftar outline bab',
+                'character_list': 'Daftar karakter utama',
+                'character_details': 'Deskripsi karakter',
+                'setting': 'Detail latar cerita',
+                'target_chapter_count': 'Target jumlah bab',
+                # ChapterOutput
+                'text': 'Konten teks bab lengkap',
+                'word_count': 'Jumlah kata total',
+                'scenes': 'Deskripsi adegan',
+                'characters_present': 'Karakter di bab ini',
+                'chapter_number': 'Nomor bab',
+                'chapter_title': 'Judul bab',
+            },
         }
     }
 
@@ -156,6 +272,31 @@ class Interface:
         if kwargs:
             return text.format(**kwargs)
         return text
+
+    def _get_field_description(self, field_name: str, fallback_description: str) -> str:
+        """Get translated field description with fallback to original.
+
+        Retrieves language-specific field description from _LANGUAGE_STRINGS['field_descriptions'].
+        Falls back to original description if translation not found.
+
+        Args:
+            field_name: The field name to look up
+            fallback_description: The original description from Pydantic model
+
+        Returns:
+            str: Translated description if available, otherwise fallback description
+        """
+        # Get current language, fallback to 'en' if not set or invalid
+        lang = self.language if hasattr(self, 'language') else 'en'
+
+        # Get language dict, fallback to English if language invalid
+        lang_dict = self._LANGUAGE_STRINGS.get(lang, self._LANGUAGE_STRINGS['en'])
+
+        # Get field_descriptions dict
+        descriptions = lang_dict.get('field_descriptions', {})
+
+        # Return translated description or fallback
+        return descriptions.get(field_name, fallback_description)
 
     def ensure_package_is_installed(self, package_name):
         try:
@@ -537,7 +678,8 @@ class Interface:
         for field in required_fields:
             field_info = properties.get(field, {})
             field_type = field_info.get('type', 'unknown')
-            field_desc = field_info.get('description', '')
+            original_desc = field_info.get('description', '')
+            field_desc = self._get_field_description(field, original_desc)
 
             # Handle array types with specific examples
             if field_type == 'array':
@@ -560,7 +702,8 @@ class Interface:
             for field in optional_fields[:5]:  # Limit to first 5 optional fields
                 field_info = properties.get(field, {})
                 field_type = field_info.get('type', 'unknown')
-                field_desc = field_info.get('description', '')
+                original_desc = field_info.get('description', '')
+                field_desc = self._get_field_description(field, original_desc)
 
                 # Handle array types with specific examples
                 if field_type == 'array':
@@ -584,37 +727,8 @@ class Interface:
         # Add specific examples for StoryElements model
         # Check for StoryElements specifically by looking for themes AND characters fields together
         if 'themes' in properties.keys() and 'characters' in properties.keys():
-            instruction += """
-For example:
-{
-    "title": "The Dragon's Treasure Cave",
-    "genre": "Fantasy Adventure",
-    "themes": ["courage", "friendship", "self-discovery"],
-    "characters": {
-        "Main Character(s)": [
-            {
-                "name": "Rian",
-                "physical_description": "Young explorer with determined eyes and weathered gear.",
-                "personality": "Brave, curious, and kind-hearted.",
-                "background": "Village boy seeking adventure and treasure.",
-                "motivation": "To prove himself and find the legendary dragon's treasure."
-            }
-        ],
-        "Supporting Characters": [
-            {
-                "name": "The Dragon",
-                "physical_description": "Small green dragon with gleaming emerald scales.",
-                "personality": "Wise and protective, with a playful spirit.",
-                "background": "Ancient guardian of the cave's treasure for centuries.",
-                "role in the story": "Tests the hero's worthiness and becomes an unexpected friend."
-            }
-        ]
-    },
-    "pacing": "Moderate with moments of excitement and wonder.",
-    "style": "Descriptive narrative with vivid imagery and emotional depth",
-    "conflict": "External conflict between hero and antagonist over the treasure",
-    "symbolism": [{{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}}]
-}"""
+            instruction += "\n" + self._get_text('story_elements_example_label') + "\n"
+            instruction += self._get_text('story_elements_example')
 
         return instruction
 

@@ -1,7 +1,7 @@
 # ollamasemua= "ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
 # ollamasemua= "huihui_ai/qwen2.5-abliterate:32b"
-ollamasemua= "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
-# ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
+# ollamasemua= "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
+ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
 # ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest" #awawa
 INITIAL_OUTLINE_WRITER_MODEL = (
     # "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
@@ -43,8 +43,10 @@ FAST_MODEL = (
 # OLLAMA_CTX = 8192
 OLLAMA_CTX = 16384
 
-OLLAMA_HOST = "10.23.82.116:11434"
+# OLLAMA_HOST = "https://xxxx-11434.proxy.runpod.net"
+# OLLAMA_HOST = "10.23.82.116:11434"
 # OLLAMA_HOST = "10.23.147.239:11434"
+OLLAMA_HOST = "http://127.0.0.1:22434"
 
 
 SEED = 12  # Note this value is overridden by the argparser
@@ -173,8 +175,8 @@ REASONING_LOG_SEPARATE = True  # Log reasoning to separate file
 REASONING_CACHE_RESULTS = False  # Cache reasoning results
 
 # Embedding Model Configuration
-# EMBEDDING_MODEL = "ollama://nomic-embed-text:latest@10.23.82.116"  # Embedding model string (provider://format). Must be explicitly set.
-EMBEDDING_MODEL = "ollama://qwen3-embedding:latest@10.23.82.116"  # Embedding model string (provider://format). Must be explicitly set.
+# EMBEDDING_MODEL = "ollama://nomic-embed-text:latest"  # Embedding model string (provider://format). Will use OLLAMA_HOST.
+EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"  # Embedding model string. Will use OLLAMA_HOST from line 46.
 EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for nomic-embed-text)
 EMBEDDING_CTX = 8192  # Context window for embeddings (match nomic-embed-text-v2-moe capabilities)
 EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback

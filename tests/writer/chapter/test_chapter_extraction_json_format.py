@@ -1,43 +1,43 @@
 """
-Tests for CHAPTER_GENERATION_PROMPT JSON format addition (Phase 5).
+Tests for CHAPTER_GENERATION_PROMPT (Phase 6 update).
 
-This tests adding clear JSON format instructions to CHAPTER_GENERATION_PROMPT.
-The prompt uses SafeGeneratePydantic(ChapterOutput) and needs explicit JSON format.
+Phase 6: Format instructions removed from prompts because SafeGeneratePydantic
+automatically adds them via _build_format_instruction().
 
-Pattern: Keep SafeGeneratePydantic, add clear JSON format instructions.
+This prevents duplication and ensures language-aware format instructions.
 """
 
 
 class TestChapterExtractionPromptFormat:
-    """Test that CHAPTER_GENERATION_PROMPT has clear JSON format instructions."""
+    """Test that CHAPTER_GENERATION_PROMPT has NO hardcoded format instructions."""
 
     def test_english_prompt_has_json_format_section(self):
-        """Test that English prompt has JSON format instructions"""
+        """Test that English prompt has NO hardcoded format instructions"""
         # Arrange
         import Writer.Prompts as Prompts
 
         # Act
         prompt = Prompts.CHAPTER_GENERATION_PROMPT
 
-        # Assert - Should have JSON format section
-        assert 'JSON' in prompt, "Prompt should mention JSON format"
-        assert 'OUTPUT FORMAT' in prompt or 'FORMAT' in prompt, "Prompt should have format section"
-        # Should request JSON only
-        assert 'ONLY' in prompt or 'only' in prompt, "Prompt should request ONLY JSON"
+        # Assert - Should NOT have format instructions (added by SafeGeneratePydantic)
+        assert 'JSON OUTPUT FORMAT' not in prompt, "Format instructions should not be hardcoded"
+        assert '{{' not in prompt or 'Example format:' not in prompt, "Should not have JSON examples"
+        # Should still have core task
+        assert 'extract' in prompt.lower() or 'chapter' in prompt.lower(), "Prompt should describe task"
 
     def test_indonesian_prompt_has_json_format_section(self):
-        """Test that Indonesian prompt has JSON format instructions"""
+        """Test that Indonesian prompt has NO hardcoded format instructions"""
         # Arrange
         import Writer.Prompts_id as Prompts_id
 
         # Act
         prompt = Prompts_id.CHAPTER_GENERATION_PROMPT
 
-        # Assert - Should have JSON format section
-        assert 'JSON' in prompt, "Indonesian prompt should mention JSON format"
-        assert 'FORMAT' in prompt or 'format' in prompt, "Indonesian prompt should have format section"
-        # Should request JSON only (Indonesian: HANYA)
-        assert 'HANYA' in prompt or 'hanya' in prompt, "Indonesian prompt should request HANYA JSON"
+        # Assert - Should NOT have format instructions (added by SafeGeneratePydantic)
+        assert 'FORMAT JSON' not in prompt, "Format instructions should not be hardcoded"
+        assert '{{' not in prompt or 'Format contoh:' not in prompt, "Should not have JSON examples"
+        # Should still have core task
+        assert 'ekstrak' in prompt.lower() or 'bab' in prompt.lower(), "Prompt should describe task"
 
 
 class TestChapterExtractionGeneration:

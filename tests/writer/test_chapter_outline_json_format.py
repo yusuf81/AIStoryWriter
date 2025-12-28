@@ -1,47 +1,47 @@
 """
-Tests for CHAPTER_OUTLINE_PROMPT JSON format addition (Phase 4).
+Tests for CHAPTER_OUTLINE_PROMPT (Phase 6 update).
 
-This tests adding clear JSON format instructions to CHAPTER_OUTLINE_PROMPT.
-The prompt uses SafeGeneratePydantic(ChapterOutlineOutput) and needs explicit JSON format.
+Phase 6: Format instructions removed from prompts because SafeGeneratePydantic
+automatically adds them via _build_format_instruction().
 
-Pattern: Keep SafeGeneratePydantic, add clear JSON format instructions.
+This prevents duplication and ensures language-aware format instructions.
 """
 from unittest.mock import MagicMock
 
 
 class TestChapterOutlinePromptFormat:
-    """Test that CHAPTER_OUTLINE_PROMPT has clear JSON format instructions."""
+    """Test that CHAPTER_OUTLINE_PROMPT has NO hardcoded format instructions."""
 
     def test_english_prompt_has_json_format_section(self):
-        """Test that English prompt has clear JSON format section"""
+        """Test that English prompt has NO hardcoded format instructions"""
         # Arrange
         import Writer.Prompts as Prompts
 
         # Act
         prompt = Prompts.CHAPTER_OUTLINE_PROMPT
 
-        # Assert - Should have clear JSON format section
-        assert '# JSON OUTPUT FORMAT' in prompt or 'JSON FORMAT' in prompt, "Prompt should have JSON format header"
-        assert 'ONLY' in prompt or 'only' in prompt, "Prompt should request ONLY JSON"
-        # Should mention ChapterOutlineOutput structure
-        assert '"scenes"' in prompt, "Prompt should show scenes field"
-        assert '"chapter_number"' in prompt or '"chapter_title"' in prompt, "Prompt should show chapter fields"
+        # Assert - Should NOT have format instructions (added by SafeGeneratePydantic)
+        assert 'JSON OUTPUT FORMAT' not in prompt, "Format instructions should not be hardcoded"
+        assert '{{' not in prompt or 'Example format:' not in prompt, "Should not have JSON examples"
+        # Should still have core task
+        assert 'outline' in prompt.lower() and 'chapter' in prompt.lower(), "Prompt should describe task"
 
     def test_indonesian_prompt_has_json_format_section(self):
-        """Test that Indonesian prompt has clear JSON format section"""
+        """Test that Indonesian prompt has NO hardcoded format instructions"""
         # Arrange
         import Writer.Prompts_id as Prompts_id
 
         # Act
         prompt = Prompts_id.CHAPTER_OUTLINE_PROMPT
 
-        # Assert - Should have clear JSON format section
-        assert 'JSON' in prompt, "Indonesian prompt should mention JSON"
-        assert 'HANYA' in prompt or 'hanya' in prompt, "Indonesian prompt should request HANYA JSON"
-        assert '"scenes"' in prompt, "Indonesian prompt should show scenes field"
+        # Assert - Should NOT have format instructions (added by SafeGeneratePydantic)
+        assert 'FORMAT JSON' not in prompt, "Format instructions should not be hardcoded"
+        assert '{{' not in prompt or 'Format contoh:' not in prompt, "Should not have JSON examples"
+        # Should still have core task
+        assert 'outline' in prompt.lower() or 'bab' in prompt.lower(), "Prompt should describe task"
 
     def test_prompts_define_scene_structure(self):
-        """Test that both prompts define EnhancedSceneOutline structure"""
+        """Test that prompts describe scene requirements (no hardcoded structure)"""
         # Arrange
         import Writer.Prompts as Prompts
         import Writer.Prompts_id as Prompts_id
@@ -50,14 +50,14 @@ class TestChapterOutlinePromptFormat:
         en_prompt = Prompts.CHAPTER_OUTLINE_PROMPT
         id_prompt = Prompts_id.CHAPTER_OUTLINE_PROMPT
 
-        # Assert - Should show scene structure fields
-        # EnhancedSceneOutline: title, characters_and_setting, conflict_and_tone, key_events, literary_devices, resolution
-        assert '"title"' in en_prompt, "English prompt should show title field"
-        assert '"characters_and_setting"' in en_prompt, "English prompt should show characters_and_setting"
-        assert '"key_events"' in en_prompt, "English prompt should show key_events"
+        # Assert - Should describe scene requirements (not hardcode JSON structure)
+        # Requirements mentioned in text, actual structure added by SafeGeneratePydantic
+        assert 'scene' in en_prompt.lower(), "English prompt should mention scenes"
+        assert 'character' in en_prompt.lower() or 'setting' in en_prompt.lower(), "English prompt should mention characters/setting"
+        assert 'plot' in en_prompt.lower() or 'event' in en_prompt.lower(), "English prompt should mention plot/events"
 
-        assert '"title"' in id_prompt, "Indonesian prompt should show title field"
-        assert '"characters_and_setting"' in id_prompt, "Indonesian prompt should show characters_and_setting"
+        assert 'scene' in id_prompt.lower() or 'adegan' in id_prompt.lower(), "Indonesian prompt should mention scenes"
+        assert 'karakter' in id_prompt.lower() or 'character' in id_prompt.lower(), "Indonesian prompt should mention characters"
 
 
 class TestChapterOutlineGeneration:

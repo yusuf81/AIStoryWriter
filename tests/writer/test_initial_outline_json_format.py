@@ -1,47 +1,47 @@
 """
-Tests for INITIAL_OUTLINE_PROMPT JSON format addition (Phase 3).
+Tests for INITIAL_OUTLINE_PROMPT (Phase 6 update).
 
-This tests adding clear JSON format instructions to INITIAL_OUTLINE_PROMPT.
-The prompt uses SafeGeneratePydantic(OutlineOutput) and needs explicit JSON format.
+Phase 6: Format instructions removed from prompts because SafeGeneratePydantic
+automatically adds them via _build_format_instruction().
 
-Pattern: Keep SafeGeneratePydantic, add JSON format instructions.
+This prevents duplication and ensures language-aware format instructions.
 """
 from unittest.mock import MagicMock
 
 
 class TestInitialOutlinePromptFormat:
-    """Test that INITIAL_OUTLINE_PROMPT has clear JSON format instructions."""
+    """Test that INITIAL_OUTLINE_PROMPT has NO hardcoded format instructions."""
 
     def test_english_prompt_has_json_format_section(self):
-        """Test that English prompt has JSON format instructions"""
+        """Test that English prompt has NO hardcoded format instructions"""
         # Arrange
         import Writer.Prompts as Prompts
 
         # Act
         prompt = Prompts.INITIAL_OUTLINE_PROMPT
 
-        # Assert - Should have JSON format section
-        assert 'JSON' in prompt, "Prompt should mention JSON format"
-        assert 'OUTPUT FORMAT' in prompt or 'FORMAT' in prompt, "Prompt should have format section"
-        # Should request JSON only
-        assert 'ONLY' in prompt or 'only' in prompt, "Prompt should request ONLY JSON"
+        # Assert - Should NOT have format instructions (added by SafeGeneratePydantic)
+        assert 'JSON OUTPUT FORMAT' not in prompt, "Format instructions should not be hardcoded"
+        assert '{{' not in prompt or 'Example format:' not in prompt, "Should not have JSON examples"
+        # Should still have core task
+        assert 'outline' in prompt.lower(), "Prompt should describe task"
 
     def test_indonesian_prompt_has_json_format_section(self):
-        """Test that Indonesian prompt has JSON format instructions"""
+        """Test that Indonesian prompt has NO hardcoded format instructions"""
         # Arrange
         import Writer.Prompts_id as Prompts_id
 
         # Act
         prompt = Prompts_id.INITIAL_OUTLINE_PROMPT
 
-        # Assert - Should have JSON format section
-        assert 'JSON' in prompt, "Indonesian prompt should mention JSON format"
-        assert 'FORMAT' in prompt or 'format' in prompt, "Indonesian prompt should have format section"
-        # Should request JSON only (Indonesian: HANYA)
-        assert 'HANYA' in prompt or 'hanya' in prompt, "Indonesian prompt should request HANYA JSON"
+        # Assert - Should NOT have format instructions (added by SafeGeneratePydantic)
+        assert 'FORMAT JSON' not in prompt, "Format instructions should not be hardcoded"
+        assert '{{' not in prompt or 'Format contoh:' not in prompt, "Should not have JSON examples"
+        # Should still have core task
+        assert 'outline' in prompt.lower(), "Prompt should describe task"
 
     def test_prompts_define_required_fields(self):
-        """Test that both prompts define required OutlineOutput fields"""
+        """Test that prompts describe requirements (not hardcode JSON structure)"""
         # Arrange
         import Writer.Prompts as Prompts
         import Writer.Prompts_id as Prompts_id
@@ -50,15 +50,14 @@ class TestInitialOutlinePromptFormat:
         en_prompt = Prompts.INITIAL_OUTLINE_PROMPT
         id_prompt = Prompts_id.INITIAL_OUTLINE_PROMPT
 
-        # Assert - Should mention key required fields
-        # OutlineOutput required: title, genre, chapters, target_chapter_count
-        assert '"title"' in en_prompt, "English prompt should show title field"
-        assert '"chapters"' in en_prompt, "English prompt should show chapters field"
-        assert '"target_chapter_count"' in en_prompt, "English prompt should show target_chapter_count"
+        # Assert - Should describe outline requirements (not show JSON structure)
+        # Requirements mentioned in text, actual structure added by SafeGeneratePydantic
+        assert 'chapter' in en_prompt.lower(), "English prompt should mention chapters"
+        assert 'character' in en_prompt.lower(), "English prompt should mention characters"
+        assert 'detail' in en_prompt.lower(), "English prompt should request detail"
 
-        assert '"title"' in id_prompt, "Indonesian prompt should show title field"
-        assert '"chapters"' in id_prompt, "Indonesian prompt should show chapters field"
-        assert '"target_chapter_count"' in id_prompt, "Indonesian prompt should show target_chapter_count"
+        assert 'bab' in id_prompt.lower() or 'chapter' in id_prompt.lower(), "Indonesian prompt should mention chapters"
+        assert 'karakter' in id_prompt.lower() or 'character' in id_prompt.lower(), "Indonesian prompt should mention characters"
 
 
 class TestInitialOutlineGeneration:

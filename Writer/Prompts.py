@@ -34,59 +34,15 @@ Here's the prompt for my story.
 {_OutlinePrompt}
 </PROMPT>
 
-=== JSON SCHEMA (REFERENCE ONLY) ===
-This defines the structure. DO NOT repeat the schema in your response!
+Please extract the following story elements from the prompt above:
+- Title and genre
+- Central themes
+- Main and supporting characters with detailed descriptions
+- Story pacing and style
+- Plot structure and conflict
+- Settings and symbolism
 
-=== YOUR RESPONSE (JSON ONLY) ===
-Provide ONLY the JSON data below. Do NOT include explanations or the schema.
-
-Required fields:
-  - title (string, Required): Story title
-  - genre (string, Required): Story genre category
-  - themes (array of strings, Required): Central themes of the story
-    Example: ["String 1", "String 2"]
-
-Optional fields:
-  - characters (object, Optional): Character names and their descriptions
-  - pacing (unknown, Optional): Story pacing speed (e.g., slow, moderate, fast)
-  - style (unknown, Optional): Language style description
-  - plot_structure (unknown, Optional): Plot elements (exposition, rising action, climax, resolution)
-  - settings (object, Optional): Setting details with time, location, culture, mood
-  - (and 3 additional optional fields)
-
-Example format: {{
-    "title": "The Dragon's Treasure Cave",
-    "genre": "Fantasy Adventure",
-    "themes": ["courage", "friendship", "self-discovery"],
-    "characters": {{
-        "Main Character(s)": [
-            {{
-                "name": "Rian",
-                "physical_description": "Young explorer with determined eyes and weathered gear.",
-                "personality": "Brave, curious, and kind-hearted.",
-                "background": "Village boy who grew up hearing tales of ancient treasures.",
-                "motivation": "Seek to prove his worth and find the legendary treasure."
-            }}
-        ],
-        "Supporting Characters": [
-            {{
-                "name": "Elder Sage",
-                "physical_description": "Old wise woman with knowing eyes and gentle smile.",
-                "personality": "Wise, patient, and mysterious.",
-                "background": "Ancient guardian of forest knowledge and secrets.",
-                "role in the story": "Mentor who guides the protagonist on their journey."
-            }}
-        ]
-    }},
-    "pacing": "Moderate with escalating tension during key moments.",
-    "style": "Descriptive narrative with vivid imagery and emotional depth",
-    "conflict": "External conflict between hero and antagonist over the treasure",
-    "symbolism": [{{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}}],
-    "character_details": {{
-        "Rian": "Young explorer, brave and curious, seeking treasure to prove his worth",
-        "Elder Sage": "Ancient wise woman, patient mentor with mysterious knowledge"
-    }}
-}}
+Provide comprehensive character details including physical description, personality, background, and motivation for each character.
 
 CRITICAL - Character Details Format:
 - If including character_details field, it MUST be a simple object/dict with character names as keys
@@ -94,8 +50,6 @@ CRITICAL - Character Details Format:
 - Example: {{"Hero": "Brief string description", "Villain": "Brief string description"}}
 - DO NOT use nested structures like {{"name": "Character Name", "personality": "brave and kind"}}
 - Use simple strings: {{"Hero": "Brave warrior seeking redemption", "Villain": "Dark sorcerer driven by revenge"}}
-
-IMPORTANT: Return ONLY the JSON data, not the schema!
 """
 
 INITIAL_OUTLINE_PROMPT = """
@@ -125,44 +79,7 @@ Make sure to add lots of detail as you write.
 Also, include information about the different characters, and how they change over the course of the story.
 We want to have rich and complex character development!
 
-# JSON OUTPUT FORMAT
-Please return your response in valid JSON format with the following structure:
-
-{{
-  "title": "Story Title",
-  "genre": "Story Genre",
-  "theme": "Central theme (optional)",
-  "chapters": [
-    "Chapter 1: Detailed outline of first chapter with at least 100 characters describing key events, character development, and plot progression",
-    "Chapter 2: Detailed outline of second chapter..."
-  ],
-  "character_list": ["Character1", "Character2"],
-  "character_details": {{
-    "Character1": "Brief description",
-    "Character2": "Brief description"
-  }},
-  "setting": {{
-    "time": "Time period",
-    "location": "Primary location",
-    "culture": "Cultural context",
-    "mood": "Overall atmosphere"
-  }},
-  "target_chapter_count": 10
-}}
-
-Required fields:
-  - title (string, min 5 characters): Story title
-  - genre (string): Story genre
-  - chapters (array of strings): Each chapter outline must be at least 100 characters
-  - target_chapter_count (integer): Number of chapters planned
-
-Optional fields:
-  - theme (string): Central theme or message
-  - character_list (array of strings): List of character names
-  - character_details (object): Character name to description mapping
-  - setting (object): Setting details with time, location, culture, mood
-
-IMPORTANT: Return ONLY the JSON data, not the schema or any explanations!"""
+IMPORTANT: Each chapter outline must be at least 100 characters describing key events, character development, and plot progression."""
 
 EXPAND_OUTLINE_CHAPTER_BY_CHAPTER = """
 # Objective
@@ -346,27 +263,7 @@ Please help me extract the part of this outline that is just for chapter {_Chapt
 
 Do not include anything else in your response except just the content for chapter {_ChapterNum}.
 
-# JSON OUTPUT FORMAT
-Please return your response in valid JSON format with the following structure:
-
-{{
-  "text": "The extracted outline content for chapter {_ChapterNum}",
-  "word_count": 100,
-  "chapter_number": {_ChapterNum},
-  "chapter_title": "Chapter Title (optional)"
-}}
-
-Required fields:
-  - text (string): The extracted chapter outline content (minimum 100 characters)
-  - word_count (integer): Word count of the extracted text
-  - chapter_number (integer): The chapter number
-
-Optional fields:
-  - chapter_title (string): Chapter title if present in outline
-  - scenes (array of strings): Scene descriptions if identifiable
-  - characters_present (array of strings): Characters mentioned in this chapter
-
-IMPORTANT: Return ONLY valid JSON data, no other text or markdown!
+IMPORTANT: The extracted chapter outline content must be at least 100 characters.
 """
 
 CHAPTER_HISTORY_INSERT = """
@@ -590,42 +487,7 @@ Don't answer these questions directly, instead make your outline implicitly answ
 
 Again, don't write the chapter itself, just create a detailed outline of the chapter.
 
-# JSON OUTPUT FORMAT
-Please return your response in valid JSON format with the following structure:
-
-{{
-  "chapter_number": 1,
-  "chapter_title": "Chapter Title",
-  "scenes": [
-    {{
-      "title": "Brief scene title",
-      "characters_and_setting": "Detailed description of characters present and setting",
-      "conflict_and_tone": "Type of conflict and emotional tone",
-      "key_events": "Important plot points, actions, and dialogue hints",
-      "literary_devices": "Foreshadowing, symbolism, or other literary techniques (optional)",
-      "resolution": "How the scene ends and connects to next scene"
-    }}
-  ],
-  "outline_summary": "Brief summary of the chapter (min 40 characters)"
-}}
-
-Required fields:
-  - chapter_number (integer): Chapter number
-  - chapter_title (string): Chapter title
-  - scenes (array of objects): Minimum 2-3 detailed scenes per chapter
-    Each scene must have:
-    - title (string): Scene title
-    - characters_and_setting (string): Characters and location details
-    - conflict_and_tone (string): Conflict type and emotional tone
-    - key_events (string): Plot points and key actions
-    - resolution (string): How scene ends and transitions
-  - outline_summary (string): Brief chapter summary
-
-Optional fields:
-  - literary_devices (string): Literary techniques used in the scene
-
 IMPORTANT: Each scene should be detailed enough to guide chapter writing.
-IMPORTANT: Return ONLY the JSON data, not the schema or any markdown formatting!
 """
 
 CHAPTER_TO_SCENES = """

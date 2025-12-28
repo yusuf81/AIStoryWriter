@@ -60,22 +60,30 @@ class TestPromptFormatValidation:
 
     def test_story_elements_prompt_english_format(self, mock_logger):
         """
-        RED: Test that English GENERATE_STORY_ELEMENTS prompt produces examples matching StoryElements
+        Phase 6: Test that English GENERATE_STORY_ELEMENTS has NO hardcoded format instructions
 
-        Arrange: Get English prompt and extract JSON examples
-        Act: Extract and validate JSON examples from the prompt
-        Assert: All examples should validate against StoryElements model
+        Arrange: Get English prompt
+        Act: Check prompt content
+        Assert: No format instructions (added by SafeGeneratePydantic)
         """
+        # Arrange
+        prompt = Prompts.GENERATE_STORY_ELEMENTS
+
+        # Act & Assert - Phase 6: No hardcoded format instructions
+        assert 'JSON SCHEMA' not in prompt, "Format instructions should not be hardcoded"
+        assert '{{' not in prompt or 'Example format:' not in prompt, "Should not have JSON examples"
+        # Should still describe the task
+        assert 'story elements' in prompt.lower() or 'elements' in prompt.lower()
+
+    def test_story_elements_prompt_english_format_OLD_DISABLED(self, mock_logger):
+        """OLD TEST - kept for reference, disabled. Format instructions now in SafeGeneratePydantic."""
         # Arrange
         prompt = Prompts.GENERATE_STORY_ELEMENTS
 
         # Act
         examples = self.extract_json_examples(prompt)
 
-        # Assert - This will FAIL (RED phase) because the current example is too generic
-        assert len(examples) > 0, "Prompt should contain at least one JSON example"
-
-        # Try to validate each example against StoryElements
+        # This test is obsolete - format instructions removed in Phase 6
         for i, example in enumerate(examples):
             try:
                 StoryElements(**example)
@@ -303,40 +311,41 @@ class TestPromptFormatValidation:
 
     def test_response_template_conflict_structure_english(self, mock_logger):
         """
-        Test that English prompt no longer has markdown template (Phase 2 cleanup)
+        Phase 6: Test that English prompt has NO markdown template and NO hardcoded format
 
         Arrange: Get English GENERATE_STORY_ELEMENTS prompt
         Act: Check that RESPONSE_TEMPLATE is removed
-        Assert: Prompt should only have JSON format, no markdown template
+        Assert: No markdown template, no hardcoded format instructions
         """
         # Arrange
         prompt = Prompts.GENERATE_STORY_ELEMENTS
 
-        # Act & Assert - Markdown template should be removed (Phase 2)
+        # Act & Assert - Phase 6: No markdown template, no hardcoded format
         assert '<RESPONSE_TEMPLATE>' not in prompt, "Prompt should not have markdown template tag"
         assert '## Conflict' not in prompt, "Prompt should not have markdown headers"
-        # Should have JSON format instead
-        assert 'JSON' in prompt, "Prompt should have JSON format instructions"
-        assert '"conflict"' in prompt, "Prompt should have conflict in JSON example"
+        # Phase 6: No hardcoded JSON format (added by SafeGeneratePydantic)
+        assert 'JSON SCHEMA' not in prompt, "Format instructions should not be hardcoded"
+        # Should still describe the task
+        assert 'conflict' in prompt.lower(), "Prompt should mention conflict in task description"
 
     def test_response_template_symbolism_structure_english(self, mock_logger):
         """
-        Test that English prompt no longer has markdown symbolism template (Phase 2 cleanup)
+        Phase 6: Test that English prompt has NO markdown template and NO hardcoded format
 
         Arrange: Get English GENERATE_STORY_ELEMENTS prompt
         Act: Check that markdown symbolism section is removed
-        Assert: Prompt should only have JSON format with symbolism array
+        Assert: No markdown template, no hardcoded format instructions
         """
         # Arrange
         prompt = Prompts.GENERATE_STORY_ELEMENTS
 
-        # Act & Assert - Markdown template should be removed (Phase 2)
+        # Act & Assert - Phase 6: No markdown template, no hardcoded format
         assert '## Symbolism' not in prompt, "Prompt should not have markdown Symbolism header"
         assert '### Symbol 1' not in prompt, "Prompt should not have numbered markdown symbols"
-        # Should have JSON format instead
-        assert '"symbolism"' in prompt, "Prompt should have symbolism in JSON example"
-        assert '"symbol"' in prompt, "Prompt should have symbol key in JSON example"
-        assert '"meaning"' in prompt, "Prompt should have meaning key in JSON example"
+        # Phase 6: No hardcoded JSON examples (added by SafeGeneratePydantic)
+        assert 'JSON SCHEMA' not in prompt, "Format instructions should not be hardcoded"
+        # Should still describe the task
+        assert 'symbolism' in prompt.lower(), "Prompt should mention symbolism in task description"
 
     def test_response_template_conflict_structure_indonesian(self, mock_logger):
         """
@@ -675,26 +684,25 @@ class TestEnhancedSceneOutlineFieldNames:
 
     def test_enhanced_scene_outline_green_fixes_english(self, mock_logger):
         """
-        GREEN: Verify English CHAPTER_OUTLINE_PROMPT now has correct JSON field examples
+        Phase 6: Verify English CHAPTER_OUTLINE_PROMPT has NO hardcoded format instructions
+
+        Format instructions (including field examples) are now added by SafeGeneratePydantic,
+        not hardcoded in prompts.
         """
         # Arrange
         from Writer.Prompts import CHAPTER_OUTLINE_PROMPT
 
-        # Act & Assert - Check for correct JSON field examples
-        assert '"title": "Brief scene title"' in CHAPTER_OUTLINE_PROMPT, \
-            "English prompt should now contain correct 'title' field example"
-        assert '"characters_and_setting":' in CHAPTER_OUTLINE_PROMPT, \
-            "English prompt should contain correct 'characters_and_setting' field example"
-        assert '"conflict_and_tone":' in CHAPTER_OUTLINE_PROMPT, \
-            "English prompt should contain correct 'conflict_and_tone' field example"
-        assert '"key_events":' in CHAPTER_OUTLINE_PROMPT, \
-            "English prompt should contain correct 'key_events' field example"
-        assert '"literary_devices":' in CHAPTER_OUTLINE_PROMPT, \
-            "English prompt should contain correct 'literary_devices' field example"
-        assert '"resolution":' in CHAPTER_OUTLINE_PROMPT, \
-            "English prompt should contain correct 'resolution' field example"
+        # Act & Assert - Phase 6: No hardcoded JSON format instructions
+        assert 'JSON OUTPUT FORMAT' not in CHAPTER_OUTLINE_PROMPT, \
+            "Format instructions should not be hardcoded"
+        assert '{{' not in CHAPTER_OUTLINE_PROMPT or 'Example format:' not in CHAPTER_OUTLINE_PROMPT, \
+            "Should not have JSON examples"
+        # Should still describe the task
+        assert 'scene' in CHAPTER_OUTLINE_PROMPT.lower(), \
+            "Prompt should describe scene-related task"
 
-        # GREEN: The prompts now have correct JSON field examples that match EnhancedSceneOutline
+        # Phase 6: Format instructions (including EnhancedSceneOutline field examples)
+        # are added dynamically by SafeGeneratePydantic via _build_format_instruction()
 
     def test_enhanced_scene_outline_green_fixes_indonesian(self, mock_logger):
         """
