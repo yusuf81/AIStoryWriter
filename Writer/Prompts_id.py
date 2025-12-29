@@ -22,6 +22,26 @@ Fokus pada:
 - Preferensi format
 - Instruksi meta lainnya yang bukan bagian dari plot
 
+# CONTOH EKSTRAKSI YANG BENAR:
+Contoh 1:
+User: "Cerita harus memiliki 2 bab saja"
+Output: {{"context": "Cerita harus terdiri dari 2 bab dengan panjang moderat (sekitar 2-3 paragraf per bab). Gaya keseluruhan harus menarik dan kohesif. Format output harus dalam bahasa Indonesia."}}
+
+Contoh 2:
+User: "Tulis 5 chapter dengan gaya formal"
+Output: {{"context": "Cerita terdiri dari 5 bab dengan panjang sedang. Gaya keseluruhan harus formal dan akademis. Format output harus dalam bahasa Indonesia."}}
+
+Contoh 3:
+User: "Buat cerita 3 bab yang panjang dan detail"
+Output: {{"context": "Cerita harus terdiri dari 3 bab dengan panjang detail (sekitar 4-5 paragraf per bab). Gaya keseluruhan harus deskriptif dan mendalam. Format output harus dalam bahasa Indonesia."}}
+
+# PENTING - HINDARI EKSTRAKSI SEPERTI INI:
+❌ "masing-masing berisi 1-2 paragraf" (terlalu literal dan kaku, akan menghasilkan chapter yang terlalu pendek)
+❌ "setiap bab hanya 1 paragraf" (terlalu rigid, tidak memberi ruang kreativitas)
+
+✅ "dengan panjang moderat (sekitar 2-3 paragraf per bab)" (lebih flexible dan natural)
+✅ "panjang sedang" (memberi kebebasan pada writer)
+
 Tuliskan dalam bahasa Indonesia.
 HANYA kembalikan JSON yang valid, tanpa teks lain.
 """
@@ -152,8 +172,7 @@ Harap kembalikan respons Anda dalam format JSON yang valid dengan struktur berik
     "location": "Lokasi utama",
     "culture": "Konteks budaya",
     "mood": "Suasana keseluruhan"
-  }},
-  "target_chapter_count": 10
+  }}
 }}
 
 Fields yang diperlukan:

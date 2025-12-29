@@ -230,9 +230,19 @@ Format: kata kerja + deskripsi singkat perubahan (maksimal 72 karakter)."""
     if not commit_message:
         print("❌ Failed to generate commit message")
         sys.exit(1)
-    
+
     # Clean up the message (remove any extra quotes or formatting)
     commit_message = commit_message.strip().strip('"').strip("'")
+
+    # Try to parse as JSON if it looks like JSON
+    if commit_message.startswith('{') and commit_message.endswith('}'):
+        try:
+            parsed = json.loads(commit_message)
+            if 'message' in parsed:
+                commit_message = parsed['message']
+        except json.JSONDecodeError:
+            # If JSON parsing fails, use the raw message
+            pass
     
     print("💬 Generated commit message:")
     print(f"   '{commit_message}'")
