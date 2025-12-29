@@ -1,7 +1,7 @@
 # ollamasemua= "ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
 # ollamasemua= "huihui_ai/qwen2.5-abliterate:32b"
-# ollamasemua= "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
-ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
+ollamasemua= "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
+# ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
 # ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest" #awawa
 INITIAL_OUTLINE_WRITER_MODEL = (
     # "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
@@ -44,9 +44,9 @@ FAST_MODEL = (
 OLLAMA_CTX = 16384
 
 # OLLAMA_HOST = "https://xxxx-11434.proxy.runpod.net"
-# OLLAMA_HOST = "10.23.82.116:11434"
+OLLAMA_HOST = "http://10.23.82.116:11434"
 # OLLAMA_HOST = "10.23.147.239:11434"
-OLLAMA_HOST = "http://127.0.0.1:22434"
+# OLLAMA_HOST = "http://127.0.0.1:22434"
 
 
 SEED = 12  # Note this value is overridden by the argparser
