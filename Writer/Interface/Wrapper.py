@@ -106,8 +106,30 @@ class Interface:
     },
     "pacing": "Moderate with moments of excitement and wonder.",
     "style": "Descriptive narrative with vivid imagery and emotional depth",
+    "plot_structure": {
+        "exposition": "Rian hears legends of the dragon's treasure cave in his village.",
+        "rising_action": "Rian journeys through the forest and discovers the hidden cave entrance.",
+        "climax": "Rian faces the dragon in a test of character rather than strength.",
+        "falling_action": "The dragon reveals the true nature of the treasure.",
+        "resolution": "Rian gains wisdom and friendship instead of gold."
+    },
+    "settings": {
+        "Village": {
+            "time": "Medieval fantasy era",
+            "location": "Small mountain village",
+            "culture": "Close-knit community with oral traditions",
+            "mood": "Warm and hopeful"
+        },
+        "Dragon's Cave": {
+            "time": "Timeless",
+            "location": "Deep within ancient mountains",
+            "culture": "Ancient magical realm",
+            "mood": "Mysterious and awe-inspiring"
+        }
+    },
     "conflict": "External conflict between hero and antagonist over the treasure",
-    "symbolism": [{{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}}]
+    "symbolism": [{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}],
+    "resolution": "The hero learns that true treasure is wisdom and friendship, not material wealth."
 }''',
             'field_descriptions': {
                 # StoryElements
@@ -195,8 +217,30 @@ class Interface:
     },
     "pacing": "Sedang dengan momen kegembiraan dan keajaiban.",
     "style": "Narasi deskriptif dengan citraan yang hidup dan kedalaman emosional",
+    "plot_structure": {
+        "exposition": "Rian mendengar legenda gua harta karun naga di desanya.",
+        "rising_action": "Rian melakukan perjalanan melalui hutan dan menemukan pintu masuk gua tersembunyi.",
+        "climax": "Rian menghadapi naga dalam ujian karakter, bukan kekuatan.",
+        "falling_action": "Naga mengungkapkan sifat sejati harta karun.",
+        "resolution": "Rian memperoleh kebijaksanaan dan persahabatan daripada emas."
+    },
+    "settings": {
+        "Desa": {
+            "time": "Era fantasi abad pertengahan",
+            "location": "Desa kecil di pegunungan",
+            "culture": "Komunitas erat dengan tradisi lisan",
+            "mood": "Hangat dan penuh harapan"
+        },
+        "Gua Naga": {
+            "time": "Abadi",
+            "location": "Jauh di dalam pegunungan kuno",
+            "culture": "Alam magis kuno",
+            "mood": "Misterius dan menakjubkan"
+        }
+    },
     "conflict": "Konflik eksternal antara pahlawan dan antagonis tentang harta karun",
-    "symbolism": [{{"symbol": "Harta Karun", "meaning": "Simbol pencapaian dan harga diri"}}]
+    "symbolism": [{"symbol": "Harta Karun", "meaning": "Simbol pencapaian dan harga diri"}],
+    "resolution": "Pahlawan belajar bahwa harta sejati adalah kebijaksanaan dan persahabatan, bukan kekayaan materi."
 }''',
             'field_descriptions': {
                 # StoryElements
