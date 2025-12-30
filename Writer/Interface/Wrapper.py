@@ -131,6 +131,62 @@ class Interface:
     "symbolism": [{"symbol": "Treasure", "meaning": "Symbol of achievement and self-worth"}],
     "resolution": "The hero learns that true treasure is wisdom and friendship, not material wealth."
 }''',
+            'outline_output_example': '''{
+    "title": "The Dragon's Treasure Cave",
+    "genre": "Fantasy Adventure",
+    "theme": "True treasure is knowledge and friendship, not material wealth",
+    "chapters": [
+        "Chapter 1: The village boy Rian hears legends of a dragon's treasure cave and decides to seek it out despite warnings from elders.",
+        "Chapter 2: Rian discovers the cave, meets the dragon Ember, and learns that the real treasure is the wisdom and friendship he gains along the way."
+    ],
+    "character_list": ["Rian", "Ember"],
+    "character_details": {
+        "Rian": "A brave young explorer with a curious nature, seeking to prove himself through adventure",
+        "Ember": "A small green dragon who guards the cave's treasure, wise and protective with a playful spirit"
+    },
+    "setting": {
+        "time": "Medieval fantasy era",
+        "location": "Small mountain village and dragon's cave in ancient mountains",
+        "culture": "Close-knit community with oral traditions and belief in mythical creatures",
+        "mood": "Warm, hopeful, and mysterious"
+    },
+    "target_chapter_count": 2
+}''',
+            'chapter_outline_output_example': '''{
+    "chapter_number": 1,
+    "chapter_title": "Fire of the Dragon and the Legend of Wisdom",
+    "scenes": [
+        {
+            "title": "The Elder's Warning",
+            "characters_and_setting": "Rian and the Village Elder at the evening bonfire, surrounded by curious villagers",
+            "conflict_and_tone": "Tension between Rian's ambition and the Elder's caution, mysterious and foreboding",
+            "key_events": "Elder tells the legend of the dragon's cave and warns of its dangers, Rian decides to seek the cave",
+            "literary_devices": "Foreshadowing through the legend, symbolism of fire representing both danger and enlightenment",
+            "resolution": "Rian commits to the journey despite warnings"
+        },
+        {
+            "title": "Journey to the Cave",
+            "characters_and_setting": "Rian traveling through treacherous mountain terrain",
+            "conflict_and_tone": "External struggle against nature and internal doubt, tense and challenging",
+            "key_events": "Rian overcomes obstacles, discovers the hidden cave entrance behind a waterfall",
+            "literary_devices": "Imagery of the journey as personal growth, metaphor of the waterfall as a veil between worlds",
+            "resolution": "Rian enters the cave, crossing the threshold of adventure"
+        },
+        {
+            "title": "The Dragon's Test",
+            "characters_and_setting": "Rian and Ember in the crystal-filled cave chamber",
+            "conflict_and_tone": "Confrontation between Rian's desire for treasure and Ember's guardianship, intense yet mystical",
+            "key_events": "Ember appears, challenges Rian's intentions, tests his character rather than his strength",
+            "literary_devices": "Dialogue as character revelation, symbolism of crystals as wisdom rather than wealth",
+            "resolution": "Rian begins to understand the true nature of treasure"
+        }
+    ],
+    "characters_present": ["Rian", "Ember", "Village Elder"],
+    "outline_summary": "Rian hears the legend of a dragon's treasure and embarks on a journey to find the cave, where he meets Ember and faces a test of character",
+    "estimated_word_count": 800,
+    "setting": "Village and dragon's cave",
+    "main_conflict": "Rian's quest for material treasure conflicts with the dragon's test of his true character"
+}''',
             'field_descriptions': {
                 # StoryElements
                 'title': 'Story title',
@@ -241,6 +297,62 @@ class Interface:
     "conflict": "Konflik eksternal antara pahlawan dan antagonis tentang harta karun",
     "symbolism": [{"symbol": "Harta Karun", "meaning": "Simbol pencapaian dan harga diri"}],
     "resolution": "Pahlawan belajar bahwa harta sejati adalah kebijaksanaan dan persahabatan, bukan kekayaan materi."
+}''',
+            'outline_output_example': '''{
+    "title": "Gua Harta Karun Naga",
+    "genre": "Petualangan Fantasi",
+    "theme": "Harta sejati adalah pengetahuan dan persahabatan, bukan kekayaan materi",
+    "chapters": [
+        "Bab 1: Anak desa bernama Rian mendengar legenda tentang gua harta karun naga dan memutuskan untuk mencarinya meskipun mendapat peringatan dari tetua.",
+        "Bab 2: Rian menemukan gua tersebut, bertemu dengan naga Ember, dan belajar bahwa harta yang sebenarnya adalah kebijaksanaan dan persahabatan yang ia dapatkan sepanjang perjalanan."
+    ],
+    "character_list": ["Rian", "Ember"],
+    "character_details": {
+        "Rian": "Seorang penjelajah muda yang pemberani dengan sifat ingin tahu, berusaha membuktikan dirinya melalui petualangan",
+        "Ember": "Naga kecil berwarna hijau yang menjaga harta gua, bijaksana dan protektif dengan semangat yang ceria"
+    },
+    "setting": {
+        "time": "Era fantasi abad pertengahan",
+        "location": "Desa kecil di pegunungan dan gua naga di pegunungan kuno",
+        "culture": "Komunitas erat dengan tradisi lisan dan kepercayaan pada makhluk mitos",
+        "mood": "Hangat, penuh harapan, dan misterius"
+    },
+    "target_chapter_count": 2
+}''',
+            'chapter_outline_output_example': '''{
+    "chapter_number": 1,
+    "chapter_title": "Api Naga dan Legenda Kebijaksanaan",
+    "scenes": [
+        {
+            "title": "Peringatan Tetua",
+            "characters_and_setting": "Rian dan Tetua Desa di api unggun malam hari, dikelilingi penduduk desa yang penasaran",
+            "conflict_and_tone": "Ketegangan antara ambisi Rian dan kehati-hatian Tetua, misterius dan penuh firasat",
+            "key_events": "Tetua menceritakan legenda gua naga dan memperingatkan bahayanya, Rian memutuskan untuk mencari gua tersebut",
+            "literary_devices": "Foreshadowing melalui legenda, simbolisme api yang melambangkan bahaya dan pencerahan",
+            "resolution": "Rian berkomitmen untuk melakukan perjalanan meskipun ada peringatan"
+        },
+        {
+            "title": "Perjalanan ke Gua",
+            "characters_and_setting": "Rian melintasi medan pegunungan yang berbahaya",
+            "conflict_and_tone": "Perjuangan eksternal melawan alam dan keraguan internal, tegang dan menantang",
+            "key_events": "Rian mengatasi rintangan, menemukan pintu masuk gua tersembunyi di balik air terjun",
+            "literary_devices": "Citra perjalanan sebagai pertumbuhan pribadi, metafora air terjun sebagai tirai antara dunia",
+            "resolution": "Rian memasuki gua, melewati ambang petualangan"
+        },
+        {
+            "title": "Ujian Naga",
+            "characters_and_setting": "Rian dan Ember di ruang gua yang dipenuhi kristal",
+            "conflict_and_tone": "Konfrontasi antara keinginan Rian akan harta dan penjagaan Ember, intens namun mistis",
+            "key_events": "Ember muncul, menantang niat Rian, menguji karakternya bukan kekuatannya",
+            "literary_devices": "Dialog sebagai pengungkapan karakter, simbolisme kristal sebagai kebijaksanaan bukan kekayaan",
+            "resolution": "Rian mulai memahami sifat sejati harta karun"
+        }
+    ],
+    "characters_present": ["Rian", "Ember", "Tetua Desa"],
+    "outline_summary": "Rian mendengar legenda harta karun naga dan memulai perjalanan untuk menemukan gua tersebut, di mana ia bertemu Ember dan menghadapi ujian karakter",
+    "estimated_word_count": 800,
+    "setting": "Desa dan gua naga",
+    "main_conflict": "Pencarian Rian akan harta materi bertentangan dengan ujian sang naga terhadap karakter sejatinya"
 }''',
             'field_descriptions': {
                 # StoryElements
