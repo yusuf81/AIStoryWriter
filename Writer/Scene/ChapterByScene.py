@@ -124,7 +124,7 @@ def ChapterByScene(
     TotalScenes = len(SceneOutlineList)  # Get total scenes after deduplication
     for idx, SceneOutlineObj in enumerate(SceneOutlineList):  # SceneOutlineObj is SceneOutline object
         SceneNum = idx + 1  # 1-based index for logging
-        RoughChapter += Writer.Scene.SceneOutlineToScene.SceneOutlineToScene(
+        scene_text = Writer.Scene.SceneOutlineToScene.SceneOutlineToScene(
             Interface,
             _Logger,
             SceneNum,
@@ -133,6 +133,8 @@ def ChapterByScene(
             _Outline,
             _BaseContext,
         )
+        # Strip trailing whitespace and add consistent paragraph break to prevent wall-of-text
+        RoughChapter += scene_text.rstrip() + "\n\n"
 
     _Logger.Log(
         f"Finished Scene-By-Scene Generation Pipeline for Chapter {_ChapterNum}/{_TotalChapters}",
