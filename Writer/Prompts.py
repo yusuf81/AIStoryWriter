@@ -43,13 +43,6 @@ Please extract the following story elements from the prompt above:
 - Settings and symbolism
 
 Provide comprehensive character details including physical description, personality, background, and motivation for each character.
-
-CRITICAL - Character Details Format:
-- If including character_details field, it MUST be a simple object/dict with character names as keys
-- Values MUST be simple STRING descriptions, NOT nested objects or arrays
-- Example: {{"Hero": "Brief string description", "Villain": "Brief string description"}}
-- DO NOT use nested structures like {{"name": "Character Name", "personality": "brave and kind"}}
-- Use simple strings: {{"Hero": "Brave warrior seeking redemption", "Villain": "Dark sorcerer driven by revenge"}}
 """
 
 INITIAL_OUTLINE_PROMPT = """
@@ -466,10 +459,12 @@ MINIMUM REQUIREMENTS (CRITICAL):
 - Your chapter outline MUST be at least 100 words total
 - Include at least 2-3 detailed scenes per chapter
 - Each scene should have:
-  * Setting details (location, time, atmosphere)
-  * Character actions and interactions
-  * Key plot points and dialogue hints
-  * Pacing notes
+  * title: Brief scene title (optional)
+  * characters_and_setting: Characters present and setting details (location, time, atmosphere)
+  * conflict_and_tone: Scene conflict and emotional tone
+  * key_events: Important plot points and events
+  * literary_devices: Literary techniques used (optional)
+  * resolution: Scene conclusion and lead-in (optional)
 
 DO NOT provide only a brief summary. Expand into detailed scene-by-scene structure.
 

@@ -92,11 +92,11 @@ class TestPromptFormatValidation:
 
     def test_story_elements_prompt_indonesian_format(self, mock_logger):
         """
-        RED: Test that Indonesian GENERATE_STORY_ELEMENTS prompt produces examples matching StoryElements
+        Phase 6: Test that Indonesian GENERATE_STORY_ELEMENTS has NO hardcoded JSON examples
 
-        Arrange: Load Indonesian prompts and extract JSON examples
-        Act: Extract and validate JSON examples from the Indonesian prompt
-        Assert: All examples should validate against StoryElements model
+        Arrange: Load Indonesian prompts
+        Act: Check for hardcoded JSON format
+        Assert: Should NOT have hardcoded JSON format (SafeGeneratePydantic auto-appends)
         """
         # Arrange
         import Writer.Config as Config
@@ -106,18 +106,13 @@ class TestPromptFormatValidation:
         prompt = indonesian_prompts.GENERATE_STORY_ELEMENTS
         Config.NATIVE_LANGUAGE = original_lang  # Restore
 
-        # Act
-        examples = self.extract_json_examples(prompt)
+        # Act & Assert - No hardcoded JSON format (Phase 6 cleanup)
+        assert '=== FORMAT JSON' not in prompt, "Indonesian prompt should not have hardcoded JSON format section"
+        assert 'Field wajib:' not in prompt, "Indonesian prompt should not have hardcoded field descriptions"
+        assert 'Example format:' not in prompt, "Indonesian prompt should not have hardcoded JSON examples"
 
-        # Assert - This will FAIL (RED phase) because Indonesian examples have wrong structure
-        assert len(examples) > 0, "Indonesian prompt should contain at least one JSON example"
-
-        # Try to validate each example against StoryElements
-        for i, example in enumerate(examples):
-            try:
-                StoryElements(**example)
-            except Exception as e:
-                pytest.fail(f"Example {i} from Indonesian prompt fails StoryElements validation: {e}")
+        # Should still describe the task
+        assert 'elemen cerita' in prompt.lower() or 'story elements' in prompt.lower(), "Prompt should describe task"
 
     def test_character_structure_format(self, mock_logger):
         """
@@ -349,11 +344,11 @@ class TestPromptFormatValidation:
 
     def test_response_template_conflict_structure_indonesian(self, mock_logger):
         """
-        Test that Indonesian prompt no longer has markdown template (Phase 2 cleanup)
+        Test that Indonesian prompt no longer has markdown template or hardcoded JSON (Phase 6 cleanup)
 
         Arrange: Get Indonesian GENERATE_STORY_ELEMENTS prompt
-        Act: Check that RESPONSE_TEMPLATE is removed
-        Assert: Prompt should only have JSON format, no markdown template
+        Act: Check that RESPONSE_TEMPLATE and hardcoded JSON format are removed
+        Assert: Prompt should not have markdown template or hardcoded JSON format (SafeGeneratePydantic auto-appends)
         """
         # Arrange
         import Writer.Config as Config
@@ -366,17 +361,19 @@ class TestPromptFormatValidation:
         # Act & Assert - Markdown template should be removed (Phase 2)
         assert '<RESPONSE_TEMPLATE>' not in prompt, "Indonesian prompt should not have markdown template tag"
         assert '## Konflik' not in prompt, "Indonesian prompt should not have markdown headers"
-        # Should have JSON format instead
-        assert 'JSON' in prompt, "Indonesian prompt should have JSON format instructions"
-        assert '"conflict"' in prompt, "Indonesian prompt should have conflict in JSON example"
+        # Phase 6: No hardcoded JSON format (auto-appended by SafeGeneratePydantic)
+        assert '=== FORMAT JSON' not in prompt, "Indonesian prompt should not have hardcoded JSON format"
+        assert 'Field wajib:' not in prompt, "Indonesian prompt should not have hardcoded field descriptions"
+        # Should still describe task requirements
+        assert 'karakter' in prompt.lower(), "Prompt should describe character requirements"
 
     def test_response_template_symbolism_structure_indonesian(self, mock_logger):
         """
-        RED: Test that Indonesian response template's symbolism section expects list, not nested object
+        Test that Indonesian prompt has no markdown template or hardcoded JSON (Phase 6 cleanup)
 
         Arrange: Get Indonesian GENERATE_STORY_ELEMENTS prompt
-        Act: Check the symbolism section in RESPONSE_TEMPLATE
-        Assert: Template should not create nested object with numbered symbols
+        Act: Check that RESPONSE_TEMPLATE and hardcoded JSON are removed
+        Assert: No markdown template, no hardcoded JSON format (SafeGeneratePydantic auto-appends)
         """
         # Arrange
         import Writer.Config as Config
@@ -389,10 +386,11 @@ class TestPromptFormatValidation:
         # Act & Assert - Markdown template should be removed (Phase 2)
         assert '## Simbolisme' not in prompt, "Indonesian prompt should not have markdown Simbolisme header"
         assert '### Simbol 1' not in prompt, "Indonesian prompt should not have numbered markdown symbols"
-        # Should have JSON format instead
-        assert '"symbolism"' in prompt, "Indonesian prompt should have symbolism in JSON example"
-        assert '"symbol"' in prompt, "Indonesian prompt should have symbol key in JSON example"
-        assert '"meaning"' in prompt, "Indonesian prompt should have meaning key in JSON example"
+        # Phase 6: No hardcoded JSON format (auto-appended by SafeGeneratePydantic)
+        assert '=== FORMAT JSON' not in prompt, "Indonesian prompt should not have hardcoded JSON format"
+        assert 'Example format:' not in prompt, "Indonesian prompt should not have hardcoded JSON examples"
+        # Should still describe the task
+        assert 'simbolisme' in prompt.lower() or 'simbol' in prompt.lower(), "Prompt should mention symbolism task"
 
 
 class TestFormatInstructionBuilder:
@@ -706,23 +704,21 @@ class TestEnhancedSceneOutlineFieldNames:
 
     def test_enhanced_scene_outline_green_fixes_indonesian(self, mock_logger):
         """
-        GREEN: Verify Indonesian CHAPTER_OUTLINE_PROMPT now has correct JSON field examples
+        Phase 6: Verify Indonesian CHAPTER_OUTLINE_PROMPT has NO hardcoded JSON examples
         """
         # Arrange
         from Writer.Prompts_id import CHAPTER_OUTLINE_PROMPT
 
-        # Act & Assert - Check for correct JSON field examples
-        assert '"title": "Judul adegan singkat"' in CHAPTER_OUTLINE_PROMPT, \
-            "Indonesian prompt should now contain correct 'title' field example"
-        assert '"characters_and_setting":' in CHAPTER_OUTLINE_PROMPT, \
-            "Indonesian prompt should contain correct 'characters_and_setting' field example"
-        assert '"conflict_and_tone":' in CHAPTER_OUTLINE_PROMPT, \
-            "Indonesian prompt should contain correct 'conflict_and_tone' field example"
-        assert '"key_events":' in CHAPTER_OUTLINE_PROMPT, \
-            "Indonesian prompt should contain correct 'key_events' field example"
-        assert '"literary_devices":' in CHAPTER_OUTLINE_PROMPT, \
-            "Indonesian prompt should contain correct 'literary_devices' field example"
-        assert '"resolution":' in CHAPTER_OUTLINE_PROMPT, \
-            "Indonesian prompt should contain correct 'resolution' field example"
+        # Act & Assert - No hardcoded JSON format (SafeGeneratePydantic auto-appends)
+        assert '# FORMAT OUTPUT JSON' not in CHAPTER_OUTLINE_PROMPT, \
+            "Indonesian prompt should not have hardcoded JSON format section"
+        assert 'Field yang wajib:' not in CHAPTER_OUTLINE_PROMPT, \
+            "Indonesian prompt should not have hardcoded field descriptions"
+        assert '"title": "Judul adegan singkat"' not in CHAPTER_OUTLINE_PROMPT, \
+            "Indonesian prompt should not have hardcoded JSON examples"
 
-        # GREEN: The Indonesian prompts now have correct JSON field examples
+        # Should still describe task requirements for scenes
+        assert 'adegan' in CHAPTER_OUTLINE_PROMPT.lower(), "Prompt should describe scene requirements"
+        assert 'detail' in CHAPTER_OUTLINE_PROMPT.lower(), "Prompt should emphasize detail requirements"
+
+        # Phase 6: Indonesian prompts now rely on SafeGeneratePydantic auto-append (no duplication)

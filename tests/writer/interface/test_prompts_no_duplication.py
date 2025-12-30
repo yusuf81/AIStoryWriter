@@ -4,7 +4,6 @@ SafeGeneratePydantic automatically appends format instructions from
 _build_format_instruction(). Prompts must NOT include their own format
 instructions, otherwise they get sent twice (duplication bug).
 """
-import pytest
 
 
 class TestPromptsNoDuplication:
@@ -62,4 +61,35 @@ class TestPromptsNoDuplication:
         prompt = Prompts.CHAPTER_OUTLINE_PROMPT
 
         assert 'JSON OUTPUT FORMAT' not in prompt
+        assert 'outline' in prompt.lower()
+
+    def test_initial_outline_no_format_indonesian(self, indonesian_language_config):
+        """INITIAL_OUTLINE_PROMPT has no hardcoded format instruction (ID)."""
+        from Writer import Prompts_id
+
+        prompt = Prompts_id.INITIAL_OUTLINE_PROMPT
+
+        assert '=== FORMAT JSON' not in prompt
+        assert '# FORMAT OUTPUT JSON' not in prompt
+        assert 'Fields yang diperlukan:' not in prompt
+        assert 'outline' in prompt.lower()
+
+    def test_chapter_generation_no_format_indonesian(self, indonesian_language_config):
+        """CHAPTER_GENERATION_PROMPT has no hardcoded format instruction (ID)."""
+        from Writer import Prompts_id
+
+        prompt = Prompts_id.CHAPTER_GENERATION_PROMPT
+
+        assert '# FORMAT OUTPUT JSON' not in prompt
+        assert 'Field yang wajib:' not in prompt
+        assert 'chapter' in prompt.lower() or 'bab' in prompt.lower()
+
+    def test_chapter_outline_no_format_indonesian(self, indonesian_language_config):
+        """CHAPTER_OUTLINE_PROMPT has no hardcoded format instruction (ID)."""
+        from Writer import Prompts_id
+
+        prompt = Prompts_id.CHAPTER_OUTLINE_PROMPT
+
+        assert '# FORMAT OUTPUT JSON' not in prompt
+        assert 'Field yang wajib:' not in prompt
         assert 'outline' in prompt.lower()
