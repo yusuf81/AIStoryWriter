@@ -448,7 +448,10 @@ class StoryPipeline:
 
             # Assuming RefineOutline is a function in OutlineGenerator now
             refined_global_outline, _ = self.OutlineGenerator.ReviseOutline(
-                self.Interface, self.SysLogger, base_outline_for_expansion, "global_chapter_structure"
+                self.Interface, self.SysLogger, base_outline_for_expansion,
+                "Perluas setiap outline bab dengan detail plot, karakter, dan konflik. "
+                "Setiap bab harus minimal 200 kata dengan menyebutkan nama-nama karakter. "
+                "PENTING: Jaga SEMUA nama karakter yang sudah ada dari outline asli!"
             )
             current_state["refined_global_outline"] = refined_global_outline
             current_state["last_completed_step"] = "refine_global_outline"  # Intermediate step
