@@ -119,8 +119,6 @@ class TestChapterExtractionGeneration:
         # Assert
         assert chapter.chapter_number == 3
         assert "ancient temple" in chapter.text
-        assert chapter.word_count == 30
-
     def test_chapter_output_validates_text_length(self):
         """Test that ChapterOutput validates minimum text length"""
         # Arrange

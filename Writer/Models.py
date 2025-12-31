@@ -2,7 +2,6 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Union, Any
 from datetime import datetime
-import Writer.Config as Config
 
 
 class BaseContext(BaseModel):
@@ -33,7 +32,6 @@ class ChapterOutput(BaseModel):
     Provides validation and type safety for chapter generation.
     """
     text: str = Field(min_length=100, description="The full chapter text content")
-    word_count: int = Field(gt=0, description="Total word count of the chapter")
     scenes: List[str] = Field(default_factory=list, description="List of scene descriptions in the chapter")
     characters_present: List[str] = Field(default_factory=list, description="Characters appearing in this chapter")
     chapter_number: int = Field(ge=1, description="Chapter number in the story")
@@ -54,17 +52,6 @@ class ChapterOutput(BaseModel):
             if indicator in v.upper():
                 raise ValueError(f"Chapter contains placeholder text: {indicator}")
 
-        return v
-
-    @field_validator('word_count')
-    @classmethod
-    def validate_word_count_consistency(cls, v, info):
-        """Ensure word count matches actual text"""
-        if 'text' in info.data:
-            actual_word_count = len(info.data['text'].split())
-            tolerance = getattr(Config, 'PYDANTIC_WORD_COUNT_TOLERANCE', 50)
-            if abs(v - actual_word_count) > tolerance:
-                raise ValueError(f"Word count {v} doesn't match actual word count {actual_word_count} (tolerance: ±{tolerance})")
         return v
 
     class Config:
@@ -518,10 +505,6 @@ class SceneContent(BaseModel):
                     "This must be complete narrative prose, NOT a summary or outline. "
                     "Include detailed descriptions, character actions, dialogue, and setting details."
     )
-    word_count: int = Field(
-        gt=0,
-        description="Total word count of the scene"
-    )
 
     @field_validator('text')
     @classmethod
@@ -538,19 +521,6 @@ class SceneContent(BaseModel):
             if indicator in v.upper():
                 raise ValueError(f"Scene contains placeholder text: {indicator}")
 
-        return v
-
-    @field_validator('word_count')
-    @classmethod
-    def validate_word_count_consistency(cls, v, info):
-        """Ensure word count matches actual text - reuses pattern from ChapterOutput"""
-        if 'text' in info.data:
-            actual_word_count = len(info.data['text'].split())
-            tolerance = getattr(Config, 'PYDANTIC_WORD_COUNT_TOLERANCE', 50)
-            if abs(v - actual_word_count) > tolerance:
-                raise ValueError(
-                    f"Word count {v} doesn't match actual word count {actual_word_count} (tolerance: ±{tolerance})"
-                )
         return v
 
 

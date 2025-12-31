@@ -22,18 +22,6 @@ def test_reasoning_constraint_in_models():
         "ReasoningOutput max_length should be 2000"
 
 
-def test_word_count_field_exists():
-    """Verify ChapterOutput has word_count field"""
-    from Writer.Models import ChapterOutput
-
-    schema = ChapterOutput.model_json_schema()
-
-    assert 'word_count' in schema['properties'], \
-        "ChapterOutput should have word_count field"
-    assert schema['properties']['word_count']['type'] == 'integer', \
-        "word_count should be integer type"
-
-
 def test_constraint_explanation_logic_reasoning():
     """Test the constraint explanation logic for reasoning field"""
     # Simulate what _build_constraint_explanations() should do
@@ -63,33 +51,6 @@ def test_constraint_explanation_logic_reasoning():
         "Should encourage conciseness"
 
 
-def test_constraint_explanation_logic_word_count():
-    """Test the constraint explanation logic for word_count field"""
-    import Writer.Config as Config
-
-    properties = {
-        'word_count': {'type': 'integer'},
-        'text': {'type': 'string'}
-    }
-
-    # Test the logic
-    explanations = []
-    for field_name, field_info in properties.items():
-        if field_name == 'word_count':
-            tolerance = getattr(Config, 'PYDANTIC_WORD_COUNT_TOLERANCE', 100)
-            explanations.append(
-                f"'{field_name}': Must match actual text word count within ±{tolerance} words. "
-                "Be accurate but don't obsess over exact counts."
-            )
-
-    assert len(explanations) == 1, \
-        "Should generate one explanation for word_count field"
-    assert "'word_count'" in explanations[0], \
-        "Explanation should reference 'word_count' field"
-    assert "±100 words" in explanations[0], \
-        "Should mention tolerance value from config"
-
-
 def test_constraint_explanation_logic_character_name():
     """Test the constraint explanation logic for character name fields"""
     properties = {
@@ -114,16 +75,6 @@ def test_constraint_explanation_logic_character_name():
         "Should explain character_name field"
     assert any("'protagonist_character'" in exp for exp in explanations), \
         "Should explain protagonist_character field"
-
-
-def test_config_has_word_count_tolerance():
-    """Verify Config has PYDANTIC_WORD_COUNT_TOLERANCE setting"""
-    import Writer.Config as Config
-
-    assert hasattr(Config, 'PYDANTIC_WORD_COUNT_TOLERANCE'), \
-        "Config should have PYDANTIC_WORD_COUNT_TOLERANCE"
-    assert Config.PYDANTIC_WORD_COUNT_TOLERANCE == 100, \
-        "Default tolerance should be 100 words"
 
 
 def test_empty_explanations_when_no_constraints():

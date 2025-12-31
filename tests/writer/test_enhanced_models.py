@@ -82,7 +82,6 @@ class TestEnhancedChapterOutlineOutput:
                 "Scene 3: Naga menantang Rian dengan teka-teki tentang kejujuran, Rian harus membuktikan dirinya layak"
             ],  # Must have at least 3 scenes
             outline_summary="Chapter about Rian's adventure discovering treasure cave guarded by a small dragon with mysterious tests of character",
-            estimated_word_count=500,
             setting=None,
             main_conflict=None
         )
@@ -144,9 +143,7 @@ class TestEnhancedChapterOutlineOutput:
             scenes=[
                 "Scene 1: A complete scene with meaningful content"  # Can now work with 1 scene
             ],
-            outline_summary="Short chapter summary",
-            estimated_word_count=None,
-            setting=None,
+            outline_summary="Short chapter summary",            setting=None,
             main_conflict=None
         )
 
@@ -167,9 +164,7 @@ class TestEnhancedChapterOutlineOutput:
                     resolution=None
                 )
             ],
-            outline_summary="Enhanced chapter summary",
-            estimated_word_count=None,
-            setting=None,
+            outline_summary="Enhanced chapter summary",            setting=None,
             main_conflict=None
         )
 
@@ -182,9 +177,7 @@ class TestEnhancedChapterOutlineOutput:
                 chapter_number=1,
                 chapter_title="Empty Chapter",
                 scenes=[],  # Empty scenes
-                outline_summary="Chapter summary",
-                estimated_word_count=None,
-                setting=None,
+                outline_summary="Chapter summary",                setting=None,
                 main_conflict=None
             )
 
@@ -206,9 +199,7 @@ class TestEnhancedChapterOutlineOutput:
                 "Scene 2: Development and conflict",
                 "Scene 3: Climax and resolution"
             ],
-            outline_summary="Chapter following traditional story structure",
-            estimated_word_count=None,
-            setting=None,
+            outline_summary="Chapter following traditional story structure",            setting=None,
             main_conflict=None
         )
 
@@ -225,70 +216,7 @@ class TestEnhancedChapterOutlineOutput:
 class TestEnhancedChapterOutput:
     """TDD tests for ChapterOutput with relaxed word count validation"""
 
-    def test_chapter_output_current_strict_word_count(self):
-        """
-        RED TEST: Current ChapterOutput has word count validation with ±50 tolerance
 
-        This test shows current validation limits that may need extension.
-        """
-        from Writer.Models import ChapterOutput
-
-        # Current model works but word_count must match actual text words within tolerance
-        text = "This is a test chapter content. " * 10  # Create about 120 words
-        actual_word_count = len(text.split())
-
-        # Should work within current ±50 tolerance
-        chapter = ChapterOutput(
-            text=text,
-            word_count=actual_word_count - 30,  # Within tolerance
-            scenes=["Scene 1: Test scene"],
-            characters_present=["Test Character"],
-            chapter_number=1,
-            chapter_title="Test Chapter"
-        )
-
-        assert chapter.word_count > 0
-        assert len(chapter.text) >= 100  # min length requirement
-
-    def test_chapter_output_needs_relaxed_validation(self):
-        """
-        RED TEST: ChapterOutput needs increased word count tolerance from ±50 to ±100
-
-        This test demonstrates need for ±100 word count tolerance.
-        """
-        from Writer.Models import ChapterOutput
-
-        # Show updated tolerance (now ±100)
-        current_tolerance = 100
-        previous_tolerance = 50
-
-        # Create text with actual word count
-        text = "word " * 200  # 200 words
-        actual_word_count = len(text.split())
-
-        # Current model should fail with more than ±50 difference
-        with pytest.raises(ValidationError) as exc_info:
-            ChapterOutput(
-                text=text,
-                word_count=actual_word_count - 150,  # Outside new ±100 tolerance
-                scenes=[f"Scene {i}: Test content" for i in range(3)],
-                characters_present=["Character 1", "Character 2"],
-                chapter_number=1,
-                chapter_title="Tolerance Test Chapter"
-            )
-
-        assert "doesn't match actual word count" in str(exc_info.value)
-        assert "tolerance: ±100" in str(exc_info.value)
-
-        # Show what now works with increased tolerance
-        # Previous tolerance: 200 ± 50 = 150-250
-        # Current tolerance: 200 ± 100 = 100-300
-        current_acceptable_range = range(actual_word_count - current_tolerance, actual_word_count + current_tolerance + 1)
-        previous_acceptable_range = range(actual_word_count - previous_tolerance, actual_word_count + previous_tolerance + 1)
-
-        # Show the benefit of extended tolerance
-        assert 120 in current_acceptable_range  # Now allowed with ±100
-        assert 120 not in previous_acceptable_range  # But not allowed with previous ±50
 
 
 class TestEnhancedReviewOutput:

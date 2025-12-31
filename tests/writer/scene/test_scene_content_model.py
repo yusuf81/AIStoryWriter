@@ -44,53 +44,12 @@ class TestSceneContentValidation:
         )
 
         scene = SceneContent(
-            text=prose_text,
-            word_count=200
-        )
+            text=prose_text)
 
         assert scene.text == prose_text
-        assert scene.word_count == 200
         assert len(scene.text) > 150
 
-    def test_scene_content_word_count_consistency(self):
-        """Test that word_count matches actual text word count"""
-        from Writer.Models import SceneContent
 
-        prose_text = (
-            "Alex walked through the misty forest, his heart pounding with anticipation. "
-            "The ancient trees loomed overhead, their branches creating intricate patterns "
-            "against the twilight sky. He could hear the distant sound of water flowing."
-        )
-        actual_word_count = len(prose_text.split())
-
-        # Should pass when word_count matches
-        scene = SceneContent(
-            text=prose_text,
-            word_count=actual_word_count
-        )
-        assert scene.word_count == actual_word_count
-
-    def test_reject_word_count_mismatch(self):
-        """Test that word count mismatch raises ValidationError"""
-        from Writer.Models import SceneContent
-
-        prose_text = (
-            "Alex walked through the misty forest, his heart pounding with anticipation. "
-            "The ancient trees loomed overhead, their branches creating intricate patterns "
-            "against the twilight sky. He could hear the distant sound of water flowing."
-        )
-        actual_word_count = len(prose_text.split())
-        wrong_word_count = actual_word_count + 110  # Off by more than tolerance (100)
-
-        # Should raise ValidationError due to word count mismatch
-        with pytest.raises(ValidationError) as exc_info:
-            SceneContent(
-                text=prose_text,
-                word_count=wrong_word_count
-            )
-
-        error_message = str(exc_info.value)
-        assert "doesn't match actual word count" in error_message
 
     def test_reject_too_short_scene_content(self):
         """Test that text less than 150 chars is rejected"""
@@ -101,9 +60,7 @@ class TestSceneContentValidation:
 
         with pytest.raises(ValidationError) as exc_info:
             SceneContent(
-                text=short_text,
-                word_count=6
-            )
+                text=short_text)
 
         error_message = str(exc_info.value)
         assert "at least 150 characters" in error_message
@@ -121,9 +78,7 @@ class TestSceneContentValidation:
 
         with pytest.raises(ValidationError) as exc_info:
             SceneContent(
-                text=prose_with_todo,
-                word_count=45
-            )
+                text=prose_with_todo)
 
         error_message = str(exc_info.value)
         assert "placeholder text: TODO" in error_message
@@ -141,9 +96,7 @@ class TestSceneContentValidation:
 
         with pytest.raises(ValidationError) as exc_info:
             SceneContent(
-                text=prose_with_fixme,
-                word_count=52
-            )
+                text=prose_with_fixme)
 
         error_message = str(exc_info.value)
         assert "placeholder text: FIXME" in error_message
@@ -161,9 +114,7 @@ class TestSceneContentValidation:
 
         with pytest.raises(ValidationError) as exc_info:
             SceneContent(
-                text=prose_with_tbd,
-                word_count=56
-            )
+                text=prose_with_tbd)
 
         error_message = str(exc_info.value)
         assert "placeholder text: TBD" in error_message
@@ -181,9 +132,7 @@ class TestSceneContentValidation:
 
         with pytest.raises(ValidationError) as exc_info:
             SceneContent(
-                text=prose_with_placeholder,
-                word_count=48
-            )
+                text=prose_with_placeholder)
 
         error_message = str(exc_info.value)
         assert "placeholder text: [PLACEHOLDER]" in error_message
@@ -203,12 +152,9 @@ class TestSceneContentValidation:
 
         # Should NOT raise ValidationError
         scene = SceneContent(
-            text=prose_with_ellipsis,
-            word_count=70
-        )
+            text=prose_with_ellipsis)
 
         assert "..." in scene.text
-        assert scene.word_count == 70
 
     def test_scene_content_strips_whitespace(self):
         """Test whitespace normalization"""
@@ -222,9 +168,7 @@ class TestSceneContentValidation:
         """
 
         scene = SceneContent(
-            text=prose_with_whitespace,
-            word_count=50
-        )
+            text=prose_with_whitespace)
 
         # Should strip leading/trailing whitespace
         assert not scene.text.startswith("\n")
@@ -239,9 +183,7 @@ class TestSceneContentValidation:
         prose_150_chars = "A" * 150
 
         scene = SceneContent(
-            text=prose_150_chars,
-            word_count=1
-        )
+            text=prose_150_chars)
 
         assert len(scene.text) == 150
 
@@ -250,9 +192,7 @@ class TestSceneContentValidation:
 
         with pytest.raises(ValidationError) as exc_info:
             SceneContent(
-                text=prose_149_chars,
-                word_count=1
-            )
+                text=prose_149_chars)
 
         error_message = str(exc_info.value)
         assert "at least 150 characters" in error_message
@@ -271,12 +211,9 @@ class TestSceneContentValidation:
         )
 
         scene = SceneContent(
-            text=prose_with_dialogue,
-            word_count=92
-        )
+            text=prose_with_dialogue)
 
         assert '"' in scene.text or "'" in scene.text
-        assert scene.word_count == 92
 
 
 class TestSceneContentEdgeCases:
@@ -295,9 +232,7 @@ class TestSceneContentEdgeCases:
         )
 
         scene = SceneContent(
-            text=prose_with_numbers,
-            word_count=82
-        )
+            text=prose_with_numbers)
 
         assert "3" in scene.text
         assert "200" in scene.text
@@ -316,9 +251,7 @@ class TestSceneContentEdgeCases:
 
         with pytest.raises(ValidationError) as exc_info:
             SceneContent(
-                text=prose_lowercase,
-                word_count=42
-            )
+                text=prose_lowercase)
 
         error_message = str(exc_info.value)
         assert "placeholder text: TODO" in error_message

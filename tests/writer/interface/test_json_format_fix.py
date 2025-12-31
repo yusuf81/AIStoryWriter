@@ -199,7 +199,6 @@ class TestJSONFormatFix:
             # Success validation
             assert isinstance(result, ChapterOutput)
             assert result.text == 'This is a valid chapter text that meets the minimum length requirement of 100 characters for proper validation in the test suite.'
-            assert result.word_count == 22
             assert result.chapter_number == 1
 
             # Should only be called once (no retries needed)

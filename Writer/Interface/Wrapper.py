@@ -61,7 +61,6 @@ class Interface:
             'important_return_only': "IMPORTANT: Return ONLY the JSON data, not the schema!",
             'validation_constraints_header': "=== VALIDATION CONSTRAINTS (IMPORTANT) ===",
             'constraint_reasoning_max': "'{field}': Maximum {max_len} characters. Keep your reasoning concise and focused - verbose explanations will be rejected. Aim for clarity over length.",
-            'constraint_word_count': "'{field}': Must match actual text word count within ±{tolerance} words. Be accurate but don't obsess over exact counts.",
             'constraint_min_length': "'{field}': Each name must be at least {min_len} characters. Avoid single-letter placeholders.",
             'important_constraints': "IMPORTANT CONSTRAINTS:",
             'validation_error_header': "Your response had validation errors. Please correct these fields:",
@@ -209,7 +208,6 @@ class Interface:
                 'target_chapter_count': 'Target number of chapters',
                 # ChapterOutput
                 'text': 'Full chapter text content',
-                'word_count': 'Total word count',
                 'scenes': 'Scene descriptions',
                 'characters_present': 'Characters in this chapter',
                 'chapter_number': 'Chapter number',
@@ -228,7 +226,6 @@ class Interface:
             'important_return_only': "PENTING: Kembalikan HANYA data JSON, bukan skemanya!",
             'validation_constraints_header': "=== BATASAN VALIDASI (PENTING) ===",
             'constraint_reasoning_max': "'{field}': Maksimum {max_len} karakter. Buat reasoning Anda ringkas dan fokus - penjelasan yang bertele-tele akan ditolak. Utamakan kejelasan daripada panjang.",
-            'constraint_word_count': "'{field}': Harus sesuai dengan jumlah kata teks sebenarnya dalam rentang ±{tolerance} kata. Akurat tapi jangan terlalu fokus pada hitungan yang tepat.",
             'constraint_min_length': "'{field}': Setiap nama harus minimal {min_len} karakter. Hindari placeholder satu huruf.",
             'important_constraints': "BATASAN PENTING:",
             'validation_error_header': "Respons Anda memiliki kesalahan validasi. Harap perbaiki field-field berikut:",
@@ -376,7 +373,6 @@ class Interface:
                 'target_chapter_count': 'Target jumlah bab',
                 # ChapterOutput
                 'text': 'Konten teks bab lengkap',
-                'word_count': 'Jumlah kata total',
                 'scenes': 'Deskripsi adegan',
                 'characters_present': 'Karakter di bab ini',
                 'chapter_number': 'Nomor bab',
@@ -781,8 +777,6 @@ class Interface:
 
         This helps LLMs understand validation rules upfront, reducing validation failures.
         """
-        import Writer.Config as Config
-
         explanations = []
 
         for field_name, field_info in properties.items():
@@ -791,13 +785,6 @@ class Interface:
                 max_len = field_info['maxLength']
                 explanations.append(
                     self._get_text('constraint_reasoning_max', field=field_name, max_len=max_len)
-                )
-
-            # Word count tolerance
-            if field_name == 'word_count':
-                tolerance = getattr(Config, 'PYDANTIC_WORD_COUNT_TOLERANCE', 100)
-                explanations.append(
-                    self._get_text('constraint_word_count', field=field_name, tolerance=tolerance)
                 )
 
             # Character name minimum length - use robust field detection

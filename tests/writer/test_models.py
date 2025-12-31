@@ -20,7 +20,6 @@ class TestChapterOutput:
 
         chapter = ChapterOutput(
             text=chapter_text,
-            word_count=len(chapter_text.split()),
             scenes=["Alice enters the forest", "Alice looks for the artifact"],
             characters_present=["Alice"],
             chapter_number=1,
@@ -28,7 +27,6 @@ class TestChapterOutput:
         )
 
         assert chapter.text == chapter_text
-        assert chapter.word_count == len(chapter_text.split())
         assert chapter.chapter_number == 1
         assert chapter.chapter_title == "The Quest Begins"
         assert "Alice" in chapter.characters_present
@@ -42,7 +40,6 @@ class TestChapterOutput:
 
         chapter = ChapterOutput(
             text=chapter_text,
-            word_count=len(chapter_text.split()),
             scenes=[],
             characters_present=[],
             chapter_number=1,
@@ -50,7 +47,6 @@ class TestChapterOutput:
         )
 
         assert chapter.text == chapter_text
-        assert chapter.word_count == len(chapter_text.split())
         assert chapter.chapter_number == 1
         assert chapter.scenes == []
         assert chapter.characters_present == []
@@ -62,7 +58,6 @@ class TestChapterOutput:
         with pytest.raises(ValidationError) as exc_info:
             ChapterOutput(
                 text="Too short",
-                word_count=2,
                 scenes=[],
                 characters_present=[],
                 chapter_number=1,
@@ -83,7 +78,6 @@ class TestChapterOutput:
         with pytest.raises(ValidationError) as exc_info:
             ChapterOutput(
                 text=chapter_text,
-                word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=["Alice"],
                 chapter_number=1,
@@ -92,40 +86,6 @@ class TestChapterOutput:
 
         assert "placeholder text" in str(exc_info.value).lower()
         assert "TODO" in str(exc_info.value)
-
-    def test_invalid_word_count_too_low(self):
-        """Test that word_count less than or equal to 0 fails validation"""
-        from Writer.Models import ChapterOutput
-
-        with pytest.raises(ValidationError) as exc_info:
-            ChapterOutput(
-                text="Some valid chapter text that meets the minimum requirements.",
-                word_count=0,
-                scenes=[],
-                characters_present=[],
-                chapter_number=1,
-                chapter_title=None
-            )
-
-        assert "greater than 0" in str(exc_info.value)
-
-    def test_invalid_word_count_mismatch(self):
-        """Test that word_count mismatching actual text fails validation"""
-        from Writer.Models import ChapterOutput
-
-        chapter_text = "Alice walked into the forest. Her blue eyes searched for danger. She needed to find the ancient artifact before the Dark Lord discovered its location. The fate of the kingdom rested on her shoulders."
-
-        with pytest.raises(ValidationError) as exc_info:
-            ChapterOutput(
-                text=chapter_text,
-                word_count=150,  # Outside ±100 tolerance (actual: 34)
-                scenes=[],
-                characters_present=["Alice"],
-                chapter_number=1,
-                chapter_title=None
-            )
-
-        assert "doesn't match actual word count" in str(exc_info.value)
 
     def test_invalid_chapter_number(self):
         """Test that invalid chapter numbers fail validation"""
@@ -137,7 +97,6 @@ class TestChapterOutput:
         with pytest.raises(ValidationError):
             ChapterOutput(
                 text=chapter_text,
-                word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=[],
                 chapter_number=0,
@@ -155,7 +114,6 @@ class TestChapterOutput:
         with pytest.raises(ValidationError):
             ChapterOutput(
                 text=chapter_text,
-                word_count=len(chapter_text.split()),
                 scenes=["Exploring ruins"],
                 characters_present=["Alice"],
                 chapter_number=1,
@@ -174,7 +132,6 @@ class TestPlaceholderValidationFix:
 
         chapter = ChapterOutput(
             text=chapter_text,
-            word_count=len(chapter_text.split()),
             scenes=[],
             characters_present=["she"],
             chapter_number=1,
@@ -191,7 +148,6 @@ class TestPlaceholderValidationFix:
 
         chapter = ChapterOutput(
             text=chapter_text,
-            word_count=len(chapter_text.split()),
             scenes=[],
             characters_present=["Aria"],
             chapter_number=1,
@@ -209,7 +165,6 @@ class TestPlaceholderValidationFix:
         with pytest.raises(ValidationError) as exc_info:
             ChapterOutput(
                 text=chapter_text,
-                word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=[],
                 chapter_number=1,
@@ -228,7 +183,6 @@ class TestPlaceholderValidationFix:
         with pytest.raises(ValidationError) as exc_info:
             ChapterOutput(
                 text=chapter_text,
-                word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=[],
                 chapter_number=1,
@@ -247,7 +201,6 @@ class TestPlaceholderValidationFix:
         with pytest.raises(ValidationError) as exc_info:
             ChapterOutput(
                 text=chapter_text,
-                word_count=len(chapter_text.split()),
                 scenes=[],
                 characters_present=[],
                 chapter_number=1,

@@ -21,7 +21,6 @@ class TestEllipsisAllowedInContent:
 
         chapter = ChapterOutput(
             text=text,
-            word_count=len(text.split()),
             scenes=["Opening scene"],
             characters_present=["Protagonist"],
             chapter_number=1,
@@ -29,7 +28,6 @@ class TestEllipsisAllowedInContent:
         )
 
         assert "..." in chapter.text
-        assert chapter.word_count > 0
 
     def test_chapter_with_trailing_ellipsis(self):
         """Suspenseful trailing ellipsis should be valid"""
@@ -37,7 +35,6 @@ class TestEllipsisAllowedInContent:
 
         chapter = ChapterOutput(
             text=text,
-            word_count=len(text.split()),
             scenes=["Cave exploration"],
             characters_present=["Aria"],
             chapter_number=2,
@@ -63,7 +60,6 @@ class TestEllipsisAllowedInContent:
             with pytest.raises(ValidationError) as exc_info:
                 ChapterOutput(
                     text=text,
-                    word_count=len(text.split()),
                     scenes=[],
                     characters_present=[],
                     chapter_number=1,
