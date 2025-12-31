@@ -444,6 +444,12 @@ ATURAN KONSISTENSI INTERNAL: Dalam dialog bab ini:
 - Informasi yang terungkap dalam dialog tidak boleh diulang lagi di bab ini
 - Dialog harus mengalir secara alami tanpa percakapan yang berputar-putar
 
+ATURAN KARAKTER WAJIB:
+- HANYA gunakan karakter yang sudah ada di bab ini (lihat <CHAPTER_CONTENT> di bawah)
+- DILARANG menambahkan karakter baru dalam dialog
+- Karakter baru yang ditambahkan akan menyebabkan output DITOLAK
+- Jika butuh dialog partner, gunakan karakter yang sudah disebutkan di bab ini
+
 {FormattedLastChapterSummary}
 
 Inilah yang saya miliki sejauh ini untuk bab ini:
@@ -1104,3 +1110,9 @@ Konteks Cerita:
 {base_story_context}
 
 Responlah hanya dengan judul, tanpa teks atau format tambahan."""
+
+# ReviseOutline feedback instruction for character constraint
+REVISE_OUTLINE_CHARACTER_CONSTRAINT = """Perluas setiap outline bab dengan detail plot dan konflik. Setiap bab harus minimal 200 kata. CRITICAL CONSTRAINT: HANYA gunakan karakter berikut: {character_list}. DILARANG menambahkan karakter baru. Jika menambahkan karakter baru, output akan DITOLAK."""
+
+# Fallback feedback if no characters extracted
+REVISE_OUTLINE_FALLBACK = """Perluas setiap outline bab dengan detail plot dan konflik. Setiap bab harus minimal 200 kata. PENTING: Jaga SEMUA nama karakter yang sudah ada dari outline asli!"""

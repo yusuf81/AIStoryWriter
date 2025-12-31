@@ -417,6 +417,12 @@ INTERNAL CONSISTENCY RULE: Within this chapter's dialogue:
 - Information revealed in dialogue should not be repeated later in the chapter
 - Dialogue should flow naturally without circular conversations
 
+MANDATORY CHARACTER RULE:
+- ONLY use characters already present in this chapter (see <CHAPTER_CONTENT> below)
+- DO NOT add new characters in dialogue
+- Adding new characters will cause output REJECTION
+- If you need a dialogue partner, use characters already mentioned in this chapter
+
 {FormattedLastChapterSummary}
 
 Here's what I have so far for this chapter:
@@ -1055,3 +1061,9 @@ Translate the entire text within the <CHAPTER> tags above into {_Language}.
 Your response MUST contain ONLY the translated text of the chapter.
 Do NOT include any introductory phrases, explanations, comments, apologies, markdown formatting, or any text other than the direct translation itself.
 """
+
+# ReviseOutline feedback instruction for character constraint
+REVISE_OUTLINE_CHARACTER_CONSTRAINT = """Expand each chapter outline with plot and conflict details. Each chapter must be at least 200 words. CRITICAL CONSTRAINT: ONLY use the following characters: {character_list}. DO NOT add new characters. If you add new characters, the output will be REJECTED."""
+
+# Fallback feedback if no characters extracted
+REVISE_OUTLINE_FALLBACK = """Expand each chapter outline with plot and conflict details. Each chapter must be at least 200 words. IMPORTANT: Keep ALL character names that already exist in the original outline!"""

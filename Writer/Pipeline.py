@@ -446,12 +446,35 @@ class StoryPipeline:
                 self.SysLogger.Log("PIPELINE _expand_chapter_outlines_stage FATAL: Base outline for expansion is missing.", 7)
                 raise ValueError("Base outline missing for global refinement.")
 
+            # Get language-aware prompts
+            from Writer.PromptsHelper import get_prompts
+            ActivePrompts = get_prompts()
+
+            # Extract character list from StoryElements for whitelist constraint
+            story_elements = current_state.get("story_elements")
+            character_whitelist = []
+            if story_elements and hasattr(story_elements, 'characters'):
+                # Extract all character names from both main and supporting characters
+                for category in story_elements.characters.values():
+                    if isinstance(category, list):
+                        for char in category:
+                            if isinstance(char, dict) and 'name' in char:
+                                character_whitelist.append(char['name'])
+
+            # Build character whitelist string and use language-aware template
+            if character_whitelist:
+                whitelist_str = ", ".join(character_whitelist)
+                feedback_instruction = ActivePrompts.REVISE_OUTLINE_CHARACTER_CONSTRAINT.format(
+                    character_list=whitelist_str
+                )
+            else:
+                # Fallback if no characters extracted
+                feedback_instruction = ActivePrompts.REVISE_OUTLINE_FALLBACK
+
             # Assuming RefineOutline is a function in OutlineGenerator now
             refined_global_outline, _ = self.OutlineGenerator.ReviseOutline(
                 self.Interface, self.SysLogger, base_outline_for_expansion,
-                "Perluas setiap outline bab dengan detail plot, karakter, dan konflik. "
-                "Setiap bab harus minimal 200 kata dengan menyebutkan nama-nama karakter. "
-                "PENTING: Jaga SEMUA nama karakter yang sudah ada dari outline asli!"
+                feedback_instruction
             )
             current_state["refined_global_outline"] = refined_global_outline
             current_state["last_completed_step"] = "refine_global_outline"  # Intermediate step
