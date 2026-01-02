@@ -3,6 +3,7 @@ import json
 import shutil
 import time
 import datetime
+import Writer
 
 # Import Pydantic model for title generation
 from Writer.Models import TitleOutput
@@ -312,6 +313,7 @@ class StoryPipeline:
 
         try:
             import Writer.OutlineGenerator
+            import Writer.LLMEditor
             import Writer.Chapter.ChapterDetector
             import Writer.Chapter.ChapterGenerator
             import Writer.NovelEditor
@@ -458,8 +460,11 @@ class StoryPipeline:
                 for category in story_elements.characters.values():
                     if isinstance(category, list):
                         for char in category:
+                            # Handle both dict and Pydantic CharacterDetail objects
                             if isinstance(char, dict) and 'name' in char:
                                 character_whitelist.append(char['name'])
+                            elif hasattr(char, 'name'):
+                                character_whitelist.append(char.name)
 
             # Build character whitelist string and use language-aware template
             if character_whitelist:
@@ -471,11 +476,59 @@ class StoryPipeline:
                 # Fallback if no characters extracted
                 feedback_instruction = ActivePrompts.REVISE_OUTLINE_FALLBACK
 
-            # Assuming RefineOutline is a function in OutlineGenerator now
-            refined_global_outline, _ = self.OutlineGenerator.ReviseOutline(
-                self.Interface, self.SysLogger, base_outline_for_expansion,
-                feedback_instruction
+            # === VALIDATION LOOP FOR GLOBAL REFINEMENT ===
+            self.SysLogger.Log("Entering Global Outline Refinement Feedback/Revision Loop", 3)
+            WritingHistory = []  # Start with empty history
+            Rating: bool = False  # Quality rating
+            Iterations: int = 0  # Iteration counter
+            GlobalRefinementLoopExitReason = "Unknown"  # Exit reason
+            refined_global_outline = base_outline_for_expansion  # Initialize
+
+            # Use character-constrained feedback for first iteration only
+            initial_feedback = feedback_instruction
+
+            while True:
+                Iterations += 1
+
+                # Get feedback and rating
+                if Iterations == 1:
+                    Feedback = initial_feedback  # Use character constraint
+                else:
+                    Feedback = Writer.LLMEditor.GetFeedbackOnOutline(
+                        self.Interface, self.SysLogger, refined_global_outline
+                    )
+
+                Rating = Writer.LLMEditor.GetOutlineRating(
+                    self.Interface, self.SysLogger,
+                    base_outline_for_expansion if Iterations == 1 else refined_global_outline
+                )
+
+                # Check exit conditions
+                if Iterations > self.Config.OUTLINE_MAX_REVISIONS:
+                    GlobalRefinementLoopExitReason = "Max Revisions Reached"
+                    break
+                if (Iterations > self.Config.OUTLINE_MIN_REVISIONS) and (Rating is True):
+                    GlobalRefinementLoopExitReason = "Quality Standard Met"
+                    break
+
+                # Revise outline
+                refined_global_outline, WritingHistory = self.OutlineGenerator.ReviseOutline(
+                    self.Interface,
+                    self.SysLogger,
+                    base_outline_for_expansion if Iterations == 1 else refined_global_outline,
+                    Feedback,
+                    WritingHistory,
+                    _Iteration=Iterations
+                )
+
+            # Log exit
+            self.SysLogger.Log(
+                f"{GlobalRefinementLoopExitReason}, Exiting Global Outline Refinement "
+                f"Feedback/Revision Loop after {Iterations}/{self.Config.OUTLINE_MAX_REVISIONS} "
+                f"iteration(s). Final Rating: {Rating}",
+                4
             )
+            # === END VALIDATION LOOP ===
             current_state["refined_global_outline"] = refined_global_outline
             current_state["last_completed_step"] = "refine_global_outline"  # Intermediate step
             self._save_state_wrapper(current_state, state_filepath)
