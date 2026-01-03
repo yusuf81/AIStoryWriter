@@ -383,6 +383,13 @@ Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sa
 
 Jangan mengambil konten, sebaliknya perluas untuk membuat output yang lebih panjang dan lebih detail.
 
+**ATURAN PEMFORMATAN KRITIS:**
+- PERTAHANKAN semua pemisah paragraf (baris kosong) dari plot bab di bawah
+- JANGAN gabungkan paragraf menjadi satu blok teks
+- Setiap adegan, pertukaran dialog, atau perubahan lokasi harus menjadi paragraf terpisah
+- Gunakan baris kosong (\\n\\n) untuk memisahkan paragraf agar mudah dibaca
+- Usahakan 3-5 kalimat per paragraf rata-rata
+
 ATURAN ANTI-DUPLIKASI: Ketika Anda melihat konteks bab sebelumnya:
 - JANGAN menulis ulang pengenalan karakter yang sudah dilakukan
 - JANGAN mengulang interaksi atau percakapan yang sama
@@ -432,6 +439,13 @@ Harap tambahkan dialog pada bab berikut {_ChapterNum} dari {_TotalChapters} berd
 Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sangat penting bahwa tulisan Anda terhubung dengan baik dengan bab sebelumnya, dan mengalir ke bab berikutnya (jadi cobalah untuk mengikuti outline)!
 
 Jangan mengambil konten, sebaliknya perluas untuk membuat output yang lebih panjang dan lebih detail.
+
+**ATURAN PEMFORMATAN KRITIS:**
+- PERTAHANKAN semua pemisah paragraf (baris kosong) dari bab di bawah
+- JANGAN gabungkan paragraf menjadi satu blok teks
+- Setiap adegan, pertukaran dialog, atau perubahan lokasi harus menjadi paragraf terpisah
+- Gunakan baris kosong (\\n\\n) untuk memisahkan paragraf agar mudah dibaca
+- Usahakan 3-5 kalimat per paragraf rata-rata
 
 ATURAN ANTI-DUPLIKASI: Ketika memperbaiki dialog:
 - JANGAN mengulang dialog dari konteks bab sebelumnya

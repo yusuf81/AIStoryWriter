@@ -15,7 +15,8 @@ import os
 import logging
 
 # Ollama Configuration
-OLLAMA_HOST = "192.168.101.34"
+#OLLAMA_HOST = "192.168.101.34"
+OLLAMA_HOST = "10.23.82.116"
 OLLAMA_PORT = 11434
 OLLAMA_MODEL = "qwen2.5-coder:32b"
 

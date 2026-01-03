@@ -4,6 +4,7 @@ import Writer.Statistics  # Add near other imports at the top
 from Writer.Models import ChapterOutput
 
 import Writer.Scene.ChapterByScene
+from Writer.Chapter.ParagraphValidator import validate_paragraph_breaks
 
 # Helper method declarations (skeletons initially, will be filled)
 
@@ -357,12 +358,26 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
         if IterCounter > Config_module.CHAPTER_MAX_REVISIONS:
             _Logger.Log(f"Chapter Summary-Based Revision Seems Stuck (Stage 2: Character Dev) - Forcefully Exiting after {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS} iterations.", 7)
             break
-        Result, Feedback = ChapterGenSummaryCheck_module.LLMSummaryCheck(
+
+        # Validate paragraph breaks first
+        paragraph_valid, paragraph_feedback = validate_paragraph_breaks(Stage2Chapter, _ChapterNum)
+
+        # Then validate summary adherence
+        summary_valid, summary_feedback = ChapterGenSummaryCheck_module.LLMSummaryCheck(
             Interface, _Logger, DetailedChapterOutlineForCheck, Stage2Chapter
         )
-        if Result:
+
+        # Combine validation results
+        if paragraph_valid and summary_valid:
             _Logger.Log(f"Done Generating Character Development (Stage 2) for Chapter {_ChapterNum}/{_TotalChapters} after {IterCounter} iteration(s).", 5)
             break
+
+        # Prioritize paragraph feedback if both fail
+        if not paragraph_valid:
+            Feedback = paragraph_feedback
+            _Logger.Log(f"Chapter {_ChapterNum} failed paragraph validation, retrying with formatting feedback", 5)
+        else:
+            Feedback = summary_feedback
     return Stage2Chapter
 
 
@@ -420,12 +435,26 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
         if IterCounter > Config_module.CHAPTER_MAX_REVISIONS:
             _Logger.Log(f"Chapter Summary-Based Revision Seems Stuck (Stage 3: Dialogue) - Forcefully Exiting after {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS} iterations.", 7)
             break
-        Result, Feedback = ChapterGenSummaryCheck_module.LLMSummaryCheck(
+
+        # Validate paragraph breaks first
+        paragraph_valid, paragraph_feedback = validate_paragraph_breaks(Stage3Chapter, _ChapterNum)
+
+        # Then validate summary adherence
+        summary_valid, summary_feedback = ChapterGenSummaryCheck_module.LLMSummaryCheck(
             Interface, _Logger, DetailedChapterOutlineForCheck, Stage3Chapter
         )
-        if Result:
+
+        # Combine validation results
+        if paragraph_valid and summary_valid:
             _Logger.Log(f"Done Generating Dialogue (Stage 3) for Chapter {_ChapterNum}/{_TotalChapters} after {IterCounter} iteration(s).", 5)
             break
+
+        # Prioritize paragraph feedback if both fail
+        if not paragraph_valid:
+            Feedback = paragraph_feedback
+            _Logger.Log(f"Chapter {_ChapterNum} failed paragraph validation, retrying with formatting feedback", 5)
+        else:
+            Feedback = summary_feedback
     return Stage3Chapter
 
 

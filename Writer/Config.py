@@ -1,8 +1,60 @@
-# ollamasemua = "ollama://huihui_ai/qwen3-abliterated:16b@10.23.82.116"
+###############################################################################
+# QUICK START: Using Google Gemini
+###############################################################################
+#
+# 1. Get API Key:
+#    - Visit: https://makersuite.google.com/app/apikey
+#    - Create or copy your API key
+#
+# 2. Setup .env file:
+#    - Edit /var/www/AIStoryWriter/.env
+#    - Add: GOOGLE_API_KEY=your-api-key-here
+#
+# 3. Configure model in this file (Config.py):
+#    - Uncomment line 50: ollamasemua = "google://gemini-flash-latest"
+#    - Comment out current ollamasemua line
+#
+# 4. Run story generation:
+#    python Write.py -Prompt Prompts/YourPrompt.txt
+#
+###############################################################################
+# MODEL CONFIGURATION EXAMPLES
+###############################################################################
+#
+# GOOGLE GEMINI (via Google AI API):
+#   Format: "google://model-name"
+#   API Key: Set GOOGLE_API_KEY in .env file
+#   Available models (2025):
+#     - gemini-2.5-flash (Latest stable, best quality)
+#     - gemini-2.5-pro (Best quality, slower)
+#     - gemini-2.0-flash (Stable, very fast)
+#     - gemini-2.0-flash-exp (Experimental features)
+#     - gemini-flash-latest (Always newest)
+#   Example:
+#     ollamasemua = "google://gemini-2.5-flash"
+#     ollamasemua = "google://gemini-2.0-flash-exp"
+#     ollamasemua = "google://gemini-flash-latest"
+#
+# OLLAMA (local or remote):
+#   Format: "ollama://model-name@host:port" or just "model-name"
+#   Example:
+#     ollamasemua = "ollama://qwen2.5:32b@10.23.82.116:11434"
+#     ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
+#
+# OPENROUTER:
+#   Format: "openrouter://model-name"
+#   API Key: Set OPENROUTER_API_KEY in .env file
+#   Example:
+#     ollamasemua = "openrouter://anthropic/claude-3.5-sonnet"
+#
+###############################################################################
+
+ollamasemua = "google://gemini-flash-lite-latest"
 # ollamasemua = "huihui_ai/qwen2.5-abliterate:32b"
-ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
+# ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
 # ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
 # ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest" #awawa
+# ollamasemua = "google://gemini-2.5-flash"  # Requires GOOGLE_API_KEY in .env
 INITIAL_OUTLINE_WRITER_MODEL = (
     # "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
     ollamasemua
@@ -185,4 +237,4 @@ EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback
 
 # Example model URLs for reference (not actively used)
 "ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"
-"google://gemini-3-flash-preview"  # Updated to current model series
+"google://gemini-2.5-flash"  # Gemini 2.5 series (2025)

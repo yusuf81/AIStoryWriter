@@ -517,9 +517,9 @@ class Interface:
                 if not os.environ.get("GOOGLE_API_KEY"):
                     raise Exception("GOOGLE_API_KEY missing")
                 self.ensure_package_is_installed("google-genai")
-                import google.genai as genai  # type: ignore[misc]
-                genai.configure(api_key=os.environ["GOOGLE_API_KEY"])  # type: ignore[reportAttributeAccessIssue]
-                self.Clients[Model] = genai.GenerativeModel(model_name=ProviderModelName)  # type: ignore[reportAttributeAccessIssue, misc]
+                from google import genai  # type: ignore[misc]
+                # google-genai library uses Client instead of configure()
+                self.Clients[Model] = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])  # type: ignore[reportAttributeAccessIssue, misc]
             elif Provider == "openrouter":
                 if not os.environ.get("OPENROUTER_API_KEY"):
                     raise Exception("OPENROUTER_API_KEY missing")
@@ -670,7 +670,7 @@ class Interface:
         if isinstance(_PydanticModel, str):
             try:
                 _PydanticModel = get_model(_PydanticModel)
-            except KeyError as e:
+            except KeyError:
                 raise Exception(f"Pydantic model '{_PydanticModel}' not found in registry")
 
         # Get max retries from config
@@ -1014,44 +1014,70 @@ class Interface:
         raise Exception(f"Google {operation_name} failed for {_Model_key} after {MaxRetries} attempts.")
 
     def _transform_messages_for_google(self, _Messages_list):
-        """Transform messages for Google Gemini API compatibility"""
-        return [
-            {
-                "role": "user" if m["role"] == "system" else ("model" if m["role"] == "assistant" else m["role"]),
-                "parts": [m["content"]]
-            }
-            for m in _Messages_list
-        ]
+        """Transform messages for Google Gemini API compatibility using types.Content"""
+        from google.genai import types
+
+        transformed = []
+        for m in _Messages_list:
+            # Map roles: system -> user, assistant -> model
+            role = "user" if m["role"] == "system" else ("model" if m["role"] == "assistant" else m["role"])
+
+            # Create Content with Part.from_text
+            content = types.Content(
+                role=role,
+                parts=[types.Part.from_text(text=m["content"])]
+            )
+            transformed.append(content)
+
+        return transformed
 
     def _google_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
-        from google.genai.types import HarmCategory, HarmBlockThreshold, SafetySetting
+        from google.genai import types
 
         # Use helper methods
         Messages_transformed = self._transform_messages_for_google(_Messages_list)
 
-        # Optimized safety settings
-        safety_settings = [
-            SafetySetting(category=cat, threshold=HarmBlockThreshold.BLOCK_NONE)
-            for cat in HarmCategory if cat != HarmCategory.HARM_CATEGORY_UNSPECIFIED
+        # Build config using types.GenerateContentConfig
+        config_params = {}
+
+        # Add safety settings - filter out IMAGE_* and JAILBREAK categories
+        # Only use basic categories that all models support
+        valid_categories = [
+            types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+            types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
         ]
 
-        gen_config = ModelOptions_dict.copy() if ModelOptions_dict is not None else {}
-        gen_config["safety_settings"] = safety_settings
-        if _FormatSchema_dict:
-            gen_config.update({
-                "response_mime_type": "application/json",
-                "response_schema": _FormatSchema_dict,
-                "temperature": gen_config.get("temperature", 0.0)
-            })
+        config_params["safety_settings"] = [
+            types.SafetySetting(
+                category=cat,
+                threshold=types.HarmBlockThreshold.BLOCK_NONE
+            )
+            for cat in valid_categories
+        ]
 
+        # Add model options (temperature, etc)
+        if ModelOptions_dict:
+            config_params.update(ModelOptions_dict)
+
+        # Add JSON schema if provided
+        if _FormatSchema_dict:
+            config_params["response_mime_type"] = "application/json"
+            config_params["response_json_schema"] = _FormatSchema_dict
+            # Force temperature to 0.0 for structured output
+            config_params["temperature"] = 0.0
+
+        gen_config = types.GenerateContentConfig(**config_params)
         client = self.Clients[_Model_key]
 
         # Use retry helper
         def operation():
-            GenResponse = client.generate_content(
+            # google-genai uses client.models.generate_content()
+            GenResponse = client.models.generate_content(
+                model=ProviderModel_name,
                 contents=Messages_transformed,
-                stream=False,
-                generation_config=gen_config
+                config=gen_config
             )
 
             AssistantMessage = {"role": "assistant", "content": GenResponse.text}
@@ -1279,7 +1305,7 @@ class Interface:
                 print("\n--- Full Pydantic Response ---")
                 print(json.dumps(response_data, indent=2))
 
-        except Exception as e:
+        except Exception:
             # Fallback: if parsing fails, just show basic info
             print(f"✓ Response generated ({len(full_content)} chars)")
             if getattr(Writer.Config, 'DEBUG', False):

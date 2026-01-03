@@ -357,6 +357,13 @@ Pay attention to the previous chapters, and make sure you both continue seamless
 
 Don't take away content, instead expand upon it to make a longer and more detailed output.{PydanticFormatInstructions}
 
+**CRITICAL FORMATTING RULE:**
+- PRESERVE all paragraph breaks (blank lines) from the chapter plot below
+- DO NOT merge paragraphs into a single block of text
+- Each scene, dialogue exchange, or location change should be a separate paragraph
+- Use blank lines (\\n\\n) to separate paragraphs for readability
+- Aim for 3-5 sentences per paragraph on average
+
 ANTI-DUPLICATION RULE: When you see previous chapter context:
 - DO NOT rewrite character introductions already done
 - DO NOT repeat the same interactions or conversations
@@ -405,6 +412,13 @@ Please add dialogue the following chapter {_ChapterNum} of {_TotalChapters} base
 Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next (so try to follow the outline)!
 
 Don't take away content, instead expand upon it to make a longer and more detailed output.
+
+**CRITICAL FORMATTING RULE:**
+- PRESERVE all paragraph breaks (blank lines) from the chapter below
+- DO NOT merge paragraphs into a single block of text
+- Each scene, dialogue exchange, or location change should be a separate paragraph
+- Use blank lines (\\n\\n) to separate paragraphs for readability
+- Aim for 3-5 sentences per paragraph on average
 
 ANTI-DUPLICATION RULE: When refining dialogue:
 - DO NOT repeat dialogue from the previous chapter context

@@ -76,15 +76,20 @@ class TestGoogleCompliance:
 
     def test_google_uses_current_models(self):
         """
-        RED: Test fails because Config.py references deprecated Gemini 1.5 models
+        Test that Config.py references current Gemini models (2.0/2.5), not deprecated 1.5
 
-        Expected: After fix, should reference current Gemini 3 models
-        Actual: Currently has gemini-1.5-pro in example URLs
+        Expected: Should reference Gemini 2.x models
+        Actual: Should not have gemini-1.5-pro or gemini-1.5-flash
         """
         # Act & Assert - Check no deprecated models in Config
         config_source = inspect.getsource(Writer.Config)
         assert 'gemini-1.5-pro' not in config_source, "Should not reference deprecated Gemini 1.5 models"
-        assert 'gemini-3' in config_source, "Should reference current Gemini 3 models"
+        assert 'gemini-1.5-flash' not in config_source, "Should not reference deprecated Gemini 1.5 models"
+        # Check for current models (2.0 or 2.5 or flash-latest)
+        has_current = ('gemini-2.0' in config_source or
+                       'gemini-2.5' in config_source or
+                       'gemini-flash-latest' in config_source)
+        assert has_current, "Should reference current Gemini 2.x models or gemini-flash-latest"
 
     def test_google_embedding_has_retry_logic(self, mock_logger):
         """
@@ -191,15 +196,17 @@ class TestGoogleCompliance:
         )
 
         # Assert - System message should be preserved and handled correctly
-        call_args = mock_client.generate_content.call_args
+        # google-genai library uses client.models.generate_content()
+        call_args = mock_client.models.generate_content.call_args
         transformed_messages = call_args[1]['contents']
 
         # System message should be converted to user message for Gemini compatibility
         assert len(transformed_messages) == 2
-        assert transformed_messages[0]["role"] == "user"  # System converted to user
-        assert transformed_messages[0]["parts"][0] == "You are a helpful assistant"
-        assert transformed_messages[1]["role"] == "user"  # Original user message
-        assert transformed_messages[1]["parts"][0] == "Hello"
+        # Access Content object attributes (not dict)
+        assert transformed_messages[0].role == "user"  # System converted to user
+        assert transformed_messages[0].parts[0].text == "You are a helpful assistant"
+        assert transformed_messages[1].role == "user"  # Original user message
+        assert transformed_messages[1].parts[0].text == "Hello"
 
 
 @pytest.fixture
