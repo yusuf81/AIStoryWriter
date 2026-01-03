@@ -718,7 +718,7 @@ class ReviewOutput(BaseModel):
     @field_validator('suggestions', mode='before')
     @classmethod
     def normalize_suggestions(cls, v):
-        """Convert structured Indonesian suggestions to EnhancedSuggestion objects."""
+        """Convert structured Indonesian or English suggestions to EnhancedSuggestion objects."""
         if isinstance(v, list):
             normalized = []
             for item in v:
@@ -726,19 +726,30 @@ class ReviewOutput(BaseModel):
                     # Keep string suggestions as-is
                     normalized.append(item)
                 elif isinstance(item, dict):
-                    # Map Indonesian fields to English EnhancedSuggestion
+                    # Extract nested other_criteria content if present
+                    nested_other = item.get('other_criteria', {})
+                    if isinstance(nested_other, dict):
+                        extra_fields = dict(nested_other)
+                    else:
+                        extra_fields = {}
+
+                    # Also check for other extra fields at top level
+                    for k, val in item.items():
+                        if k not in ['detail', 'laju', 'alur', 'description', 'pacing', 'flow', 'other_criteria']:
+                            extra_fields[k] = val
+
+                    # Map BOTH Indonesian and English fields to English EnhancedSuggestion
                     suggestion_data = {
-                        'description': item.get('detail', ''),
-                        'pacing': item.get('laju'),
-                        'flow': item.get('alur'),
-                        'other_criteria': {
-                            k: v for k, v in item.items()
-                            if k not in ['detail', 'laju', 'alur']
-                        }
+                        'description': item.get('detail') or item.get('description', ''),
+                        'pacing': item.get('laju') or item.get('pacing'),
+                        'flow': item.get('alur') or item.get('flow'),
+                        'other_criteria': extra_fields or None  # Use None instead of {} for Pydantic
                     }
-                    # Remove None values from other_criteria if empty
-                    if not suggestion_data['other_criteria']:
-                        suggestion_data.pop('other_criteria', None)
+                    # Remove None values for optional fields
+                    if not suggestion_data['pacing']:
+                        suggestion_data.pop('pacing', None)
+                    if not suggestion_data['flow']:
+                        suggestion_data.pop('flow', None)
                     normalized.append(suggestion_data)
                 else:
                     # Already a valid model instance, preserve as-is
