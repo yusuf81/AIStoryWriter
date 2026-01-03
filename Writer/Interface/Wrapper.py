@@ -1358,16 +1358,17 @@ class Interface:
         MaxRetries = Writer.Config.MAX_GOOGLE_RETRIES
         for attempt in range(MaxRetries):
             try:
-                for text in _Texts:
-                    # Use client pattern (latest SDK)
-                    result = client.models.embed_content(
-                        model=f'models/{ProviderModel_name}',
-                        content=text,
-                        config=types.EmbedContentConfig(task_type="retrieval_document")
-                    )
-                    # Use object attribute access (not dictionary)
-                    embeddings.append(result.embedding)
-                    total_tokens += len(text.split())
+                # Use client pattern (latest SDK)
+                result = client.models.embed_content(
+                    model=ProviderModel_name,  # e.g., "gemini-embedding-001" (no models/ prefix)
+                    contents=_Texts,  # Note: contents (plural), not content
+                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+                )
+                # Access embedding values from response
+                for emb_obj in result.embeddings:
+                    embeddings.append(emb_obj.values)
+                # Approximate token count (SDK doesn't provide exact count in embedding response)
+                total_tokens = sum(len(text.split()) for text in _Texts)
 
                 return embeddings, {"prompt_tokens": total_tokens, "completion_tokens": 0}
 

@@ -49,66 +49,98 @@
 #
 ###############################################################################
 
+###############################################################################
+# LLM MODEL CONFIGURATION
+###############################################################################
+
+# Default model for all tasks (use provider://model-name format)
+# Provider formats:
+#   - google://gemini-2.5-flash         (Google Genai, requires GOOGLE_API_KEY)
+#   - google://gemini-flash-lite-latest (Google Genai, lightweight)
+#   - openrouter://anthropic/claude-3.5-sonnet (OpenRouter, requires OPENROUTER_API_KEY)
+#   - ollama://qwen2.5:32b              (Ollama, uses OLLAMA_HOST)
+#   - qwen2.5:32b                       (Ollama, uses OLLAMA_HOST when no provider specified)
 ollamasemua = "google://gemini-flash-lite-latest"
 # ollamasemua = "huihui_ai/qwen2.5-abliterate:32b"
 # ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
 # ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
-# ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest" #awawa
+# ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
 # ollamasemua = "google://gemini-2.5-flash"  # Requires GOOGLE_API_KEY in .env
-INITIAL_OUTLINE_WRITER_MODEL = (
-    # "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-    ollamasemua
-)
-CHAPTER_OUTLINE_WRITER_MODEL = (
-    #    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-    ollamasemua
-)
-CHAPTER_STAGE1_WRITER_MODEL = (
-    #    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-    ollamasemua
-)
-CHAPTER_STAGE2_WRITER_MODEL = (
-    #    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-    ollamasemua
-)
-CHAPTER_STAGE3_WRITER_MODEL = (
-    #    "ollama://gemma3:27b@10.23.82.116"  # Note this value is overridden by the argparser
-    ollamasemua
-)
-# FINAL_NOVEL_EDITOR_MODEL = "ollama://gemma3:27b@10.23.82.116"
+
+# Stage-specific LLM models (all default to ollamasemua unless overridden)
+INITIAL_OUTLINE_WRITER_MODEL = ollamasemua
+CHAPTER_OUTLINE_WRITER_MODEL = ollamasemua
+CHAPTER_STAGE1_WRITER_MODEL = ollamasemua  # Plot and scene writing
+CHAPTER_STAGE2_WRITER_MODEL = ollamasemua  # Character development
+CHAPTER_STAGE3_WRITER_MODEL = ollamasemua  # Dialogue refinement
 FINAL_NOVEL_EDITOR_MODEL = ollamasemua
-
-# Model for the final novel-wide edit pass (used by NovelEditor.py) # Note this value is overridden by the argparser
-# CHAPTER_REVISION_WRITER_MODEL = "ollama://qwen2.5:32b@10.23.147.239"  # Note this value is overridden by the argparser
-CHAPTER_REVISION_WRITER_MODEL = ollamasemua  # Note this value is overridden by the argparser
-REVISION_MODEL = ollamasemua  # Note this value is overridden by the argparser
-EVAL_MODEL = ollamasemua  # Note this value is overridden by the argparser
-INFO_MODEL = ollamasemua  # Note this value is overridden by the argparser
-SCRUB_MODEL = ollamasemua  # Note this value is overridden by the argparser
-CHECKER_MODEL = ollamasemua  # Model used to check results
+CHAPTER_REVISION_WRITER_MODEL = ollamasemua
+REVISION_MODEL = ollamasemua
+EVAL_MODEL = ollamasemua
+INFO_MODEL = ollamasemua
+SCRUB_MODEL = ollamasemua
+CHECKER_MODEL = ollamasemua
 TRANSLATOR_MODEL = ollamasemua
-FAST_MODEL = (
-    #    "ollama://gemma3:27b@10.23.82.116"  # Default fast model for tasks like titling
-    ollamasemua  # Default fast model for tasks like titling
-)
+FAST_MODEL = ollamasemua  # For quick tasks like titling
 
-# OLLAMA_CTX = 8192
-OLLAMA_CTX = 16384
+# Reasoning model (two-pass reasoning system)
+REASONING_MODEL = CHAPTER_STAGE1_WRITER_MODEL
 
+# SEED for reproducibility (can be overridden by argparser)
+SEED = 12
+
+###############################################################################
+# EMBEDDING MODEL CONFIGURATION
+###############################################################################
+
+# Format: "provider://model-name" or just "model-name"
+#
+# OLLAMA (local or remote):
+#   - ollama://nomic-embed-text:latest
+#   - ollama://qwen3-embedding:latest (recommended)
+#
+# GOOGLE GEMINI (via Google AI API):
+#   - google://gemini-embedding-001 (Stable, recommended for production)
+#   API Key: Set GOOGLE_API_KEY in .env file
+#   Dimensions: Default 3072, flexible 128-3072 (recommended: 768, 1536, or 3072)
+#   Input limit: 2,048 tokens
+#   Example: EMBEDDING_MODEL = "google://gemini-embedding-001"
+#
+# OPENROUTER:
+#   - openrouter://openai/text-embedding-3-small
+#   API Key: Set OPENROUTER_API_KEY in .env file
+#
+EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"
+EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for qwen3-embedding)
+EMBEDDING_CTX = 8192  # Context window for embeddings
+EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback
+
+###############################################################################
+# OLLAMA-SPECIFIC CONFIGURATION
+###############################################################################
+
+OLLAMA_CTX = 16384  # Default: 8192. Increased for longer contexts.
+
+# Ollama host (used when provider is ollama or no provider specified)
 # OLLAMA_HOST = "https://xxxx-11434.proxy.runpod.net"
 # OLLAMA_HOST = "http://10.23.82.116:11434"
 # OLLAMA_HOST = "10.23.147.239:11434"
 # OLLAMA_HOST = "http://127.0.0.1:22434"
 OLLAMA_HOST = "http://127.0.0.1:11434"
 
+###############################################################################
+# RETRY CONFIGURATION
+###############################################################################
 
-SEED = 12  # Note this value is overridden by the argparser
+# Maximum retries for each provider
+MAX_PYDANTIC_RETRIES = 5  # Pydantic validation retries
+MAX_GOOGLE_RETRIES = 2  # Google Genai API retries
+MAX_OPENROUTER_RETRIES = 2  # OpenRouter API retries
+MAX_RETRIES_CHAPTER_TITLE = 3  # Chapter title generation retries
 
-# TRANSLATE_LANGUAGE = "Indonesian"  # If the user wants to translate, this'll be changed from empty to a language e.g 'French' or 'Russian'
-# TRANSLATE_PROMPT_LANGUAGE = "Indonesian"  # If the user wants to translate their prompt, this'll be changed from empty to a language e.g 'French' or 'Russian'
-
-TRANSLATE_LANGUAGE = ""  # If the user wants to translate, this'll be changed from empty to a language e.g 'French' or 'Russian'
-TRANSLATE_PROMPT_LANGUAGE = ""  # If the user wants to translate their prompt, this'll be changed from empty to a language e.g 'French' or 'Russian'
+###############################################################################
+# QUALITY & REVISION CONFIGURATION
+###############################################################################
 
 OUTLINE_QUALITY = 92  # Note this value is overridden by the argparser
 OUTLINE_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
@@ -136,26 +168,29 @@ MIN_WORDS_SCENE_WRITE = 150  # Minimum words for writing a scene from its outlin
 MIN_WORDS_SCRUB_CHAPTER = 100  # Minimum words for scrubbing a chapter
 MIN_WORDS_EDIT_NOVEL = 150  # Minimum words for final novel edit pass per chapter
 
+###############################################################################
+# FEATURE FLAGS
+###############################################################################
+
 SCRUB_NO_SCRUB = False  # Note this value is overridden by the argparser
 EXPAND_OUTLINE = True  # Note this value is overridden by the argparser
 ENABLE_FINAL_EDIT_PASS = True  # Note this value is overridden by the argparser
-
 SCENE_GENERATION_PIPELINE = True
 
-OPTIONAL_OUTPUT_NAME = ""
+###############################################################################
+# LANGUAGE CONFIGURATION
+###############################################################################
 
-DEBUG = False
+NATIVE_LANGUAGE = "id"  # Default language for prompts (en or id)
+# TRANSLATE_LANGUAGE = "Indonesian"  # If the user wants to translate, this'll be changed from empty to a language e.g 'French' or 'Russian'
+# TRANSLATE_PROMPT_LANGUAGE = "Indonesian"  # If the user wants to translate their prompt, this'll be changed from empty to a language e.g 'French' or 'Russian'
+TRANSLATE_LANGUAGE = ""  # If the user wants to translate, this'll be changed from empty to a language e.g 'French' or 'Russian'
+TRANSLATE_PROMPT_LANGUAGE = ""  # If the user wants to translate their prompt, this'll be changed from empty to a language e.g 'French' or 'Russian'
 
-# NATIVE_LANGUAGE = "en"  # Default ke Bahasa Inggris. Akan diubah menjadi "id" untuk pengujian.
-# Nilai ini bisa juga di-override oleh argumen command-line jika diinginkan di masa depan.
-NATIVE_LANGUAGE = "id"
+###############################################################################
+# LLM NATIVE REASONING MODE
+###############################################################################
 
-# Maximum retries for Pydantic validation
-MAX_PYDANTIC_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk Pydantic validation
-PYDANTIC_RETRY_DELAY = 3  # Delay in seconds before retry (helps Ollama model unload)
-
-# LLM Native Reasoning Mode Control
-#
 # CONTROLS native LLM-level reasoning (NOT app reasoning chain)
 # Applies to models that support Ollama's 'think' parameter:
 # - Llama-SEA-LION-v3.5-8B-R (models ending with -R suffix)
@@ -164,30 +199,42 @@ PYDANTIC_RETRY_DELAY = 3  # Delay in seconds before retry (helps Ollama model un
 # Setting to False prevents reasoning-related timeout/stuck issues
 ENABLE_LLM_REASONING_MODE = True  # False = disable LLM native reasoning, True = allow reasoning
 
-# Maximum retries for OpenRouter API
-MAX_OPENROUTER_RETRIES = 2  # Maximum retries for OpenRouter API calls
+###############################################################################
+# PYDANTIC VALIDATION CONFIGURATION
+###############################################################################
 
-# Maximum retries for Google API calls
-MAX_GOOGLE_RETRIES = 2
+MAX_PYDANTIC_RETRIES = 5  # Jumlah percobaan ulang maksimum untuk Pydantic validation
+PYDANTIC_RETRY_DELAY = 3  # Delay in seconds before retry (helps Ollama model unload)
+USE_PYDANTIC_PARSING = True  # Enable/disable structured output
+PYDANTIC_WORD_COUNT_TOLERANCE = 100  # Tolerance for word count validation (±N words)
 
-# Configuration comment removed - SafeGenerateText is no longer used
-# MAX_TEXT_RETRIES = 5  # This is deprecated as SafeGenerateText is replaced
+###############################################################################
+# CHAPTER TITLE CONFIGURATION
+###############################################################################
 
-# Added based on test_pipeline.py AttributeErrors
+GENERATE_CHAPTER_TITLES = True
+AUTO_CHAPTER_TITLES = True  # Flag to enable automatic chapter title generation
+DEFAULT_CHAPTER_TITLE_PREFIX = "Chapter"  # Default prefix for chapter titles
+ADD_CHAPTER_TITLES_TO_NOVEL_BODY_TEXT = True  # Add chapter titles to final novel text
 CHAPTER_HEADER_FORMAT = "## Chapter {chapter_num}: {chapter_title}"
 CHAPTER_MEMORY_WORDS = 250  # Adaptive: Short stories (≤3 chapters) use min(100, this value), longer stories use full value
-GENERATE_CHAPTER_TITLES = True
 TITLE_MAX_TOKENS = 50
 MAX_WORDS_FOR_CHAPTER_TITLE_PROMPT = 500  # Maximum words of chapter content to use for title generation
 MIN_WORDS_FOR_CHAPTER_TITLE = 3  # Minimum words for chapter title
 MAX_LENGTH_CHAPTER_TITLE = 100  # Maximum character length for chapter title
-MAX_RETRIES_CHAPTER_TITLE = 3  # Maximum retries for chapter title generation
-ENABLE_GLOBAL_OUTLINE_REFINEMENT = True  # Flag to enable global outline refinement
-AUTO_CHAPTER_TITLES = True  # Flag to enable automatic chapter title generation
-DEFAULT_CHAPTER_TITLE_PREFIX = "Chapter"  # Default prefix for chapter titles
-ADD_CHAPTER_TITLES_TO_NOVEL_BODY_TEXT = True  # Add chapter titles to final novel text
+
+###############################################################################
+# DIRECTORY & OUTPUT CONFIGURATION
+###############################################################################
+
 STORIES_DIR = "Stories"  # Directory for generated stories
 LOG_DIRECTORY = "Logs"  # Directory for log files
+OPTIONAL_OUTPUT_NAME = ""
+DEBUG = False
+
+###############################################################################
+# MARKDOWN & PDF OUTPUT CONFIGURATION
+###############################################################################
 
 # Markdown output configuration
 INCLUDE_OUTLINE_IN_MD = True  # Include outline in final markdown output
@@ -211,30 +258,21 @@ PDF_MARGIN_RIGHT = 90  # Right margin in points (was 72, too cramped)
 PDF_MARGIN_TOP = 75  # Top margin in points (optimized for readability)
 PDF_MARGIN_BOTTOM = 75  # Bottom margin in points (optimized for readability)
 
-# LangChain Enhancement Configuration
+###############################################################################
+# LANGCHAIN ENHANCEMENT CONFIGURATION
+###############################################################################
+
 USE_LOREBOOK = True  # Enable/disable lorebook system
 LOREBOOK_K_RETRIEVAL = 5  # Number of lore entries to retrieve
 LOREBOOK_PERSIST_DIR = "./lorebook_db"  # Directory for lorebook persistence
 LOREBOOK_SIMILARITY_THRESHOLD = 0.7  # Minimum similarity for lore retrieval
 LOREBOOK_AUTO_CLEAR = True  # Auto-clear lorebook for fresh runs (not resume)
+ENABLE_GLOBAL_OUTLINE_REFINEMENT = True  # Flag to enable global outline refinement
 
-USE_PYDANTIC_PARSING = True  # Enable/disable structured output
-PYDANTIC_WORD_COUNT_TOLERANCE = 100  # Tolerance for word count validation (±N words)
+###############################################################################
+# REASONING CHAIN CONFIGURATION
+###############################################################################
 
-# USE_REASONING_CHAIN = True  # Enable/disable two-pass reasoning
 USE_REASONING_CHAIN = False  # Enable/disable two-pass reasoning
-REASONING_MODEL = CHAPTER_STAGE1_WRITER_MODEL  # Model to use for reasoning generation
 REASONING_LOG_SEPARATE = True  # Log reasoning to separate file
 REASONING_CACHE_RESULTS = False  # Cache reasoning results
-
-# Embedding Model Configuration
-# EMBEDDING_MODEL = "ollama://nomic-embed-text:latest"  # Embedding model string (provider://format). Will use OLLAMA_HOST.
-EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"  # Embedding model string. Will use OLLAMA_HOST from line 46.
-EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for nomic-embed-text)
-EMBEDDING_CTX = 8192  # Context window for embeddings (match nomic-embed-text-v2-moe capabilities)
-EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback
-
-
-# Example model URLs for reference (not actively used)
-"ollama://mychen76/gemma3_cline_roocode_qat:12b@10.23.147.239"
-"google://gemini-2.5-flash"  # Gemini 2.5 series (2025)
