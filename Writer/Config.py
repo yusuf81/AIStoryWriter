@@ -110,7 +110,8 @@ SEED = 12
 #   - openrouter://openai/text-embedding-3-small
 #   API Key: Set OPENROUTER_API_KEY in .env file
 #
-EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"
+#EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"
+EMBEDDING_MODEL = "google://gemini-embedding-001"
 EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for qwen3-embedding)
 EMBEDDING_CTX = 8192  # Context window for embeddings
 EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback

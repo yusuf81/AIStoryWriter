@@ -3,7 +3,7 @@ termcolor
 google-genai>=1.55.0
 python-dotenv
 pydantic
-json-repair
+json-repair>=0.55.0
 requests
 pytest
 pytest-mock
