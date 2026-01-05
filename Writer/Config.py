@@ -47,6 +47,34 @@
 #   Example:
 #     ollamasemua = "openrouter://anthropic/claude-3.5-sonnet"
 #
+# XAI GROK (via xAI API):
+#   Format: "grok://model-name"
+#   API Key: Set XAI_API_KEY in .env file
+#   Available models (2025-2026):
+#     Grok 4 Series (Latest, Released Nov 2025):
+#       - grok-4-1-fast-reasoning (Best: 2M context, agentic, reasoning)
+#       - grok-4-1-fast-non-reasoning (Fast: 2M context, instant responses)
+#       - grok-4-fast (Fast: 40% fewer tokens, 2M context)
+#       - grok-4-heavy (Powerful: Highest quality)
+#       - grok-4 (Standard: Balanced performance)
+#     Grok 3 Series (Released Feb 2025):
+#       - grok-3 (Flagship: Excellent quality)
+#       - grok-3-mini (Small: Fast responses)
+#     Vision & Multimodal:
+#       - grok-2-vision-1212 (Vision: Image understanding)
+#       - grok-vision-beta (Beta: Vision tasks)
+#       - grok-2-1212 (Multimodal: 131K context)
+#     Specialized:
+#       - grok-code-fast-1 (Coding: Agentic coding tasks)
+#       - grok-2-image-1212 (Image: Text-to-image generation)
+#     Legacy (Still available):
+#       - grok-2, grok-2-mini, grok-1.5, grok-1
+#   Example:
+#     ollamasemua = "grok://grok-4-1-fast-reasoning"  # Best for complex tasks
+#     ollamasemua = "grok://grok-3"                   # Good balance
+#     ollamasemua = "grok://grok-3-mini"              # Fast & lightweight
+#     ollamasemua = "grok://grok-2-vision-1212"       # For vision tasks
+#
 ###############################################################################
 
 ###############################################################################
@@ -60,7 +88,8 @@
 #   - openrouter://anthropic/claude-3.5-sonnet (OpenRouter, requires OPENROUTER_API_KEY)
 #   - ollama://qwen2.5:32b              (Ollama, uses OLLAMA_HOST)
 #   - qwen2.5:32b                       (Ollama, uses OLLAMA_HOST when no provider specified)
-ollamasemua = "google://gemini-flash-lite-latest"
+ollamasemua = "grok://grok-4-1-fast-reasoning"
+# ollamasemua = "google://gemini-flash-lite-latest"
 # ollamasemua = "huihui_ai/qwen2.5-abliterate:32b"
 # ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
 # ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
@@ -137,6 +166,7 @@ OLLAMA_HOST = "http://127.0.0.1:11434"
 MAX_PYDANTIC_RETRIES = 5  # Pydantic validation retries
 MAX_GOOGLE_RETRIES = 2  # Google Genai API retries
 MAX_OPENROUTER_RETRIES = 2  # OpenRouter API retries
+MAX_GROK_RETRIES = 2  # xAI Grok API retries
 MAX_RETRIES_CHAPTER_TITLE = 3  # Chapter title generation retries
 
 ###############################################################################

@@ -525,6 +525,12 @@ class Interface:
                     raise Exception("OPENROUTER_API_KEY missing")
                 from Writer.Interface.OpenRouter import OpenRouter
                 self.Clients[Model] = OpenRouter(api_key=os.environ["OPENROUTER_API_KEY"], model=ProviderModelName)  # type: ignore
+            elif Provider == "grok":
+                if not os.environ.get("XAI_API_KEY"):
+                    raise Exception("XAI_API_KEY missing")
+                self.ensure_package_is_installed("xai-sdk")
+                from xai_sdk import Client
+                self.Clients[Model] = Client(api_key=os.environ["XAI_API_KEY"])
             else:
                 raise NotImplementedError(f"Provider {Provider} not supported")
 
@@ -1031,6 +1037,27 @@ class Interface:
 
         return transformed
 
+    def _transform_messages_for_grok(self, _Messages_list):
+        """Transform messages for xAI Grok API using SDK helpers"""
+        from xai_sdk.chat import system, user, assistant
+
+        transformed = []
+        for m in _Messages_list:
+            role = m["role"]
+            content = m["content"]
+
+            if role == "system":
+                transformed.append(system(content))
+            elif role == "user":
+                transformed.append(user(content))
+            elif role == "assistant":
+                transformed.append(assistant(content))
+            else:
+                # Fallback to user for unknown roles
+                transformed.append(user(content))
+
+        return transformed
+
     def _google_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
         from google.genai import types
 
@@ -1091,6 +1118,59 @@ class Interface:
                 }
             return FinalMessages, TokenUsage
 
+        return self._execute_with_retry(_Logger, operation, _Model_key, "chat")
+
+    def _grok_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
+        """Handle xAI Grok chat completions using xai-sdk"""
+
+        # Transform messages using helper
+        Messages_transformed = self._transform_messages_for_grok(_Messages_list)
+
+        # Get client
+        client = self.Clients[_Model_key]
+
+        # Prepare chat config
+        chat_config = {}
+
+        # Apply supported model options
+        if ModelOptions_dict:
+            supported_params = ['temperature', 'max_tokens', 'top_p']
+            for key in supported_params:
+                if key in ModelOptions_dict:
+                    chat_config[key] = ModelOptions_dict[key]
+
+        # Handle structured output
+        if _FormatSchema_dict:
+            chat_config["temperature"] = 0.0
+            _Logger.Log("Warning: xAI Grok structured output uses basic JSON mode", 6)
+
+        # Define operation for retry helper
+        def operation():
+            # Create chat with messages
+            chat = client.chat.create(
+                model=ProviderModel_name,
+                messages=Messages_transformed,
+                **chat_config
+            )
+
+            # Sample response (non-streaming)
+            response = chat.sample()
+
+            # Build response
+            AssistantMessage = {"role": "assistant", "content": response.content}
+            FinalMessages = _Messages_list + [AssistantMessage]
+
+            # Extract token usage
+            TokenUsage = None
+            if hasattr(response, 'usage') and response.usage:
+                TokenUsage = {
+                    "prompt_tokens": getattr(response.usage, 'prompt_tokens', 0),
+                    "completion_tokens": getattr(response.usage, 'completion_tokens', 0)
+                }
+
+            return FinalMessages, TokenUsage
+
+        # Use retry helper (DRY)
         return self._execute_with_retry(_Logger, operation, _Model_key, "chat")
 
     def _openrouter_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
@@ -1379,6 +1459,23 @@ class Interface:
                 time.sleep(random.uniform(0.5, 1.5) * (attempt + 1))
 
         raise Exception(f"Google embedding failed for {_Model_key} after {MaxRetries} attempts.")
+
+    def _grok_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
+        """
+        xAI embeddings not supported - Collections API only.
+
+        The xAI API provides embeddings through the Collections API, which is designed
+        for document management and retrieval, not standalone embedding generation.
+        For embedding needs, consider using Google Gemini or Ollama providers.
+
+        Raises:
+            NotImplementedError: Always raises, embeddings not supported
+        """
+        raise NotImplementedError(
+            "xAI Grok does not support standalone embeddings. "
+            "Use Collections API for document retrieval or switch to "
+            "google://gemini-embedding-001 or ollama://nomic-embed-text"
+        )
 
     def _openrouter_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
         """Generate embeddings using OpenRouter (OpenAI-compatible)"""
