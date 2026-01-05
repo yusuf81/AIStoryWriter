@@ -1139,10 +1139,24 @@ class Interface:
                 if key in ModelOptions_dict:
                     chat_config[key] = ModelOptions_dict[key]
 
-        # Handle structured output
+        # Handle structured output with response_format parameter
         if _FormatSchema_dict:
+            # Import here to avoid circular dependency
+            from Writer.Models import get_model_from_schema
+
+            # Force temperature to 0.0 for deterministic structured output
             chat_config["temperature"] = 0.0
-            _Logger.Log("Warning: xAI Grok structured output uses basic JSON mode", 6)
+
+            # Try to get Pydantic model from schema
+            pydantic_model = get_model_from_schema(_FormatSchema_dict)
+
+            if pydantic_model:
+                # Pass Pydantic class directly to xAI SDK
+                chat_config["response_format"] = pydantic_model
+                _Logger.Log("Info: xAI Grok structured output enabled (response_format)", 6)
+            else:
+                # Fallback to basic JSON mode if schema not in registry
+                _Logger.Log("Warning: xAI Grok structured output uses basic JSON mode (schema not in registry)", 6)
 
         # Define operation for retry helper
         def operation():

@@ -844,6 +844,55 @@ class TestModelRegistry:
             assert model_name in MODEL_REGISTRY, f"{model_name} not found in MODEL_REGISTRY"
 
 
+class TestModelRegistryReverseLookup:
+    """Test reverse lookup from JSON schema to Pydantic model"""
+
+    def test_get_model_from_schema_with_title(self):
+        """RED: Retrieve model class from schema title"""
+        from Writer.Models import get_model_from_schema, ChapterOutput
+
+        schema = ChapterOutput.model_json_schema()
+        result = get_model_from_schema(schema)
+
+        assert result == ChapterOutput
+        assert result.__name__ == 'ChapterOutput'
+
+    def test_get_model_from_schema_outline_output(self):
+        """RED: Test with OutlineOutput schema"""
+        from Writer.Models import get_model_from_schema, OutlineOutput
+
+        schema = OutlineOutput.model_json_schema()
+        result = get_model_from_schema(schema)
+
+        assert result == OutlineOutput
+
+    def test_get_model_from_schema_not_in_registry(self):
+        """RED: Return None for schema not in registry"""
+        from Writer.Models import get_model_from_schema
+
+        schema = {"title": "NonExistentModel", "type": "object"}
+        result = get_model_from_schema(schema)
+
+        assert result is None
+
+    def test_get_model_from_schema_no_title(self):
+        """RED: Return None for schema without title"""
+        from Writer.Models import get_model_from_schema
+
+        schema = {"type": "object", "properties": {}}
+        result = get_model_from_schema(schema)
+
+        assert result is None
+
+    def test_get_model_from_schema_empty_dict(self):
+        """RED: Return None for empty schema"""
+        from Writer.Models import get_model_from_schema
+
+        result = get_model_from_schema({})
+
+        assert result is None
+
+
 class TestModelMethods:
     """Test new Pydantic model methods for structured extraction"""
 

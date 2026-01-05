@@ -235,11 +235,199 @@ class TestGrokCompliance:
             _FormatSchema_dict=schema
         )
 
-        # Assert - Warning should be logged
+        # Assert - Warning should be logged (schema not in registry fallback)
         mock_logger.Log.assert_any_call(
-            "Warning: xAI Grok structured output uses basic JSON mode", 6
+            "Warning: xAI Grok structured output uses basic JSON mode (schema not in registry)", 6
         )
         # Temperature should be set to 0.0
+        call_args = mock_client.chat.create.call_args
+        assert call_args[1].get('temperature') == 0.0
+
+
+class TestGrokStructuredOutputSupport:
+    """
+    TDD London School: Test xAI Grok response_format parameter support
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup_grok_env(self):
+        """Setup test environment with xAI API key"""
+        if not os.environ.get("XAI_API_KEY"):
+            os.environ["XAI_API_KEY"] = "test_key_for_pytest"
+
+    def test_grok_structured_output_passes_pydantic_model(self, mock_logger):
+        """RED: Verify response_format passed to xAI SDK with Pydantic class"""
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import ChapterOutput
+
+        # Arrange
+        interface = Interface()
+        mock_client = Mock()
+        interface.Clients["grok://grok-4"] = mock_client
+
+        mock_chat = Mock()
+        mock_response = Mock()
+        mock_response.content = '{"text": "Valid chapter text", "chapter_number": 1}'
+        mock_response.usage = Mock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 20
+        mock_chat.sample.return_value = mock_response
+        mock_client.chat.create.return_value = mock_chat
+
+        # Act
+        schema = ChapterOutput.model_json_schema()
+        result, usage = interface._grok_chat(
+            _Logger=mock_logger,
+            _Model_key="grok://grok-4",
+            ProviderModel_name="grok-4",
+            _Messages_list=[{"role": "user", "content": "Generate chapter"}],
+            ModelOptions_dict=None,
+            Seed_int=None,
+            _FormatSchema_dict=schema
+        )
+
+        # Assert
+        call_args = mock_client.chat.create.call_args
+        assert call_args is not None
+        assert 'response_format' in call_args[1]
+        assert call_args[1]['response_format'] == ChapterOutput
+
+    def test_grok_structured_output_logs_enabled_message(self, mock_logger):
+        """RED: Verify log message changed from 'basic JSON mode' to 'structured output enabled'"""
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import OutlineOutput
+
+        # Arrange
+        interface = Interface()
+        mock_client = Mock()
+        interface.Clients["grok://grok-4"] = mock_client
+
+        mock_chat = Mock()
+        mock_response = Mock()
+        mock_response.content = '{"title": "Test", "chapters": ["Ch1"], "target_chapter_count": 1}'
+        mock_response.usage = None
+        mock_chat.sample.return_value = mock_response
+        mock_client.chat.create.return_value = mock_chat
+
+        # Act
+        schema = OutlineOutput.model_json_schema()
+        interface._grok_chat(
+            _Logger=mock_logger,
+            _Model_key="grok://grok-4",
+            ProviderModel_name="grok-4",
+            _Messages_list=[{"role": "user", "content": "Test"}],
+            ModelOptions_dict=None,
+            Seed_int=None,
+            _FormatSchema_dict=schema
+        )
+
+        # Assert
+        logged_messages = [call[0][0] for call in mock_logger.Log.call_args_list]
+        assert any("structured output enabled" in msg.lower() for msg in logged_messages)
+        assert not any("basic JSON mode" in msg for msg in logged_messages)
+
+    def test_grok_structured_output_without_schema_no_response_format(self, mock_logger):
+        """Test that response_format NOT passed when FormatSchema is None"""
+        from Writer.Interface.Wrapper import Interface
+
+        # Arrange
+        interface = Interface()
+        mock_client = Mock()
+        interface.Clients["grok://grok-4"] = mock_client
+
+        mock_chat = Mock()
+        mock_response = Mock()
+        mock_response.content = "Plain text"
+        mock_response.usage = None
+        mock_chat.sample.return_value = mock_response
+        mock_client.chat.create.return_value = mock_chat
+
+        # Act
+        interface._grok_chat(
+            _Logger=mock_logger,
+            _Model_key="grok://grok-4",
+            ProviderModel_name="grok-4",
+            _Messages_list=[{"role": "user", "content": "Test"}],
+            ModelOptions_dict=None,
+            Seed_int=None,
+            _FormatSchema_dict=None
+        )
+
+        # Assert
+        call_args = mock_client.chat.create.call_args
+        assert 'response_format' not in call_args[1]
+
+    def test_grok_structured_output_schema_not_in_registry_fallback(self, mock_logger):
+        """RED: Test fallback to basic JSON when schema not in registry"""
+        from Writer.Interface.Wrapper import Interface
+
+        # Arrange
+        interface = Interface()
+        mock_client = Mock()
+        interface.Clients["grok://grok-4"] = mock_client
+
+        mock_chat = Mock()
+        mock_response = Mock()
+        mock_response.content = '{"unknown": "data"}'
+        mock_response.usage = None
+        mock_chat.sample.return_value = mock_response
+        mock_client.chat.create.return_value = mock_chat
+
+        # Act
+        custom_schema = {
+            "title": "CustomUnknownModel",
+            "type": "object",
+            "properties": {"unknown": {"type": "string"}}
+        }
+
+        interface._grok_chat(
+            _Logger=mock_logger,
+            _Model_key="grok://grok-4",
+            ProviderModel_name="grok-4",
+            _Messages_list=[{"role": "user", "content": "Test"}],
+            ModelOptions_dict=None,
+            Seed_int=None,
+            _FormatSchema_dict=custom_schema
+        )
+
+        # Assert - Should NOT pass response_format
+        call_args = mock_client.chat.create.call_args
+        assert 'response_format' not in call_args[1]
+
+        # Should log fallback warning
+        logged_messages = [call[0][0] for call in mock_logger.Log.call_args_list]
+        assert any("basic" in msg.lower() for msg in logged_messages)
+
+    def test_grok_structured_output_maintains_temperature_zero(self, mock_logger):
+        """Test that temperature=0.0 set for structured output"""
+        from Writer.Interface.Wrapper import Interface
+        from Writer.Models import ChapterOutput
+
+        # Arrange
+        interface = Interface()
+        mock_client = Mock()
+        interface.Clients["grok://grok-4"] = mock_client
+
+        mock_chat = Mock()
+        mock_response = Mock()
+        mock_response.content = '{"text": "Valid", "chapter_number": 1}'
+        mock_response.usage = None
+        mock_chat.sample.return_value = mock_response
+        mock_client.chat.create.return_value = mock_chat
+
+        # Act
+        schema = ChapterOutput.model_json_schema()
+        interface._grok_chat(
+            _Logger=mock_logger,
+            _Model_key="grok://grok-4",
+            ProviderModel_name="grok-4",
+            _Messages_list=[{"role": "user", "content": "Test"}],
+            ModelOptions_dict=None,
+            Seed_int=None,
+            _FormatSchema_dict=schema
+        )
+
+        # Assert
         call_args = mock_client.chat.create.call_args
         assert call_args[1].get('temperature') == 0.0
 

@@ -59,7 +59,9 @@ class TestGoogleCompliance:
 
         # Mock the embed_content response - using client.models.embed_content pattern
         mock_response = Mock()
-        mock_response.embedding = [0.1, 0.2, 0.3]
+        mock_emb_obj = Mock()
+        mock_emb_obj.values = [0.1, 0.2, 0.3]
+        mock_response.embeddings = [mock_emb_obj]  # embeddings is plural, list of objects
         mock_client.models.embed_content.return_value = mock_response
 
         # Act - This should call client.models.embed_content, not genai.embed_content
@@ -106,7 +108,9 @@ class TestGoogleCompliance:
 
         # Make first call fail, second succeed
         mock_response = Mock()
-        mock_response.embedding = [0.1, 0.2, 0.3]
+        mock_emb_obj = Mock()
+        mock_emb_obj.values = [0.1, 0.2, 0.3]
+        mock_response.embeddings = [mock_emb_obj]
         mock_client.models.embed_content.side_effect = [
             Exception("API Error"),  # First call fails
             mock_response            # Second call succeeds
@@ -140,7 +144,9 @@ class TestGoogleCompliance:
 
         # Mock response with object attributes (latest SDK pattern)
         mock_response = Mock()
-        mock_response.embedding = [0.1, 0.2, 0.3]
+        mock_emb_obj = Mock()
+        mock_emb_obj.values = [0.1, 0.2, 0.3]
+        mock_response.embeddings = [mock_emb_obj]
         mock_client.models.embed_content.return_value = mock_response
         interface.Clients["google_test"] = mock_client
 
@@ -153,7 +159,7 @@ class TestGoogleCompliance:
         )
 
         # Assert - Should access object attributes, not dictionary keys
-        assert hasattr(mock_response, 'embedding'), "Response should have embedding attribute"
+        assert hasattr(mock_response, 'embeddings'), "Response should have embeddings attribute"
         assert result == [[0.1, 0.2, 0.3]]
 
     def test_google_chat_optimizes_system_messages(self, mock_logger):

@@ -854,3 +854,32 @@ def get_model(model_name: str) -> type:
         available = ', '.join(MODEL_REGISTRY.keys())
         raise KeyError(f"Model '{model_name}' not found. Available: {available}")
     return MODEL_REGISTRY[model_name]
+
+
+def get_model_from_schema(schema: dict) -> Optional[type]:
+    """
+    Get a Pydantic model by reverse lookup from JSON schema.
+
+    Args:
+        schema (dict): JSON schema dict (typically from model_json_schema())
+
+    Returns:
+        Optional[type]: The Pydantic model class if found, None otherwise
+
+    Example:
+        >>> from Writer.Models import ChapterOutput, get_model_from_schema
+        >>> schema = ChapterOutput.model_json_schema()
+        >>> model_class = get_model_from_schema(schema)
+        >>> assert model_class == ChapterOutput
+    """
+    # Return None for invalid inputs
+    if not schema or not isinstance(schema, dict):
+        return None
+
+    # Extract title from schema (Pydantic sets this to class name)
+    schema_title = schema.get('title')
+    if not schema_title:
+        return None
+
+    # Lookup in registry (case-sensitive)
+    return MODEL_REGISTRY.get(schema_title)
