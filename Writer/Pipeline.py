@@ -304,7 +304,7 @@ def _get_full_story_text_pipeline_version(chapters_data_list, Config, add_titles
 
 
 class StoryPipeline:
-    def __init__(self, interface, sys_logger, config, active_prompts, is_fresh_run=True):
+    def __init__(self, interface, sys_logger, config, active_prompts, is_fresh_run=True, resumed_state_file=None):
         self.Interface = interface
         self.SysLogger = sys_logger
         self.Config = config
@@ -343,19 +343,16 @@ class StoryPipeline:
                     )
 
                     # NEW: Handle lorebook state restoration for resume
-                    if self.lorebook and not self.is_fresh_run:
-                        # For resume, look for state file in current run logs
-                        import glob
-                        log_dirs = glob.glob("Logs/Generation_*/")
-                        if log_dirs:
-                            latest_dir = sorted(log_dirs)[-1]
-                            state_file = os.path.join(latest_dir, "run.state.json")
-                            if os.path.exists(state_file):
-                                try:
-                                    self.lorebook.load_entries_from_state(state_file)
-                                    self.SysLogger.Log(f"Lorebook state restored from {state_file}", 5)
-                                except Exception as e:
-                                    self.SysLogger.Log(f"Failed to restore lorebook from {state_file}: {e}", 3)
+                    if self.lorebook and not self.is_fresh_run and resumed_state_file:
+                        # Use the explicit state file path that was resumed
+                        if os.path.exists(resumed_state_file):
+                            try:
+                                self.lorebook.load_entries_from_state(resumed_state_file)
+                                self.SysLogger.Log(f"Lorebook state restored from {resumed_state_file}", 5)
+                            except Exception as e:
+                                self.SysLogger.Log(f"Failed to restore lorebook from {resumed_state_file}: {e}", 3)
+                        else:
+                            self.SysLogger.Log(f"Warning: Resumed state file not found: {resumed_state_file}", 6)
 
                     # Auto-clear logic remains for fresh runs
                     if (self.lorebook and

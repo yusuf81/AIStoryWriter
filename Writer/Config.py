@@ -139,7 +139,7 @@ SEED = 12
 #   - openrouter://openai/text-embedding-3-small
 #   API Key: Set OPENROUTER_API_KEY in .env file
 #
-#EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"
+# EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"
 EMBEDDING_MODEL = "google://gemini-embedding-001"
 EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for qwen3-embedding)
 EMBEDDING_CTX = 8192  # Context window for embeddings
@@ -168,6 +168,89 @@ MAX_GOOGLE_RETRIES = 2  # Google Genai API retries
 MAX_OPENROUTER_RETRIES = 2  # OpenRouter API retries
 MAX_GROK_RETRIES = 2  # xAI Grok API retries
 MAX_RETRIES_CHAPTER_TITLE = 3  # Chapter title generation retries
+
+###############################################################################
+# LLM SAMPLING & REPETITION CONTROL
+###############################################################################
+
+# Temperature settings
+# - Controls randomness: 0.0 = deterministic, 1.0 = balanced, 2.0 = very creative
+# - Used for non-structured output (free-form text generation)
+# - Structured output (Pydantic/JSON) always uses 0.0 for determinism
+DEFAULT_TEMPERATURE_FREEFORM = 0.7  # Default for story/chapter generation
+DEFAULT_TEMPERATURE_STRUCTURED = 0.0  # For JSON/Pydantic output (DO NOT CHANGE)
+
+# Repetition penalty settings (prevent model from repeating itself)
+# Different providers use different parameter names - see provider-specific sections below
+
+# --- OLLAMA REPETITION CONTROL ---
+# repeat_penalty: Penalizes token repetition
+#   1.0 = no penalty, >1.0 = penalize repetition
+#   Range: >0, typical values: 1.0-1.3
+#   Too high (>1.5) causes incoherence
+OLLAMA_REPEAT_PENALTY = 1.1  # Slight penalty for story generation
+
+# repeat_last_n: Number of tokens to look back for repetition detection
+#   Default: 64, higher = catches longer-distance repetition
+OLLAMA_REPEAT_LAST_N = 64
+
+# --- OPENROUTER REPETITION CONTROL ---
+# frequency_penalty: Penalizes tokens based on occurrence frequency
+#   Range: [-2, 2], 0 = no penalty
+#   Positive values decrease repetition, negative encourages it
+OPENROUTER_FREQUENCY_PENALTY = 0.5  # Moderate penalty
+
+# presence_penalty: Penalizes tokens that already appeared (flat penalty)
+#   Range: [-2, 2], 0 = no penalty
+#   Unlike frequency_penalty, doesn't scale with count
+OPENROUTER_PRESENCE_PENALTY = 0.3  # Light penalty for diversity
+
+# repetition_penalty: OpenRouter-specific repetition control
+#   Range: (0, 2], 1.0 = no penalty
+#   Scales based on original token probability
+OPENROUTER_REPETITION_PENALTY = 1.0  # Neutral (let frequency/presence handle it)
+
+# --- GOOGLE GEMINI REPETITION CONTROL ---
+# frequency_penalty & presence_penalty: Same as OpenRouter
+#   ⚠️ WARNING: Only supported by gemini-2.0-* models
+#   gemini-2.5-* models do NOT support these (returns INVALID_ARGUMENT error)
+GOOGLE_FREQUENCY_PENALTY = 0.5  # Only for 2.0 models
+GOOGLE_PRESENCE_PENALTY = 0.3   # Only for 2.0 models
+
+# --- GROK REPETITION CONTROL ---
+# frequency_penalty: Limited support
+#   ⚠️ WARNING: Grok-4 models auto-filter these parameters
+GROK_FREQUENCY_PENALTY = 0.5  # May be filtered by API
+
+# --- REPETITION DETECTION THRESHOLDS ---
+# Used by RepetitionDetector to identify problematic outputs
+
+# Character explosion detection
+# Example: "aaaaaaaaaa..." triggers when same char repeats >= threshold
+MAX_CONSECUTIVE_CHARS = 10  # Max consecutive identical characters (non-structured output)
+MAX_CONSECUTIVE_CHARS_STRUCTURED = 20  # Higher threshold for structured output (JSON values can have legitimate repetition)
+
+# N-gram loop detection
+# Example: "The cat sat. The cat sat. The cat sat." triggers when n-gram repeats >= threshold
+NGRAM_SIZE = 5  # Number of words in n-gram sequence
+MAX_NGRAM_REPETITIONS = 3  # Max times n-gram can repeat
+
+# Minimum phrase length for phrase repetition detection (in characters)
+MIN_PHRASE_LENGTH = 20  # Ignore very short phrases
+MAX_PHRASE_REPETITIONS = 2  # Max times phrase can repeat
+
+# --- AUTO-RETRY CONFIGURATION ---
+# When repetition detected, automatically retry with adjusted parameters
+
+# Maximum retry attempts for repetition issues
+MAX_REPETITION_RETRIES = 2  # Retry up to 2 times (total 3 attempts)
+
+# Temperature increment per retry
+# Each retry increases temperature to add randomness
+TEMPERATURE_INCREMENT_PER_RETRY = 0.2  # +0.2 per retry (0.7 → 0.9 → 1.1)
+
+# Delay between retries (seconds)
+REPETITION_RETRY_DELAY = 3  # Wait 3s before retry (allow model unload)
 
 ###############################################################################
 # QUALITY & REVISION CONFIGURATION

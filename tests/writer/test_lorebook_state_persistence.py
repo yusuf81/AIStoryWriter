@@ -145,18 +145,16 @@ class TestLorebookStatePersistence:
         """GREEN: Pipeline should restore lorebook when is_fresh_run=False
 
         Tests the restored functionality - should now pass.
+        Now tests REAL scenario: resume with explicit state file path (no glob mocking).
         """
         with patch('Writer.Lorebook.LorebookManager') as mock_lorebook_class:
             mock_lorebook = Mock()
             mock_lorebook.load_entries_from_state = Mock()
             mock_lorebook_class.return_value = mock_lorebook
 
-            # Create a fake log directory with state file
+            # Create a state file (can be anywhere, doesn't need to be in Logs/)
             with tempfile.TemporaryDirectory() as temp_dir:
-                log_dir = Path(temp_dir) / "Logs" / "Generation_2025-12-15_19-47-56"
-                log_dir.mkdir(parents=True)
-
-                state_file = log_dir / "run.state.json"
+                state_file = Path(temp_dir) / "run.state.json"
                 state_data = {
                     "other_data": {
                         "lorebook_entries": [
@@ -171,16 +169,59 @@ class TestLorebookStatePersistence:
                 with open(state_file, 'w') as f:
                     json.dump(state_data, f)
 
-                # Mock glob to return our temp Logs directory (with Generation_*/ pattern)
-                with patch('glob.glob') as mock_glob:
-                    mock_glob.return_value = [str(log_dir)]
+                # NO GLOB MOCKING - Test real scenario where user provides explicit path
+                # Create pipeline for resume with explicit state file path
+                from Writer.Pipeline import StoryPipeline
+                StoryPipeline(
+                    Mock(), Mock(), Mock(), Mock(),
+                    is_fresh_run=False,
+                    resumed_state_file=str(state_file)
+                )
 
-                    # Create pipeline for resume
-                    from Writer.Pipeline import StoryPipeline
-                    pipeline = StoryPipeline(Mock(), Mock(), Mock(), Mock(), is_fresh_run=False)
+                # This should restore lorebook entries from the EXACT file provided
+                mock_lorebook.load_entries_from_state.assert_called_once_with(str(state_file))
 
-                    # This should restore lorebook entries
-                    mock_lorebook.load_entries_from_state.assert_called_once_with(str(state_file))
+    def test_pipeline_resume_without_state_file_should_warn(self):
+        """NEW: Pipeline should warn when resumed but state file path not provided or doesn't exist
+
+        This test ensures the bug we fixed is caught: if glob was used, it might find wrong file.
+        Now we require explicit state file path.
+        """
+        with patch('Writer.Lorebook.LorebookManager') as mock_lorebook_class:
+            mock_logger = Mock()
+            mock_logger.Log = Mock()
+            mock_lorebook = Mock()
+            mock_lorebook.load_entries_from_state = Mock()
+            mock_lorebook_class.return_value = mock_lorebook
+
+            # Test 1: Resume without providing state file path
+            from Writer.Pipeline import StoryPipeline
+            StoryPipeline(
+                Mock(), mock_logger, Mock(), Mock(),
+                is_fresh_run=False,
+                resumed_state_file=None  # ❌ No file provided
+            )
+
+            # Should NOT attempt to load (no file to load from)
+            mock_lorebook.load_entries_from_state.assert_not_called()
+
+            # Test 2: Resume with non-existent state file
+            mock_lorebook.load_entries_from_state.reset_mock()
+            mock_logger.Log.reset_mock()
+
+            StoryPipeline(
+                Mock(), mock_logger, Mock(), Mock(),
+                is_fresh_run=False,
+                resumed_state_file="/nonexistent/path.json"
+            )
+
+            # Should NOT attempt to load (file doesn't exist)
+            mock_lorebook.load_entries_from_state.assert_not_called()
+
+            # Should log warning about missing file
+            logged_messages = [str(call[0][0]) for call in mock_logger.Log.call_args_list]
+            assert any("not found" in msg.lower() for msg in logged_messages), \
+                "Should warn when resumed state file doesn't exist"
 
     def test_get_all_entries_should_return_serializable_data(self):
         """GREEN: LorebookManager should provide all entries in serializable format

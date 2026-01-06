@@ -941,6 +941,11 @@ class Interface:
             if key not in ValidParameters:
                 del CurrentModelOptions[key]
         CurrentModelOptions.setdefault("num_ctx", getattr(Writer.Config, "OLLAMA_CTX", 4096))
+        # Apply default repetition penalties if not already set
+        if "repeat_penalty" not in CurrentModelOptions:
+            CurrentModelOptions["repeat_penalty"] = getattr(Writer.Config, "OLLAMA_REPEAT_PENALTY", 1.1)
+        if "repeat_last_n" not in CurrentModelOptions:
+            CurrentModelOptions["repeat_last_n"] = getattr(Writer.Config, "OLLAMA_REPEAT_LAST_N", 64)
         CurrentModelOptions["seed"] = Seed_int
         if _FormatSchema_dict:
             CurrentModelOptions.update({"temperature": CurrentModelOptions.get("temperature", 0.0)})
@@ -968,7 +973,7 @@ class Interface:
         MaxRetries = getattr(Writer.Config, "MAX_OLLAMA_RETRIES", 2)
         for attempt in range(MaxRetries):
             try:
-                client = self.Clients[_Model_key]
+                client = self._get_client(_Model_key)
 
                 # Always use non-streaming mode (streaming removed)
                 response = client.chat(**chat_params)
@@ -1088,6 +1093,14 @@ class Interface:
         if ModelOptions_dict:
             config_params.update(ModelOptions_dict)
 
+        # Add repetition penalties for Gemini 2.0 models (not supported in 2.5+)
+        # Only apply for non-structured output (free-form generation)
+        if not _FormatSchema_dict and 'gemini-2.0' in ProviderModel_name:
+            if "frequency_penalty" not in config_params:
+                config_params["frequency_penalty"] = getattr(Writer.Config, "GOOGLE_FREQUENCY_PENALTY", 0.5)
+            if "presence_penalty" not in config_params:
+                config_params["presence_penalty"] = getattr(Writer.Config, "GOOGLE_PRESENCE_PENALTY", 0.3)
+
         # Add JSON schema if provided
         if _FormatSchema_dict:
             config_params["response_mime_type"] = "application/json"
@@ -1096,7 +1109,7 @@ class Interface:
             config_params["temperature"] = 0.0
 
         gen_config = types.GenerateContentConfig(**config_params)
-        client = self.Clients[_Model_key]
+        client = self._get_client(_Model_key)
 
         # Use retry helper
         def operation():
@@ -1126,15 +1139,15 @@ class Interface:
         # Transform messages using helper
         Messages_transformed = self._transform_messages_for_grok(_Messages_list)
 
-        # Get client
-        client = self.Clients[_Model_key]
+        # Get client (handles query parameters from auto-retry)
+        client = self._get_client(_Model_key)
 
         # Prepare chat config
         chat_config = {}
 
         # Apply supported model options
         if ModelOptions_dict:
-            supported_params = ['temperature', 'max_tokens', 'top_p']
+            supported_params = ['temperature', 'max_tokens', 'top_p', 'frequency_penalty']
             for key in supported_params:
                 if key in ModelOptions_dict:
                     chat_config[key] = ModelOptions_dict[key]
@@ -1157,38 +1170,80 @@ class Interface:
             else:
                 # Fallback to basic JSON mode if schema not in registry
                 _Logger.Log("Warning: xAI Grok structured output uses basic JSON mode (schema not in registry)", 6)
+        else:
+            # Apply default frequency_penalty for non-structured output (free-form generation)
+            # Note: Some Grok models (reasoning models) don't support this - will auto-fallback on error
+            if 'frequency_penalty' not in chat_config:
+                chat_config['frequency_penalty'] = getattr(Writer.Config, "GROK_FREQUENCY_PENALTY", 0.5)
 
         # Define operation for retry helper
         def operation():
-            # Create chat with messages
-            chat = client.chat.create(
-                model=ProviderModel_name,
-                messages=Messages_transformed,
-                **chat_config
-            )
+            try:
+                # Create chat with messages
+                chat = client.chat.create(
+                    model=ProviderModel_name,
+                    messages=Messages_transformed,
+                    **chat_config
+                )
 
-            # Sample response (non-streaming)
-            response = chat.sample()
+                # Sample response (non-streaming)
+                response = chat.sample()
 
-            # Build response
-            AssistantMessage = {"role": "assistant", "content": response.content}
-            FinalMessages = _Messages_list + [AssistantMessage]
+                # Build response
+                AssistantMessage = {"role": "assistant", "content": response.content}
+                FinalMessages = _Messages_list + [AssistantMessage]
 
-            # Extract token usage
-            TokenUsage = None
-            if hasattr(response, 'usage') and response.usage:
-                TokenUsage = {
-                    "prompt_tokens": getattr(response.usage, 'prompt_tokens', 0),
-                    "completion_tokens": getattr(response.usage, 'completion_tokens', 0)
-                }
+                # Extract token usage
+                TokenUsage = None
+                if hasattr(response, 'usage') and response.usage:
+                    TokenUsage = {
+                        "prompt_tokens": getattr(response.usage, 'prompt_tokens', 0),
+                        "completion_tokens": getattr(response.usage, 'completion_tokens', 0)
+                    }
 
-            return FinalMessages, TokenUsage
+                return FinalMessages, TokenUsage
+
+            except Exception as e:
+                # Auto-fallback: If model doesn't support frequency_penalty, retry without it
+                error_msg = str(e)
+                if "does not support parameter" in error_msg and "frequencyPenalty" in error_msg:
+                    if 'frequency_penalty' in chat_config:
+                        _Logger.Log(
+                            f"⚠️ Model {ProviderModel_name} does not support frequency_penalty. Retrying without it.",
+                            7
+                        )
+                        chat_config.pop('frequency_penalty', None)
+
+                        # Retry without frequency_penalty
+                        chat = client.chat.create(
+                            model=ProviderModel_name,
+                            messages=Messages_transformed,
+                            **chat_config
+                        )
+                        response = chat.sample()
+
+                        # Build response
+                        AssistantMessage = {"role": "assistant", "content": response.content}
+                        FinalMessages = _Messages_list + [AssistantMessage]
+
+                        # Extract token usage
+                        TokenUsage = None
+                        if hasattr(response, 'usage') and response.usage:
+                            TokenUsage = {
+                                "prompt_tokens": getattr(response.usage, 'prompt_tokens', 0),
+                                "completion_tokens": getattr(response.usage, 'completion_tokens', 0)
+                            }
+
+                        return FinalMessages, TokenUsage
+
+                # Re-raise if not handled
+                raise
 
         # Use retry helper (DRY)
         return self._execute_with_retry(_Logger, operation, _Model_key, "chat")
 
     def _openrouter_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
-        Client = self.Clients[_Model_key]
+        Client = self._get_client(_Model_key)
         if hasattr(Client, 'model_name'):
             Client.model_name = ProviderModel_name
         elif hasattr(Client, 'model'):
@@ -1206,6 +1261,14 @@ class Interface:
                 # Apply temperature adjustment for basic JSON object mode only
                 if response_format.get("type") == "json_object":
                     ReqOptions.update({"temperature": ReqOptions.get("temperature", 0.0)})
+        else:
+            # Apply repetition penalties for non-structured output (free-form generation)
+            if "frequency_penalty" not in ReqOptions:
+                ReqOptions["frequency_penalty"] = getattr(Writer.Config, "OPENROUTER_FREQUENCY_PENALTY", 0.5)
+            if "presence_penalty" not in ReqOptions:
+                ReqOptions["presence_penalty"] = getattr(Writer.Config, "OPENROUTER_PRESENCE_PENALTY", 0.3)
+            if "repetition_penalty" not in ReqOptions:
+                ReqOptions["repetition_penalty"] = getattr(Writer.Config, "OPENROUTER_REPETITION_PENALTY", 1.0)
 
         MaxRetries = Writer.Config.MAX_OPENROUTER_RETRIES
         for attempt in range(MaxRetries):
@@ -1229,8 +1292,8 @@ class Interface:
                 time.sleep(random.uniform(0.5, 1.5) * (attempt + 1))
         raise Exception(f"OpenRouter chat failed for {_Model_key} after {MaxRetries} attempts.")
 
-    def ChatResponse(self, _Logger, _Messages, _Model: str, _SeedOverride: int, _FormatSchema: dict = None):  # type: ignore[assignment]
-        """Non-streaming response for Pydantic generation with user-friendly display"""
+    def ChatResponse(self, _Logger, _Messages, _Model: str, _SeedOverride: int, _FormatSchema: dict | None = None, _repetition_retry_count: int = 0):  # type: ignore[assignment]
+        """Non-streaming response for Pydantic generation with user-friendly display and repetition detection"""
         TotalInputChars, EstInputTokens = 0, 0
         try:
             for msg in _Messages:
@@ -1262,6 +1325,102 @@ class Interface:
         FullResponseMessages, TokenUsage = ResponseHandler(
             _Logger, _Model, ProviderModelName, _Messages, ModelOptions, SeedToUse, _FormatSchema
         )
+
+        # POST-GENERATION: Check for repetition issues (ALL outputs including structured)
+        if FullResponseMessages and isinstance(FullResponseMessages, list):
+            # Find the last assistant message
+            last_message = None
+            for msg in reversed(FullResponseMessages):
+                if isinstance(msg, dict) and msg.get("role") == "assistant":
+                    last_message = msg
+                    break
+
+            if last_message:
+                content = last_message.get("content", "")
+
+                # Analyze for repetition with appropriate threshold
+                from Writer.RepetitionDetector import RepetitionDetector
+
+                # For structured output: Use higher threshold for character explosion
+                if _FormatSchema:
+                    char_threshold = getattr(Writer.Config, 'MAX_CONSECUTIVE_CHARS_STRUCTURED', 20)
+                    char_detected, char_msg = RepetitionDetector.detect_character_explosion(content, threshold=char_threshold)
+                    # Only check character explosion for structured output (most severe)
+                    analysis = {
+                        "has_repetition": char_detected,
+                        "character_explosion": char_detected,
+                        "ngram_loop": False,
+                        "phrase_repetition": False,
+                        "diagnostics": {
+                            "character": char_msg,
+                            "ngram": "",
+                            "phrase": ""
+                        }
+                    }
+                else:
+                    # For non-structured output: Check all repetition types
+                    analysis = RepetitionDetector.analyze(content)
+
+                # If repetition detected and retries available
+                if analysis["has_repetition"]:
+                    max_retries = getattr(Writer.Config, 'MAX_REPETITION_RETRIES', 2)
+
+                    # Log detected issues
+                    diagnostics = []
+                    output_type = "structured" if _FormatSchema else "non-structured"
+                    if analysis["character_explosion"]:
+                        diagnostics.append(f"CharExplosion: {analysis['diagnostics']['character']}")
+                    if analysis["ngram_loop"]:
+                        diagnostics.append(f"NgramLoop: {analysis['diagnostics']['ngram']}")
+                    if analysis["phrase_repetition"]:
+                        diagnostics.append(f"PhraseLoop: {analysis['diagnostics']['phrase']}")
+
+                    diagnostic_msg = "; ".join(diagnostics)
+                    _Logger.Log(
+                        f"⚠️ Repetition detected in {_Model} ({output_type}, attempt {_repetition_retry_count + 1}/{max_retries + 1}): {diagnostic_msg}",
+                        7  # Warning level
+                    )
+
+                    # Auto-retry if retries available
+                    if _repetition_retry_count < max_retries:
+                        _Logger.Log(f"🔄 Auto-retry with adjusted temperature (attempt {_repetition_retry_count + 2}/{max_retries + 1})", 6)
+
+                        # Wait before retry
+                        import time as time_module
+                        retry_delay = getattr(Writer.Config, 'REPETITION_RETRY_DELAY', 3)
+                        _Logger.Log(f"⏱️ Waiting {retry_delay}s before retry...", 6)
+                        time_module.sleep(retry_delay)
+
+                        # Increase temperature by modifying ModelOptions
+                        temp_increment = getattr(Writer.Config, 'TEMPERATURE_INCREMENT_PER_RETRY', 0.2)
+                        if ModelOptions is None:
+                            ModelOptions = {}
+                        current_temp_raw = ModelOptions.get('temperature', getattr(Writer.Config, 'DEFAULT_TEMPERATURE_FREEFORM', 0.7))
+                        current_temp = float(current_temp_raw)  # Ensure float type
+                        new_temp = min(current_temp + temp_increment, 1.5)  # Cap at 1.5
+                        ModelOptions['temperature'] = new_temp
+
+                        # Rebuild model string with updated temperature
+                        # Parse current model URL and update temperature query parameter
+                        import urllib.parse
+                        if '?' in _Model:
+                            base_model, query = _Model.split('?', 1)
+                            params = urllib.parse.parse_qs(query)
+                            params['temperature'] = [str(new_temp)]
+                            new_query = urllib.parse.urlencode(params, doseq=True)
+                            updated_model = f"{base_model}?{new_query}"
+                        else:
+                            updated_model = f"{_Model}?temperature={new_temp}"
+
+                        _Logger.Log(f"🌡️ Increasing temperature from {current_temp} to {new_temp}", 6)
+
+                        # Recursive retry with incremented count
+                        return self.ChatResponse(
+                            _Logger, _Messages, updated_model, _SeedOverride,
+                            _FormatSchema, _repetition_retry_count + 1
+                        )
+                    else:
+                        _Logger.Log(f"❌ Max repetition retries ({max_retries}) exceeded. Returning response with issues.", 7)
 
         # Display user-friendly content for Pydantic responses
         if _FormatSchema and FullResponseMessages:
@@ -1421,7 +1580,7 @@ class Interface:
 
     def _ollama_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
         """Generate embeddings using Ollama"""
-        client = self.Clients[_Model_key]
+        client = self._get_client(_Model_key)
         embeddings = []
         total_tokens = 0
 
@@ -1445,7 +1604,7 @@ class Interface:
         """Generate embeddings using Gemini with retry logic and client pattern"""
         from google.genai import types
 
-        client = self.Clients[_Model_key]
+        client = self._get_client(_Model_key)
         embeddings = []
         total_tokens = 0
 
@@ -1495,7 +1654,7 @@ class Interface:
         """Generate embeddings using OpenRouter (OpenAI-compatible)"""
         import requests
 
-        client = self.Clients[_Model_key]
+        client = self._get_client(_Model_key)
 
         # Prepare request for embeddings (OpenAI-compatible format)
         headers = {
@@ -1561,3 +1720,35 @@ class Interface:
 
         Options = {k: (float(v[0]) if v[0].replace('.', '', 1).isdigit() else v[0]) for k, v in parse_qs(Query).items()}
         return Provider, ModelName.strip('/'), Host, Options if Options else None
+
+    def _get_client(self, _Model_key: str):
+        """
+        Get client for model key, handling query parameters.
+
+        When auto-retry adds query parameters (e.g., ?temperature=0.9),
+        we need to lookup client using base model key without parameters.
+
+        Args:
+            _Model_key: Full model key (may include query parameters)
+
+        Returns:
+            Client instance
+
+        Raises:
+            KeyError: If client not found for base model key
+        """
+        # Try exact match first (most common case)
+        if _Model_key in self.Clients:
+            return self.Clients[_Model_key]
+
+        # Strip query parameters and try again
+        if '?' in _Model_key:
+            base_key = _Model_key.split('?')[0]
+            if base_key in self.Clients:
+                return self.Clients[base_key]
+
+        # Not found - raise descriptive error
+        raise KeyError(
+            f"Client not found for model key: {_Model_key}\n"
+            f"Available keys: {list(self.Clients.keys())}"
+        )

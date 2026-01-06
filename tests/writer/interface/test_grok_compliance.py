@@ -12,7 +12,7 @@ Phase 3 - REFACTOR: Tests will continue passing with improved code.
 import pytest
 import inspect
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 import Writer.Config
 
 
@@ -126,6 +126,7 @@ class TestGrokCompliance:
 
         # Assert - Verify response and token usage
         assert result[-1]["content"] == "Test response"
+        assert usage is not None
         assert usage["prompt_tokens"] == 10
         assert usage["completion_tokens"] == 5
 
@@ -430,6 +431,114 @@ class TestGrokStructuredOutputSupport:
         # Assert
         call_args = mock_client.chat.create.call_args
         assert call_args[1].get('temperature') == 0.0
+
+
+class TestGrokFrequencyPenaltyAutoFallback:
+    """Test auto-fallback when model doesn't support frequency_penalty"""
+
+    @pytest.fixture(autouse=True)
+    def setup_grok_env(self):
+        """Setup test environment with xAI API key"""
+        if not os.environ.get("XAI_API_KEY"):
+            os.environ["XAI_API_KEY"] = "test_key_for_pytest"
+
+    def test_grok_reasoning_model_auto_fallback_on_unsupported_param(self, mock_logger):
+        """
+        RED: Test auto-fallback when reasoning model rejects frequency_penalty
+
+        Scenario:
+        1. First call with frequency_penalty → Error "does not support parameter frequencyPenalty"
+        2. Auto-retry without frequency_penalty → Success
+        3. Log warning about unsupported parameter
+        """
+        from Writer.Interface.Wrapper import Interface
+
+        # Arrange
+        interface = Interface()
+        mock_client = Mock()
+        interface.Clients["grok://grok-4-1-fast-reasoning"] = mock_client
+
+        # Mock: First call fails with parameter error, second succeeds
+        mock_chat_fail = Mock()
+        mock_chat_success = Mock()
+
+        # Simulate gRPC error from xAI SDK
+        grpc_error = Exception("Model grok-4-1-fast-reasoning does not support parameter frequencyPenalty.")
+
+        mock_chat_fail.sample.side_effect = grpc_error
+
+        # Second call succeeds
+        mock_response = Mock()
+        mock_response.content = "Valid response without frequency_penalty"
+        mock_response.usage = Mock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_chat_success.sample.return_value = mock_response
+
+        # client.chat.create called twice: first fails, second succeeds
+        mock_client.chat.create.side_effect = [mock_chat_fail, mock_chat_success]
+
+        # Act - Execute chat (should auto-retry without frequency_penalty)
+        result, usage = interface._grok_chat(
+            _Logger=mock_logger,
+            _Model_key="grok://grok-4-1-fast-reasoning",
+            ProviderModel_name="grok-4-1-fast-reasoning",
+            _Messages_list=[{"role": "user", "content": "Test"}],
+            ModelOptions_dict=None,
+            Seed_int=None,
+            _FormatSchema_dict=None
+        )
+
+        # Assert - Should succeed on second attempt
+        assert result[-1]["content"] == "Valid response without frequency_penalty"
+        assert usage is not None
+        assert usage["prompt_tokens"] == 10
+        assert mock_client.chat.create.call_count == 2
+
+        # Assert - Warning logged about unsupported parameter
+        logged_messages = [str(call[0][0]) for call in mock_logger.Log.call_args_list]
+        assert any("does not support frequency_penalty" in msg for msg in logged_messages)
+        assert any("Retrying without it" in msg for msg in logged_messages)
+
+    def test_grok_non_reasoning_model_uses_frequency_penalty_normally(self, mock_logger):
+        """
+        Test that non-reasoning models (grok-3, grok-3-mini) successfully use frequency_penalty
+        """
+        from Writer.Interface.Wrapper import Interface
+
+        # Arrange
+        interface = Interface()
+        mock_client = Mock()
+        interface.Clients["grok://grok-3"] = mock_client
+
+        # Mock successful response
+        mock_chat = Mock()
+        mock_response = Mock()
+        mock_response.content = "Response with frequency_penalty applied"
+        mock_response.usage = Mock()
+        mock_response.usage.prompt_tokens = 8
+        mock_response.usage.completion_tokens = 12
+        mock_chat.sample.return_value = mock_response
+        mock_client.chat.create.return_value = mock_chat
+
+        # Act
+        result, usage = interface._grok_chat(
+            _Logger=mock_logger,
+            _Model_key="grok://grok-3",
+            ProviderModel_name="grok-3",
+            _Messages_list=[{"role": "user", "content": "Test"}],
+            ModelOptions_dict=None,
+            Seed_int=None,
+            _FormatSchema_dict=None
+        )
+
+        # Assert - Should succeed on first attempt
+        assert result[-1]["content"] == "Response with frequency_penalty applied"
+        assert mock_client.chat.create.call_count == 1
+
+        # Assert - frequency_penalty passed in config
+        call_args = mock_client.chat.create.call_args
+        assert 'frequency_penalty' in call_args[1]
 
 
 @pytest.fixture
