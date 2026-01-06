@@ -703,23 +703,38 @@ def main():
     except Exception as e:
         SysLogger.Log(f"FATAL error during main pipeline setup or invocation: {e}", 7)
         import traceback
-        SysLogger.Log(f"Traceback:\n{traceback.format_exc()}", 1) # Log stack trace at debug level
+        SysLogger.Log(f"Traceback:\n{traceback.format_exc()}", 1)  # Log stack trace at debug level
         # Ensure state is saved even on catastrophic pipeline failure, if possible
         # The pipeline itself should try to save state on error, but this is a fallback.
-        if current_state and state_filepath: # Check if these are defined
+        if current_state and state_filepath:  # Check if these are defined
             try:
-                current_state["status"] = "error_in_main" # More specific error status
+                current_state["status"] = "error_in_main"  # More specific error status
                 current_state["error_message_main"] = str(e)
                 current_state["error_traceback_main"] = traceback.format_exc()
-                save_state(current_state, state_filepath)
-                SysLogger.Log(f"Saved error state (from main exception handler) to {state_filepath}",6)
+
+                # Try to use pipeline._save_state_wrapper() to preserve lorebook entries
+                # Fallback to save_state() if pipeline is not available or in bad state
+                if 'pipeline' in locals() and pipeline is not None:
+                    try:
+                        pipeline._save_state_wrapper(current_state, state_filepath)
+                        SysLogger.Log(f"Saved error state with lorebook (using pipeline wrapper) to {state_filepath}", 6)
+                    except Exception as wrapper_err:
+                        # Fallback to basic save if wrapper fails (pipeline in bad state)
+                        SysLogger.Log(f"Pipeline wrapper save failed: {wrapper_err}, falling back to basic save", 6)
+                        save_state(current_state, state_filepath)
+                        SysLogger.Log(f"Saved error state (fallback without lorebook) to {state_filepath}", 6)
+                else:
+                    # Pipeline not available yet - use basic save
+                    save_state(current_state, state_filepath)
+                    SysLogger.Log(f"Saved error state (pipeline not available) to {state_filepath}", 6)
             except Exception as se:
-                SysLogger.Log(f"CRITICAL: Could not save error state from main: {se}",7)
+                SysLogger.Log(f"CRITICAL: Could not save error state from main: {se}", 7)
         sys.exit(1)
 
     # All logic previously below this point (sequential step execution, post-processing)
     # has been moved into the StoryPipeline.
     # The main function now concludes after the pipeline call and its outcome logging.
+
 
 if __name__ == "__main__":
     main()
