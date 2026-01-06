@@ -1,5 +1,38 @@
 # Setup Google Gemini untuk AIStoryWriter
 
+<!--
+    STATUS MARKER: MOSTLY RELEVANT ✅
+    Last checked: Jan 6, 2026
+
+    RELEVANT PARTS (Still Accurate):
+    - API key setup procedure (https://makersuite.google.com/app/apikey) ✅
+    - .env configuration (GOOGLE_API_KEY) ✅
+    - Basic model selection in Config.py ✅
+    - Troubleshooting section ✅
+
+    EVIDENCE FROM CURRENT CODE:
+    - Config.py line 34: google://gemini-2.5-flash (correct)
+    - Config.py line 86: google://gemini-2.5-flash listed (correct)
+    - Config.py line 97: google://gemini-flash-lite-latest (current recommendation)
+    - Config.py line 215: Warning about gemini-2.5-* not supporting certain params
+
+    MINOR NOTES:
+    - Actual model names in Config.py: google://gemini-2.5-flash, google://gemini-flash-lite-latest
+    - Document mentions "gemini-2.5-flash" which is the correct base model name
+    - google://gemini-embedding-001 for embedding (Config.py line 143) - document doesn't mention this
+
+    STILL RELEVANT:
+    - Setup procedure is still accurate
+    - Model names mentioned (gemini-2.5-flash, gemini-flash-latest) are still valid
+    - google://gemini-flash-lite-latest is the current lightweight option
+
+    RECOMMENDATION:
+    This document is still mostly accurate for setting up Google Gemini.
+    Minor updates: mention google://gemini-flash-lite-latest and google://gemini-embedding-001
+-->
+
+# Setup Google Gemini untuk AIStoryWriter
+
 ## Langkah 1: Dapatkan API Key
 
 1. Kunjungi: https://makersuite.google.com/app/apikey
@@ -51,6 +84,10 @@ python Write.py -Prompt Prompts/test.txt
 ```
 
 ## Model Gemini yang Tersedia (2025)
+
+<!--
+    ⚠️ OUTDATED MODEL NAMES - Check https://ai.google.dev for current models
+-->
 
 | Model | Kecepatan | Kualitas | Harga | Keterangan |
 |-------|-----------|----------|-------|------------|

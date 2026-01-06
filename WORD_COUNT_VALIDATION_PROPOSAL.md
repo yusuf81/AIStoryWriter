@@ -1,3 +1,31 @@
+<!--
+    STATUS MARKER: NOT IMPLEMENTED ⚠️
+    Last checked: Jan 6, 2026
+
+    NOT IMPLEMENTED:
+    - Word count validation error "Word count X doesn't match actual word count Y" is NOT enforced
+    - No WordCountValidator class exists in Writer/Interface/
+    - No interactive validation prompt logic found in Wrapper.py
+
+    EVIDENCE:
+    - Grep for "word count doesn't match" in Writer/ returned NO FILES
+    - grep for "WordCountValidator" returned NO RESULTS
+    - No validation error handling in SafeGeneratePydantic exception handler
+
+    STILL RELEVANT:
+    - Proposes valid solution for sporadic word count mismatch errors
+    - Example issue (claimed 567 words, actual 166 words) still possible
+    - Option B (wrapper function pattern) is still a good approach
+
+    OUTDATED:
+    - "Option B recommended" timestamp (2025-12-15) - implementation hasn't started
+    - Statistics (3-5% error rate) may be outdated
+
+    RECOMMENDATION:
+    This proposal is still valid and worth implementing if word count validation is desired
+    Consider this a low-priority enhancement for future development
+-->
+
 # Word Count Validation Enhancement Proposal
 
 ## Problem Statement

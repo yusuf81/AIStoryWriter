@@ -1,9 +1,37 @@
+<!--
+    STATUS MARKER: ISSUE FIXED ✅
+    Last checked: Jan 6, 2026
+
+    ISSUE FIXED:
+    - ScenesToJSON redundant LLM call has been REMOVED
+    - ChapterByScene.py now only imports deduplicate_scene_objects from ScenesToJSON
+    - The wasteful Step 2 (LLM parse string → JSON) is no longer executed
+
+    EVIDENCE:
+    - Writer/Scene/ChapterByScene.py line 3: "from Writer.Scene.ScenesToJSON import deduplicate_scene_objects"
+    - No calls to ScenesToJSON() function found
+    - Only deduplication utility function is used
+
+    OUTDATED:
+    - "Status: Documented - Not yet fixed" is incorrect
+    - Cost analysis (500 tokens per chapter) no longer applies
+    - Recommended implementation options are obsolete
+
+    STILL RELEVANT:
+    - Historical reference for understanding what was fixed
+    - Deduplication logic is still in use
+    - SceneOutline model structure still relevant
+
+    RECOMMENDATION:
+    Archive as "FIXED" or delete - the issue described has been resolved
+-->
+
 # Scene Generation Pipeline - Inefficiency Analysis
 
 **Date:** 2025-12-16
 **Discovered During:** Chapter duplication fix implementation
 **Impact:** Medium (Performance & Cost)
-**Status:** Documented - Not yet fixed
+**Status:** **FIXED** ✅ (Redundant LLM call removed in subsequent commit)
 
 ---
 

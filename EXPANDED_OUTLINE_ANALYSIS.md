@@ -1,6 +1,35 @@
 # Expanded Outline Analysis & Recommendations
 
-## Issue Summary
+<!--
+    STATUS MARKER: ISSUE FIXED ✅
+    Last checked: Jan 6, 2026
+
+    ISSUE FIXED:
+    - Bug described (only outline_summary counted) has been FIXED
+    - Pipeline.py now has _calculate_total_chapter_outline_words() function
+    - This function counts ALL content including scenes array, not just summary
+    - Function doc explicitly states: "This fixes the bug where only outline_summary was counted"
+
+    OUTDATED:
+    - Example warning "29 words, min 50" is OLD - threshold now is 100 words
+    - MIN_WORDS_PER_CHAPTER_OUTLINE = 100 (Config.py:271), not 50
+    - Analysis of "What Happens" describes old behavior before fix
+    - Problem sections describe issues that no longer exist
+
+    STILL RELEVANT:
+    - Historical context for understanding what was fixed
+    - Hybrid approach concept (expanded vs MegaOutline) still valid
+    - Option 2 (Multi-Criteria Quality Assessment) still relevant as enhancement
+
+    EVIDENCE:
+    - Pipeline.py lines 83-103: _calculate_total_chapter_outline_words implementation
+    - Pipeline.py line 135: Uses Config.MIN_WORDS_PER_CHAPTER_OUTLINE (100)
+    - Config.py line 271: MIN_WORDS_PER_CHAPTER_OUTLINE = 100
+
+    RECOMMENDATION:
+    Mark this as FIXED/RESOLVED. The issue described has been completely addressed.
+    Consider archiving or updating with current implementation details.
+-->
 
 **Warning Message**: `Pipeline: Warning: Expanded outline for Chapter 1 is too short (29 words, min 50). Falling back to MegaOutline.`
 
