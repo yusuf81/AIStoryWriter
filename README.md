@@ -7,13 +7,13 @@ Generate full-length novels with AI! Harness the power of large language models 
 ## 🚀 Features
 
 - **Generate medium to full-length novels**: Produce substantial stories with coherent narratives, suitable for novella or novel-length works
+- **Multi-model provider support**: Support for Ollama (local), Google Gemini, OpenRouter, and xAI Grok
 - **Multi-language support**: Generate stories in Indonesian and English with automatic prompt/output translation capabilities
 - **Easy setup and use**: Get started quickly with minimal configuration required
 - **Modular pipeline architecture**: Clean separation of concerns with dedicated modules for outline generation, chapter writing, and post-processing
 - **Customizable prompts and models**: Choose from existing prompts or create your own, and select from various language models
 - **Automatic model downloading**: The system can automatically download required models via Ollama if they aren't already available
 - **Support for local models via Ollama**: Run language models locally for full control and privacy
-- **Cloud provider support**: Support for Google Gemini, OpenRouter, and other cloud-based AI services
 - **Flexible configuration options**: Fine-tune the generation process through easily modifiable settings
 - **Cross-platform compatibility**: Works across all operating systems
 - **Advanced story generation pipeline**:
@@ -22,13 +22,14 @@ Generate full-length novels with AI! Harness the power of large language models 
   - Automatic quality evaluation and revision loops
   - Chapter outline expansion for structured writing
 - **Resume interrupted generation**: Automatic state saving allows resuming from any point in the generation process
+- **Vector-based lore management**: Automatic consistency checking with ChromaDB for characters, locations, and plot elements
+- **Repetition detection and auto-retry**: Automatically detects repetitive outputs and retries with adjusted parameters
 - **Post-processing capabilities**:
   - Optional final editing pass over the entire novel
   - Automatic scrubbing to remove AI artifacts and leftover instructions
   - Translation support for generated stories
+  - PDF generation with optimized readability
 - **Quality assurance**: Built-in evaluation system and story comparison tools (`Evaluate.py`)
-- **Unified embedding system**: Centralized embeddings using the same provider architecture (Ollama, Google, OpenRouter)
-- **Vector-based lore management**: Automatic consistency checking with semantic search for characters, locations, and plot elements
 - **Comprehensive testing**: Full test suite with pytest for reliable code quality
 
 ## 🏁 Quick Start
@@ -36,11 +37,11 @@ Generate full-length novels with AI! Harness the power of large language models 
 Getting started with AI Story Generator is easy:
 
 ### Prerequisites
-1. **Python 3.8+** with pip
-2. **Install [Ollama](https://ollama.com/)** for local model support
+1. **Python 3.11+** with pip
+2. **Install [Ollama](https://ollama.com/)** for local model support (optional)
 3. **Clone the repository**:
    ```bash
-   git clone https://github.com/datacrystals/AIStoryWriter.git
+   git clone https://github.com/yusuf81/AIStoryWriter.git
    cd AIStoryWriter
    ```
 
@@ -53,7 +54,7 @@ Getting started with AI Story Generator is easy:
 2. **Set up environment variables** (optional, for cloud providers):
    ```bash
    cp .env.example .env
-   # Edit .env to add your API keys for Google, OpenRouter, etc.
+   # Edit .env to add your API keys for Google, OpenRouter, xAI, etc.
    ```
 
 ### Generate Your First Story
@@ -62,7 +63,7 @@ Getting started with AI Story Generator is easy:
 python Write.py -Prompt Prompts/horor3.txt
 
 # Generate with custom models
-python Write.py -Prompt Prompts/roman1.txt -InitialOutlineModel "google://gemini-1.5-pro"
+python Write.py -Prompt Prompts/roman1.txt -InitialOutlineModel "google://gemini-2.5-flash"
 
 # Resume interrupted generation
 python Write.py -Resume Logs/Generation_YYYY-MM-DD_HH-MM-SS/run.state.json
@@ -82,9 +83,33 @@ pytest -v
 python Write.py --help
 ```
 
-## 💻 Hardware Recommendations
+## 💻 Hardware & Model Recommendations
 
-Not sure which models to use with your GPU? Check out our [Model Recommendations](Docs/Models.md) page for suggestions based on different GPU capabilities. We provide a quick reference table to help you choose the right models for your hardware, ensuring optimal performance and quality for your story generation projects.
+### Model Providers
+
+**Ollama (Local Models)**
+- Full privacy and control
+- No API costs
+- Requires capable hardware for larger models
+- Models: Llama 3, Qwen 2.5, Gemma, SEA-LION series
+
+**Google Gemini**
+- High-quality outputs with gemini-2.5-flash
+- Fast inference with gemini-2.0-flash
+- Requires `GOOGLE_API_KEY` in `.env`
+- Recommended: `google://gemini-2.5-flash` or `google://gemini-flash-lite-latest`
+
+**xAI Grok**
+- Latest Grok-4 series with 2M context window
+- Agentic reasoning capabilities
+- Requires `XAI_API_KEY` in `.env`
+- Recommended: `grok://grok-4-1-fast-reasoning` (default)
+
+**OpenRouter**
+- Access to 100+ models including Claude, GPT-4, etc.
+- Requires `OPENROUTER_API_KEY` in `.env`
+
+Not sure which models to use with your GPU? Check out our [Model Recommendations](Docs/Models.md) page for suggestions based on different GPU capabilities.
 
 ## 🛠️ Usage
 
@@ -100,9 +125,9 @@ You can override the default models for different generation stages:
 ```bash
 # Use different models for different stages
 python Write.py -Prompt Prompts/horor3.txt \
-  -InitialOutlineModel "google://gemini-1.5-pro" \
-  -ChapterS1Model "ollama://llama3:70b" \
-  -ChapterS2Model "ollama://gemma2:27b" \
+  -InitialOutlineModel "google://gemini-2.5-flash" \
+  -ChapterS1Model "grok://grok-4-1-fast-reasoning" \
+  -ChapterS2Model "ollama://llama3:70b" \
   -ChapterS3Model "ollama://qwen2.5:32b"
 ```
 
@@ -128,9 +153,9 @@ python Write.py -Prompt Prompts/horor3.txt \
 - `-TranslatorModel`: Model for translation tasks
 
 **Generation Options:**
-- `-ExpandOutline`: Enable per-chapter outline expansion (default: enabled)
-- `-SceneGenerationPipeline`: Use scene-by-scene generation (default: enabled)
-- `-EnableFinalEditPass`: Perform final novel editing (default: enabled)
+- `-ExpandOutline` / `-NoExpandOutline`: Enable/disable per-chapter outline expansion
+- `-SceneGenerationPipeline` / `-NoSceneGenerationPipeline`: Enable/disable scene-by-scene generation
+- `-EnableFinalEditPass` / `-NoEnableFinalEditPass`: Enable/disable final novel editing
 - `-NoChapterRevision`: Disable chapter revision loops
 - `-NoScrubChapters`: Disable final AI artifact cleanup
 
@@ -148,9 +173,10 @@ python Write.py -Prompt Prompts/horor3.txt \
 The model format is: `{Provider}://{ModelName}@{Host}?parameter=value`
 
 **Supported Providers:**
-- `ollama`: Local models via Ollama (default)
+- `ollama`: Local models via Ollama
 - `google`: Google Gemini models
 - `openrouter`: OpenRouter API models
+- `grok`: xAI Grok models
 
 **Examples:**
 ```bash
@@ -161,10 +187,13 @@ ollama://llama3:70b
 ollama://qwen2.5:32b@192.168.1.100:11434?temperature=0.7
 
 # Google Gemini model
-google://gemini-1.5-pro
+google://gemini-2.5-flash
+
+# xAI Grok model
+grok://grok-4-1-fast-reasoning
 
 # OpenRouter model
-openrouter://anthropic/claude-3-opus
+openrouter://anthropic/claude-3.5-sonnet
 ```
 
 ### Configuration File
@@ -172,16 +201,30 @@ openrouter://anthropic/claude-3-opus
 You can also modify default settings in `Writer/Config.py`:
 
 ```python
-# Default models for each generation stage
-INITIAL_OUTLINE_WRITER_MODEL = "ollama://gemma3:27b@10.23.82.116"
-CHAPTER_STAGE1_WRITER_MODEL = "ollama://gemma3:27b@10.23.82.116" 
-CHAPTER_STAGE2_WRITER_MODEL = "ollama://gemma3:27b@10.23.82.116"
+# Default model for all tasks
+ollamasemua = "grok://grok-4-1-fast-reasoning"
+# ollamasemua = "google://gemini-2.5-flash"
+# ollamasemua = "ollama://qwen2.5:32b"
+
+# Stage-specific models (all default to ollamasemua unless overridden)
+INITIAL_OUTLINE_WRITER_MODEL = ollamasemua
+CHAPTER_STAGE1_WRITER_MODEL = ollamasemua
+CHAPTER_STAGE2_WRITER_MODEL = ollamasemua
+CHAPTER_STAGE3_WRITER_MODEL = ollamasemua
+
+# Embedding model for lorebook
+EMBEDDING_MODEL = "google://gemini-embedding-001"
+# EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"
 
 # Generation parameters
-OUTLINE_QUALITY = 87
-CHAPTER_QUALITY = 85
+OUTLINE_QUALITY = 92
+CHAPTER_QUALITY = 90
 EXPAND_OUTLINE = True
 SCENE_GENERATION_PIPELINE = True
+
+# Lorebook settings
+USE_LOREBOOK = True  # Enable vector-based lore management
+LOREBOOK_K_RETRIEVAL = 5  # Number of lore entries to retrieve
 
 # Language settings
 NATIVE_LANGUAGE = "id"  # "en" for English, "id" for Indonesian
@@ -196,13 +239,15 @@ The application automatically saves its progress to allow resuming interrupted r
 The system saves state after each major pipeline step:
 
 1. **`init`**: Initial setup and configuration loaded
-2. **`outline`**: Main story outline generation completed  
+2. **`outline`**: Main story outline generation completed
 3. **`detect_chapters`**: Chapter count detection finished
 4. **`expand_chapters`**: Per-chapter outline expansion completed (if enabled)
 5. **`chapter_generation`**: Saved after *each* individual chapter (allows mid-chapter resuming)
 6. **`chapter_generation_complete`**: All chapters generated
 7. **`post_processing`**: Before final editing/scrubbing/translation
 8. **`complete`**: Full generation process finished
+
+**Lorebook State Persistence**: Lorebook entries are automatically saved to state during checkpoints and restored when resuming, ensuring story consistency across interruptions.
 
 #### State Files Location
 
@@ -219,9 +264,9 @@ Logs/Generation_YYYY-MM-DD_HH-MM-SS/
 
 ```bash
 # Resume from a previous run
-python Write.py -Resume Logs/Generation_2025-07-31_21-53-05/run.state.json
+python Write.py -Resume Logs/Generation_2025-12-19_14-14-58/run.state.json
 
-# The system will continue from where it left off
+# The system will continue from where it left off, including lorebook state
 ```
 
 ## 🧰 Architecture Overview
@@ -234,7 +279,7 @@ The AI Story Generator uses a modular pipeline architecture:
 
 - **`Write.py`**: Main entry point and argument parsing
 - **`Writer/Pipeline.py`**: Orchestrates the entire generation process
-- **`Writer/Config.py`**: Configuration settings and model assignments  
+- **`Writer/Config.py`**: Configuration settings and model assignments
 - **`Writer/Prompts.py`** & **`Writer/Prompts_id.py`**: Multi-language prompt templates
 
 ### Generation Modules
@@ -246,13 +291,34 @@ The AI Story Generator uses a modular pipeline architecture:
 - **`Writer/NovelEditor.py`**: Final novel-wide editing pass
 - **`Writer/Scrubber.py`**: AI artifact cleanup
 - **`Writer/Translator.py`**: Multi-language translation support
+- **`Writer/Lorebook.py`**: Vector-based lore management with ChromaDB
 
 ### Infrastructure
 
-- **`Writer/Interface/Wrapper.py`**: Unified LLM provider interface
+- **`Writer/Interface/Wrapper.py`**: Unified LLM provider interface (Ollama, Google, OpenRouter, Grok)
 - **`Writer/PrintUtils.py`**: Logging and output formatting
 - **`Writer/Statistics.py`**: Generation metrics and timing
 - **`tests/`**: Comprehensive test suite with pytest
+
+### Key Features Implementation
+
+**Lorebook System** (`Writer/Lorebook.py`):
+- ChromaDB vector storage for semantic retrieval
+- Automatic character, location, and plot element tracking
+- Configurable similarity threshold and retrieval count
+- Persistent storage across generation sessions
+- State checkpoint integration for resume capability
+
+**Repetition Detection**:
+- Character explosion detection (consecutive identical characters)
+- N-gram loop detection (repeating word sequences)
+- Phrase repetition detection
+- Auto-retry with increased temperature on detection
+
+**PDF Generation** (`Writer/PDFGenerator.py`):
+- Optimized margins and line height for readability
+- Configurable fonts and spacing
+- Automatic chapter and section formatting
 
 ### Language Support
 
@@ -267,6 +333,7 @@ The system supports both Indonesian and English generation:
 - **Mix and match models**: Use different models for different generation stages
 - **Local vs Cloud**: Combine local Ollama models with cloud providers for optimal cost/performance
 - **Quality tuning**: Adjust revision loops and quality thresholds
+- **Repetition control**: Configure repetition penalties and auto-retry behavior
 
 ### Prompt Customization
 - **Modify existing prompts**: Edit `Writer/Prompts.py` or `Writer/Prompts_id.py`
@@ -274,7 +341,7 @@ The system supports both Indonesian and English generation:
 - **Multi-language support**: Ensure changes are reflected in both language files
 
 ### Pipeline Configuration
-- **Enable/disable features**: Control outline expansion, scene generation, final editing
+- **Enable/disable features**: Control outline expansion, scene generation, final editing, lorebook
 - **Quality parameters**: Adjust minimum word counts, revision limits, quality scores
 - **Performance tuning**: Optimize for speed vs quality based on your needs
 
@@ -287,6 +354,8 @@ The system supports both Indonesian and English generation:
 - **Reliable resuming**: State saving system allows seamless continuation of interrupted generations
 - **Multi-language support**: Indonesian and English generation with translation capabilities
 - **Quality assurance**: Built-in revision loops and evaluation systems ensure story quality
+- **Lorebook system**: Vector-based lore management maintains story consistency
+- **Repetition handling**: Automatic detection and retry prevents repetitive outputs
 - **Comprehensive testing**: Full test coverage ensures reliable functionality and catches regressions
 
 ## 🔧 Areas for Improvement
@@ -304,7 +373,7 @@ We're excited to hear from you! Your feedback and contributions are crucial to i
 
 ### How to Contribute
 
-1. **🐛 Report Issues**: Found a bug or have a feature request? [Open an issue](https://github.com/datacrystals/AIStoryWriter/issues)
+1. **🐛 Report Issues**: Found a bug or have a feature request? [Open an issue](https://github.com/yusuf81/AIStoryWriter/issues)
 
 2. **🔧 Submit Pull Requests**: Ready to contribute code? We welcome PRs for:
    - Bug fixes and improvements
@@ -312,7 +381,7 @@ We're excited to hear from you! Your feedback and contributions are crucial to i
    - Test coverage improvements
    - Documentation updates
 
-3. **💡 Join Discussions**: Have ideas or want to brainstorm? [Start a discussion](https://github.com/datacrystals/AIStoryWriter/discussions)
+3. **💡 Join Discussions**: Have ideas or want to brainstorm? [Start a discussion](https://github.com/yusuf81/AIStoryWriter/discussions)
 
 4. **🔬 Experiment and Share**: Try different model combinations and share your results
 
@@ -322,7 +391,7 @@ We're excited to hear from you! Your feedback and contributions are crucial to i
 
 ```bash
 # Clone and setup
-git clone https://github.com/datacrystals/AIStoryWriter.git
+git clone https://github.com/yusuf81/AIStoryWriter.git
 cd AIStoryWriter
 pip install -r requirements.txt
 
@@ -342,6 +411,7 @@ pytest tests/writer/test_pipeline.py -v
 - Add tests for new functionality
 - Update both `Prompts.py` and `Prompts_id.py` for multi-language support
 - Ensure all tests pass before submitting PRs
+- Run `flake8` and `pyright` on modified files
 
 Don't hesitate to reach out – your input is valuable, and we're here to help!
 
