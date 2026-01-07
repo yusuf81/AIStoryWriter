@@ -461,8 +461,12 @@ class LorebookManager:
             with open(state_filepath, 'r', encoding='utf-8') as f:
                 state_data = json.load(f)
 
-            # Get lorebook entries
+            # Get lorebook entries - check both normal and nested structures
+            # Nested structure can occur when StateManager double-nests during exception handling
             lorebook_entries = state_data.get("other_data", {}).get("lorebook_entries", [])
+            if not lorebook_entries:
+                # Check nested structure: other_data.other_data.lorebook_entries
+                lorebook_entries = state_data.get("other_data", {}).get("other_data", {}).get("lorebook_entries", [])
 
             if not lorebook_entries:
                 self.SysLogger.Log("No lorebook entries found in state", 5)

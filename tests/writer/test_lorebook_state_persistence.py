@@ -363,3 +363,72 @@ class TestLorebookStatePersistence:
 
             # Should not crash and should not call clear (since file doesn't exist)
             mock_lorebook.clear.assert_not_called()
+
+    def test_load_entries_from_state_should_handle_nested_other_data(self):
+        """RED: State entries with nested other_data should be loaded correctly
+
+        Bug: When exception handler saves state after pipeline already saved with lorebook,
+        the state gets double-nested:
+        {
+          "other_data": {
+            "status": "error_in_main",
+            "other_data": {
+              "lorebook_entries": [...]
+            }
+          }
+        }
+
+        Current code only checks d["other_data"]["lorebook_entries"] which is None.
+        Should check d["other_data"]["other_data"]["lorebook_entries"] for nested structure.
+        """
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create test state file with NESTED other_data structure
+            state_file = Path(temp_dir) / "run.state.json"
+            state_data = {
+                "pydantic_objects": {},
+                "other_data": {
+                    "status": "error_in_main",
+                    "error_message_main": "Model is required",
+                    "error_traceback_main": "Traceback...",
+                    "other_data": {
+                        "status": "in_progress",
+                        "chapters_completed": 2,
+                        "lorebook_entries": [
+                            {
+                                "id": "uuid-1",
+                                "text": "Rian adalah karakter utama yang penasaran dengan legenda gua harta karun.",
+                                "metadata": {
+                                    "type": "character",
+                                    "name": "Rian",
+                                    "source": "outline",
+                                    "added_at": "2025-12-15T10:30:00"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+            with open(state_file, 'w', encoding='utf-8') as f:
+                json.dump(state_data, f, indent=2, ensure_ascii=False)
+
+            # Create mock lorebook
+            mock_lorebook = Mock()
+            mock_lorebook.clear = Mock()
+
+            # Load entries from state
+            from Writer.Lorebook import LorebookManager
+            LorebookManager.load_entries_from_state(mock_lorebook, str(state_file))
+
+            # Verify clear was called first
+            mock_lorebook.clear.assert_called_once()
+
+            # Verify add_entry was called with correct data from NESTED structure
+            mock_lorebook.add_entry.assert_called_once_with(
+                "Rian adalah karakter utama yang penasaran dengan legenda gua harta karun.",
+                {
+                    "type": "character",
+                    "name": "Rian",
+                    "source": "outline",
+                    "added_at": "2025-12-15T10:30:00"
+                }
+            )
