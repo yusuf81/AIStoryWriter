@@ -1690,7 +1690,14 @@ class Interface:
 
     def GetModelAndProvider(self, _Model: str):
         if "://" not in _Model:
-            return "ollama", _Model, getattr(Writer.Config, 'OLLAMA_HOST', None), None
+            # Handle query parameters in local Ollama model strings
+            # e.g., "model?temperature=0.9" from auto-retry
+            if '?' in _Model:
+                base_model, _query = _Model.split('?', 1)
+                options = {k: (float(v[0]) if v[0].replace('.', '', 1).isdigit() else v[0]) for k, v in parse_qs(_query).items()}
+                return "ollama", base_model, getattr(Writer.Config, 'OLLAMA_HOST', None), options if options else None
+            else:
+                return "ollama", _Model, getattr(Writer.Config, 'OLLAMA_HOST', None), None
 
         parsed = urlparse(_Model)
         Provider, Netloc, Path, Query = parsed.scheme, parsed.netloc, parsed.path.strip('/'), parsed.query
