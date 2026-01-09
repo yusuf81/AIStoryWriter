@@ -369,6 +369,7 @@ MIN_WORDS_CHAPTER_SEGMENT_EXTRACT = (
 MIN_WORDS_CHAPTER_SUMMARY = 100  # Minimum words for summarizing previous chapter
 MIN_WORDS_CHAPTER_DRAFT = 300  # Minimum words for chapter draft stages (1, 2, 3)
 MIN_WORDS_REVISE_CHAPTER = 100  # Minimum words for chapter revision
+MAX_WORD_COUNT_REDUCTION_RATIO = 0.20  # Maximum allowed word count reduction ratio during chapter revision (20%)
 MIN_WORDS_OUTLINE_FEEDBACK = 70  # Minimum words for outline feedback/critique
 MIN_WORDS_SCENE_OUTLINE = 100  # Minimum words for scene-by-scene outline generation
 MIN_WORDS_SCENE_WRITE = 150  # Minimum words for writing a scene from its outline

@@ -862,9 +862,40 @@ Berdasarkan umpan balik berikut:
 <FEEDBACK>
 {_Feedback}
 </FEEDBACK>
+
+## PERSYARATAN KRITIS - WAJIB DIIKUTI:
+
+1. **PERTAHANKAN PANJANG KONTEN**: Bab yang direvisi harus minimal 80% dari jumlah kata asli.
+2. **PERTAHANKAN STRUKTUR PARAGRAF**: Jaga semua paragraf yang ada. Jangan menggabungkan atau memampatkan paragraf.
+3. **PERTAHANKAN SEMUA DIALOG**: Setiap baris dialog dari aslinya harus tetap ada dalam revisi.
+4. **TANPA RINGKASAN**: Jangan membuat ringkasan. Ini adalah revisi untuk kualitas, bukan ringkasan.
+5. **TINGKATKAN, JANGAN KURANGI**: Tambahkan detail deskriptif, perbaiki alur, kuatkan prosa - tapi pertahankan semua konten asli.
+
+Tujuan Anda adalah meningkatkan kualitas penulisan sambil mempertahankan struktur konten lengkap.
+
 Jangan merefleksikan revisi, cukup tulis bab yang ditingkatkan yang membahas umpan balik dan kriteria prompt.
 Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia.
 Ingatlah untuk tidak menyertakan catatan penulis apa pun."""
+
+CHAPTER_REVISION_STRICT = """
+## MODE KETAT - PRESERVASI KONTEN DIPERLUKAN
+
+Revisi sebelumnya Anda terlalu mengurangi konten. Anda WAJIB:
+
+1. **Pertahankan SEMUA paragraf** dari bab asli
+2. **Pertahankan SEMUA dialog** verbatim atau dengan perbaikan minimal saja
+3. **Pertahankan jumlah kata** - JANGAN mengurangi panjang konten
+4. **TINGKATKAN saja** - Tambah detail, perbaiki deskripsi, kuatkan prosa
+
+<CHAPTER_CONTENT>
+{_Chapter}
+</CHAPTER_CONTENT>
+
+<FEEDBACK>
+{_Feedback}
+</FEEDBACK>
+
+Kembalikan BAB REVISI LENGKAP dengan semua konten dipertahankan. Jangan merangkum."""
 
 CHAPTER_COMPLETE_INTRO = "Anda adalah Asisten AI yang membantu. Jawab prompt pengguna sebaik mungkin. Pastikan seluruh respons Anda ditulis dalam Bahasa Indonesia."
 

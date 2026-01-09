@@ -816,15 +816,46 @@ CHAPTER_REVISION = """
 Please revise the following chapter:
 
 <CHAPTER_CONTENT>
-{_Chapter}
+-{_Chapter}
 </CHAPTER_CONTENT>
 
 Based on the following feedback:
 <FEEDBACK>
-{_Feedback}
+-{_Feedback}
 </FEEDBACK>
+
+## CRITICAL REQUIREMENTS - MUST FOLLOW:
+
+1. **PRESERVE CONTENT LENGTH**: The revised chapter must be at least 80% of the original word count.
+2. **MAINTAIN PARAGRAPH STRUCTURE**: Keep all existing paragraphs. Do not merge or compress paragraphs.
+3. **PRESERVE ALL DIALOG**: Every line of dialogue from the original must remain in the revision.
+4. **NO SUMMARIZATION**: Do not create a summary. This is a revision for quality, not a summary.
+5. **ENHANCE, DON'T REDUCE**: Add descriptive details, improve flow, strengthen prose - but keep all original content.
+
+Your goal is to improve the quality of the writing while preserving the complete content structure.
+
 Do not reflect on the revisions, just write the improved chapter that addresses the feedback and prompt criteria.
 Remember not to include any author notes."""
+
+CHAPTER_REVISION_STRICT = """
+## STRICT MODE - CONTENT PRESERVATION REQUIRED
+
+Your previous revision reduced the content excessively. You MUST:
+
+1. **Keep ALL paragraphs** from the original chapter
+2. **Preserve ALL dialogue** verbatim or with minimal improvements only
+3. **Maintain word count** - Do NOT reduce content length
+4. **ENHANCE only** - Add details, improve descriptions, strengthen prose
+
+<CHAPTER_CONTENT>
+-{_Chapter}
+</CHAPTER_CONTENT>
+
+<FEEDBACK>
+-{_Feedback}
+</FEEDBACK>
+
+Return the FULL REVISED CHAPTER with all content preserved. Do not summarize."""
 
 CHAPTER_COMPLETE_INTRO = "You are a helpful AI Assistant. Answer the user's prompts to the best of your abilities."
 

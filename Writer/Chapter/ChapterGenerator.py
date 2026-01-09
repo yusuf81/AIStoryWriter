@@ -603,14 +603,22 @@ def ReviseChapter(
     _Feedback,
     _History: list = [],
     _Iteration: int = 0,
+    _UseStrictPrompt: bool = False,
 ):  # Tambahkan _ChapterNum, _TotalChapters
     from Writer.PromptsHelper import get_prompts
     ActivePrompts = get_prompts()  # Use language-aware import
 
     # Get original word count before revising
     OriginalWordCount = Writer.Statistics.GetWordCount(_Chapter)
+    MinWordCount = int(OriginalWordCount * (1 - Writer.Config.MAX_WORD_COUNT_REDUCTION_RATIO))
 
-    RevisionPrompt = ActivePrompts.CHAPTER_REVISION.format(
+    # Choose prompt based on strict mode flag
+    if _UseStrictPrompt:
+        prompt_template = ActivePrompts.CHAPTER_REVISION_STRICT
+    else:
+        prompt_template = ActivePrompts.CHAPTER_REVISION
+
+    RevisionPrompt = prompt_template.format(
         _Chapter=_Chapter, _Feedback=_Feedback
     )
 
@@ -630,9 +638,34 @@ def ReviseChapter(
     # Use .text attribute from ChapterOutput
     SummaryText: str = revision_obj.text
     NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
+
+    # Calculate reduction percentage
+    ReductionRatio = (OriginalWordCount - NewWordCount) / OriginalWordCount if OriginalWordCount > 0 else 0
+
+    # Validate word count reduction
+    if NewWordCount < MinWordCount and not _UseStrictPrompt:
+        _Logger.Log(
+            f"Warning: Word count reduction {ReductionRatio*100:.1f}% exceeds threshold {Writer.Config.MAX_WORD_COUNT_REDUCTION_RATIO*100:.0f}%. "
+            f"Retrying with strict prompt...",
+            5
+        )
+        # Retry with strict prompt
+        return ReviseChapter(
+            Interface=Interface,
+            _Logger=_Logger,
+            _ChapterNum=_ChapterNum,
+            _TotalChapters=_TotalChapters,
+            _Chapter=_Chapter,
+            _Feedback=_Feedback,
+            _History=Messages,  # Continue from current conversation
+            _Iteration=_Iteration,
+            _UseStrictPrompt=True
+        )
+
     # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
     _Logger.Log(
-        f"Done Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS}). Word Count Change: {OriginalWordCount} -> {NewWordCount}",
+        f"Done Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS}). "
+        f"Word Count Change: {OriginalWordCount} -> {NewWordCount} ({ReductionRatio*100:+.1f}%)",
         5,
     )
 
