@@ -186,6 +186,11 @@ class Interface:
     "setting": "Village and dragon's cave",
     "main_conflict": "Rian's quest for material treasure conflicts with the dragon's test of his true character"
 }''',
+            'chapter_output_example_label': 'Chapter output format:',
+            'chapter_output_example': '''{
+    "text": "Full chapter text content goes here...",
+    "chapter_number": 1
+}''',
             'field_descriptions': {
                 # StoryElements
                 'title': 'Story title',
@@ -350,6 +355,11 @@ class Interface:
     "estimated_word_count": 800,
     "setting": "Desa dan gua naga",
     "main_conflict": "Pencarian Rian akan harta materi bertentangan dengan ujian sang naga terhadap karakter sejatinya"
+}''',
+            'chapter_output_example_label': 'Format output bab:',
+            'chapter_output_example': '''{
+    "text": "Isi teks bab lengkap ada di sini...",
+    "chapter_number": 1
 }''',
             'field_descriptions': {
                 # StoryElements
@@ -906,6 +916,12 @@ class Interface:
         if 'themes' in properties.keys() and 'characters' in properties.keys():
             instruction += "\n" + self._get_text('story_elements_example_label') + "\n"
             instruction += self._get_text('story_elements_example')
+
+        # Add ChapterOutput example for models that need visual guidance
+        # Schema-based detection: has 'text' AND 'chapter_number' fields
+        if 'text' in properties.keys() and 'chapter_number' in properties.keys():
+            instruction += "\n" + self._get_text('chapter_output_example_label') + "\n"
+            instruction += self._get_text('chapter_output_example')
 
         return instruction
 
