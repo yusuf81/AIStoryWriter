@@ -1350,15 +1350,35 @@ class Interface:
             response_format = self._build_response_format(_FormatSchema_dict, provider="synthetic")
             if response_format:
                 ReqOptions["response_format"] = response_format
-                # Force temperature for basic JSON mode
-                if response_format.get("type") == "json_object":
-                    ReqOptions["temperature"] = ReqOptions.get("temperature", 0.0)
+
+                # Set max_tokens for structured output (unless already specified)
+                if "max_tokens" not in ReqOptions and "max_completion_tokens" not in ReqOptions:
+                    ReqOptions["max_tokens"] = getattr(
+                        Writer.Config, "MAX_SYNTHETIC_TOKENS_STRUCTURED", 4096)
+
+                # Higher temperature for LLaMA to prevent repetition loops
+                # Apply for both json_object and json_schema types
+                ReqOptions["temperature"] = ReqOptions.get(
+                    "temperature", getattr(Writer.Config, "SYNTHETIC_TEMPERATURE_STRUCTURED", 0.8))
+
+                # Stronger anti-repetition penalties for structured output
+                if "frequency_penalty" not in ReqOptions:
+                    ReqOptions["frequency_penalty"] = getattr(
+                        Writer.Config, "SYNTHETIC_FREQUENCY_PENALTY", 1.0)
+                if "presence_penalty" not in ReqOptions:
+                    ReqOptions["presence_penalty"] = getattr(
+                        Writer.Config, "SYNTHETIC_PRESENCE_PENALTY", 0.6)
         else:
-            # Apply repetition penalties for free-form generation
+            # Free-form generation - use lower max_tokens and standard penalties
+            if "max_tokens" not in ReqOptions and "max_completion_tokens" not in ReqOptions:
+                ReqOptions["max_tokens"] = getattr(
+                    Writer.Config, "MAX_SYNTHETIC_TOKENS_FREEFORM", 2048)
             if "frequency_penalty" not in ReqOptions:
-                ReqOptions["frequency_penalty"] = getattr(Writer.Config, "SYNTHETIC_FREQUENCY_PENALTY", 0.5)
+                ReqOptions["frequency_penalty"] = getattr(
+                    Writer.Config, "SYNTHETIC_FREQUENCY_PENALTY", 0.5)
             if "presence_penalty" not in ReqOptions:
-                ReqOptions["presence_penalty"] = getattr(Writer.Config, "SYNTHETIC_PRESENCE_PENALTY", 0.3)
+                ReqOptions["presence_penalty"] = getattr(
+                    Writer.Config, "SYNTHETIC_PRESENCE_PENALTY", 0.3)
 
         MaxRetries = Writer.Config.MAX_SYNTHETIC_RETRIES
         for attempt in range(MaxRetries):

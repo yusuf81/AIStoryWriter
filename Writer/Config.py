@@ -203,6 +203,51 @@ MAX_SYNTHETIC_RETRIES = 2  # Synthetic.dev API retries
 MAX_RETRIES_CHAPTER_TITLE = 3  # Chapter title generation retries
 
 ###############################################################################
+# MAX TOKENS CONFIGURATION (OUTPUT LIMITS)
+# These control OUTPUT tokens only, not context window capacity
+# Formula: Prompt Tokens + MAX_*_TOKENS ≤ Context Window
+#
+# ⚠️ IMPORTANT: Currently ONLY Synthetic.dev actively uses max_tokens configuration
+# in Wrapper.py::_synthetic_chat(). Other providers rely on their defaults or
+# handle token limits automatically via their APIs.
+#
+# The values below are RESERVED for future implementation if needed:
+# - OpenAI/OpenRouter: Rely on model defaults (typically 4096-8192)
+# - Gemini: API handles max_output_tokens automatically based on model
+# - Grok: Supports max_tokens via query parameter (ModelOptions_dict)
+# - Ollama: Uses num_predict, controlled via query parameter
+#
+# To enable max_tokens for other providers:
+# 1. Uncomment/configure the provider's chat method in Wrapper.py
+# 2. Add logic similar to _synthetic_chat() to set ReqOptions["max_tokens"]
+###############################################################################
+
+# OpenAI / OpenRouter / Compatible providers
+# ⚠️ NOT YET IMPLEMENTED - Uses model defaults
+MAX_OPENAI_TOKENS_STRUCTURED = 4096  # For structured output (JSON Schema)
+MAX_OPENAI_TOKENS_FREEFORM = 2048   # For free-form text generation
+
+# Synthetic.dev (default is 2048, need higher for structured output)
+# ✅ ACTIVE - Implemented in Wrapper.py::_synthetic_chat()
+MAX_SYNTHETIC_TOKENS_STRUCTURED = 4096
+MAX_SYNTHETIC_TOKENS_FREEFORM = 2048
+
+# Google Gemini (uses max_output_tokens, API handles automatically)
+# ⚠️ NOT YET IMPLEMENTED - Gemini API handles this automatically
+MAX_GEMINI_TOKENS_STRUCTURED = 8192
+MAX_GEMINI_TOKENS_FREEFORM = 4096
+
+# xAI Grok
+# ⚠️ NOT YET IMPLEMENTED - Supports max_tokens via query parameter
+MAX_GROK_TOKENS_STRUCTURED = 4096
+MAX_GROK_TOKENS_FREEFORM = 2048
+
+# Ollama (local, uses num_predict parameter)
+# ⚠️ NOT YET IMPLEMENTED - Uses num_predict via query parameter
+MAX_OLLAMA_TOKENS_STRUCTURED = 4096
+MAX_OLLAMA_TOKENS_FREEFORM = 2048
+
+###############################################################################
 # LLM SAMPLING & REPETITION CONTROL
 ###############################################################################
 
@@ -256,13 +301,19 @@ GOOGLE_PRESENCE_PENALTY = 0.3   # Only for 2.0 models
 GROK_FREQUENCY_PENALTY = 0.5  # May be filtered by API
 
 # --- SYNTHETIC.DEV REPETITION CONTROL ---
+# LLaMA-specific settings to prevent degenerative repetition
+# See: https://discuss.huggingface.co/t/repetition-issues-in-llama-models-3-8b-3-70b-3-1-3-2/144196
+
+# Temperature for structured output (higher temp breaks repetition loops)
+SYNTHETIC_TEMPERATURE_STRUCTURED = 0.8  # Higher temp for LLaMA structured output
+
 # frequency_penalty: Penalizes tokens based on occurrence frequency
 #   Range: [-2, 2], 0 = no penalty
-SYNTHETIC_FREQUENCY_PENALTY = 0.5  # Moderate penalty
+SYNTHETIC_FREQUENCY_PENALTY = 1.0  # Stronger penalty for LLaMA
 
 # presence_penalty: Penalizes tokens that already appeared (flat penalty)
 #   Range: [-2, 2], 0 = no penalty
-SYNTHETIC_PRESENCE_PENALTY = 0.3  # Light penalty for diversity
+SYNTHETIC_PRESENCE_PENALTY = 0.6  # Encourages topic diversity
 
 # --- REPETITION DETECTION THRESHOLDS ---
 # Used by RepetitionDetector to identify problematic outputs
