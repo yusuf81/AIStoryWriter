@@ -464,13 +464,14 @@ class Interface:
             except Exception as e:
                 print(f"Failed to install {package_name}: {e}", file=sys.stderr)
 
-    def _build_response_format(self, FormatSchema_dict: dict = None) -> dict:  # type: ignore[assignment]
+    def _build_response_format(self, FormatSchema_dict: dict = None, provider: str | None = None) -> dict:  # type: ignore[assignment]
         """
         Build response_format dict for providers that support structured outputs.
         Supports both JSON Schema and basic JSON object formats.
 
         Args:
             FormatSchema_dict: JSON Schema dict or basic format specification
+            provider: Provider name (e.g., 'synthetic', 'openrouter', etc.) for provider-specific handling
 
         Returns:
             dict: response_format configuration for API call
@@ -482,11 +483,24 @@ class Interface:
             'properties' in FormatSchema_dict and
                 FormatSchema_dict['properties']):
             # Full JSON Schema support (only if has non-empty properties)
-            return {
+            json_schema_response = {
                 "type": "json_schema",
                 "json_schema": FormatSchema_dict,
                 "strict": True
             }
+
+            # Synthetic.dev requires json_schema to be wrapped with {name, schema}
+            if provider == "synthetic":
+                return {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "schema",  # Generic name for structured output
+                        "schema": FormatSchema_dict,
+                        "strict": True
+                    }
+                }
+
+            return json_schema_response
         else:
             # Basic JSON object format (existing behavior) - for empty dict or non-schema
             return {"type": "json_object"}
@@ -531,6 +545,20 @@ class Interface:
                 self.ensure_package_is_installed("xai-sdk")
                 from xai_sdk import Client
                 self.Clients[Model] = Client(api_key=os.environ["XAI_API_KEY"])
+            elif Provider == "synthetic":
+                if not os.environ.get("SYNTHETIC_API_KEY"):
+                    raise Exception("SYNTHETIC_API_KEY missing from environment")
+                self.ensure_package_is_installed("openai")
+                from openai import OpenAI
+
+                # Use OpenAI library with Synthetic's base URL
+                api_url = getattr(Writer.Config, 'SYNTHETIC_API_URL', 'https://api.synthetic.new/openai/v1')
+                self.Clients[Model] = OpenAI(
+                    api_key=os.environ["SYNTHETIC_API_KEY"],
+                    base_url=api_url,
+                    timeout=60.0,
+                    max_retries=getattr(Writer.Config, 'MAX_SYNTHETIC_RETRIES', 2),
+                )
             else:
                 raise NotImplementedError(f"Provider {Provider} not supported")
 
@@ -1255,7 +1283,7 @@ class Interface:
 
         # Enhanced FormatSchema handling for JSON Schema support (using DRY helper)
         if _FormatSchema_dict is not None:
-            response_format = self._build_response_format(_FormatSchema_dict)
+            response_format = self._build_response_format(_FormatSchema_dict, provider="openrouter")
             if response_format:
                 ReqOptions.update({"response_format": response_format})
                 # Apply temperature adjustment for basic JSON object mode only
@@ -1291,6 +1319,56 @@ class Interface:
                     raise
                 time.sleep(random.uniform(0.5, 1.5) * (attempt + 1))
         raise Exception(f"OpenRouter chat failed for {_Model_key} after {MaxRetries} attempts.")
+
+    def _synthetic_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
+        """Handle Synthetic.dev chat completions using OpenAI library"""
+        client = self._get_client(_Model_key)
+
+        # Prepare request options
+        ReqOptions = ModelOptions_dict.copy() if ModelOptions_dict is not None else {}
+        if Seed_int is not None:
+            ReqOptions["seed"] = Seed_int
+
+        # Handle structured output (JSON Schema or JSON mode)
+        if _FormatSchema_dict is not None:
+            response_format = self._build_response_format(_FormatSchema_dict, provider="synthetic")
+            if response_format:
+                ReqOptions["response_format"] = response_format
+                # Force temperature for basic JSON mode
+                if response_format.get("type") == "json_object":
+                    ReqOptions["temperature"] = ReqOptions.get("temperature", 0.0)
+        else:
+            # Apply repetition penalties for free-form generation
+            if "frequency_penalty" not in ReqOptions:
+                ReqOptions["frequency_penalty"] = getattr(Writer.Config, "SYNTHETIC_FREQUENCY_PENALTY", 0.5)
+            if "presence_penalty" not in ReqOptions:
+                ReqOptions["presence_penalty"] = getattr(Writer.Config, "SYNTHETIC_PRESENCE_PENALTY", 0.3)
+
+        MaxRetries = Writer.Config.MAX_SYNTHETIC_RETRIES
+        for attempt in range(MaxRetries):
+            try:
+                # Use OpenAI client pattern - direct API call
+                response = client.chat.completions.create(
+                    model=ProviderModel_name,
+                    messages=_Messages_list,
+                    **ReqOptions
+                )
+
+                AssistantMessage = {"role": "assistant", "content": response.choices[0].message.content}
+                FullResponseMessages = _Messages_list + [AssistantMessage]
+                TokenUsage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens
+                }
+                return FullResponseMessages, TokenUsage
+
+            except Exception as e:
+                _Logger.Log(f"Synthetic API Error ({_Model_key}, Attempt {attempt+1}/{MaxRetries}): {e}", 7)
+                if attempt + 1 >= MaxRetries:
+                    raise
+                time.sleep(random.uniform(0.5, 1.5) * (attempt + 1))
+
+        raise Exception(f"Synthetic chat failed for {_Model_key} after {MaxRetries} attempts.")
 
     def ChatResponse(self, _Logger, _Messages, _Model: str, _SeedOverride: int, _FormatSchema: dict | None = None, _repetition_retry_count: int = 0):  # type: ignore[assignment]
         """Non-streaming response for Pydantic generation with user-friendly display and repetition detection"""
@@ -1688,6 +1766,27 @@ class Interface:
 
         return all_embeddings, {"prompt_tokens": total_tokens, "completion_tokens": 0}
 
+    def _synthetic_embedding(self, _Logger, _Model_key, ProviderModel_name, _Texts: list):
+        """Generate embeddings using Synthetic.dev (OpenAI-compatible)"""
+        client = self._get_client(_Model_key)
+
+        all_embeddings = []
+        total_tokens = 0
+
+        for text in _Texts:
+            try:
+                response = client.embeddings.create(
+                    model=ProviderModel_name,
+                    input=text
+                )
+                all_embeddings.append(response.data[0].embedding)
+                total_tokens += response.usage.prompt_tokens
+            except Exception as e:
+                _Logger.Log(f"Synthetic embedding error: {e}", 7)
+                raise
+
+        return all_embeddings, {"prompt_tokens": total_tokens, "completion_tokens": 0}
+
     def GetModelAndProvider(self, _Model: str):
         if "://" not in _Model:
             # Handle query parameters in local Ollama model strings
@@ -1710,6 +1809,9 @@ class Interface:
         ModelName = unquote(ModelName)  # Decode URL encoded characters like %2F
 
         if Provider == "openrouter":
+            ModelName = f"{ModelName}/{Path}" if Path and ModelName else (ModelName or Path)
+        elif Provider == "synthetic":
+            # Synthetic uses same pattern as OpenRouter for model names
             ModelName = f"{ModelName}/{Path}" if Path and ModelName else (ModelName or Path)
         elif Provider == "ollama":
             if Path:

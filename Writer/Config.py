@@ -47,6 +47,24 @@
 #   Example:
 #     ollamasemua = "openrouter://anthropic/claude-3.5-sonnet"
 #
+# SYNTHETIC.DEV (OpenAI-compatible API):
+#   Format: "synthetic://model-name"
+#   API Key: Set SYNTHETIC_API_KEY in .env file
+#   All models use Hugging Face format: "hf:{owner}/{model-name}"
+#   Popular models (2025):
+#     - DeepSeek V3.1 (Latest reasoning model, Jan 2025):
+#       synthetic://hf:deepseek-ai/DeepSeek-V3.1
+#     - Qwen 3 235B (Large Chinese model, Jan 2025):
+#       synthetic://hf:Qwen/Qwen3-235B-A22B-Instruct-2507
+#     - GLM 4.6 (Zhihu AI, Chinese model):
+#       synthetic://hf:zai-org/GLM-4.6
+#     - Kimi K2 Instruct (Moonshot AI, Chinese model):
+#       synthetic://hf:moonshotai/Kimi-K2-Instruct
+#     - OpenAI GPT-OSS 120B (Open-source GPT alternative):
+#       synthetic://hf:openai/gpt-oss-120b
+#   Example:
+#     ollamasemua = "synthetic://hf:deepseek-ai/DeepSeek-V3.1"
+#
 # XAI GROK (via xAI API):
 #   Format: "grok://model-name"
 #   API Key: Set XAI_API_KEY in .env file
@@ -86,9 +104,12 @@
 #   - google://gemini-2.5-flash         (Google Genai, requires GOOGLE_API_KEY)
 #   - google://gemini-flash-lite-latest (Google Genai, lightweight)
 #   - openrouter://anthropic/claude-3.5-sonnet (OpenRouter, requires OPENROUTER_API_KEY)
+#   - synthetic://hf:deepseek-ai/DeepSeek-V3.1 (Synthetic.dev, requires SYNTHETIC_API_KEY)
+#   - grok://grok-4-1-fast-reasoning     (xAI, requires XAI_API_KEY)
 #   - ollama://qwen2.5:32b              (Ollama, uses OLLAMA_HOST)
 #   - qwen2.5:32b                       (Ollama, uses OLLAMA_HOST when no provider specified)
-ollamasemua = "grok://grok-4-1-fast-reasoning"
+# ollamasemua = "grok://grok-4-1-fast-reasoning"
+ollamasemua = "synthetic://hf:reissbaker/llama-3.1-70b-abliterated-lora"  # Requires SYNTHETIC_API_KEY in .env
 # ollamasemua = "google://gemini-flash-lite-latest"
 # ollamasemua = "huihui_ai/qwen2.5-abliterate:32b"
 # ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
@@ -139,6 +160,12 @@ SEED = 12
 #   - openrouter://openai/text-embedding-3-small
 #   API Key: Set OPENROUTER_API_KEY in .env file
 #
+# SYNTHETIC.DEV (OpenAI-compatible API):
+#   Popular embedding models:
+#   - synthetic://hf:nomic-ai/nomic-embed-text-v1.5 (Nomic AI, 768 dim, recommended)
+#   - synthetic://hf:Qwen/Qwen2.5-72B-Instruct (Qwen, supports embeddings)
+#   API Key: Set SYNTHETIC_API_KEY in .env file
+#
 # EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"
 EMBEDDING_MODEL = "google://gemini-embedding-001"
 EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for qwen3-embedding)
@@ -158,6 +185,11 @@ OLLAMA_CTX = 16384  # Default: 8192. Increased for longer contexts.
 # OLLAMA_HOST = "http://127.0.0.1:22434"
 OLLAMA_HOST = "http://127.0.0.1:11434"
 
+# Synthetic.dev API endpoint (OpenAI-compatible API)
+# Get your API key from: https://dev.synthetic.new/
+# Set SYNTHETIC_API_KEY in .env or environment
+SYNTHETIC_API_URL = "https://api.synthetic.new/openai/v1"
+
 ###############################################################################
 # RETRY CONFIGURATION
 ###############################################################################
@@ -167,6 +199,7 @@ MAX_PYDANTIC_RETRIES = 5  # Pydantic validation retries
 MAX_GOOGLE_RETRIES = 2  # Google Genai API retries
 MAX_OPENROUTER_RETRIES = 2  # OpenRouter API retries
 MAX_GROK_RETRIES = 2  # xAI Grok API retries
+MAX_SYNTHETIC_RETRIES = 2  # Synthetic.dev API retries
 MAX_RETRIES_CHAPTER_TITLE = 3  # Chapter title generation retries
 
 ###############################################################################
@@ -221,6 +254,15 @@ GOOGLE_PRESENCE_PENALTY = 0.3   # Only for 2.0 models
 # frequency_penalty: Limited support
 #   ⚠️ WARNING: Grok-4 models auto-filter these parameters
 GROK_FREQUENCY_PENALTY = 0.5  # May be filtered by API
+
+# --- SYNTHETIC.DEV REPETITION CONTROL ---
+# frequency_penalty: Penalizes tokens based on occurrence frequency
+#   Range: [-2, 2], 0 = no penalty
+SYNTHETIC_FREQUENCY_PENALTY = 0.5  # Moderate penalty
+
+# presence_penalty: Penalizes tokens that already appeared (flat penalty)
+#   Range: [-2, 2], 0 = no penalty
+SYNTHETIC_PRESENCE_PENALTY = 0.3  # Light penalty for diversity
 
 # --- REPETITION DETECTION THRESHOLDS ---
 # Used by RepetitionDetector to identify problematic outputs
