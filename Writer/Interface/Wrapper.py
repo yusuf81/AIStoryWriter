@@ -1642,11 +1642,11 @@ class Interface:
 
             elif "score" in response_data and "strengths" in response_data:
                 # Evaluation outputs (OutlineEvaluationOutput, ChapterEvaluationOutput)
-                print(f"✓ Evaluasi: Score {response_data['score']}/10")
+                print(f"✓ Evaluasi: Score {response_data['score']}/100")
 
             elif "feedback" in response_data and "rating" in response_data:
                 # ReviewOutput
-                print(f"✓ Review: Rating {response_data['rating']}/10")
+                print(f"✓ Review: Rating {response_data['rating']}/100")
 
             elif "scenes" in response_data and len(response_data) == 1:
                 # SceneListSchema
