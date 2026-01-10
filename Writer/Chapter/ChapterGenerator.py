@@ -604,13 +604,22 @@ def ReviseChapter(
     _History: list = [],
     _Iteration: int = 0,
     _UseStrictPrompt: bool = False,
+    _StrictRetryAttempt: int = 0,
+    _OriginalChapter: str | None = None,
 ):  # Tambahkan _ChapterNum, _TotalChapters
     from Writer.PromptsHelper import get_prompts
     ActivePrompts = get_prompts()  # Use language-aware import
 
+    # Store original chapter on first call to enable fallback
+    if _OriginalChapter is None:
+        _OriginalChapter = _Chapter
+
     # Get original word count before revising
-    OriginalWordCount = Writer.Statistics.GetWordCount(_Chapter)
+    OriginalWordCount = Writer.Statistics.GetWordCount(_OriginalChapter)
     MinWordCount = int(OriginalWordCount * (1 - Writer.Config.MAX_WORD_COUNT_REDUCTION_RATIO))
+
+    # Maximum retries for strict prompt attempts
+    MAX_STRICT_RETRIES = 3  # Allows 3 strict prompt retry attempts total
 
     # Choose prompt based on strict mode flag
     if _UseStrictPrompt:
@@ -659,8 +668,42 @@ def ReviseChapter(
             _Feedback=_Feedback,
             _History=Messages,  # Continue from current conversation
             _Iteration=_Iteration,
-            _UseStrictPrompt=True
+            _UseStrictPrompt=True,
+            _StrictRetryAttempt=0,
+            _OriginalChapter=_OriginalChapter
         )
+
+    # Handle strict prompt retry logic
+    if _UseStrictPrompt and NewWordCount < MinWordCount:
+        if _StrictRetryAttempt < MAX_STRICT_RETRIES - 1:  # Allows retries at 0, 1, 2 (3 total)
+            _Logger.Log(
+                f"Strict prompt retry {_StrictRetryAttempt + 1}/{MAX_STRICT_RETRIES}: "
+                f"Word count still {ReductionRatio*100:.1f}% reduced. Retrying...",
+                5
+            )
+            return ReviseChapter(
+                Interface=Interface,
+                _Logger=_Logger,
+                _ChapterNum=_ChapterNum,
+                _TotalChapters=_TotalChapters,
+                _Chapter=_Chapter,
+                _Feedback=_Feedback,
+                _History=Messages,
+                _Iteration=_Iteration,
+                _UseStrictPrompt=True,
+                _StrictRetryAttempt=_StrictRetryAttempt + 1,
+                _OriginalChapter=_OriginalChapter
+            )
+        else:
+            # All retries exhausted, fall back to original content
+            _Logger.Log(
+                f"Warning: All {MAX_STRICT_RETRIES} strict prompt retries failed. "
+                f"Word count reduced from {OriginalWordCount} to {NewWordCount} ({ReductionRatio*100:.1f}%). "
+                f"Falling back to original chapter content to preserve story quality.",
+                5
+            )
+            # Return original chapter with the conversation history
+            return _OriginalChapter, Messages
 
     # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
     _Logger.Log(
