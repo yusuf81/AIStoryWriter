@@ -109,7 +109,7 @@
 #   - ollama://qwen2.5:32b              (Ollama, uses OLLAMA_HOST)
 #   - qwen2.5:32b                       (Ollama, uses OLLAMA_HOST when no provider specified)
 # ollamasemua = "grok://grok-4-1-fast-reasoning"
-ollamasemua = "synthetic://hf:meta-llama/Llama-3.3-70B-Instruct"  # Requires SYNTHETIC_API_KEY in .env
+ollamasemua = "synthetic://hf:deepseek-ai/DeepSeek-V3.2"  # Requires SYNTHETIC_API_KEY in .env
 # ollamasemua = "google://gemini-flash-lite-latest"
 # ollamasemua = "huihui_ai/qwen2.5-abliterate:32b"
 # ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
