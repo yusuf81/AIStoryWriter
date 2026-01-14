@@ -93,11 +93,34 @@
 #     ollamasemua = "grok://grok-3-mini"              # Fast & lightweight
 #     ollamasemua = "grok://grok-2-vision-1212"       # For vision tasks
 #
+# VLLM (local, high-performance inference):
+#   Format: "vllm://model-name"
+#   Setup: Run vLLM server separately: vllm serve <model_name>
+#   API Key: Optional for local deployments (set VLLM_API_KEY in .env if needed)
+#   Popular models (use Hugging Face model names):
+#     - meta-llama/Llama-3.1-8B-Instruct (8B, good balance)
+#     - meta-llama/Llama-3.1-70B-Instruct (70B, high quality)
+#     - meta-llama/Llama-3.2-3B-Instruct (3B, lightweight)
+#     - Qwen/Qwen2.5-72B-Instruct (72B, Chinese/English)
+#     - mistralai/Mistral-7B-Instruct-v0.3 (7B, fast)
+#   Example:
+#     ollamasemua = "vllm://meta-llama/Llama-3.1-8B-Instruct"
+#     ollamasemua = "vllm://Qwen/Qwen2.5-72B-Instruct"
+#
+#   Custom vLLM server (non-default host):
+#   Set VLLM_API_URL in Config.py or environment
+#   Default: http://localhost:8000/v1
+#
 ###############################################################################
 
 ###############################################################################
 # LLM MODEL CONFIGURATION
 ###############################################################################
+
+# Hybrid Abliterated Models (Fully Uncensored)
+# structllm = "ollama://huihui_ai/qwenlong-l1.5-abliterated:latest"  # Structured output (JSON)
+structllm = "grok://grok-4-1-fast-non-reasoning"  # Structured output (JSON)
+fformllm = "ollama://huihui_ai/gemma3-abliterated:12b"  # Free-form (creative writing)
 
 # Default model for all tasks (use provider://model-name format)
 # Provider formats:
@@ -106,32 +129,62 @@
 #   - openrouter://anthropic/claude-3.5-sonnet (OpenRouter, requires OPENROUTER_API_KEY)
 #   - synthetic://hf:deepseek-ai/DeepSeek-V3.1 (Synthetic.dev, requires SYNTHETIC_API_KEY)
 #   - grok://grok-4-1-fast-reasoning     (xAI, requires XAI_API_KEY)
+#   - vllm://meta-llama/Llama-3.1-8B-Instruct (vLLM, requires vLLM server running)
 #   - ollama://qwen2.5:32b              (Ollama, uses OLLAMA_HOST)
 #   - qwen2.5:32b                       (Ollama, uses OLLAMA_HOST when no provider specified)
 # ollamasemua = "grok://grok-4-1-fast-reasoning"
-ollamasemua = "synthetic://hf:deepseek-ai/DeepSeek-V3.2"  # Requires SYNTHETIC_API_KEY in .env
+# ollamasemua = "ollama://huihui_ai/qwen2.5-abliterate:32b"  # Default to free-form model
+# ollamasemua = "synthetic://hf:deepseek-ai/DeepSeek-V3.2"  # Requires SYNTHETIC_API_KEY in .env
 # ollamasemua = "google://gemini-flash-lite-latest"
 # ollamasemua = "huihui_ai/qwen2.5-abliterate:32b"
 # ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
 # ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
 # ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
 # ollamasemua = "google://gemini-2.5-flash"  # Requires GOOGLE_API_KEY in .env
+# ollamasemua = "vllm://meta-llama/Llama-3.1-8B-Instruct"  # Requires vLLM server running
 
-# Stage-specific LLM models (all default to ollamasemua unless overridden)
-INITIAL_OUTLINE_WRITER_MODEL = ollamasemua
-CHAPTER_OUTLINE_WRITER_MODEL = ollamasemua
-CHAPTER_STAGE1_WRITER_MODEL = ollamasemua  # Plot and scene writing
-CHAPTER_STAGE2_WRITER_MODEL = ollamasemua  # Character development
-CHAPTER_STAGE3_WRITER_MODEL = ollamasemua  # Dialogue refinement
-FINAL_NOVEL_EDITOR_MODEL = ollamasemua
-CHAPTER_REVISION_WRITER_MODEL = ollamasemua
-REVISION_MODEL = ollamasemua
-EVAL_MODEL = ollamasemua
-INFO_MODEL = ollamasemua
-SCRUB_MODEL = ollamasemua
-CHECKER_MODEL = ollamasemua
-TRANSLATOR_MODEL = ollamasemua
-FAST_MODEL = ollamasemua  # For quick tasks like titling
+ollamasemua = "vllm://p-e-w/gemma-3-12b-it-heretic-v2"  # Requires vLLM server running
+
+# Stage-specific LLM models (Hybrid: Structured→Qwen, Free-form→Gemma)
+#
+# IMPORTANT: Models marked with [STRUCTURED] use SafeGeneratePydantic with format="json"
+#   These models MUST support structured output (format="json" parameter)
+#   Models that DON'T support format="json" will CRASH (e.g., gemma3-abliterated)
+#
+# Models marked with [FREEFORM] use SafeGenerateJSON WITHOUT _FormatSchema parameter
+#   These models do NOT require format="json" support
+#   Safe for models that don't support structured output
+#
+# === STORY OUTLINE GENERATION ===
+INITIAL_OUTLINE_WRITER_MODEL = ollamasemua     # [STRUCTURED] OutlineOutput schema
+CHAPTER_OUTLINE_WRITER_MODEL = ollamasemua    # [STRUCTURED] ChapterOutline schema
+#
+# === CHAPTER GENERATION STAGES ===
+# NOTE: ALL chapter stages (1,2,3) use SafeGeneratePydantic with ChapterOutput schema
+#       Therefore ALL require models that support format="json"
+CHAPTER_STAGE1_WRITER_MODEL = ollamasemua      # [STRUCTURED] ChapterOutput - Plot and scene writing
+CHAPTER_STAGE2_WRITER_MODEL = ollamasemua      # [STRUCTURED] ChapterOutput - Character development
+CHAPTER_STAGE3_WRITER_MODEL = ollamasemua      # [STRUCTURED] ChapterOutput - Dialogue refinement
+#
+# === POST-PROCESSING ===
+FINAL_NOVEL_EDITOR_MODEL = ollamasemua         # [STRUCTURED] ChapterOutput - Novel editing
+SCRUB_MODEL = ollamasemua                      # [STRUCTURED] ChapterOutput - Text scrubbing
+#
+# === QUALITY & REVISION ===
+CHAPTER_REVISION_WRITER_MODEL = ollamasemua    # [STRUCTURED] ChapterOutput - Chapter revision
+REVISION_MODEL = ollamasemua                  # [STRUCTURED] ReviewOutput schema
+CHECKER_MODEL = ollamasemua                   # [STRUCTURED] ChapterCompleteSchema
+EVAL_MODEL = ollamasemua                     # [STRUCTURED] EvaluationOutput schema
+#
+# === METADATA & TRANSLATION ===
+INFO_MODEL = ollamasemua                     # [STRUCTURED] StoryInfoSchema
+TRANSLATOR_MODEL = ollamasemua                # [STRUCTURED] Translation schema
+FAST_MODEL = ollamasemua                     # [STRUCTURED] TitleOutput - For quick tasks like titling
+#
+# === CHAPTER SUMMARY (FREEFORM!) ===
+# Chapter summary generation uses SafeGenerateJSON WITHOUT _FormatSchema
+# This means format="json" is NOT added to the request - safe for non-JSON models
+# Uses: CHAPTER_STAGE1_WRITER_MODEL (currently fformllm)
 
 # Reasoning model (two-pass reasoning system)
 REASONING_MODEL = CHAPTER_STAGE1_WRITER_MODEL
@@ -190,6 +243,18 @@ OLLAMA_HOST = "http://127.0.0.1:11434"
 # Set SYNTHETIC_API_KEY in .env or environment
 SYNTHETIC_API_URL = "https://api.synthetic.new/openai/v1"
 
+# vLLM API endpoint (OpenAI-compatible API)
+# vLLM server runs separately: vllm serve <model_name>
+# Set VLLM_API_KEY in .env if your vLLM server requires authentication
+VLLM_API_URL = "http://localhost:8000/v1"
+VLLM_HOST = "http://localhost:8000"
+
+# vLLM request timeout in seconds
+# Quantized models (bitsandbytes, AWQ, GPTQ) are slower than full precision
+# Structured output (JSON Schema) adds additional processing overhead
+# 12B+ models with 2000+ tokens may require 3-5 minutes per request
+VLLM_TIMEOUT = 300  # 5 minutes (default 60s is too slow for quantized models)
+
 ###############################################################################
 # RETRY CONFIGURATION
 ###############################################################################
@@ -200,6 +265,7 @@ MAX_GOOGLE_RETRIES = 2  # Google Genai API retries
 MAX_OPENROUTER_RETRIES = 2  # OpenRouter API retries
 MAX_GROK_RETRIES = 2  # xAI Grok API retries
 MAX_SYNTHETIC_RETRIES = 2  # Synthetic.dev API retries
+MAX_VLLM_RETRIES = 2  # vLLM API retries
 MAX_RETRIES_CHAPTER_TITLE = 3  # Chapter title generation retries
 
 ###############################################################################
@@ -314,6 +380,20 @@ SYNTHETIC_FREQUENCY_PENALTY = 1.0  # Stronger penalty for LLaMA
 # presence_penalty: Penalizes tokens that already appeared (flat penalty)
 #   Range: [-2, 2], 0 = no penalty
 SYNTHETIC_PRESENCE_PENALTY = 0.6  # Encourages topic diversity
+
+# --- VLLM REPETITION CONTROL ---
+# vLLM uses OpenAI-compatible API with similar parameters to Synthetic
+
+# Temperature for structured output
+VLLM_TEMPERATURE_STRUCTURED = 0.8
+
+# frequency_penalty: Penalizes tokens based on occurrence frequency
+#   Range: [-2, 2], 0 = no penalty
+VLLM_FREQUENCY_PENALTY = 0.5
+
+# presence_penalty: Penalizes tokens that already appeared (flat penalty)
+#   Range: [-2, 2], 0 = no penalty
+VLLM_PRESENCE_PENALTY = 0.3
 
 # --- REPETITION DETECTION THRESHOLDS ---
 # Used by RepetitionDetector to identify problematic outputs

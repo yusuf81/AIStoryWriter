@@ -499,8 +499,9 @@ class Interface:
                 "strict": True
             }
 
-            # Synthetic.dev requires json_schema to be wrapped with {name, schema}
-            if provider == "synthetic":
+            # Synthetic.dev and vLLM require json_schema to be wrapped with {name, schema}
+            # This follows OpenAI's structured output format
+            if provider in ("synthetic", "vllm"):
                 return {
                     "type": "json_schema",
                     "json_schema": {
@@ -568,6 +569,20 @@ class Interface:
                     base_url=api_url,
                     timeout=60.0,
                     max_retries=getattr(Writer.Config, 'MAX_SYNTHETIC_RETRIES', 2),
+                )
+            elif Provider == "vllm":
+                # vLLM uses OpenAI-compatible API
+                # API key is optional for local deployments
+                self.ensure_package_is_installed("openai")
+                from openai import OpenAI
+
+                # Use ModelHost if provided, otherwise use default VLLM_API_URL
+                api_url = ModelHost or getattr(Writer.Config, 'VLLM_API_URL', 'http://localhost:8000/v1')
+                self.Clients[Model] = OpenAI(
+                    api_key=os.environ.get("VLLM_API_KEY", "dummy"),
+                    base_url=api_url,
+                    timeout=getattr(Writer.Config, 'VLLM_TIMEOUT', 300),
+                    max_retries=getattr(Writer.Config, 'MAX_VLLM_RETRIES', 2),
                 )
             else:
                 raise NotImplementedError(f"Provider {Provider} not supported")
@@ -771,6 +786,11 @@ class Interface:
                     # Build targeted error message (no schema structure)
                     error_message = self._build_validation_error_message(ve, _PydanticModel.__name__)
                     _Logger.Log(f"Validation errors:\n{error_message}", 5)
+
+                    # Update conversation history with the failed response
+                    # This ensures proper role alternation (user → assistant → user) for strict chat templates
+                    # Required by vLLM (OpenAI-compatible API) and doesn't affect Ollama
+                    messages_for_parsing = [m.copy() for m in ResponseMessagesList]
 
                     # Add error feedback to conversation for retry
                     messages_for_parsing.append({
@@ -1406,6 +1426,67 @@ class Interface:
 
         raise Exception(f"Synthetic chat failed for {_Model_key} after {MaxRetries} attempts.")
 
+    def _vllm_chat(self, _Logger, _Model_key, ProviderModel_name, _Messages_list, ModelOptions_dict, Seed_int, _FormatSchema_dict):
+        """Handle vLLM chat completions using OpenAI-compatible API"""
+        client = self._get_client(_Model_key)
+
+        # Prepare request options
+        ReqOptions = ModelOptions_dict.copy() if ModelOptions_dict is not None else {}
+        if Seed_int is not None:
+            ReqOptions["seed"] = Seed_int
+
+        # Handle structured output (JSON Schema or JSON mode)
+        if _FormatSchema_dict is not None:
+            response_format = self._build_response_format(_FormatSchema_dict, provider="vllm")
+            if response_format:
+                ReqOptions["response_format"] = response_format
+
+                # Higher temperature to prevent repetition loops
+                ReqOptions["temperature"] = ReqOptions.get(
+                    "temperature", getattr(Writer.Config, "VLLM_TEMPERATURE_STRUCTURED", 0.8))
+
+                # Anti-repetition penalties for structured output
+                if "frequency_penalty" not in ReqOptions:
+                    ReqOptions["frequency_penalty"] = getattr(
+                        Writer.Config, "VLLM_FREQUENCY_PENALTY", 0.5)
+                if "presence_penalty" not in ReqOptions:
+                    ReqOptions["presence_penalty"] = getattr(
+                        Writer.Config, "VLLM_PRESENCE_PENALTY", 0.3)
+        else:
+            # Free-form generation - use standard penalties
+            if "frequency_penalty" not in ReqOptions:
+                ReqOptions["frequency_penalty"] = getattr(
+                    Writer.Config, "VLLM_FREQUENCY_PENALTY", 0.5)
+            if "presence_penalty" not in ReqOptions:
+                ReqOptions["presence_penalty"] = getattr(
+                    Writer.Config, "VLLM_PRESENCE_PENALTY", 0.3)
+
+        MaxRetries = getattr(Writer.Config, 'MAX_VLLM_RETRIES', 2)
+        for attempt in range(MaxRetries):
+            try:
+                # Use OpenAI client pattern - direct API call (non-streaming by default)
+                response = client.chat.completions.create(
+                    model=ProviderModel_name,
+                    messages=_Messages_list,
+                    **ReqOptions
+                )
+
+                AssistantMessage = {"role": "assistant", "content": response.choices[0].message.content}
+                FullResponseMessages = _Messages_list + [AssistantMessage]
+                TokenUsage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens
+                }
+                return FullResponseMessages, TokenUsage
+
+            except Exception as e:
+                _Logger.Log(f"vLLM API Error ({_Model_key}, Attempt {attempt+1}/{MaxRetries}): {e}", 7)
+                if attempt + 1 >= MaxRetries:
+                    raise Exception(f"vLLM chat failed for {_Model_key} after {MaxRetries} attempts.") from e
+                time.sleep(random.uniform(0.5, 1.5) * (attempt + 1))
+
+        raise Exception(f"vLLM chat failed for {_Model_key} after {MaxRetries} attempts.")
+
     def ChatResponse(self, _Logger, _Messages, _Model: str, _SeedOverride: int, _FormatSchema: dict | None = None, _repetition_retry_count: int = 0):  # type: ignore[assignment]
         """Non-streaming response for Pydantic generation with user-friendly display and repetition detection"""
         TotalInputChars, EstInputTokens = 0, 0
@@ -1848,6 +1929,9 @@ class Interface:
             ModelName = f"{ModelName}/{Path}" if Path and ModelName else (ModelName or Path)
         elif Provider == "synthetic":
             # Synthetic uses same pattern as OpenRouter for model names
+            ModelName = f"{ModelName}/{Path}" if Path and ModelName else (ModelName or Path)
+        elif Provider == "vllm":
+            # vLLM uses same pattern as OpenRouter/Synthetic for model names
             ModelName = f"{ModelName}/{Path}" if Path and ModelName else (ModelName or Path)
         elif Provider == "ollama":
             if Path:
