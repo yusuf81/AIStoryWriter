@@ -143,7 +143,7 @@ fformllm = "ollama://huihui_ai/gemma3-abliterated:12b"  # Free-form (creative wr
 # ollamasemua = "google://gemini-2.5-flash"  # Requires GOOGLE_API_KEY in .env
 # ollamasemua = "vllm://meta-llama/Llama-3.1-8B-Instruct"  # Requires vLLM server running
 
-ollamasemua = "vllm://aisingapore/Llama-SEA-LION-v3.5-8B-R"  # Requires vLLM server running
+ollamasemua = "vllm://google/gemma-3-12b-it"  # Requires vLLM server running
 
 # Stage-specific LLM models (Hybrid: Structured→Qwen, Free-form→Gemma)
 #

@@ -1010,6 +1010,14 @@ class Interface:
             CurrentModelOptions["repeat_penalty"] = getattr(Writer.Config, "OLLAMA_REPEAT_PENALTY", 1.1)
         if "repeat_last_n" not in CurrentModelOptions:
             CurrentModelOptions["repeat_last_n"] = getattr(Writer.Config, "OLLAMA_REPEAT_LAST_N", 64)
+        # Set num_predict (max_tokens equivalent) based on output type
+        if "num_predict" not in CurrentModelOptions:
+            if _FormatSchema_dict:
+                # Structured output (JSON/Pydantic) - use higher limit
+                CurrentModelOptions["num_predict"] = getattr(Writer.Config, "MAX_OLLAMA_TOKENS_STRUCTURED", 4096)
+            else:
+                # Free-form text generation - use standard limit
+                CurrentModelOptions["num_predict"] = getattr(Writer.Config, "MAX_OLLAMA_TOKENS_FREEFORM", 2048)
         CurrentModelOptions["seed"] = Seed_int
         if _FormatSchema_dict:
             CurrentModelOptions.update({"temperature": CurrentModelOptions.get("temperature", 0.0)})
