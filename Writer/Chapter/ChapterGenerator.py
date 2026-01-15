@@ -360,7 +360,8 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
             break
 
         # Validate paragraph breaks first
-        paragraph_valid, paragraph_feedback = validate_paragraph_breaks(Stage2Chapter, _ChapterNum)
+        native_lang = getattr(Config_module, 'NATIVE_LANGUAGE', 'en')
+        paragraph_valid, paragraph_feedback = validate_paragraph_breaks(Stage2Chapter, _ChapterNum, native_lang)
 
         # Then validate summary adherence
         summary_valid, summary_feedback = ChapterGenSummaryCheck_module.LLMSummaryCheck(
@@ -437,7 +438,8 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
             break
 
         # Validate paragraph breaks first
-        paragraph_valid, paragraph_feedback = validate_paragraph_breaks(Stage3Chapter, _ChapterNum)
+        native_lang = getattr(Config_module, 'NATIVE_LANGUAGE', 'en')
+        paragraph_valid, paragraph_feedback = validate_paragraph_breaks(Stage3Chapter, _ChapterNum, native_lang)
 
         # Then validate summary adherence
         summary_valid, summary_feedback = ChapterGenSummaryCheck_module.LLMSummaryCheck(

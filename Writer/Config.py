@@ -136,14 +136,14 @@ fformllm = "ollama://huihui_ai/gemma3-abliterated:12b"  # Free-form (creative wr
 # ollamasemua = "ollama://huihui_ai/qwen2.5-abliterate:32b"  # Default to free-form model
 # ollamasemua = "synthetic://hf:deepseek-ai/DeepSeek-V3.2"  # Requires SYNTHETIC_API_KEY in .env
 # ollamasemua = "google://gemini-flash-lite-latest"
-# ollamasemua = "huihui_ai/qwen2.5-abliterate:32b"
+# ollamasemua = "huihui_ai/qwen2.5-abliterate:14b"
 # ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
 # ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
 # ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
 # ollamasemua = "google://gemini-2.5-flash"  # Requires GOOGLE_API_KEY in .env
 # ollamasemua = "vllm://meta-llama/Llama-3.1-8B-Instruct"  # Requires vLLM server running
 
-ollamasemua = "vllm://p-e-w/gemma-3-12b-it-heretic-v2"  # Requires vLLM server running
+ollamasemua = "vllm://aisingapore/Llama-SEA-LION-v3.5-8B-R"  # Requires vLLM server running
 
 # Stage-specific LLM models (Hybrid: Structured→Qwen, Free-form→Gemma)
 #
@@ -219,8 +219,8 @@ SEED = 12
 #   - synthetic://hf:Qwen/Qwen2.5-72B-Instruct (Qwen, supports embeddings)
 #   API Key: Set SYNTHETIC_API_KEY in .env file
 #
-# EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"
-EMBEDDING_MODEL = "google://gemini-embedding-001"
+EMBEDDING_MODEL = "ollama://qwen3-embedding:latest"
+# EMBEDDING_MODEL = "google://gemini-embedding-001"
 EMBEDDING_DIMENSIONS = 768  # Default embedding dimensions (for qwen3-embedding)
 EMBEDDING_CTX = 8192  # Context window for embeddings
 EMBEDDING_FALLBACK_ENABLED = False  # Fail fast, no automatic fallback
@@ -313,6 +313,10 @@ MAX_GROK_TOKENS_FREEFORM = 2048
 MAX_OLLAMA_TOKENS_STRUCTURED = 4096
 MAX_OLLAMA_TOKENS_FREEFORM = 2048
 
+# vLLM (OpenAI-compatible API, uses max_tokens parameter)
+MAX_VLLM_TOKENS_STRUCTURED = 4096
+MAX_VLLM_TOKENS_FREEFORM = 2048
+
 ###############################################################################
 # LLM SAMPLING & REPETITION CONTROL
 ###############################################################################
@@ -367,11 +371,15 @@ GOOGLE_PRESENCE_PENALTY = 0.3   # Only for 2.0 models
 GROK_FREQUENCY_PENALTY = 0.5  # May be filtered by API
 
 # --- SYNTHETIC.DEV REPETITION CONTROL ---
-# LLaMA-specific settings to prevent degenerative repetition
-# See: https://discuss.huggingface.co/t/repetition-issues-in-llama-models-3-8b-3-70b-3-1-3-2/144196
+# Synthetic.dev uses OpenAI-compatible API
+# Follows industry best practice: temperature=0 for structured output (deterministic)
+# Same as Ollama, Google, Grok, Amazon Nova, Anyscale, vLLM
+#
+# Note: Historical comment about LLaMA repetition was based on misunderstanding.
+# Industry research shows temperature=0 is correct for structured output.
 
-# Temperature for structured output (higher temp breaks repetition loops)
-SYNTHETIC_TEMPERATURE_STRUCTURED = 0.8  # Higher temp for LLaMA structured output
+# Temperature for structured output (0.0 = deterministic for JSON/Pydantic)
+SYNTHETIC_TEMPERATURE_STRUCTURED = 0.0
 
 # frequency_penalty: Penalizes tokens based on occurrence frequency
 #   Range: [-2, 2], 0 = no penalty
@@ -382,10 +390,12 @@ SYNTHETIC_FREQUENCY_PENALTY = 1.0  # Stronger penalty for LLaMA
 SYNTHETIC_PRESENCE_PENALTY = 0.6  # Encourages topic diversity
 
 # --- VLLM REPETITION CONTROL ---
-# vLLM uses OpenAI-compatible API with similar parameters to Synthetic
+# vLLM uses OpenAI-compatible API
+# Follows industry best practice: temperature=0 for structured output (deterministic)
+# Same as Ollama, Google, Grok, Amazon Nova, Anyscale
 
-# Temperature for structured output
-VLLM_TEMPERATURE_STRUCTURED = 0.8
+# Temperature for structured output (0.0 = deterministic for JSON/Pydantic)
+VLLM_TEMPERATURE_STRUCTURED = 0.0
 
 # frequency_penalty: Penalizes tokens based on occurrence frequency
 #   Range: [-2, 2], 0 = no penalty

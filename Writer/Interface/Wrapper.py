@@ -1441,6 +1441,10 @@ class Interface:
             if response_format:
                 ReqOptions["response_format"] = response_format
 
+                # Set max_tokens for structured output
+                if "max_tokens" not in ReqOptions:
+                    ReqOptions["max_tokens"] = getattr(Writer.Config, "MAX_VLLM_TOKENS_STRUCTURED", 4096)
+
                 # Higher temperature to prevent repetition loops
                 ReqOptions["temperature"] = ReqOptions.get(
                     "temperature", getattr(Writer.Config, "VLLM_TEMPERATURE_STRUCTURED", 0.8))
@@ -1454,6 +1458,10 @@ class Interface:
                         Writer.Config, "VLLM_PRESENCE_PENALTY", 0.3)
         else:
             # Free-form generation - use standard penalties
+            # Set max_tokens for free-form output
+            if "max_tokens" not in ReqOptions:
+                ReqOptions["max_tokens"] = getattr(Writer.Config, "MAX_VLLM_TOKENS_FREEFORM", 2048)
+
             if "frequency_penalty" not in ReqOptions:
                 ReqOptions["frequency_penalty"] = getattr(
                     Writer.Config, "VLLM_FREQUENCY_PENALTY", 0.5)
