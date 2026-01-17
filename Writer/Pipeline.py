@@ -43,11 +43,11 @@ def _build_mega_outline_pipeline_version(SysLogger, Config, ActivePrompts, curre
     base_outline_to_use = FullOutline
     if Config.EXPAND_OUTLINE and RefinedGlobalOutline:
         base_outline_to_use = RefinedGlobalOutline
-        SysLogger.Log(f"Pipeline: Using refined_global_outline for Mega Outline base.", 6)
+        SysLogger.Log("Pipeline: Using refined_global_outline for Mega Outline base.", 6)
     elif Config.EXPAND_OUTLINE:
-        SysLogger.Log(f"Pipeline: EXPAND_OUTLINE is true, but no refined_global_outline found. Using original full_outline for Mega Outline base.", 6)
+        SysLogger.Log("Pipeline: EXPAND_OUTLINE is true, but no refined_global_outline found. Using original full_outline for Mega Outline base.", 6)
     else:
-        SysLogger.Log(f"Pipeline: Using original full_outline for Mega Outline base (EXPAND_OUTLINE is false or no refined_global_outline).", 6)
+        SysLogger.Log("Pipeline: Using original full_outline for Mega Outline base (EXPAND_OUTLINE is false or no refined_global_outline).", 6)
 
     Preamble = ActivePrompts.MEGA_OUTLINE_PREAMBLE
     ChapterOutlineFormat = ActivePrompts.MEGA_OUTLINE_CHAPTER_FORMAT
@@ -62,8 +62,8 @@ def _build_mega_outline_pipeline_version(SysLogger, Config, ActivePrompts, curre
         MegaOutline += "# Expanded Per-Chapter Outlines\n"
         for i, chapter_outline_text in enumerate(ExpandedChapterOutlines):
             chapter_num = i + 1
-            is_current_chapter = (chapter_index_for_context is not None and chapter_num == chapter_index_for_context)
-            prefix = ActivePrompts.MEGA_OUTLINE_CURRENT_CHAPTER_PREFIX if is_current_chapter else ""
+            # is_current_chapter is calculated but not currently used (reserved for future enhancement)
+            is_current_chapter = (chapter_index_for_context is not None and chapter_num == chapter_index_for_context)  # noqa: F841
 
             # Extract text and title from dict
             text = chapter_outline_text["text"]
@@ -262,9 +262,12 @@ def _handle_chapter_title_generation_pipeline_version(SysLogger, Interface, Conf
             word_count=Statistics.GetWordCount(chapter_text_segment_for_title)
         )
 
-        title_messages = [Interface.BuildUserQuery(title_prompt_content)]
+        # FIX: Ensure proper role alternation for vLLM - start with system message
+        title_messages = []
+        title_messages.append(Interface.BuildSystemQuery(Interface._get_text('default_system_message')))
+        title_messages.append(Interface.BuildUserQuery(title_prompt_content))
         # Use SafeGeneratePydantic for structured title generation
-        title_response_messages, Title_obj, _ = Interface.SafeGeneratePydantic(
+        _, Title_obj, _ = Interface.SafeGeneratePydantic(
             _Logger=SysLogger,
             _Messages=title_messages,
             _Model=Config.FAST_MODEL,
@@ -313,7 +316,7 @@ class StoryPipeline:
 
         try:
             import Writer.OutlineGenerator
-            import Writer.LLMEditor
+            import Writer.LLMEditor  # type: ignore[reportUnusedImport]
             import Writer.Chapter.ChapterDetector
             import Writer.Chapter.ChapterGenerator
             import Writer.NovelEditor
@@ -461,7 +464,7 @@ class StoryPipeline:
                             if isinstance(char, dict) and 'name' in char:
                                 character_whitelist.append(char['name'])
                             elif hasattr(char, 'name'):
-                                character_whitelist.append(char.name)
+                                character_whitelist.append(char.name)  # type: ignore[attr-defined]
 
             # Build character whitelist string and use language-aware template
             if character_whitelist:
@@ -491,11 +494,11 @@ class StoryPipeline:
                 if Iterations == 1:
                     Feedback = initial_feedback  # Use character constraint
                 else:
-                    Feedback = Writer.LLMEditor.GetFeedbackOnOutline(
+                    Feedback = Writer.LLMEditor.GetFeedbackOnOutline(  # type: ignore[attr-defined]
                         self.Interface, self.SysLogger, refined_global_outline
                     )
 
-                Rating = Writer.LLMEditor.GetOutlineRating(
+                Rating = Writer.LLMEditor.GetOutlineRating(  # type: ignore[attr-defined]
                     self.Interface, self.SysLogger,
                     base_outline_for_expansion if Iterations == 1 else refined_global_outline
                 )
@@ -805,7 +808,7 @@ class StoryPipeline:
 
         # Create StatsString (moved from Write.py)
         gen_start_time_str = datetime.datetime.fromtimestamp(StartTime).strftime("%Y/%m/%d %H:%M:%S")
-        StatsString = f"Work Statistics:\n"
+        StatsString = "Work Statistics:\n"
         StatsString += f" - Title: {Title}\n"
         StatsString += f" - Summary: {StoryInfoJSON.get('Summary', 'N/A')}\n"
         StatsString += f" - Tags: {StoryInfoJSON.get('Tags', 'N/A')}\n"
@@ -815,12 +818,12 @@ class StoryPipeline:
         StatsString += f" - Generation Total Time: {ElapsedTime:.2f}s\n"
         StatsString += f" - Generation Average WPM: {(60 * (TotalWords/ElapsedTime)):.2f}\n" if ElapsedTime > 0 else "N/A\n"
         StatsString += f" - Output Language: {StoryInfoJSON.get('FinalOutputLanguage', native_lang)}\n"
-        StatsString += f"\nUser Settings:\n"
+        StatsString += "\nUser Settings:\n"
         StatsString += f" - Base Prompt File: {current_state.get('input_prompt_file', 'N/A')}\n"
         if current_state.get("translated_to_native_prompt_content"):
             StatsString += f" - Original Prompt Language: {self.Config.TRANSLATE_PROMPT_LANGUAGE}\n"
             StatsString += f" - Generation Prompt Language: {self.Config.NATIVE_LANGUAGE}\n"
-        StatsString += f"\nGeneration Configuration:\n"
+        StatsString += "\nGeneration Configuration:\n"
         for key in dir(self.Config):
             if not key.startswith("_") and key.isupper():  # Only public config variables
                 StatsString += f" - {key}: {getattr(self.Config, key)}\n"

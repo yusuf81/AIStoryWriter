@@ -174,6 +174,9 @@ def EditNovel(Interface, _Logger, _Chapters: list, _Outline: str, _TotalChapters
             5,
         )
         Messages = []
+        # FIX: Ensure proper role alternation for vLLM (OpenAI-compatible API)
+        # Start with system message, then user message
+        Messages.append(Interface.BuildSystemQuery(Interface._get_text('default_system_message')))
         Messages.append(Interface.BuildUserQuery(Prompt))
         Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
             _Logger,

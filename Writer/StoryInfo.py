@@ -24,8 +24,21 @@ def GetStoryInfo(
     _Logger.Log(
         f"Prompting LLM ({ModelToUse}) To Generate Stats", 5
     )  # Log model yang digunakan
-    Messages = _Messages
-    Messages.append(Interface.BuildUserQuery(Prompt))
+
+    # FIX: Ensure proper role alternation for vLLM (OpenAI-compatible API)
+    # Build messages in correct order: system -> user (combined content)
+    Messages = []
+
+    # Start with system message
+    Messages.append(Interface.BuildSystemQuery(Interface._get_text('default_system_message')))
+
+    # Combine existing user content with new prompt into a single user message
+    existing_content = ""
+    if _Messages and _Messages[0].get("role") == "user":
+        existing_content = _Messages[0].get("content", "")
+
+    combined_prompt = existing_content + "\n\n" + Prompt
+    Messages.append(Interface.BuildUserQuery(combined_prompt))
     # Use SafeGeneratePydantic with existing StoryInfoSchema (already a Pydantic model)
     Messages, info_obj, TokenUsage = Interface.SafeGeneratePydantic(
         _Logger,

@@ -66,7 +66,10 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
     )
 
     _Logger.Log("Generating Main Story Elements", 4)
-    Messages = [Interface.BuildUserQuery(Prompt)]
+    # FIX: Ensure proper role alternation for vLLM - start with system message
+    Messages = []
+    Messages.append(Interface.BuildSystemQuery(Interface._get_text('default_system_message')))
+    Messages.append(Interface.BuildUserQuery(Prompt))
     Messages, StoryElements_obj, _ = Interface.SafeGeneratePydantic(
         _Logger,
         Messages,

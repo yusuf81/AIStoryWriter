@@ -15,6 +15,9 @@ def LLMCountChapters(Interface, _Logger, _Summary):
 
     _Logger.Log("Prompting LLM To Get ChapterCount JSON", 5)
     Messages = []
+    # FIX: Ensure proper role alternation for vLLM (OpenAI-compatible API)
+    # Start with system message, then user message
+    Messages.append(Interface.BuildSystemQuery(Interface._get_text('default_system_message')))
     Messages.append(Interface.BuildUserQuery(Prompt))
 
     # Use SafeGeneratePydantic with existing ChapterCountSchema (already a Pydantic model)

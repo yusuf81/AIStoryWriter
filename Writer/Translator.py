@@ -14,6 +14,9 @@ def TranslatePrompt(Interface, _Logger, _Prompt: str, _SourceLanguage: str, Targ
     )
     _Logger.Log(f"Prompting LLM To Translate User Prompt from {_SourceLanguage} to {TargetLang}", 5)
     Messages = []
+    # FIX: Ensure proper role alternation for vLLM (OpenAI-compatible API)
+    # Start with system message, then user message
+    Messages.append(Interface.BuildSystemQuery(Interface._get_text('default_system_message')))
     Messages.append(Interface.BuildUserQuery(PromptFormatted))
     Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
@@ -47,6 +50,9 @@ def TranslateNovel(
             f"Prompting LLM To Perform Chapter {i+1}/{_TotalChapters} Translation from {_SourceLanguage} to {_TargetLanguage}", 5
         )
         Messages = []
+        # FIX: Ensure proper role alternation for vLLM (OpenAI-compatible API)
+        # Start with system message, then user message
+        Messages.append(Interface.BuildSystemQuery(Interface._get_text('default_system_message')))
         Messages.append(Interface.BuildUserQuery(PromptFormatted))
         Messages, Chapter_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
             _Logger, Messages, Writer.Config.TRANSLATOR_MODEL, ChapterOutput

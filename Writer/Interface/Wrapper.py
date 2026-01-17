@@ -745,14 +745,35 @@ class Interface:
         # Prepare format instruction - use simplified format to prevent schema echoing
         format_instruction = self._build_format_instruction(schema)
 
-        # Add format instruction to the last user message
+        # Add format instruction to messages with proper role alternation for vLLM (OpenAI-compatible API)
         messages_for_parsing = [m.copy() for m in _Messages]
-        if messages_for_parsing and messages_for_parsing[-1]["role"] == "user":
-            messages_for_parsing[-1]["content"] += format_instruction
-        elif messages_for_parsing:
-            messages_for_parsing.append({"role": "user", "content": format_instruction})
-        else:
+
+        # DEBUG: Log incoming messages
+        _Logger.Log(f"=== SafeGeneratePydantic: Received {len(_Messages)} messages ===", 4)
+        for i, msg in enumerate(_Messages):
+            content_preview = str(msg.get('content', ''))[:80]
+            _Logger.Log(f"  Input Msg{i} role={msg.get('role')}, content={content_preview}...", 4)
+
+        if not messages_for_parsing:
+            # No messages yet, start with just the format instruction
             messages_for_parsing = [{"role": "user", "content": format_instruction}]
+        elif messages_for_parsing[-1]["role"] == "user":
+            # Last message is user, append format instruction to it
+            messages_for_parsing[-1]["content"] += format_instruction
+        elif messages_for_parsing[-1]["role"] == "assistant":
+            # Last message is assistant, insert format instruction BEFORE it
+            # This maintains system/user/assistant -> system/user/format_instruction/assistant pattern
+            # Find where to insert: before the last assistant message
+            messages_for_parsing.insert(-1, {"role": "user", "content": format_instruction})
+        else:
+            # Last message is system or other role, insert after it
+            messages_for_parsing.append({"role": "user", "content": format_instruction})
+
+        # DEBUG: Log outgoing messages
+        _Logger.Log(f"=== SafeGeneratePydantic: Output {len(messages_for_parsing)} messages ===", 4)
+        for i, msg in enumerate(messages_for_parsing):
+            content_preview = str(msg.get('content', ''))[:80]
+            _Logger.Log(f"  Output Msg{i} role={msg.get('role')}, content={content_preview}...", 4)
 
         _Logger.Log(f"SafeGeneratePydantic: Using schema for {_PydanticModel.__name__}", 5)
 

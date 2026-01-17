@@ -528,7 +528,8 @@ MAX_LENGTH_CHAPTER_TITLE = 100  # Maximum character length for chapter title
 STORIES_DIR = "Stories"  # Directory for generated stories
 LOG_DIRECTORY = "Logs"  # Directory for log files
 OPTIONAL_OUTPUT_NAME = ""
-DEBUG = False
+#DEBUG = False
+DEBUG = True
 
 ###############################################################################
 # MARKDOWN & PDF OUTPUT CONFIGURATION
