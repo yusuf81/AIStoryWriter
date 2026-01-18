@@ -143,7 +143,8 @@ fformllm = "ollama://huihui_ai/gemma3-abliterated:12b"  # Free-form (creative wr
 # ollamasemua = "google://gemini-2.5-flash"  # Requires GOOGLE_API_KEY in .env
 # ollamasemua = "vllm://meta-llama/Llama-3.1-8B-Instruct"  # Requires vLLM server running
 
-ollamasemua = "vllm://google/gemma-3-12b-it"  # Requires vLLM server running
+#ollamasemua = "vllm://google/gemma-3-12b-it"  # Requires vLLM server running
+ollamasemua = "vllm://p-e-w/gemma-3-12b-it-heretic-v2"  # Requires vLLM server running
 
 # Stage-specific LLM models (Hybrid: Structured→Qwen, Free-form→Gemma)
 #
@@ -468,6 +469,36 @@ CHAPTER_NO_REVISIONS = False  # Note this value is overridden by the argparser #
 CHAPTER_QUALITY = 90  # Note this value is overridden by the argparser
 CHAPTER_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
 CHAPTER_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
+
+# Paragraph Formatting Fallback Settings
+# Used when LLM fails to add adequate paragraph breaks after max retries
+PARAGRAPH_TARGET_WORDS = 150  # Target words per paragraph for fallback formatter
+
+# Scene break indicators for paragraph formatting fallback
+# EN and ID lists must be symmetric (same length, corresponding items)
+PARAGRAPH_SCENE_INDICATORS_EN = [
+    "Meanwhile",      # Sementara itu
+    "Later",          # Kemudian
+    "Suddenly",       # Tiba-tiba
+    "The next",       # Keesokan
+    "That night",     # Malam itu
+    "That morning",   # Pagi itu
+    "That afternoon",  # Sore itu
+    "After",          # Setelah
+    "Before long",    # Tak lama
+]
+
+PARAGRAPH_SCENE_INDICATORS_ID = [
+    "Sementara itu",  # Meanwhile
+    "Kemudian",       # Later
+    "Tiba-tiba",      # Suddenly
+    "Keesokan",       # The next
+    "Malam itu",      # That night
+    "Pagi itu",       # That morning
+    "Sore itu",       # That afternoon
+    "Setelah",        # After
+    "Tak lama",       # Before long
+]
 
 # Minimum Word Counts for chapter generation calls
 MIN_WORDS_TRANSLATE_PROMPT = 10  # Minimum words for prompt translation

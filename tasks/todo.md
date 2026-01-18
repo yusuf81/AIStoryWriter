@@ -701,3 +701,191 @@ are continuations of the original text, so they should all be merged.
 ---
 
 *vLLM JSON Parsing & Dynamic Max Tokens fix completed January 18, 2026*
+
+---
+
+# Paragraph Formatting Fallback
+
+## Problem Statement
+
+Ketika LLM gagal menambahkan paragraph breaks yang memadai setelah max retries tercapai, chapter akan di-output dengan formatting yang buruk (wall of text). Perlu fallback mechanism untuk memastikan output selalu readable.
+
+## Solution Design
+
+**Option Chosen:** Hybrid (LLM + Rule-Based Fallback)
+- LLM tetap mencoba formatting dengan feedback loop
+- Jika max revisions tercapai, apply rule-based fallback
+
+**Fallback Strategy:**
+1. Check if text already has adequate paragraph breaks → return unchanged
+2. Apply heuristic formatting (dialogue/scene boundaries + word count) → check again
+3. Force split at sentence boundaries (last resort)
+
+**Key Decisions:**
+- Use regex for sentence tokenization (no NLTK dependency)
+- 150 words per paragraph target
+- Scene indicators stored in Config.py (symmetric EN/ID lists)
+- Trigger fallback after CHAPTER_MAX_REVISIONS reached
+- Log at warning level (6)
+
+## Implementation Plan
+
+### Phase 1: TDD - Write Tests First
+- [x] Create `tests/writer/chapter/test_paragraph_formatter.py`
+- [x] 24 tests for regex tokenizer, auto formatting, force split, main function
+- [x] Run pytest - tests FAIL (red phase)
+
+### Phase 2: Add Config Values
+- [x] Add `PARAGRAPH_TARGET_WORDS = 150` to Config.py
+- [x] Add `PARAGRAPH_SCENE_INDICATORS_EN` list
+- [x] Add `PARAGRAPH_SCENE_INDICATORS_ID` list (symmetric with EN)
+
+### Phase 3: Create ParagraphFormatter.py
+- [x] `regex_sent_tokenize()` - Split text into sentences using regex
+- [x] `auto_format_paragraphs()` - Heuristic-based formatting
+- [x] `force_split_paragraphs()` - Last resort split
+- [x] `ensure_paragraph_formatting()` - Main entry point
+
+### Phase 4: Integrate into ChapterGenerator.py
+- [x] Add import for `ensure_paragraph_formatting`
+- [x] In Stage 2 and Stage 3, apply fallback when max revisions exceeded
+- [x] Log warning when fallback applied
+
+### Phase 5: Validation
+- [x] Run pytest (950 tests)
+- [x] Run pyright (0 errors)
+- [x] Run flake8 (no errors)
+
+### Phase 6: Review
+- [x] Update tasks/todo.md with review section
+
+## Todo Checklist
+- [x] Write tests (TDD red phase)
+- [x] Add config values to Config.py
+- [x] Create ParagraphFormatter.py
+- [x] Integrate fallback in ChapterGenerator.py
+- [x] Run pytest (100%)
+- [x] Run pyright (no errors)
+- [x] Run flake8 (no errors)
+- [x] Add review section
+
+---
+
+## Review Section
+
+### Implementation Summary
+
+**Date:** January 19, 2026
+
+**Files Changed:**
+1. `Writer/Config.py` - Added paragraph formatting config values
+2. `Writer/Chapter/ParagraphFormatter.py` - NEW: Fallback formatting module
+3. `Writer/Chapter/ChapterGenerator.py` - Integrated fallback after max retries
+4. `tests/writer/chapter/test_paragraph_formatter.py` - NEW: 24 tests
+5. `tests/writer/chapter/test_chapter_generator_fallback.py` - NEW: 4 integration tests
+
+### Changes Made
+
+#### 1. Writer/Config.py (Lines 350-369)
+
+**Added:**
+```python
+# Paragraph formatting fallback settings
+PARAGRAPH_TARGET_WORDS = 150
+
+# Scene indicators for paragraph breaks (EN)
+PARAGRAPH_SCENE_INDICATORS_EN = [
+    "Meanwhile", "Later", "Suddenly", "The next", "That night",
+    "That morning", "That afternoon", "After", "Before long",
+]
+
+# Scene indicators for paragraph breaks (ID) - must be symmetric with EN
+PARAGRAPH_SCENE_INDICATORS_ID = [
+    "Sementara itu", "Kemudian", "Tiba-tiba", "Keesokan", "Malam itu",
+    "Pagi itu", "Sore itu", "Setelah", "Tak lama",
+]
+```
+
+#### 2. Writer/Chapter/ParagraphFormatter.py (NEW - 241 lines)
+
+**Key Functions:**
+- `regex_sent_tokenize(text)` - Regex-based sentence splitter with abbreviation handling
+- `auto_format_paragraphs(text, target_words)` - Heuristic formatting with dialogue/scene detection
+- `force_split_paragraphs(text, max_chars)` - Last resort character-based splitting
+- `ensure_paragraph_formatting(text, chapter_num, native_language)` - Main entry point
+
+**Features:**
+- Handles abbreviations (Mr., Mrs., Dr., etc.) without false splits
+- Detects dialogue start (quotes, smart quotes, Japanese brackets)
+- Detects scene indicators (EN and ID)
+- Falls back gracefully through three levels
+
+#### 3. Writer/Chapter/ChapterGenerator.py (Lines 8, 359-368, 444-453)
+
+**Added import:**
+```python
+from Writer.Chapter.ParagraphFormatter import ensure_paragraph_formatting
+```
+
+**Added fallback in Stage 2:**
+```python
+if IterCounter > Config_module.CHAPTER_MAX_REVISIONS:
+    # Apply paragraph formatting fallback before exiting
+    native_lang = getattr(Config_module, 'NATIVE_LANGUAGE', 'en')
+    Stage2Chapter, was_modified = ensure_paragraph_formatting(
+        Stage2Chapter, _ChapterNum, native_lang
+    )
+    if was_modified:
+        _Logger.Log(f"Paragraph formatting fallback applied to Chapter {_ChapterNum} (Stage 2)", 6)
+    break
+```
+
+**Same pattern added to Stage 3 (dialogue generation)**
+
+### Test Results
+
+**pytest:** ✅ **950/950 tests passed (100%)**
+- 28 new tests added (24 for ParagraphFormatter, 4 for integration)
+- No regression detected
+
+**pyright:** ✅ **0 errors, 0 warnings, 0 informations**
+
+**flake8:** ✅ **No errors** (ignoring E501, W504, W503)
+
+### Code Quality
+
+**TDD Approach:** ✅ Followed London School TDD
+1. **RED Phase:** 24 tests written first, all failed
+2. **GREEN Phase:** ParagraphFormatter.py implemented to pass tests
+3. **REFACTOR Phase:** Fixed syntax error (smart quotes), cleaned up flake8 warnings
+
+**Code Reuse:** ✅ No new libraries
+- Pure regex for sentence tokenization
+- Reused ParagraphValidator for validation checks
+- Reused Config values pattern
+
+**Simplicity:** ✅ Minimal implementation
+- Single file module (241 lines)
+- Clear function responsibilities
+- Config-driven (no hardcoded values in logic)
+
+### Expected Impact
+
+**For Chapter Generation:**
+- ✅ Chapters always output with readable paragraph formatting
+- ✅ Fallback only triggers after max retries exhausted
+- ✅ Warning logged when fallback applied (for debugging)
+
+**For Both Languages:**
+- ✅ Works with English and Indonesian text
+- ✅ Symmetric scene indicator lists ensure consistent behavior
+- ✅ Dialogue detection handles multiple quote styles
+
+**No Breaking Changes:**
+- Fallback only triggers when LLM fails after max retries
+- Existing well-formatted chapters are returned unchanged
+- All existing tests still pass
+
+---
+
+*Paragraph Formatting Fallback completed January 19, 2026*
