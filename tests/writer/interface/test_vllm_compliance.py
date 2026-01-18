@@ -630,3 +630,254 @@ class TestVLLMChatHandler:
 
             assert "vLLM" in str(exc_info.value) or "chat failed" in str(exc_info.value), \
                 "Exception should mention vLLM or chat failed"
+
+    def test_vllm_chat_applies_repetition_penalty(self, mock_logger):
+        """
+        RED: Test fails because _vllm_chat doesn't apply vLLM-native repetition_penalty
+
+        Expected: Should apply repetition_penalty from Config (>1.0 reduces repetition)
+        Note: vLLM-native parameters are passed via extra_body, not directly to create()
+        """
+        from unittest.mock import patch
+        with patch('openai.OpenAI') as mock_openai_class:
+            mock_openai = Mock()
+            mock_openai_class.return_value = mock_openai
+
+            mock_response = Mock()
+            mock_choice = Mock()
+            mock_choice.message.content = "Response"
+            mock_response.choices = [mock_choice]
+            mock_response.usage.prompt_tokens = 5
+            mock_response.usage.completion_tokens = 3
+            mock_openai.chat.completions.create.return_value = mock_response
+
+            interface = Interface([])
+            interface.Clients["vllm://test"] = mock_openai
+
+            messages, usage = interface._vllm_chat(
+                _Logger=mock_logger,
+                _Model_key="vllm://test",
+                ProviderModel_name="test",
+                _Messages_list=[{"role": "user", "content": "test"}],
+                ModelOptions_dict={},  # No repetition_penalty specified
+                Seed_int=42,
+                _FormatSchema_dict=None
+            )
+
+            call_kwargs = mock_openai.chat.completions.create.call_args[1]
+            assert 'extra_body' in call_kwargs, \
+                "vLLM-native parameters should be passed via extra_body"
+            assert call_kwargs['extra_body']['repetition_penalty'] > 1.0, \
+                f"repetition_penalty should be > 1.0, got {call_kwargs['extra_body']['repetition_penalty']}"
+
+    def test_vllm_chat_applies_top_p_sampling(self, mock_logger):
+        """
+        RED: Test fails because _vllm_chat doesn't apply top_p sampling
+
+        Expected: Should apply top_p from Config (nucleus sampling)
+        Note: vLLM-native parameters are passed via extra_body
+        """
+        from unittest.mock import patch
+        with patch('openai.OpenAI') as mock_openai_class:
+            mock_openai = Mock()
+            mock_openai_class.return_value = mock_openai
+
+            mock_response = Mock()
+            mock_choice = Mock()
+            mock_choice.message.content = "Response"
+            mock_response.choices = [mock_choice]
+            mock_response.usage.prompt_tokens = 5
+            mock_response.usage.completion_tokens = 3
+            mock_openai.chat.completions.create.return_value = mock_response
+
+            interface = Interface([])
+            interface.Clients["vllm://test"] = mock_openai
+
+            messages, usage = interface._vllm_chat(
+                _Logger=mock_logger,
+                _Model_key="vllm://test",
+                ProviderModel_name="test",
+                _Messages_list=[{"role": "user", "content": "test"}],
+                ModelOptions_dict={},  # No top_p specified
+                Seed_int=42,
+                _FormatSchema_dict=None
+            )
+
+            call_kwargs = mock_openai.chat.completions.create.call_args[1]
+            assert 'extra_body' in call_kwargs, \
+                "vLLM-native parameters should be passed via extra_body"
+            assert 0 < call_kwargs['extra_body']['top_p'] <= 1.0, \
+                f"top_p should be in (0, 1], got {call_kwargs['extra_body']['top_p']}"
+
+    def test_vllm_chat_applies_top_k_sampling(self, mock_logger):
+        """
+        RED: Test fails because _vllm_chat doesn't apply top_k sampling
+
+        Expected: Should apply top_k from Config (limits vocabulary)
+        Note: vLLM-native parameters are passed via extra_body
+        """
+        from unittest.mock import patch
+        with patch('openai.OpenAI') as mock_openai_class:
+            mock_openai = Mock()
+            mock_openai_class.return_value = mock_openai
+
+            mock_response = Mock()
+            mock_choice = Mock()
+            mock_choice.message.content = "Response"
+            mock_response.choices = [mock_choice]
+            mock_response.usage.prompt_tokens = 5
+            mock_response.usage.completion_tokens = 3
+            mock_openai.chat.completions.create.return_value = mock_response
+
+            interface = Interface([])
+            interface.Clients["vllm://test"] = mock_openai
+
+            messages, usage = interface._vllm_chat(
+                _Logger=mock_logger,
+                _Model_key="vllm://test",
+                ProviderModel_name="test",
+                _Messages_list=[{"role": "user", "content": "test"}],
+                ModelOptions_dict={},  # No top_k specified
+                Seed_int=42,
+                _FormatSchema_dict=None
+            )
+
+            call_kwargs = mock_openai.chat.completions.create.call_args[1]
+            assert 'extra_body' in call_kwargs, \
+                "vLLM-native parameters should be passed via extra_body"
+            assert call_kwargs['extra_body']['top_k'] > 0, \
+                f"top_k should be > 0, got {call_kwargs['extra_body']['top_k']}"
+
+    def test_vllm_chat_applies_stop_tokens(self, mock_logger):
+        """
+        RED: Test fails because _vllm_chat doesn't apply stop tokens
+
+        Expected: Should apply stop tokens from Config (prevent character explosion)
+        Note: stop IS OpenAI-compatible, so it goes directly in ReqOptions
+        """
+        from unittest.mock import patch
+        with patch('openai.OpenAI') as mock_openai_class:
+            mock_openai = Mock()
+            mock_openai_class.return_value = mock_openai
+
+            mock_response = Mock()
+            mock_choice = Mock()
+            mock_choice.message.content = "Response"
+            mock_response.choices = [mock_choice]
+            mock_response.usage.prompt_tokens = 5
+            mock_response.usage.completion_tokens = 3
+            mock_openai.chat.completions.create.return_value = mock_response
+
+            interface = Interface([])
+            interface.Clients["vllm://test"] = mock_openai
+
+            messages, usage = interface._vllm_chat(
+                _Logger=mock_logger,
+                _Model_key="vllm://test",
+                ProviderModel_name="test",
+                _Messages_list=[{"role": "user", "content": "test"}],
+                ModelOptions_dict={},  # No stop specified
+                Seed_int=42,
+                _FormatSchema_dict=None
+            )
+
+            call_kwargs = mock_openai.chat.completions.create.call_args[1]
+            # stop tokens ARE OpenAI-compatible, so they go directly in call_kwargs
+            assert 'stop' in call_kwargs, \
+                "stop tokens should be applied from VLLM_STOP_TOKENS config"
+            assert isinstance(call_kwargs['stop'], list), \
+                f"stop should be a list, got {type(call_kwargs['stop'])}"
+
+    def test_vllm_dynamic_max_tokens_reduces_when_context_limited(self, mock_logger):
+        """
+        RED: Test fails because _vllm_chat doesn't calculate dynamic max_tokens
+
+        Expected: When input tokens + requested max_tokens > context length,
+        max_tokens should be reduced to fit within context window.
+
+        Example: context=16384, input=12625, requested=4096
+        Available = 16384 - 12625 - 100 (buffer) = 3659
+        max_tokens should be min(4096, 3659) = 3659
+        """
+        from unittest.mock import patch
+        with patch('openai.OpenAI') as mock_openai_class:
+            mock_openai = Mock()
+            mock_openai_class.return_value = mock_openai
+
+            mock_response = Mock()
+            mock_choice = Mock()
+            mock_choice.message.content = "Response"
+            mock_response.choices = [mock_choice]
+            mock_response.usage.prompt_tokens = 12625
+            mock_response.usage.completion_tokens = 100
+            mock_openai.chat.completions.create.return_value = mock_response
+
+            interface = Interface([])
+            interface.Clients["vllm://test"] = mock_openai
+
+            # Create a large message list to simulate high input token count
+            # Each message ~100 chars = ~22 tokens (using 4.5 chars/token estimate)
+            # Need ~12625 tokens = ~56812 chars
+            large_content = "x" * 56000  # ~12444 tokens estimated
+
+            messages, usage = interface._vllm_chat(
+                _Logger=mock_logger,
+                _Model_key="vllm://test",
+                ProviderModel_name="test",
+                _Messages_list=[{"role": "user", "content": large_content}],
+                ModelOptions_dict={},
+                Seed_int=42,
+                _FormatSchema_dict={"type": "object"}  # Structured output triggers 4096 default
+            )
+
+            call_kwargs = mock_openai.chat.completions.create.call_args[1]
+            max_tokens = call_kwargs.get('max_tokens', 0)
+
+            # With 16384 context, ~12444 input tokens, and 100 buffer:
+            # Available = 16384 - 12444 - 100 = 3840
+            # max_tokens should be <= available (not the default 4096)
+            assert max_tokens < 4096, \
+                f"max_tokens should be reduced from 4096 when context is limited, got {max_tokens}"
+            assert max_tokens >= 256, \
+                f"max_tokens should be at least 256 (minimum), got {max_tokens}"
+
+    def test_vllm_dynamic_max_tokens_uses_full_when_context_sufficient(self, mock_logger):
+        """
+        RED: Test that max_tokens stays at requested value when context is sufficient
+
+        Expected: When input tokens + requested max_tokens < context length,
+        max_tokens should use the full requested value.
+        """
+        from unittest.mock import patch
+        with patch('openai.OpenAI') as mock_openai_class:
+            mock_openai = Mock()
+            mock_openai_class.return_value = mock_openai
+
+            mock_response = Mock()
+            mock_choice = Mock()
+            mock_choice.message.content = "Response"
+            mock_response.choices = [mock_choice]
+            mock_response.usage.prompt_tokens = 100
+            mock_response.usage.completion_tokens = 50
+            mock_openai.chat.completions.create.return_value = mock_response
+
+            interface = Interface([])
+            interface.Clients["vllm://test"] = mock_openai
+
+            # Small message - plenty of context available
+            messages, usage = interface._vllm_chat(
+                _Logger=mock_logger,
+                _Model_key="vllm://test",
+                ProviderModel_name="test",
+                _Messages_list=[{"role": "user", "content": "short message"}],
+                ModelOptions_dict={},
+                Seed_int=42,
+                _FormatSchema_dict={"type": "object"}  # Structured output
+            )
+
+            call_kwargs = mock_openai.chat.completions.create.call_args[1]
+            max_tokens = call_kwargs.get('max_tokens', 0)
+
+            # With small input, should use full requested max_tokens (4096 for structured)
+            assert max_tokens == 4096, \
+                f"max_tokens should be 4096 when context is sufficient, got {max_tokens}"

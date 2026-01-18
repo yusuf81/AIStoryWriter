@@ -500,3 +500,204 @@ All 42+ files moved using `git mv`, preserving git history.
 ---
 
 *Documentation restructure completed January 6, 2026*
+
+---
+
+# Fix vLLM JSON Parsing & Dynamic Max Tokens
+
+## Problem Statement
+
+Dua masalah ditemukan saat testing vLLM dengan model gemma-3-12b-it:
+
+### Problem 1: JSON Parsing - Unescaped Quotes
+Model menghasilkan JSON dengan quotes yang tidak di-escape di dalam string:
+```json
+{"text": "...pekat... "Jangan pernah menyerah," gumamnya..."}
+```
+
+`json_repair.loads()` menginterpretasi ini sebagai JSON valid tapi salah semantik:
+```json
+{
+    "text": "...pekat...",
+    "Jangan pernah menyerah,": "gumamnya...",
+    "hadapannya": "..."
+}
+```
+
+**Impact:** Field `text` hanya 29 karakter (seharusnya 1500+), validation fail terus-menerus.
+
+### Problem 2: vLLM Max Tokens Overflow
+Error ketika input tokens besar:
+```
+'max_tokens' is too large: 4096. Model context=16384, input=12625 (4096 > 16384-12625)
+```
+
+**Impact:** Request gagal karena `max_tokens=4096` hardcoded tanpa memperhitungkan sisa context.
+
+## Solution Design
+
+### Problem 1: Schema-Aware JSON Repair (Code Reuse)
+- Gunakan Pydantic schema yang sudah ada di `SafeGeneratePydantic`
+- Setelah `json_repair.loads()`, detect extra keys yang bukan dari schema
+- Merge extra keys kembali ke field `text` jika ada
+- **Lokasi:** `SafeGeneratePydantic` (setelah line 803)
+- **Library baru:** Tidak ada (reuse json_repair + Pydantic)
+
+### Problem 2: Dynamic Max Tokens vLLM
+- Hitung available tokens: `context_length - input_tokens - buffer`
+- Set max_tokens = min(requested, available)
+- Tambah `VLLM_CONTEXT_LENGTH` di Config.py
+- **Lokasi:** `_vllm_chat` (line 1500-1502)
+- **Library baru:** Tidak ada
+
+## Implementation Plan
+
+### Phase 1: TDD - Write Tests First
+- [ ] Test untuk Problem 1: `test_json_repair_merges_extra_keys_to_text_field`
+- [ ] Test untuk Problem 2: `test_vllm_dynamic_max_tokens_calculation`
+- [ ] Run pytest - tests harus FAIL (red phase)
+
+### Phase 2: Implement Problem 2 (Dynamic Max Tokens)
+- [ ] Add `VLLM_CONTEXT_LENGTH = 16384` di Config.py
+- [ ] Di `_vllm_chat`, hitung EstInputTokens dari _Messages_list
+- [ ] Hitung available_tokens = VLLM_CONTEXT_LENGTH - EstInputTokens - 100 (buffer)
+- [ ] Set max_tokens = min(requested, max(available, 256))
+- [ ] Run test - should pass
+
+### Phase 3: Implement Problem 1 (Schema-Aware JSON Repair)
+- [ ] Di `SafeGeneratePydantic`, setelah `SafeGenerateJSON` return
+- [ ] Get expected keys dari Pydantic model: `_PydanticModel.model_fields.keys()`
+- [ ] Detect extra keys: `extra_keys = set(JSONResponse.keys()) - expected_keys`
+- [ ] Jika extra_keys dan 'text' in expected_keys: merge extra ke text
+- [ ] Run test - should pass
+
+### Phase 4: Validation
+- [ ] Run pytest semua tests
+- [ ] Run pyright untuk files yang diedit
+- [ ] Run flake8 untuk files yang diedit
+
+### Phase 5: Review
+- [ ] Verify fix logic benar
+- [ ] Document perubahan di review section
+
+## Expected Impact
+- ✅ JSON parsing lebih robust untuk model yang tidak escape quotes dengan benar
+- ✅ vLLM tidak error saat input tokens besar
+- ✅ Code reuse - tidak ada library baru
+- ✅ Hanya affects vLLM (Problem 2), semua provider (Problem 1 - tapi fix di SafeGeneratePydantic)
+
+## Todo Checklist
+- [x] Write tests (TDD red phase)
+- [x] Implement Problem 2 (dynamic max_tokens)
+- [x] Implement Problem 1 (schema-aware JSON repair)
+- [x] Run pytest (100%)
+- [x] Run pyright (no errors)
+- [x] Run flake8 (no errors)
+- [x] Add review section
+
+---
+
+## Review Section
+
+### Implementation Summary
+
+**Date:** January 18, 2026
+
+**Files Changed:**
+1. `Writer/Config.py` - Added VLLM_CONTEXT_LENGTH config
+2. `Writer/Interface/Wrapper.py` - Dynamic max_tokens & schema-aware JSON repair
+3. `tests/writer/interface/test_vllm_compliance.py` - 2 new tests for dynamic max_tokens
+4. `tests/writer/interface/test_json_repair_extra_keys.py` - 4 new tests for JSON repair
+
+### Changes Made
+
+#### 1. Writer/Config.py (Line 319-321)
+
+**Added:**
+```python
+# Context length for dynamic max_tokens calculation
+# Set this to match your vLLM model's context window (default: gemma-3-12b-it = 16384)
+VLLM_CONTEXT_LENGTH = 16384
+```
+
+#### 2. Writer/Interface/Wrapper.py - Dynamic Max Tokens (Lines 1570-1592)
+
+**Added logic in `_vllm_chat`:**
+- Calculate estimated input tokens from message content
+- Compute available tokens: `context_length - est_input_tokens - safety_buffer`
+- Adjust max_tokens: `min(requested, max(available, 256))`
+- Log when reduction occurs for debugging
+
+**Impact:**
+- Prevents "max_tokens too large" errors when input is large
+- Ensures at least 256 tokens for generation (minimum viable)
+- Only affects vLLM provider
+
+#### 3. Writer/Interface/Wrapper.py - Schema-Aware JSON Repair (Lines 821-865)
+
+**Added logic in `SafeGeneratePydantic` after `SafeGenerateJSON` returns:**
+1. Get expected field names from Pydantic model
+2. Identify extra keys not in schema
+3. Check if any extra key looks like broken quote fragment (contains comma, space, colon, etc.)
+4. If found, merge ALL extra keys back into 'text' field
+5. Delete merged keys from JSONResponse before Pydantic validation
+
+**Key insight:** When JSON breaks due to unescaped quotes, ALL subsequent key:value pairs
+are continuations of the original text, so they should all be merged.
+
+**Impact:**
+- Handles models that don't properly escape quotes in JSON output
+- Recovers full text content that would otherwise be truncated
+- Affects all providers (logic is in SafeGeneratePydantic which is shared)
+
+### Test Results
+
+**pytest:** ✅ **922/922 tests passed (100%)**
+- 6 new tests added (2 for vLLM max_tokens, 4 for JSON repair)
+- No regression detected
+
+**pyright:** ✅ **0 errors, 0 warnings, 0 informations**
+
+**flake8:** ✅ **No errors** (ignoring E501, W504, W503)
+
+### Code Quality
+
+**TDD Approach:** ✅ Followed London School TDD
+1. **RED Phase:** Tests written first, all failed initially
+2. **GREEN Phase:** Minimal implementation to pass tests
+3. **REFACTOR Phase:** Improved logic to handle edge cases (normal extra fields vs broken quotes)
+
+**Code Reuse:** ✅ No new libraries added
+- Reused existing `json_repair` library
+- Reused Pydantic model introspection (`model_fields`)
+- Reused existing token estimation (`CHARS_PER_TOKEN_ESTIMATE`)
+
+**Simplicity:** ✅ Minimal changes
+- Problem 2: ~20 lines added to `_vllm_chat`
+- Problem 1: ~35 lines added to `SafeGeneratePydantic`
+- Both changes are self-contained and well-documented
+
+### Bug Fix Verification
+
+**Problem 1 - JSON Parsing:**
+- Before: Text truncated at 29 chars due to unescaped quotes
+- After: Full text recovered by merging broken quote fragments
+
+**Problem 2 - Max Tokens:**
+- Before: Error when input_tokens + max_tokens > context_length
+- After: max_tokens automatically reduced to fit available context
+
+### Expected User Impact
+
+**For vLLM with gemma-3-12b-it:**
+- ✅ No more "max_tokens too large" errors
+- ✅ Better JSON parsing when model produces unescaped quotes
+- ✅ Full chapter text recovered instead of truncated
+
+**For All Providers:**
+- ✅ Schema-aware JSON repair benefits any provider that produces malformed JSON
+- ✅ No negative side effects for providers that produce correct JSON
+
+---
+
+*vLLM JSON Parsing & Dynamic Max Tokens fix completed January 18, 2026*

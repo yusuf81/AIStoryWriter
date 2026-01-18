@@ -650,8 +650,11 @@ def ReviseChapter(
     SummaryText: str = revision_obj.text
     NewWordCount = Writer.Statistics.GetWordCount(SummaryText)
 
-    # Calculate reduction percentage
-    ReductionRatio = (OriginalWordCount - NewWordCount) / OriginalWordCount if OriginalWordCount > 0 else 0
+    # Calculate percentage change (positive = increase, negative = decrease)
+    PercentageChange = ((NewWordCount - OriginalWordCount) / OriginalWordCount) if OriginalWordCount > 0 else 0
+
+    # For backward compatibility with validation logic, calculate reduction ratio (positive = reduction)
+    ReductionRatio = -PercentageChange  # Invert sign: reduction is opposite of change
 
     # Validate word count reduction
     if NewWordCount < MinWordCount and not _UseStrictPrompt:
@@ -710,7 +713,7 @@ def ReviseChapter(
     # Gunakan _ChapterNum dan _TotalChapters yang diteruskan sebagai parameter
     _Logger.Log(
         f"Done Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS}). "
-        f"Word Count Change: {OriginalWordCount} -> {NewWordCount} ({ReductionRatio*100:+.1f}%)",
+        f"Word Count Change: {OriginalWordCount} -> {NewWordCount} ({PercentageChange*100:+.1f}%)",
         5,
     )
 

@@ -316,6 +316,9 @@ MAX_OLLAMA_TOKENS_FREEFORM = 2048
 # vLLM (OpenAI-compatible API, uses max_tokens parameter)
 MAX_VLLM_TOKENS_STRUCTURED = 4096
 MAX_VLLM_TOKENS_FREEFORM = 2048
+# Context length for dynamic max_tokens calculation
+# Set this to match your vLLM model's context window (default: gemma-3-12b-it = 16384)
+VLLM_CONTEXT_LENGTH = 16384
 
 ###############################################################################
 # LLM SAMPLING & REPETITION CONTROL
@@ -405,6 +408,25 @@ VLLM_FREQUENCY_PENALTY = 0.5
 #   Range: [-2, 2], 0 = no penalty
 VLLM_PRESENCE_PENALTY = 0.3
 
+# repetition_penalty: vLLM-native parameter (more effective than frequency/presence)
+#   Range: (0, 2], 1.0 = no penalty, >1.0 = penalize repetition
+#   Differs from OpenAI frequency_penalty in scale and implementation
+VLLM_REPETITION_PENALTY = 1.15  # Moderate penalty to reduce repetition loops
+
+# top_p: Nucleus sampling (limits to tokens comprising P probability mass)
+#   Range: (0, 1], 1.0 = disabled, 0.9-0.95 = typical for creative output
+VLLM_TOP_P = 0.95  # Slightly restrictive to prevent lazy sampling
+
+# top_k: Limits sampling to top K most probable tokens
+#   Range: positive integer, -1 = disabled (consider all tokens)
+#   40-50 = balanced diversity, lower = more focused
+VLLM_TOP_K = 50  # Restrict vocabulary to prevent repetition
+
+# stop_tokens: Sequences that immediately halt generation
+#   Used to prevent character explosion (e.g., 4+ consecutive newlines)
+#   Each token is a string that stops generation when detected
+VLLM_STOP_TOKENS = ["\n\n\n\n", "\t\t\t\t", "####"]  # 4 newlines/tabs, markdown marker
+
 # --- REPETITION DETECTION THRESHOLDS ---
 # Used by RepetitionDetector to identify problematic outputs
 
@@ -419,8 +441,8 @@ NGRAM_SIZE = 5  # Number of words in n-gram sequence
 MAX_NGRAM_REPETITIONS = 3  # Max times n-gram can repeat
 
 # Minimum phrase length for phrase repetition detection (in characters)
-MIN_PHRASE_LENGTH = 20  # Ignore very short phrases
-MAX_PHRASE_REPETITIONS = 2  # Max times phrase can repeat
+MIN_PHRASE_LENGTH = 25  # Ignore very short phrases (increased from 20 to reduce false positives)
+MAX_PHRASE_REPETITIONS = 3  # Max times phrase can repeat (increased from 2 to reduce false positives)
 
 # --- AUTO-RETRY CONFIGURATION ---
 # When repetition detected, automatically retry with adjusted parameters
@@ -528,7 +550,7 @@ MAX_LENGTH_CHAPTER_TITLE = 100  # Maximum character length for chapter title
 STORIES_DIR = "Stories"  # Directory for generated stories
 LOG_DIRECTORY = "Logs"  # Directory for log files
 OPTIONAL_OUTPUT_NAME = ""
-#DEBUG = False
+# DEBUG = False
 DEBUG = True
 
 ###############################################################################

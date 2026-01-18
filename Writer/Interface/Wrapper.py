@@ -640,6 +640,12 @@ class Interface:
 
             RawResponseText = self.GetLastMessageText(ResponseMessagesList)
             CleanedResponseText = RawResponseText.strip()
+
+            # DEBUG: Log the raw response before any processing
+            if getattr(Writer.Config, 'DEBUG', False):
+                print(f"[DEBUG] SafeGenerateJSON: RawResponseText length={len(RawResponseText)}")
+                print(f"[DEBUG] SafeGenerateJSON: RawResponseText preview={repr(RawResponseText[:200])}")
+
             # Standard cleaning for markdown-like code blocks
             if CleanedResponseText.startswith("```json"):
                 CleanedResponseText = CleanedResponseText[7:]
@@ -681,6 +687,17 @@ class Interface:
                     # else, we might have a truncated JSON or other issues, let json_repair try
 
                 JSONResponse = json_repair.loads(CleanedResponseText)
+
+                # DEBUG: Log the parsed JSONResponse
+                if getattr(Writer.Config, 'DEBUG', False):
+                    print(f"[DEBUG] SafeGenerateJSON: Parsed JSONResponse type={type(JSONResponse)}")
+                    if isinstance(JSONResponse, dict):
+                        print(f"[DEBUG] SafeGenerateJSON: JSONResponse keys={list(JSONResponse.keys())}")
+                        if 'text' in JSONResponse:
+                            text_len = len(str(JSONResponse.get('text', '')))
+                            print(f"[DEBUG] SafeGenerateJSON: JSONResponse['text'] length={text_len}")
+                            print(f"[DEBUG] SafeGenerateJSON: JSONResponse['text'] preview={str(JSONResponse.get('text', ''))[:100]}...")
+
                 token_info = TokenUsage if TokenUsage else "N/A (streaming incomplete)"
                 _Logger.Log(f"JSON Call Stats: ... Tokens: {token_info}", 6)
                 return ResponseMessagesList, JSONResponse, TokenUsage  # Success
@@ -793,6 +810,59 @@ class Interface:
                 # PRE-CHECK: Ensure it's a dict
                 if not isinstance(JSONResponse, dict):
                     raise TypeError(f"Expected JSON object/dict, got {type(JSONResponse).__name__}")
+
+                # DEBUG: Log JSONResponse before Pydantic validation
+                if getattr(Writer.Config, 'DEBUG', False):
+                    print(f"[DEBUG] JSONResponse before Pydantic: {JSONResponse}")
+                    if isinstance(JSONResponse, dict) and 'text' in JSONResponse:
+                        print(f"[DEBUG] JSONResponse['text'] length: {len(JSONResponse.get('text', ''))}")
+                        print(f"[DEBUG] JSONResponse['text'] preview: {str(JSONResponse.get('text', ''))[:100]}...")
+
+                # Schema-aware JSON repair: Merge extra keys back into 'text' field
+                # This handles cases where LLM produces JSON with unescaped quotes that
+                # json_repair parses as syntactically valid but semantically incorrect JSON.
+                # Example: {"text": "...pekat... "Jangan," gumam..."} becomes
+                #          {"text": "...pekat...", "Jangan,": "gumam..."}
+                if hasattr(_PydanticModel, 'model_fields'):
+                    expected_keys = set(_PydanticModel.model_fields.keys())
+                else:
+                    # Fallback for older Pydantic versions
+                    expected_keys = set(_PydanticModel.__fields__.keys())
+
+                extra_keys = set(JSONResponse.keys()) - expected_keys
+
+                # Only merge keys that look like broken quote fragments, not normal extra fields
+                # Broken quote keys typically: contain commas, spaces, or don't look like identifiers
+                def looks_like_broken_quote(key: str) -> bool:
+                    """Check if key looks like a fragment from broken JSON quotes"""
+                    # Normal field names are snake_case or camelCase identifiers
+                    # Broken quote fragments often have: commas, spaces, punctuation, etc.
+                    if ' ' in key or ',' in key or ':' in key or '.' in key:
+                        return True
+                    # Check if key starts with lowercase/uppercase letter and is valid identifier
+                    if key.isidentifier() and key[0].islower():
+                        return False  # Looks like a normal field name
+                    return True  # Unusual key format, likely broken quote
+
+                # If ANY extra key is obviously broken (has comma/space/etc), merge ALL extra keys
+                # This is because when JSON breaks at unescaped quotes, subsequent key:value pairs
+                # are all continuations of the same text that should be merged together
+                has_obvious_broken_key = any(looks_like_broken_quote(k) for k in extra_keys)
+                keys_to_merge = extra_keys if has_obvious_broken_key else set()
+
+                if keys_to_merge and 'text' in expected_keys and 'text' in JSONResponse:
+                    # Merge broken quote keys back into text field
+                    merged_text = str(JSONResponse.get('text', ''))
+                    for key in sorted(keys_to_merge):  # Sort for consistent ordering
+                        value = JSONResponse.get(key, '')
+                        # Reconstruct the text: key was likely a quoted phrase, value is continuation
+                        merged_text += f' "{key}" {value}'
+                        del JSONResponse[key]
+                    JSONResponse['text'] = merged_text.strip()
+
+                    if getattr(Writer.Config, 'DEBUG', False):
+                        print(f"[DEBUG] JSON repair: Merged {len(keys_to_merge)} broken quote keys into text field")
+                        print(f"[DEBUG] JSONResponse['text'] after merge: {len(JSONResponse['text'])} chars")
 
                 # Validate and convert to Pydantic model
                 validated_model = _PydanticModel(**JSONResponse)
@@ -995,6 +1065,9 @@ class Interface:
             elif error_type == 'string_too_short':
                 input_val = err.get('input', '')
                 actual_len = len(str(input_val)) if input_val else 0
+                # DEBUG: Log the actual input value
+                if getattr(Writer.Config, 'DEBUG', False):
+                    print(f"[DEBUG] string_too_short error: field={field_path}, actual_len={actual_len}, input_val={repr(str(input_val)[:200])}")
                 line = f"- {field_path}: {self._get_text('error_too_short', msg=error_msg, actual_len=actual_len)}"
 
             elif error_type in ('int_parsing', 'float_parsing', 'bool_parsing'):
@@ -1485,6 +1558,27 @@ class Interface:
                 if "presence_penalty" not in ReqOptions:
                     ReqOptions["presence_penalty"] = getattr(
                         Writer.Config, "VLLM_PRESENCE_PENALTY", 0.3)
+
+                # Stop tokens (OpenAI-compatible)
+                stop_tokens = getattr(Writer.Config, "VLLM_STOP_TOKENS", None)
+                if stop_tokens:
+                    ReqOptions["stop"] = stop_tokens
+
+                # vLLM-native parameters (must use extra_body)
+                extra_body = {}
+                if "repetition_penalty" not in ReqOptions:
+                    extra_body["repetition_penalty"] = getattr(
+                        Writer.Config, "VLLM_REPETITION_PENALTY", 1.15)
+                if "top_p" not in ReqOptions:
+                    extra_body["top_p"] = getattr(
+                        Writer.Config, "VLLM_TOP_P", 0.95)
+                if "top_k" not in ReqOptions:
+                    extra_body["top_k"] = getattr(
+                        Writer.Config, "VLLM_TOP_K", 50)
+
+                # Only add extra_body if we have vLLM-specific params
+                if extra_body:
+                    ReqOptions["extra_body"] = extra_body
         else:
             # Free-form generation - use standard penalties
             # Set max_tokens for free-form output
@@ -1497,6 +1591,51 @@ class Interface:
             if "presence_penalty" not in ReqOptions:
                 ReqOptions["presence_penalty"] = getattr(
                     Writer.Config, "VLLM_PRESENCE_PENALTY", 0.3)
+
+            # Stop tokens (OpenAI-compatible)
+            stop_tokens = getattr(Writer.Config, "VLLM_STOP_TOKENS", None)
+            if stop_tokens:
+                ReqOptions["stop"] = stop_tokens
+
+            # vLLM-native parameters (must use extra_body)
+            extra_body = {}
+            if "repetition_penalty" not in ReqOptions:
+                extra_body["repetition_penalty"] = getattr(
+                    Writer.Config, "VLLM_REPETITION_PENALTY", 1.15)
+            if "top_p" not in ReqOptions:
+                extra_body["top_p"] = getattr(
+                    Writer.Config, "VLLM_TOP_P", 0.95)
+            if "top_k" not in ReqOptions:
+                extra_body["top_k"] = getattr(
+                    Writer.Config, "VLLM_TOP_K", 50)
+
+            # Only add extra_body if we have vLLM-specific params
+            if extra_body:
+                ReqOptions["extra_body"] = extra_body
+
+        # Dynamic max_tokens calculation to prevent context overflow
+        # Calculate estimated input tokens from messages
+        total_input_chars = sum(len(str(msg.get("content", ""))) for msg in _Messages_list)
+        chars_per_token = getattr(Writer.Config, "CHARS_PER_TOKEN_ESTIMATE", 4.5)
+        est_input_tokens = int(total_input_chars / chars_per_token)
+
+        # Get context length and calculate available tokens
+        context_length = getattr(Writer.Config, "VLLM_CONTEXT_LENGTH", 16384)
+        safety_buffer = 100  # Reserve some tokens for safety
+        available_tokens = context_length - est_input_tokens - safety_buffer
+
+        # Adjust max_tokens if it exceeds available context
+        requested_max = ReqOptions.get("max_tokens", 4096)
+        min_tokens = 256  # Minimum to allow some generation
+        adjusted_max = min(requested_max, max(available_tokens, min_tokens))
+
+        if adjusted_max < requested_max:
+            _Logger.Log(
+                f"vLLM: Reduced max_tokens from {requested_max} to {adjusted_max} "
+                f"(context={context_length}, est_input={est_input_tokens}, available={available_tokens})",
+                6
+            )
+        ReqOptions["max_tokens"] = adjusted_max
 
         MaxRetries = getattr(Writer.Config, 'MAX_VLLM_RETRIES', 2)
         for attempt in range(MaxRetries):
@@ -1701,6 +1840,15 @@ class Interface:
         try:
             import json
             response_data = json.loads(full_content)
+
+            # DEBUG: Log the parsed response_data structure
+            if getattr(Writer.Config, 'DEBUG', False):
+                print(f"[DEBUG] _DisplayPydanticResponse: response_data type={type(response_data)}")
+                if isinstance(response_data, dict):
+                    print(f"[DEBUG] _DisplayPydanticResponse: response_data keys={list(response_data.keys())}")
+                    if 'text' in response_data:
+                        print(f"[DEBUG] _DisplayPydanticResponse: text type={type(response_data['text'])}")
+                        print(f"[DEBUG] _DisplayPydanticResponse: text value={repr(str(response_data['text'])[:100])}")
 
             # Get schema title for better identification
             schema_title = schema.get('title', '').lower() if schema else ''
