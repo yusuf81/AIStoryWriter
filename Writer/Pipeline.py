@@ -9,6 +9,10 @@ import Writer
 from Writer.Models import TitleOutput
 # Import StateManager for proper Pydantic serialization
 from Writer.StateManager import StateManager, serialize_for_json
+# Import paragraph processing modules for final text processing
+from Writer.Chapter.ParagraphValidator import validate_paragraph_breaks
+from Writer.Chapter.ParagraphFormatter import ensure_paragraph_formatting
+from Writer.NovelEditor import validate_chapter_editing
 
 
 # Assuming Writer.Config, Writer.Statistics, and other Writer modules will be imported
@@ -290,17 +294,200 @@ def _handle_chapter_title_generation_pipeline_version(SysLogger, Interface, Conf
         SysLogger.Log(traceback.format_exc(), 1)  # Log stack trace at debug level
         return f"{Config.DEFAULT_CHAPTER_TITLE_PREFIX}{chapter_num}"
 
+
 # Helper: Compiles all chapter texts into a single string for editing or final output.
 
+# Configuration for LLM paragraph formatting retry
+PARAGRAPH_LLM_MAX_RETRIES = 2  # Max LLM retries before fallback to manual
 
-def _get_full_story_text_pipeline_version(chapters_data_list, Config, add_titles_to_body):
+
+def _llm_format_paragraphs(
+    interface, logger, text: str, feedback: str, chapter_num: int, _native_language: str
+) -> str:
+    """
+    Use LLM to add paragraph breaks to text based on feedback.
+
+    Args:
+        interface: LLM interface for generation
+        logger: Logger instance
+        text: Text to format
+        feedback: Feedback about what's wrong with paragraphs
+        chapter_num: Chapter number for logging
+        _native_language: Language code (kept for API compat, language handled by get_prompts())
+
+    Returns:
+        Formatted text from LLM
+    """
+    from Writer.Models import ChapterOutput
+    from Writer.PromptsHelper import get_prompts
+    import Writer.Config as Config
+
+    # Get language-aware prompts
+    ActivePrompts = get_prompts()
+
+    # Build prompt for paragraph formatting using template from Prompts
+    prompt = ActivePrompts.PARAGRAPH_FORMATTING_PROMPT.format(
+        text=text,
+        feedback=feedback
+    )
+
+    logger.Log(f"Attempting LLM paragraph formatting for Chapter {chapter_num}", 5)
+
+    try:
+        messages = [interface.BuildUserQuery(prompt)]
+        messages, result, _ = interface.SafeGeneratePydantic(
+            logger, messages,
+            getattr(Config, 'CHAPTER_REVISION_WRITER_MODEL', Config.CHECKER_MODEL),
+            ChapterOutput
+        )
+        formatted_text = result.text if hasattr(result, 'text') else str(result)
+        logger.Log(f"LLM paragraph formatting completed for Chapter {chapter_num}", 5)
+        return formatted_text
+    except Exception as e:
+        logger.Log(f"LLM paragraph formatting failed for Chapter {chapter_num}: {e}", 6)
+        return text  # Return original on failure
+
+
+def apply_final_text_processing(
+    text: str, chapter_num: int, native_language: str, logger, interface=None
+) -> str:
+    """
+    Apply final text processing to chapter content before saving.
+
+    This is the LAST processing step before the story is saved to file.
+    It handles:
+    1. Check if text has adequate paragraph breaks
+    2. If wall of text, try LLM formatting first (most natural)
+    3. If LLM fails, fallback to manual heuristic formatting
+    4. Validate formatting didn't cause content loss
+
+    Args:
+        text: Chapter text to process
+        chapter_num: Chapter number for logging
+        native_language: Language code ('en' or 'id')
+        logger: Logger instance for logging
+        interface: LLM interface for formatting (optional, skips LLM if None)
+
+    Returns:
+        Processed text (formatted if needed, or original if formatting would cause content loss)
+    """
+    # 1. Check if text already has adequate paragraph breaks
+    is_valid_para, feedback = validate_paragraph_breaks(text, chapter_num, native_language)
+
+    if is_valid_para:
+        # Already has proper paragraphs, no processing needed
+        return text
+
+    logger.Log(f"Chapter {chapter_num} detected as wall of text, attempting formatting", 5)
+
+    # 2. Try LLM formatting first (if interface available)
+    if interface is not None:
+        for retry in range(PARAGRAPH_LLM_MAX_RETRIES):
+            llm_formatted = _llm_format_paragraphs(
+                interface, logger, text, feedback, chapter_num, native_language
+            )
+
+            # Validate LLM result
+            is_valid_llm, new_feedback = validate_paragraph_breaks(
+                llm_formatted, chapter_num, native_language
+            )
+
+            if is_valid_llm:
+                # Verify content wasn't lost
+                is_valid_edit, _ = validate_chapter_editing(text, llm_formatted, logger)
+                if is_valid_edit:
+                    logger.Log(
+                        f"LLM paragraph formatting successful for Chapter {chapter_num} "
+                        f"(attempt {retry + 1}/{PARAGRAPH_LLM_MAX_RETRIES})",
+                        5
+                    )
+                    return llm_formatted
+                else:
+                    logger.Log(
+                        f"LLM formatting caused content loss for Chapter {chapter_num}, "
+                        f"trying again...",
+                        6
+                    )
+            else:
+                feedback = new_feedback  # Update feedback for next retry
+                logger.Log(
+                    f"LLM formatting still wall of text for Chapter {chapter_num} "
+                    f"(attempt {retry + 1}/{PARAGRAPH_LLM_MAX_RETRIES})",
+                    5
+                )
+
+        logger.Log(
+            f"LLM paragraph formatting failed after {PARAGRAPH_LLM_MAX_RETRIES} attempts "
+            f"for Chapter {chapter_num}, falling back to manual formatting",
+            6
+        )
+
+    # 3. Fallback to manual heuristic formatting
+    formatted_text, was_modified = ensure_paragraph_formatting(
+        text, chapter_num, native_language
+    )
+
+    if not was_modified:
+        # ensure_paragraph_formatting determined no change needed
+        return text
+
+    # 4. Validate manual formatting didn't cause content loss
+    is_valid_edit, validation_report = validate_chapter_editing(text, formatted_text, logger)
+
+    if is_valid_edit:
+        # Formatting passed validation - use formatted text
+        similarity = validation_report.get('content_similarity', 0)
+        similarity_str = f"{similarity:.2%}" if isinstance(similarity, (int, float)) else str(similarity)
+        logger.Log(
+            f"Manual paragraph formatting applied to Chapter {chapter_num} "
+            f"(similarity: {similarity_str})",
+            5
+        )
+        return formatted_text
+    else:
+        # Formatting caused content loss - keep original
+        failure_reasons = validation_report.get('failure_reasons', ['Unknown'])
+        logger.Log(
+            f"Manual paragraph formatting rejected for Chapter {chapter_num} due to content loss: "
+            f"{', '.join(failure_reasons)}. Keeping original text.",
+            6
+        )
+        return text
+
+
+def _get_full_story_text_pipeline_version(
+    chapters_data_list, Config, add_titles_to_body, logger=None, interface=None
+):
+    """
+    Compile all chapter texts into a single string for final output.
+
+    Applies final text processing to each chapter before combining.
+
+    Args:
+        chapters_data_list: List of chapter data dicts with 'number', 'title', 'text'
+        Config: Configuration module
+        add_titles_to_body: Whether to add chapter titles to output
+        logger: Logger instance for final text processing (optional)
+        interface: LLM interface for paragraph formatting (optional)
+
+    Returns:
+        Combined story text
+    """
     FullStory = ""
+    native_lang = getattr(Config, 'NATIVE_LANGUAGE', 'en')
+
     for chapter_info in chapters_data_list:  # Expects list of dicts
         title = chapter_info.get("title", f"{Config.DEFAULT_CHAPTER_TITLE_PREFIX}{chapter_info.get('number', 'N/A')}")
         text = chapter_info.get("text", "")
+        chapter_num = chapter_info.get("number", 0)
+
+        # Apply final text processing if logger is available
+        if logger and text:
+            text = apply_final_text_processing(text, chapter_num, native_lang, logger, interface)
+
         if add_titles_to_body:  # Use the passed boolean
             # Use CHAPTER_HEADER_FORMAT from Config for consistency
-            FullStory += f"{Config.CHAPTER_HEADER_FORMAT.replace('{chapter_title}', title).replace('{chapter_num}', str(chapter_info.get('number', 'N/A')))}\n{text}\n\n"
+            FullStory += f"{Config.CHAPTER_HEADER_FORMAT.replace('{chapter_title}', title).replace('{chapter_num}', str(chapter_num))}\n{text}\n\n"
         else:
             FullStory += f"{text}\n\n"  # Just text and newlines if not adding titles
     return FullStory.strip()
@@ -798,8 +985,11 @@ class StoryPipeline:
         Title = StoryInfoJSON.get("Title", "Untitled Story")  # Get from StoryInfoJSON now
 
         # Compile final story body text using the final processed chapters
-        # Use _get_full_story_text_pipeline_version with final data
-        FinalStoryBodyText = _get_full_story_text_pipeline_version(current_working_chapters_data, self.Config, self.Config.ADD_CHAPTER_TITLES_TO_NOVEL_BODY_TEXT)
+        # Use _get_full_story_text_pipeline_version with final data, logger, and interface for LLM paragraph formatting
+        FinalStoryBodyText = _get_full_story_text_pipeline_version(
+            current_working_chapters_data, self.Config,
+            self.Config.ADD_CHAPTER_TITLES_TO_NOVEL_BODY_TEXT, self.SysLogger, self.Interface
+        )
 
         # Calculate Elapsed Time & Stats
         ElapsedTime = time.time() - StartTime  # StartTime passed from Write.py

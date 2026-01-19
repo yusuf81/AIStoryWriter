@@ -1112,3 +1112,21 @@ REVISE_OUTLINE_CHARACTER_CONSTRAINT = """Expand each chapter outline with plot a
 
 # Fallback feedback if no characters extracted
 REVISE_OUTLINE_FALLBACK = """Expand each chapter outline with plot and conflict details. Each chapter must be at least 200 words. IMPORTANT: Keep ALL character names that already exist in the original outline!"""
+
+# Prompt for paragraph formatting (final processing)
+PARAGRAPH_FORMATTING_PROMPT = """Here is a chapter text that needs paragraph formatting:
+
+{text}
+
+Issue: {feedback}
+
+Please add paragraph breaks (blank lines/double enter) to the text above to separate:
+- Different scenes
+- Dialogue from narration
+- Time or location changes
+- Thought or perspective transitions
+
+IMPORTANT:
+- DO NOT change, remove, or shorten any content
+- ONLY add blank lines between paragraphs
+- Keep ALL original sentences and words"""

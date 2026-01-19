@@ -168,6 +168,22 @@ def ReviseOutline(
     )
     # Extract text from OutlineOutput model
     SummaryText: str = Outline_obj.title + "\n\n" + "\n\n".join(Outline_obj.chapters)
+
+    # Content loss protection: reject revision if too much content was lost
+    min_retention = getattr(Writer.Config, 'OUTLINE_REVISION_MIN_RETENTION', 0.5)
+    original_len = len(_Outline)
+    revised_len = len(SummaryText)
+
+    if original_len > 0 and revised_len < (original_len * min_retention):
+        retention_pct = (revised_len / original_len) * 100
+        _Logger.Log(
+            f"Outline revision rejected due to content loss: "
+            f"{revised_len} chars vs {original_len} chars ({retention_pct:.1f}% retention, "
+            f"minimum {min_retention * 100:.0f}% required). Keeping original outline.",
+            6  # Warning level
+        )
+        return _Outline, _History
+
     _Logger.Log(
         f"Done Revising Outline (Iteration {_Iteration}/{Writer.Config.OUTLINE_MAX_REVISIONS})",
         2,

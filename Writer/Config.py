@@ -143,7 +143,7 @@ fformllm = "ollama://huihui_ai/gemma3-abliterated:12b"  # Free-form (creative wr
 # ollamasemua = "google://gemini-2.5-flash"  # Requires GOOGLE_API_KEY in .env
 # ollamasemua = "vllm://meta-llama/Llama-3.1-8B-Instruct"  # Requires vLLM server running
 
-#ollamasemua = "vllm://google/gemma-3-12b-it"  # Requires vLLM server running
+# ollamasemua = "vllm://google/gemma-3-12b-it"  # Requires vLLM server running
 ollamasemua = "vllm://p-e-w/gemma-3-12b-it-heretic-v2"  # Requires vLLM server running
 
 # Stage-specific LLM models (Hybrid: Structured→Qwen, Free-form→Gemma)
@@ -465,6 +465,20 @@ REPETITION_RETRY_DELAY = 3  # Wait 3s before retry (allow model unload)
 OUTLINE_QUALITY = 92  # Note this value is overridden by the argparser
 OUTLINE_MIN_REVISIONS = 1  # Note this value is overridden by the argparser
 OUTLINE_MAX_REVISIONS = 3  # Note this value is overridden by the argparser
+
+# Outline Revision Content Loss Protection
+# ----------------------------------------
+# Minimum content retention ratio when revising outlines.
+# If a revised outline is shorter than (original_length * this_value),
+# the revision is rejected and the original outline is kept.
+# This prevents LLM from returning truncated outlines (e.g., only chapter titles
+# instead of full chapter content with characters, plot, settings, etc.)
+#
+# Value: 0.0 to 1.0 (0.5 = 50% minimum retention)
+# Example: If original outline is 1000 chars and this is 0.5,
+#          revised outline must be at least 500 chars or it's rejected.
+OUTLINE_REVISION_MIN_RETENTION = 0.5
+
 CHAPTER_NO_REVISIONS = False  # Note this value is overridden by the argparser # disables all revision checks for the chapter, overriding any other chapter quality/revision settings
 CHAPTER_QUALITY = 90  # Note this value is overridden by the argparser
 CHAPTER_MIN_REVISIONS = 1  # Note this value is overridden by the argparser

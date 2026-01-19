@@ -1161,3 +1161,21 @@ REVISE_OUTLINE_CHARACTER_CONSTRAINT = """Perluas setiap outline bab dengan detai
 
 # Fallback feedback if no characters extracted
 REVISE_OUTLINE_FALLBACK = """Perluas setiap outline bab dengan detail plot dan konflik. Setiap bab harus minimal 200 kata. PENTING: Jaga SEMUA nama karakter yang sudah ada dari outline asli!"""
+
+# Prompt for paragraph formatting (final processing)
+PARAGRAPH_FORMATTING_PROMPT = """Berikut adalah teks bab yang perlu diperbaiki formatnya:
+
+{text}
+
+Masalah: {feedback}
+
+Tolong tambahkan pemisah paragraf (baris kosong/double enter) pada teks di atas untuk memisahkan:
+- Adegan yang berbeda
+- Dialog dari narasi
+- Perubahan waktu atau lokasi
+- Transisi pemikiran atau perspektif
+
+PENTING:
+- JANGAN mengubah, menghapus, atau mempersingkat konten apapun
+- HANYA tambahkan baris kosong di antara paragraf
+- Pertahankan SEMUA kalimat dan kata-kata asli"""
