@@ -687,7 +687,9 @@ def ReviseChapter(
         f"Revising Chapter {_ChapterNum}/{_TotalChapters} (Stage 5, Iteration {_Iteration}/{Writer.Config.CHAPTER_MAX_REVISIONS})",
         5,
     )
-    Messages = _History
+    # CRITICAL: Use copy() to avoid modifying _History when we return early
+    # Same bug fix as in OutlineGenerator.py - prevents message history corruption
+    Messages = _History.copy()
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages, revision_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
