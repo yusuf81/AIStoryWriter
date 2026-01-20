@@ -162,7 +162,10 @@ def ReviseOutline(
         f"Revising Outline (Iteration {_Iteration}/{Writer.Config.OUTLINE_MAX_REVISIONS})",
         2,
     )
-    Messages = _History
+    # CRITICAL: Use copy() to avoid modifying _History when we return early due to content loss
+    # If _History is modified and then we return early, WritingHistory becomes corrupted
+    # (has appended user message but no assistant response from SafeGeneratePydantic)
+    Messages = _History.copy()
     Messages.append(Interface.BuildUserQuery(RevisionPrompt))
     Messages, Outline_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
