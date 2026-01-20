@@ -13,14 +13,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 
 class TestLLMSummaryCheckLengthValidation:
-    """Test length validation early return for < 100 words"""
+    """Test length validation early return for < MIN_WORDS_CHAPTER_DRAFT words"""
 
-    def test_length_less_than_100_words_returns_false(self, mock_interface, mock_logger):
-        """Test that work with < 100 words returns False with empty result"""
+    def test_length_less_than_config_min_words_returns_false(self, mock_interface, mock_logger):
+        """Test that work with < MIN_WORDS_CHAPTER_DRAFT words returns False with empty result"""
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
+        import Writer.Config
 
-        # Arrange: Work with less than 100 words
-        short_work = ' '.join(['word'] * 50)  # 50 words
+        # Arrange: Work with less than MIN_WORDS_CHAPTER_DRAFT words
+        short_work = ' '.join(['word'] * (Writer.Config.MIN_WORDS_CHAPTER_DRAFT - 50))
         mock_log = mock_logger()
 
         # Act
@@ -36,16 +37,51 @@ class TestLLMSummaryCheckLengthValidation:
             7,
         )
 
-    def test_length_exactly_100_words_continues(self, mock_interface, mock_logger):
-        """Test that work with exactly 100 words continues processing"""
+    def test_uses_min_words_from_config(self, mock_interface, mock_logger):
+        """Test that MIN_WORDS_CHAPTER_DRAFT from Config is used, not hardcoded 100."""
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
+        import Writer.Config
 
-        # Arrange: Work with exactly 100 words
-        hundred_words = ' '.join(['word'] * 100)
+        # Arrange: Patch config to use a different value
+        original_value = Writer.Config.MIN_WORDS_CHAPTER_DRAFT
+        mock_log = mock_logger()
+
+        try:
+            # Set config to 400 words (higher than default 300)
+            Writer.Config.MIN_WORDS_CHAPTER_DRAFT = 400
+
+            # Work with 350 words (should fail with 400 min, would pass with 300 min)
+            short_work = ' '.join(['word'] * 350)
+
+            # Act
+            result, suggestions = LLMSummaryCheck(
+                mock_interface(), mock_log, "outline_text", short_work
+            )
+
+            # Assert - should fail because 350 < 400
+            assert result is False
+            assert suggestions == ""
+        finally:
+            # Restore original value
+            Writer.Config.MIN_WORDS_CHAPTER_DRAFT = original_value
+
+    def test_length_at_config_min_words_continues(self, mock_interface, mock_logger):
+        """Test that work at MIN_WORDS_CHAPTER_DRAFT continues processing"""
+        from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck, _outline_summary_cache
+        import Writer.Config
+
+        # Clear the cache to avoid interference from other tests
+        _outline_summary_cache.clear()
+
+        # Arrange: Work with exactly MIN_WORDS_CHAPTER_DRAFT words
+        min_words = ' '.join(['word'] * Writer.Config.MIN_WORDS_CHAPTER_DRAFT)
 
         # Configure mocks for successful summary generation
         mock_int = mock_interface()
         mock_log = mock_logger()
+
+        # Use unique outline text to avoid cache hits
+        unique_outline = "unique_outline_for_length_test_config_words_continue"
 
         mock_int.SafeGenerateJSON.side_effect = [
             # First call: work summary
@@ -74,7 +110,7 @@ class TestLLMSummaryCheckLengthValidation:
 
         # Act - should continue past length check
         result, suggestions = LLMSummaryCheck(
-            mock_int, mock_log, "outline_text", hundred_words
+            mock_int, mock_log, unique_outline, min_words
         )
 
         # Assert - should have called SafeGenerateJSON (not returned early)
@@ -91,7 +127,7 @@ class TestLLMSummaryCheckWorkSummary:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)  # 150 words
+        work_text = ' '.join(['word'] * 350)  # 150 words
         outline_text = "unique outline text 123"  # unique to avoid cache
 
         mock_int = mock_interface()
@@ -137,7 +173,7 @@ class TestLLMSummaryCheckWorkSummary:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
 
         mock_int = mock_interface()
         mock_log = mock_logger()
@@ -176,7 +212,7 @@ class TestLLMSummaryCheckWorkSummary:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
 
         mock_int = mock_interface()
         mock_log = mock_logger()
@@ -215,7 +251,7 @@ class TestLLMSummaryCheckWorkSummary:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
 
         mock_int = mock_interface()
         mock_log = mock_logger()
@@ -260,7 +296,7 @@ class TestLLMSummaryCheckOutlineSummary:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
         outline_text = "This is the chapter outline reference"
 
         mock_int = mock_interface()
@@ -299,11 +335,14 @@ class TestLLMSummaryCheckOutlineSummary:
 
     def test_outline_summary_cached_for_duplicate_outline(self, mock_interface, mock_logger):
         """Test that outline summary is cached for repeated calls with same outline"""
-        from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
+        from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck, _outline_summary_cache
+
+        # Clear cache to avoid interference
+        _outline_summary_cache.clear()
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
-        outline_text = "unique outline text 456"  # unique to avoid cache interference
+        work_text = ' '.join(['word'] * 350)
+        outline_text = "unique outline text 456 for cache test"  # unique to avoid cache interference
 
         mock_int = mock_interface()
         mock_log = mock_logger()
@@ -343,7 +382,7 @@ class TestLLMSummaryCheckOutlineSummary:
         result1, _ = LLMSummaryCheck(mock_int, mock_log, outline_text, work_text)
 
         # Act again with same outline but different work
-        work_text2 = ' '.join(['different'] * 150)
+        work_text2 = ' '.join(['different'] * 350)  # Must be >= MIN_WORDS_CHAPTER_DRAFT (300)
         result2, _ = LLMSummaryCheck(mock_int, mock_log, outline_text, work_text2)
 
         # Assert - should have called 3 times total (no second outline summary)
@@ -356,7 +395,7 @@ class TestLLMSummaryCheckOutlineSummary:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
         outline_text = "Repeated outline text"
 
         mock_int = mock_interface()
@@ -398,7 +437,7 @@ class TestLLMSummaryCheckComparison:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
         outline_text = "Outline text"
 
         mock_int = mock_interface()
@@ -434,7 +473,7 @@ class TestLLMSummaryCheckComparison:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
 
         mock_int = mock_interface()
         mock_log = mock_logger()
@@ -465,7 +504,7 @@ class TestLLMSummaryCheckComparison:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
 
         mock_int = mock_interface()
         mock_log = mock_logger()
@@ -495,7 +534,7 @@ class TestLLMSummaryCheckComparison:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
 
         mock_int = mock_interface()
         mock_log = mock_logger()
@@ -530,7 +569,7 @@ class TestLLMSummaryCheckIntegration:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
         outline_text = "Chapter outline with sufficient detail"
 
         mock_int = mock_interface()
@@ -566,7 +605,7 @@ class TestLLMSummaryCheckIntegration:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
 
         mock_int = mock_interface()
         mock_log = mock_logger()
@@ -595,10 +634,13 @@ class TestLLMSummaryCheckIntegration:
 
     def test_multiple_calls_share_outline_cache(self, mock_interface, mock_logger):
         """Test that multiple calls efficiently share the outline cache"""
-        from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
+        from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck, _outline_summary_cache
+
+        # Clear cache to avoid interference
+        _outline_summary_cache.clear()
 
         # Arrange
-        outline_text = "Common outline used for multiple chapters"
+        outline_text = "Common outline used for multiple chapters integration test"
 
         mock_int = mock_interface()
         mock_log = mock_logger()
@@ -626,7 +668,7 @@ class TestLLMSummaryCheckIntegration:
 
         # Act - check 3 chapters with same outline
         for i in range(1, 4):
-            work = ' '.join([f'word{i}'] * 150)
+            work = ' '.join([f'word{i}'] * 350)  # Must be >= MIN_WORDS_CHAPTER_DRAFT (300)
             result, _ = LLMSummaryCheck(mock_int, mock_log, outline_text, work)
             assert result is True
 
@@ -638,7 +680,7 @@ class TestLLMSummaryCheckIntegration:
         from Writer.Chapter.ChapterGenSummaryCheck import LLMSummaryCheck
 
         # Arrange
-        work_text = ' '.join(['word'] * 150)
+        work_text = ' '.join(['word'] * 350)
         outline_text = "unique outline text 789"  # unique to avoid cache
 
         mock_int = mock_interface()

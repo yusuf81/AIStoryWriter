@@ -11,11 +11,14 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
 
     for i in range(_TotalChapters):
 
+        # Save original chapter for potential revert
+        OriginalChapter = EditedChapters[i]
+
         # Get original word count before scrubbing
-        OriginalWordCount = Writer.Statistics.GetWordCount(EditedChapters[i])
+        OriginalWordCount = Writer.Statistics.GetWordCount(OriginalChapter)
 
         Prompt: str = ActivePrompts.CHAPTER_SCRUB_PROMPT.format(
-            _Chapter=EditedChapters[i]
+            _Chapter=OriginalChapter
         )
         _Logger.Log(
             f"Prompting LLM To Perform Chapter {i+1}/{_TotalChapters} Scrubbing Edit", 5
@@ -35,8 +38,19 @@ def ScrubNovel(Interface, _Logger, _Chapters: list, _TotalChapters: int):
 
         # Extract text from validated ChapterOutput model
         NewChapter = Chapter_obj.text
-        EditedChapters[i] = NewChapter
         NewWordCount = Writer.Statistics.GetWordCount(NewChapter)
+
+        # Validate content shrinkage
+        from Writer.ContentValidator import validate_content_shrinkage
+        shrinkage_valid, _ = validate_content_shrinkage(
+            OriginalChapter, NewChapter, _Logger, f"Scrubber Chapter {i+1}"
+        )
+        if not shrinkage_valid:
+            _Logger.Log(f"Scrubber content shrinkage detected for Chapter {i+1}, keeping original", 5)
+            NewChapter = OriginalChapter  # Revert to original
+            NewWordCount = OriginalWordCount
+
+        EditedChapters[i] = NewChapter
         _Logger.Log(
             f"Word Count Change (Scrub): Chapter {i+1} {OriginalWordCount} -> {NewWordCount}",
             3,

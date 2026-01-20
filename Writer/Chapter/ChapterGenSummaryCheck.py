@@ -18,8 +18,8 @@ def LLMSummaryCheck(Interface, _Logger, _RefSummary: str, _Work: str):
     Generates a summary of the work provided, and compares that to the reference summary, asking if they answered the prompt correctly.
     """
 
-    # LLM Length Check - Firstly, check if the length of the response was at least 100 words.
-    if len(_Work.split(" ")) < 100:
+    # LLM Length Check - Firstly, check if the length of the response was at least MIN_WORDS_CHAPTER_DRAFT.
+    if len(_Work.split(" ")) < Writer.Config.MIN_WORDS_CHAPTER_DRAFT:
         _Logger.Log(
             "Previous response didn't meet the length requirement, so it probably tried to cheat around writing.",
             7,

@@ -20,13 +20,16 @@ def validate_chapter_editing(original_chapter, edited_chapter, logger):
     Layer 2: Length Change Detection
     """
 
+    # Calculate minimum retention ratio from config (1 - max reduction)
+    min_retention_ratio = 1 - Writer.Config.MAX_WORD_COUNT_REDUCTION_RATIO
+
     if not SKLEARN_AVAILABLE:
         logger.Log("SKLEARN not available, skipping TF-IDF validation", 4)
         # Fallback to simple length check
         char_ratio = len(edited_chapter) / len(original_chapter) if original_chapter else 0
         word_ratio = len(edited_chapter.split()) / len(original_chapter.split()) if original_chapter.split() else 0
 
-        is_valid = char_ratio >= 0.7 and word_ratio >= 0.7
+        is_valid = char_ratio >= min_retention_ratio and word_ratio >= min_retention_ratio
         return is_valid, {
             'is_valid': is_valid,
             'content_similarity': 'N/A (SKLEARN unavailable)',
@@ -51,7 +54,7 @@ def validate_chapter_editing(original_chapter, edited_chapter, logger):
         if not original_processed or not edited_processed:
             logger.Log("Warning: Empty processed text, using fallback validation", 4)
             char_ratio = len(edited_chapter) / len(original_chapter) if original_chapter else 0
-            return char_ratio >= 0.7, {'validation_method': 'empty_text_fallback'}
+            return char_ratio >= min_retention_ratio, {'validation_method': 'empty_text_fallback'}
 
         texts = [original_processed, edited_processed]
 
@@ -87,8 +90,8 @@ def validate_chapter_editing(original_chapter, edited_chapter, logger):
         is_valid = (
             content_similarity >= 0.6 and      # 60% content similarity threshold
             key_preservation >= 0.5 and        # 50% key elements preserved
-            char_ratio >= 0.7 and             # Max 30% character reduction
-            word_ratio >= 0.7                  # Max 30% word reduction
+            char_ratio >= min_retention_ratio and   # Max configured character reduction
+            word_ratio >= min_retention_ratio       # Max configured word reduction
         )
 
         validation_report = {
@@ -109,9 +112,9 @@ def validate_chapter_editing(original_chapter, edited_chapter, logger):
                 validation_report['failure_reasons'].append(f'Low content similarity: {content_similarity:.2%}')
             if key_preservation < 0.5:
                 validation_report['failure_reasons'].append(f'Key elements lost: {key_preservation:.2%}')
-            if char_ratio < 0.7:
+            if char_ratio < min_retention_ratio:
                 validation_report['failure_reasons'].append(f'Content too short (chars): {char_ratio:.2%}')
-            if word_ratio < 0.7:
+            if word_ratio < min_retention_ratio:
                 validation_report['failure_reasons'].append(f'Content too short (words): {word_ratio:.2%}')
 
         return is_valid, validation_report
@@ -122,7 +125,7 @@ def validate_chapter_editing(original_chapter, edited_chapter, logger):
         char_ratio = len(edited_chapter) / len(original_chapter) if original_chapter else 0
         word_ratio = len(edited_chapter.split()) / len(original_chapter.split()) if original_chapter.split() else 0
 
-        is_valid = char_ratio >= 0.7 and word_ratio >= 0.7
+        is_valid = char_ratio >= min_retention_ratio and word_ratio >= min_retention_ratio
         return is_valid, {
             'is_valid': is_valid,
             'validation_method': 'error_fallback',

@@ -351,6 +351,15 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
         )
         Stage2Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
 
+        # Validate content shrinkage
+        from Writer.ContentValidator import validate_content_shrinkage
+        shrinkage_valid, _ = validate_content_shrinkage(
+            Stage1Chapter, Stage2Chapter, _Logger, "Stage 2: Character Development"
+        )
+        if not shrinkage_valid:
+            _Logger.Log("Stage 2 content shrinkage detected, keeping Stage 1 output", 5)
+            Stage2Chapter = Stage1Chapter  # Fallback to previous stage
+
         IterCounter += 1
         _Logger.Log(f"Finished Character Development Generation (Stage 2) for Chapter {_ChapterNum}/{_TotalChapters}", 5)
 
@@ -417,6 +426,15 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
             ChapterOutput, _SeedOverride=IterCounter + Config_module.SEED
         )
         Stage3Chapter = pydantic_result.text if hasattr(pydantic_result, 'text') else str(pydantic_result)
+
+        # Validate content shrinkage
+        from Writer.ContentValidator import validate_content_shrinkage
+        shrinkage_valid, _ = validate_content_shrinkage(
+            Stage2Chapter, Stage3Chapter, _Logger, "Stage 3: Dialogue"
+        )
+        if not shrinkage_valid:
+            _Logger.Log("Stage 3 content shrinkage detected, keeping Stage 2 output", 5)
+            Stage3Chapter = Stage2Chapter  # Fallback to previous stage
 
         IterCounter += 1
         _Logger.Log(f"Finished Dialogue Generation (Stage 3) for Chapter {_ChapterNum}/{_TotalChapters}", 5)

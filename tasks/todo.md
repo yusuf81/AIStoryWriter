@@ -889,3 +889,227 @@ if IterCounter > Config_module.CHAPTER_MAX_REVISIONS:
 ---
 
 *Paragraph Formatting Fallback completed January 19, 2026*
+
+---
+
+# Content Shrinkage Validation
+
+## Problem Statement
+
+LLM yang bermasalah dapat menghasilkan output yang terpotong (content shrinkage), di mana teks hasil generation jauh lebih pendek dari input. Ini menyebabkan konten hilang di berbagai stage pipeline.
+
+## Solution Design
+
+**Approach:** DRY utility function + consistent validation across pipeline
+
+1. Create centralized `validate_content_shrinkage()` function
+2. Apply validation at:
+   - Stage 2 (Character Development)
+   - Stage 3 (Dialogue)
+   - Scrubber
+   - NovelEditor
+3. Fallback to previous stage output when shrinkage exceeds threshold
+4. Use Config.MAX_WORD_COUNT_REDUCTION_RATIO (changed from 20% to 10%)
+
+## Implementation Plan
+
+### Phase 1: TDD - Write Tests First
+- [x] Create `tests/writer/test_content_validator.py` (10 tests)
+- [x] Update `tests/writer/chapter/test_chapter_gen_summary_check.py` (3 tests)
+- [x] Create `tests/writer/chapter/test_chapter_generator_shrinkage.py` (4 tests)
+- [x] Create `tests/writer/test_scrubber.py` (4 tests)
+- [x] Run pytest - tests FAIL (red phase)
+
+### Phase 2: Implement Code
+- [x] Create `Writer/ContentValidator.py` with `validate_content_shrinkage()`
+- [x] Update `Writer/Config.py` - change MAX_WORD_COUNT_REDUCTION_RATIO from 0.20 to 0.10
+- [x] Update `Writer/Chapter/ChapterGenSummaryCheck.py` - use Config.MIN_WORDS_CHAPTER_DRAFT
+- [x] Update `Writer/Chapter/ChapterGenerator.py` - add shrinkage validation to Stage 2 & 3
+- [x] Update `Writer/Scrubber.py` - add shrinkage validation
+- [x] Update `Writer/NovelEditor.py` - use Config threshold instead of hardcoded 0.7
+
+### Phase 3: Validation
+- [x] Run pyright (0 errors)
+- [x] Run flake8 (no errors)
+- [x] Run pytest (982 tests passed)
+
+### Phase 4: Review
+- [x] Update tasks/todo.md with review section
+
+## Todo Checklist
+- [x] Write tests (TDD red phase)
+- [x] Create ContentValidator.py
+- [x] Update Config.py threshold (0.20 -> 0.10)
+- [x] Update ChapterGenSummaryCheck.py to use Config
+- [x] Update ChapterGenerator.py Stage 2 & 3
+- [x] Update Scrubber.py with shrinkage validation
+- [x] Update NovelEditor.py to use Config threshold
+- [x] Run pytest (100%)
+- [x] Run pyright (no errors)
+- [x] Run flake8 (no errors)
+- [x] Add review section
+
+---
+
+## Review Section
+
+### Implementation Summary
+
+**Date:** January 20, 2026
+
+**Files Changed:**
+1. `Writer/ContentValidator.py` - NEW: DRY utility function for shrinkage validation
+2. `Writer/Config.py` - Changed MAX_WORD_COUNT_REDUCTION_RATIO from 0.20 to 0.10
+3. `Writer/Chapter/ChapterGenSummaryCheck.py` - Use Config.MIN_WORDS_CHAPTER_DRAFT instead of hardcoded 100
+4. `Writer/Chapter/ChapterGenerator.py` - Added shrinkage validation to Stage 2 & 3
+5. `Writer/Scrubber.py` - Added shrinkage validation with fallback to original
+6. `Writer/NovelEditor.py` - Use Config threshold instead of hardcoded 0.7
+7. `tests/writer/test_content_validator.py` - NEW: 10 tests
+8. `tests/writer/chapter/test_chapter_generator_shrinkage.py` - NEW: 4 tests
+9. `tests/writer/test_scrubber.py` - NEW: 4 tests
+10. `tests/writer/chapter/test_chapter_gen_summary_check.py` - Updated for Config usage
+11. `tests/writer/chapter/test_chapter_revision_validation.py` - Updated threshold from 20% to 10%
+
+### Changes Made
+
+#### 1. Writer/ContentValidator.py (NEW - 55 lines)
+
+**Key Function:**
+```python
+def validate_content_shrinkage(
+    original_text: str,
+    new_text: str,
+    logger: Any,
+    context: str = ""
+) -> Tuple[bool, Dict[str, Any]]:
+```
+
+**Features:**
+- Compares word counts between original and new text
+- Returns (is_valid, report) tuple
+- Uses Config.MAX_WORD_COUNT_REDUCTION_RATIO for threshold
+- Logs warning when validation fails
+
+#### 2. Writer/Config.py (Line 529)
+
+**Changed:**
+```python
+# FROM:
+MAX_WORD_COUNT_REDUCTION_RATIO = 0.20  # (20%)
+
+# TO:
+MAX_WORD_COUNT_REDUCTION_RATIO = 0.10  # (10%)
+```
+
+**Impact:** Stricter content protection across all pipeline stages
+
+#### 3. Writer/Chapter/ChapterGenSummaryCheck.py (Line 22)
+
+**Changed:**
+```python
+# FROM:
+if len(_Work.split(" ")) < 100:
+
+# TO:
+if len(_Work.split(" ")) < Writer.Config.MIN_WORDS_CHAPTER_DRAFT:
+```
+
+**Impact:** Uses configurable minimum words (300) instead of hardcoded 100
+
+#### 4. Writer/Chapter/ChapterGenerator.py (Lines 354-361, 430-437)
+
+**Added to Stage 2:**
+```python
+from Writer.ContentValidator import validate_content_shrinkage
+shrinkage_valid, _ = validate_content_shrinkage(
+    Stage1Chapter, Stage2Chapter, _Logger, "Stage 2: Character Development"
+)
+if not shrinkage_valid:
+    _Logger.Log("Stage 2 content shrinkage detected, keeping Stage 1 output", 5)
+    Stage2Chapter = Stage1Chapter  # Fallback to previous stage
+```
+
+**Same pattern added to Stage 3**
+
+**Impact:** Chapters fallback to previous stage when content shrinks > 10%
+
+#### 5. Writer/Scrubber.py (Lines 43-51)
+
+**Added:**
+```python
+from Writer.ContentValidator import validate_content_shrinkage
+shrinkage_valid, _ = validate_content_shrinkage(
+    OriginalChapter, NewChapter, _Logger, f"Scrubber Chapter {i+1}"
+)
+if not shrinkage_valid:
+    _Logger.Log(f"Scrubber content shrinkage detected for Chapter {i+1}, keeping original", 5)
+    NewChapter = OriginalChapter  # Revert to original
+    NewWordCount = OriginalWordCount
+```
+
+**Impact:** Scrubbed chapters revert when content shrinks > 10%
+
+#### 6. Writer/NovelEditor.py (Lines 24, 32, 57, 93-94, 115-117, 128)
+
+**Changed:**
+```python
+# Calculate minimum retention ratio from config
+min_retention_ratio = 1 - Writer.Config.MAX_WORD_COUNT_REDUCTION_RATIO
+
+# Use in validation checks instead of hardcoded 0.7
+is_valid = char_ratio >= min_retention_ratio and word_ratio >= min_retention_ratio
+```
+
+**Impact:** NovelEditor uses consistent 90% retention threshold (previously 70%)
+
+### Test Results
+
+**pytest:** ✅ **982/982 tests passed (100%)**
+- 18 new tests added
+- Existing tests updated to use new threshold
+- No regression detected
+
+**pyright:** ✅ **0 errors, 0 warnings, 0 informations**
+
+**flake8:** ✅ **No errors** (ignoring E501, W504, W503)
+
+### Code Quality
+
+**TDD Approach:** ✅ Followed London School TDD
+1. **RED Phase:** 18 tests written first, all failed initially
+2. **GREEN Phase:** ContentValidator.py created, all files updated
+3. **REFACTOR Phase:** Fixed existing tests to use new threshold
+
+**DRY Principle:** ✅ Applied
+- Single `validate_content_shrinkage()` function used across 4 modules
+- All threshold references use Config.MAX_WORD_COUNT_REDUCTION_RATIO
+- No hardcoded values in validation logic
+
+**Simplicity:** ✅ Minimal changes
+- ContentValidator.py: 55 lines
+- Each integration point: ~8 lines added
+- Config change: 1 line
+
+### Expected Impact
+
+**For Chapter Generation:**
+- ✅ Stage 2/3 fallback to previous stage when content shrinks > 10%
+- ✅ More aggressive content protection (10% vs 20%)
+- ✅ Warning logged for debugging
+
+**For Scrubbing:**
+- ✅ Original chapters preserved when scrubber produces truncated output
+- ✅ Word count tracking continues correctly
+
+**For NovelEditor:**
+- ✅ Consistent 90% retention threshold across all validation paths
+- ✅ Better alignment with other pipeline stages
+
+**No Breaking Changes:**
+- All existing tests pass (with threshold adjustments)
+- Backward compatible - just stricter validation
+- Clean integration with existing logging
+
+---
+
+*Content Shrinkage Validation completed January 20, 2026*

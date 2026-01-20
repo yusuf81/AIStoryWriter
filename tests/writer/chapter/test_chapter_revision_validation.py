@@ -9,8 +9,8 @@ class TestChapterRevisionValidation:
     """Test that revision validates word count reduction."""
 
     @patch('Writer.PromptsHelper.get_prompts')
-    def test_revision_accepts_minor_reduction_under_20_percent(self, mock_get_prompts, mock_interface, mock_logger):
-        """Revision should succeed if word count reduction < 20%."""
+    def test_revision_accepts_minor_reduction_under_10_percent(self, mock_get_prompts, mock_interface, mock_logger):
+        """Revision should succeed if word count reduction < 10% (Config.MAX_WORD_COUNT_REDUCTION_RATIO)."""
         mock_prompts = Mock()
         mock_prompts.CHAPTER_REVISION = "Revise: {_Chapter} with {_Feedback}"
         mock_get_prompts.return_value = mock_prompts
@@ -18,9 +18,9 @@ class TestChapterRevisionValidation:
         interface = mock_interface()
         logger = mock_logger()
 
-        # Original: 500 words, Revised: 420 words (16% reduction - acceptable)
+        # Original: 500 words, Revised: 455 words (9% reduction - acceptable under 10% threshold)
         mock_response = ChapterOutput(
-            text="Word " * 420,
+            text="Word " * 455,
             chapter_number=1,
             chapter_title=None
         )
@@ -45,11 +45,11 @@ class TestChapterRevisionValidation:
 
         # Should succeed without retry
         assert interface.SafeGeneratePydantic.call_count == 1
-        assert len(revised_text.split()) == 420
+        assert len(revised_text.split()) == 455
 
     @patch('Writer.PromptsHelper.get_prompts')
-    def test_revision_retries_on_excessive_reduction_over_20_percent(self, mock_get_prompts, mock_interface, mock_logger):
-        """Revision should retry if word count reduction > 20%."""
+    def test_revision_retries_on_excessive_reduction_over_10_percent(self, mock_get_prompts, mock_interface, mock_logger):
+        """Revision should retry if word count reduction > 10% (Config.MAX_WORD_COUNT_REDUCTION_RATIO)."""
         mock_prompts = Mock()
         mock_prompts.CHAPTER_REVISION = "Revise: {_Chapter} with {_Feedback}"
         mock_prompts.CHAPTER_REVISION_STRICT = "STRICT: Preserve all content! {_Chapter} {_Feedback}"
