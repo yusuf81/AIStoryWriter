@@ -88,7 +88,11 @@ def GenerateOutline(Interface, _Logger, _OutlinePrompt, _QualityThreshold: int =
     )
 
     _Logger.Log("Generating Initial Outline", 4)
-    Messages = [Interface.BuildUserQuery(Prompt)]
+    # FIX: Ensure proper role alternation for vLLM - start with system message
+    # Some LLMs (like gemma-3-12b-it) require strict user/assistant alternation
+    Messages = []
+    Messages.append(Interface.BuildSystemQuery(Interface._get_text('default_system_message')))
+    Messages.append(Interface.BuildUserQuery(Prompt))
     Messages, Outline_obj, _ = Interface.SafeGeneratePydantic(  # Use Pydantic model
         _Logger,
         Messages,
