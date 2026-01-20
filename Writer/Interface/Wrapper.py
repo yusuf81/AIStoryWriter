@@ -705,11 +705,10 @@ class Interface:
             except Exception as e:
                 _Logger.Log(f"SafeGenerateJSON: Parse Error: '{e}'. Raw: '{RawResponseText[:100]}...'. Cleaned: '{CleanedResponseText[:100]}...'. Retry {Retries + 1}/{max_r}", 7)
                 Retries += 1
-                CurrentMessages = ResponseMessagesList  # Use history from the failed attempt
-                if CurrentMessages and CurrentMessages[-1]["role"] == "assistant":
-                    del CurrentMessages[-1]
-                if not CurrentMessages or not any(m['role'] == 'user' for m in CurrentMessages):
-                    CurrentMessages = [m.copy() for m in _Messages]  # Reset
+                # CRITICAL FIX: Reset to original messages instead of using failed attempt
+                # The failed attempt may have corrupted message state (e.g., partial API response)
+                # This prevents consecutive user messages that break API role alternation requirements
+                CurrentMessages = [m.copy() for m in _Messages]  # Reset to original input messages
 
         _Logger.Log(f"SafeGenerateJSON: All {max_r} retries failed. RAISING EXCEPTION.", 7)
         raise Exception(f"Failed to generate valid JSON after {max_r} retries")

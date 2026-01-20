@@ -353,18 +353,45 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
 
         # Validate content shrinkage
         from Writer.ContentValidator import validate_content_shrinkage
-        shrinkage_valid, _ = validate_content_shrinkage(
+        shrinkage_valid, shrinkage_report = validate_content_shrinkage(
             Stage1Chapter, Stage2Chapter, _Logger, "Stage 2: Character Development"
         )
         if not shrinkage_valid:
-            _Logger.Log("Stage 2 content shrinkage detected, keeping Stage 1 output", 5)
-            Stage2Chapter = Stage1Chapter  # Fallback to previous stage
+            # Don't revert immediately - add shrinkage feedback for retry
+            original_word_count = shrinkage_report['original_word_count']
+            new_word_count = shrinkage_report['new_word_count']
+            min_word_count = shrinkage_report['min_word_count']
+            # Support both EN and ID languages
+            if Writer.Config.NATIVE_LANGUAGE == "id":
+                shrinkage_feedback = (
+                    f"\n\nCRITICAL: Output Anda hanya {new_word_count} kata, "
+                    f"sedangkan MINIMUM {min_word_count} kata diperlukan "
+                    f"({int((min_word_count/original_word_count)*100)}% dari original {original_word_count} kata). "
+                    f"JANGAN meringkas atau memendekkan konten. Perluas dengan konten nyata."
+                )
+            else:
+                shrinkage_feedback = (
+                    f"\n\nCRITICAL: Your output is only {new_word_count} words, "
+                    f"but MINIMUM {min_word_count} words are required "
+                    f"({int((min_word_count/original_word_count)*100)}% of original {original_word_count} words). "
+                    f"DO NOT summarize or shorten the content. Expand with actual content."
+                )
+            Feedback += shrinkage_feedback
+            _Logger.Log(f"Stage 2 shrinkage detected ({original_word_count} -> {new_word_count} words), added feedback for retry", 5)
 
         IterCounter += 1
         _Logger.Log(f"Finished Character Development Generation (Stage 2) for Chapter {_ChapterNum}/{_TotalChapters}", 5)
 
         if IterCounter > Config_module.CHAPTER_MAX_REVISIONS:
             _Logger.Log(f"Chapter Summary-Based Revision Seems Stuck (Stage 2: Character Dev) - Forcefully Exiting after {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS} iterations.", 7)
+            # Final fallback: check if we have shrinkage and need to revert to Stage 1
+            from Writer.ContentValidator import validate_content_shrinkage
+            final_shrinkage_valid, _ = validate_content_shrinkage(
+                Stage1Chapter, Stage2Chapter, _Logger, "Stage 2 Final"
+            )
+            if not final_shrinkage_valid:
+                _Logger.Log("Max retries exceeded with shrinkage, reverting to Stage 1", 5)
+                Stage2Chapter = Stage1Chapter
             break
 
         # Validate summary adherence
@@ -429,18 +456,45 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
 
         # Validate content shrinkage
         from Writer.ContentValidator import validate_content_shrinkage
-        shrinkage_valid, _ = validate_content_shrinkage(
+        shrinkage_valid, shrinkage_report = validate_content_shrinkage(
             Stage2Chapter, Stage3Chapter, _Logger, "Stage 3: Dialogue"
         )
         if not shrinkage_valid:
-            _Logger.Log("Stage 3 content shrinkage detected, keeping Stage 2 output", 5)
-            Stage3Chapter = Stage2Chapter  # Fallback to previous stage
+            # Don't revert immediately - add shrinkage feedback for retry
+            original_word_count = shrinkage_report['original_word_count']
+            new_word_count = shrinkage_report['new_word_count']
+            min_word_count = shrinkage_report['min_word_count']
+            # Support both EN and ID languages
+            if Writer.Config.NATIVE_LANGUAGE == "id":
+                shrinkage_feedback = (
+                    f"\n\nCRITICAL: Output Anda hanya {new_word_count} kata, "
+                    f"sedangkan MINIMUM {min_word_count} kata diperlukan "
+                    f"({int((min_word_count/original_word_count)*100)}% dari original {original_word_count} kata). "
+                    f"JANGAN meringkas atau memendekkan konten. Perluas dengan konten nyata."
+                )
+            else:
+                shrinkage_feedback = (
+                    f"\n\nCRITICAL: Your output is only {new_word_count} words, "
+                    f"but MINIMUM {min_word_count} words are required "
+                    f"({int((min_word_count/original_word_count)*100)}% of original {original_word_count} words). "
+                    f"DO NOT summarize or shorten the content. Expand with actual content."
+                )
+            Feedback += shrinkage_feedback
+            _Logger.Log(f"Stage 3 shrinkage detected ({original_word_count} -> {new_word_count} words), added feedback for retry", 5)
 
         IterCounter += 1
         _Logger.Log(f"Finished Dialogue Generation (Stage 3) for Chapter {_ChapterNum}/{_TotalChapters}", 5)
 
         if IterCounter > Config_module.CHAPTER_MAX_REVISIONS:
             _Logger.Log(f"Chapter Summary-Based Revision Seems Stuck (Stage 3: Dialogue) - Forcefully Exiting after {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS} iterations.", 7)
+            # Final fallback: check if we have shrinkage and need to revert to Stage 2
+            from Writer.ContentValidator import validate_content_shrinkage
+            final_shrinkage_valid, _ = validate_content_shrinkage(
+                Stage2Chapter, Stage3Chapter, _Logger, "Stage 3 Final"
+            )
+            if not final_shrinkage_valid:
+                _Logger.Log("Max retries exceeded with shrinkage, reverting to Stage 2", 5)
+                Stage3Chapter = Stage2Chapter
             break
 
         # Validate summary adherence
