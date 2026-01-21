@@ -1618,6 +1618,20 @@ class Interface:
         chars_per_token = getattr(Writer.Config, "CHARS_PER_TOKEN_ESTIMATE", 4.5)
         est_input_tokens = int(total_input_chars / chars_per_token)
 
+        # ALSO estimate tokens for JSON schema in response_format (if present)
+        # The JSON schema is sent as response_format parameter and counts toward input tokens
+        if _FormatSchema_dict is not None:
+            # Convert schema dict to JSON string for token estimation
+            import json
+            schema_json = json.dumps(_FormatSchema_dict, ensure_ascii=False)
+            schema_chars = len(schema_json)
+            # JSON schema tokenizes more efficiently (more structure, less natural language)
+            schema_chars_per_token = 4.0
+            est_schema_tokens = int(schema_chars / schema_chars_per_token)
+            est_input_tokens += est_schema_tokens
+            if getattr(Writer.Config, 'DEBUG', False):
+                _Logger.Log(f"vLLM: JSON schema adds ~{est_schema_tokens} tokens ({schema_chars} chars)", 6)
+
         # Get context length and calculate available tokens
         context_length = getattr(Writer.Config, "VLLM_CONTEXT_LENGTH", 16384)
         safety_buffer = 100  # Reserve some tokens for safety
