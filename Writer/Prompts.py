@@ -314,9 +314,12 @@ CHAPTER_GENERATION_STAGE1 = """
 {_BaseContext}
 
 Please write the plot for chapter {_ChapterNum} of {_TotalChapters} based on the following chapter outline and any previous chapters.
-Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next (so try to follow the outline)!
+Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next.
 
-CRITICAL INSTRUCTION: The previous chapter context below is provided for continuity ONLY.
+CRITICAL INSTRUCTION: PREVIOUS CHAPTER CONTEXT IS THE GROUND TRUTH FOR CONTINUITY.
+- The "Previous Chapter" context below reflects what ACTUALLY happened in the story
+- IF THERE IS A CONFLICT between previous chapter context and outline, PRIORITIZE the previous chapter context
+- Outline is only a general structural guide, previous chapter context is the actual events
 - DO NOT re-describe scenes already written in the previous chapter
 - DO NOT re-introduce characters who were already introduced
 - START where the previous chapter ended, don't repeat it
@@ -353,9 +356,15 @@ CHAPTER_GENERATION_STAGE2 = """
 {_BaseContext}
 
 Please write character development for the following chapter {_ChapterNum} of {_TotalChapters} based on the following criteria and any previous chapters.
-Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next (so try to follow the outline)!
+Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next.
 
 Don't take away content, instead expand upon it to make a longer and more detailed output.{PydanticFormatInstructions}
+
+**CONTINUITY PRIORITY RULE:**
+- PREVIOUS CHAPTER CONTEXT is the GROUND TRUTH for continuity
+- IF THERE IS A CONFLICT between previous chapter context and outline, PRIORITIZE the previous chapter context
+- Current chapter plot (Stage 1) also reflects the actual events that already happened
+- Outline is only a general structural guide
 
 **CRITICAL FORMATTING RULE:**
 - PRESERVE all paragraph breaks (blank lines) from the chapter plot below
@@ -409,9 +418,15 @@ CHAPTER_GENERATION_STAGE3 = """
 {_BaseContext}
 
 Please add dialogue the following chapter {_ChapterNum} of {_TotalChapters} based on the following criteria and any previous chapters.
-Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next (so try to follow the outline)!
+Pay attention to the previous chapters, and make sure you both continue seamlessly from them, It's imperative that your writing connects well with the previous chapter, and flows into the next.
 
 Don't take away content, instead expand upon it to make a longer and more detailed output.
+
+**CONTINUITY PRIORITY RULE:**
+- PREVIOUS CHAPTER CONTEXT is the GROUND TRUTH for continuity
+- IF THERE IS A CONFLICT between previous chapter context and outline, PRIORITIZE the previous chapter context
+- Current chapter plot (Stage 1 and Stage 2) also reflects the actual events that already happened
+- Outline is only a general structural guide for dialogue
 
 **CRITICAL FORMATTING RULE:**
 - PRESERVE all paragraph breaks (blank lines) from the chapter below

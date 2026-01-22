@@ -339,9 +339,12 @@ CHAPTER_GENERATION_STAGE1 = """
 {_BaseContext}
 
 Harap tulis plot untuk bab {_ChapterNum} dari {_TotalChapters} berdasarkan outline bab berikut dan bab-bab sebelumnya.
-Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sangat penting bahwa tulisan Anda terhubung dengan baik dengan bab sebelumnya, dan mengalir ke bab berikutnya (jadi cobalah untuk mengikuti outline)!
+Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sangat penting bahwa tulisan Anda terhubung dengan baik dengan bab sebelumnya, dan mengalir ke bab berikutnya.
 
-INSTRUKSI KRITIS: Konteks bab sebelumnya di bawah ini HANYA untuk kontinuitas.
+INSTRUKSI KRITIS: KONTENKS BAB SEBELUMNYA ADALAH SUMBER KEBENARAN.
+- "Bab Sebelumnya" di bawah ini mencerminkan kejadian SEBENARNYA yang sudah terjadi
+- JIKA ADA KONFLIK antara konteks bab sebelumnya dan outline, PRIORITASKAN KONTEKS BAB SEBELUMNYA
+- Outline hanyalah panduan umum, konteks bab sebelumnya adalah kejadian aktual
 - JANGAN mendeskripsikan ulang scene yang sudah ditulis di bab sebelumnya
 - JANGAN memperkenalkan ulang karakter yang sudah diperkenalkan
 - MULAI dari titik di mana bab sebelumnya berakhir, jangan ulangi
@@ -379,9 +382,15 @@ CHAPTER_GENERATION_STAGE2 = """
 {_BaseContext}
 
 Harap tulis pengembangan karakter untuk bab berikut {_ChapterNum} dari {_TotalChapters} berdasarkan kriteria berikut dan bab-bab sebelumnya.
-Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sangat penting bahwa tulisan Anda terhubung dengan baik dengan bab sebelumnya, dan mengalir ke bab berikutnya (jadi cobalah untuk mengikuti outline)!
+Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sangat penting bahwa tulisan Anda terhubung dengan baik dengan bab sebelumnya, dan mengalir ke bab berikutnya.
 
 Jangan mengambil konten, sebaliknya perluas untuk membuat output yang lebih panjang dan lebih detail.
+
+**ATURAN PRIORITAS KONTINUITAS:**
+- KONTENKS BAB SEBELUMNYA adalah SUMBER KEBENARAN untuk kontinuitas
+- JIKA ADA KONFLIK antara konteks bab sebelumnya dan outline, PRIORITASKAN KONTEKS BAB SEBELUMNYA
+- Plot bab saat ini (Stage 1) juga mencerminkan kejadian sebenarnya yang sudah terjadi
+- Outline hanyalah panduan umum untuk struktur
 
 **ATURAN PEMFORMATAN KRITIS:**
 - PERTAHANKAN semua pemisah paragraf (baris kosong) dari plot bab di bawah
@@ -436,9 +445,15 @@ CHAPTER_GENERATION_STAGE3 = """
 {_BaseContext}
 
 Harap tambahkan dialog pada bab berikut {_ChapterNum} dari {_TotalChapters} berdasarkan kriteria berikut dan bab-bab sebelumnya.
-Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sangat penting bahwa tulisan Anda terhubung dengan baik dengan bab sebelumnya, dan mengalir ke bab berikutnya (jadi cobalah untuk mengikuti outline)!
+Perhatikan bab-bab sebelumnya, dan pastikan Anda melanjutkannya dengan mulus, Sangat penting bahwa tulisan Anda terhubung dengan baik dengan bab sebelumnya, dan mengalir ke bab berikutnya.
 
 Jangan mengambil konten, sebaliknya perluas untuk membuat output yang lebih panjang dan lebih detail.
+
+**ATURAN PRIORITAS KONTINUITAS:**
+- KONTENKS BAB SEBELUMNYA adalah SUMBER KEBENARAN untuk kontinuitas
+- JIKA ADA KONFLIK antara konteks bab sebelumnya dan outline, PRIORITASKAN KONTEKS BAB SEBELUMNYA
+- Plot bab saat ini (Stage 1 dan Stage 2) juga mencerminkan kejadian sebenarnya yang sudah terjadi
+- Outline hanyalah panduan umum untuk struktur dialog
 
 **ATURAN PEMFORMATAN KRITIS:**
 - PERTAHANKAN semua pemisah paragraf (baris kosong) dari bab di bawah
