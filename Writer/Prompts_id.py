@@ -356,6 +356,13 @@ ATURAN KONSISTENSI INTERNAL: Dalam bab yang Anda tulis ini:
 - JANGAN mendeskripsikan aksi atau kejadian yang sama dari berbagai sudut kecuali disengaja untuk efek
 - Jaga narasi Anda tetap BERGERAK MAJU dalam bab ini
 
+**BATAS CHAPTER - BERHENTI DI TEMPAT YANG TEPAT:**
+Chapter ini HANYA mencakup: {ChapterScope}
+Chapter ini HARUS BERAKHIR di: {ChapterEndpoint}
+Chapter BERIKUTNYA akan mencakup: {NextChapterPreview}
+
+DILARANG terburu-buru menyelesaikan full story arc. Jika outline menunjukkan {_TotalChapters} chapter, Chapter {_ChapterNum} HARUS BERHENTI sebelum climax/resolusi. Biarkan chapter berikutnya menangani porsinya. JANGAN tulis melewati batas chapter ini.
+
 Berikut adalah outline saya untuk bab ini:
 <CHAPTER_OUTLINE>
 {ThisChapterOutline}
@@ -409,6 +416,13 @@ ATURAN KONSISTENSI INTERNAL: Dalam bab saat ini:
 - Jika karakter belajar atau menyadari sesuatu, mereka harus mempertahankan pengetahuan itu
 - Alur emosional harus mengalir secara alami tanpa monolog internal yang repetitif
 - Interaksi karakter harus membangun dari momen-momen sebelumnya di bab INI
+
+**BATAS CHAPTER - BERHENTI DI TEMPAT YANG TEPAT:**
+Chapter ini HANYA mencakup: {ChapterScope}
+Chapter ini HARUS BERAKHIR di: {ChapterEndpoint}
+Chapter BERIKUTNYA akan mencakup: {NextChapterPreview}
+
+DILARANG terburu-buru menyelesaikan full story arc. Jika outline menunjukkan {_TotalChapters} chapter, Chapter {_ChapterNum} HARUS BERHENTI sebelum climax/resolusi. Biarkan chapter berikutnya menangani porsinya. JANGAN tulis melewati batas chapter ini.
 
 Sebagai referensi Anda, berikut adalah outline saya untuk bab ini:
 <CHAPTER_OUTLINE>
@@ -478,6 +492,13 @@ ATURAN KARAKTER WAJIB:
 - DILARANG menambahkan karakter baru dalam dialog
 - Karakter baru yang ditambahkan akan menyebabkan output DITOLAK
 - Jika butuh dialog partner, gunakan karakter yang sudah disebutkan di bab ini
+
+**BATAS CHAPTER - BERHENTI DI TEMPAT YANG TEPAT:**
+Chapter ini HANYA mencakup: {ChapterScope}
+Chapter ini HARUS BERAKHIR di: {ChapterEndpoint}
+Chapter BERIKUTNYA akan mencakup: {NextChapterPreview}
+
+DILARANG terburu-buru menyelesaikan full story arc. Jika outline menunjukkan {_TotalChapters} chapter, Chapter {_ChapterNum} HARUS BERHENTI sebelum climax/resolusi. Biarkan chapter berikutnya menangani porsinya. JANGAN tulis melewati batas chapter ini.
 
 {FormattedLastChapterSummary}
 
@@ -697,6 +718,12 @@ Outline adegan harus menunjukkan target - prioritaskan kelengkapan adegan daripa
 - JANGAN memperkenalkan ulang karakter yang sudah diperkenalkan
 - MULAI dari titik di mana bab sebelumnya berakhir, jangan ulangi
 - Jika pertemuan/interaksi sudah terjadi, lanjutkan dari SETELAH kejadian tersebut
+
+**BATAS CHAPTER - BERHENTI DI TEMPAT YANG TEPAT:**
+- JANGAN menulis melewati batas chapter saat ini
+- Jika ini bukan chapter terakhir, BERHENTI sebelum menyelesaikan full arc
+- Biarkan chapter berikutnya menangani porsinya dari cerita
+- Setiap scene HANYA mencakup apa yang ditentukan dalam outline scene
 ###############
 
 # GAYA #

@@ -241,12 +241,53 @@ def _prepare_initial_generation_context(Interface, _Logger, ActivePrompts, _Outl
     return MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, DetailedChapterOutlineForCheck
 
 
+def _extract_chapter_boundary_info(_Logger, _ChapterNum: int, _TotalChapters: int, ThisChapterOutline: str):
+    """
+    Extract chapter boundary information from outline to prevent overwriting.
+
+    Returns:
+        tuple: (this_chapter_scope, chapter_endpoint, next_chapter_preview)
+    """
+    # Try to extract the last sentence or key ending from the outline
+    outline_lines = ThisChapterOutline.strip().split('\n')
+    outline_lines = [line.strip() for line in outline_lines if line.strip()]
+
+    # Get the last 1-2 lines as the endpoint
+    if len(outline_lines) >= 2:
+        endpoint = outline_lines[-1]
+        if len(outline_lines) > 5:
+            scope_preview = "... " + outline_lines[-3]
+        else:
+            scope_preview = " ".join(outline_lines[:-1])
+    elif len(outline_lines) == 1:
+        endpoint = outline_lines[0]
+        scope_preview = outline_lines[0]
+    else:
+        endpoint = "endpoint yang ditentukan di outline"
+        scope_preview = "konten chapter ini"
+
+    # Generate next chapter preview based on current chapter number
+    if _ChapterNum < _TotalChapters:
+        next_preview = f"Chapter {_ChapterNum + 1} akan melanjutkan dari endpoint ini"
+    else:
+        next_preview = "ini adalah chapter terakhir"
+
+    _Logger.Log(f"Chapter {_ChapterNum} boundary: END at '{endpoint[:80]}...'", 6)
+
+    return scope_preview, endpoint, next_preview
+
+
 def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _TotalChapters, MessageHistory, ContextHistoryInsert, ThisChapterOutline, FormattedLastChapterSummary, _BaseContext, DetailedChapterOutlineForCheck, Config_module, ChapterGenSummaryCheck_module):
     """Generates Stage 1: Initial Plot, including feedback loop."""
     _Logger.Log(f"Stage 1: Generating Initial Plot for Chapter {_ChapterNum}/{_TotalChapters}", 3)
     IterCounter = 0
     Feedback = ""
     Stage1Chapter = ""
+
+    # Extract chapter boundary info
+    ChapterScope, ChapterEndpoint, NextChapterPreview = _extract_chapter_boundary_info(
+        _Logger, _ChapterNum, _TotalChapters, ThisChapterOutline
+    )
 
     # Get Pydantic format instructions if enabled
     PydanticFormatInstructions = _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module)
@@ -274,6 +315,9 @@ def _generate_stage1_plot(Interface, _Logger, ActivePrompts, _ChapterNum, _Total
             Feedback=Feedback,
             _BaseContext=EnhancedBaseContext,
             PydanticFormatInstructions=PydanticFormatInstructions,
+            ChapterScope=ChapterScope,
+            ChapterEndpoint=ChapterEndpoint,
+            NextChapterPreview=NextChapterPreview,
         )
         _Logger.Log(f"Generating Initial Chapter (Stage 1: Plot) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
 
@@ -310,6 +354,11 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
     Feedback = ""
     Stage2Chapter = ""
 
+    # Extract chapter boundary info
+    ChapterScope, ChapterEndpoint, NextChapterPreview = _extract_chapter_boundary_info(
+        _Logger, _ChapterNum, _TotalChapters, ThisChapterOutline
+    )
+
     # Get Pydantic format instructions if enabled
     PydanticFormatInstructions = _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module)
 
@@ -337,6 +386,9 @@ def _generate_stage2_character_dev(Interface, _Logger, ActivePrompts, _ChapterNu
             Feedback=Feedback,
             _BaseContext=EnhancedBaseContext,
             PydanticFormatInstructions=PydanticFormatInstructions,
+            ChapterScope=ChapterScope,
+            ChapterEndpoint=ChapterEndpoint,
+            NextChapterPreview=NextChapterPreview,
         )
         _Logger.Log(f"Generating Character Development (Stage 2) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
 
@@ -413,6 +465,11 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
     Feedback = ""
     Stage3Chapter = ""
 
+    # Extract chapter boundary info
+    ChapterScope, ChapterEndpoint, NextChapterPreview = _extract_chapter_boundary_info(
+        _Logger, _ChapterNum, _TotalChapters, ThisChapterOutline
+    )
+
     # Get Pydantic format instructions if enabled
     PydanticFormatInstructions = _get_pydantic_format_instructions_if_enabled(Interface, _Logger, Config_module)
 
@@ -440,6 +497,9 @@ def _generate_stage3_dialogue(Interface, _Logger, ActivePrompts, _ChapterNum, _T
             Feedback=Feedback,
             _BaseContext=EnhancedBaseContext,
             PydanticFormatInstructions=PydanticFormatInstructions,
+            ChapterScope=ChapterScope,
+            ChapterEndpoint=ChapterEndpoint,
+            NextChapterPreview=NextChapterPreview,
         )
         _Logger.Log(f"Generating Dialogue (Stage 3) {_ChapterNum}/{_TotalChapters} (Iteration {IterCounter}/{Config_module.CHAPTER_MAX_REVISIONS})", 5)
 

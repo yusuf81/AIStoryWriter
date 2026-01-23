@@ -331,6 +331,13 @@ INTERNAL CONSISTENCY RULE: Within this chapter you are writing:
 - DO NOT describe the same action or event from multiple angles unless intentional for effect
 - Keep your narrative FORWARD-MOVING within this chapter
 
+**CHAPTER BOUNDARY - STOP AT THE RIGHT PLACE:**
+This chapter ONLY covers: {ChapterScope}
+This chapter MUST END at: {ChapterEndpoint}
+The NEXT chapter will cover: {NextChapterPreview}
+
+DO NOT rush to complete the full story arc. If outline shows {_TotalChapters} chapters, Chapter {_ChapterNum} must STOP before the climax/resolution. Let the next chapter handle its portion. DO NOT write beyond this chapter's boundary.
+
 Here is my outline for this chapter:
 <CHAPTER_OUTLINE>
 {ThisChapterOutline}
@@ -383,6 +390,13 @@ INTERNAL CONSISTENCY RULE: Within the current chapter:
 - If a character learns or realizes something, they should retain that knowledge
 - Emotional arcs should flow naturally without repetitive internal monologues
 - Character interactions should build upon earlier moments in THIS chapter
+
+**CHAPTER BOUNDARY - STOP AT THE RIGHT PLACE:**
+This chapter ONLY covers: {ChapterScope}
+This chapter MUST END at: {ChapterEndpoint}
+The NEXT chapter will cover: {NextChapterPreview}
+
+DO NOT rush to complete the full story arc. If outline shows {_TotalChapters} chapters, Chapter {_ChapterNum} must STOP before the climax/resolution. Let the next chapter handle its portion. DO NOT write beyond this chapter's boundary.
 
 For your reference, here is my outline for this chapter:
 <CHAPTER_OUTLINE>
@@ -451,6 +465,13 @@ MANDATORY CHARACTER RULE:
 - DO NOT add new characters in dialogue
 - Adding new characters will cause output REJECTION
 - If you need a dialogue partner, use characters already mentioned in this chapter
+
+**CHAPTER BOUNDARY - STOP AT THE RIGHT PLACE:**
+This chapter ONLY covers: {ChapterScope}
+This chapter MUST END at: {ChapterEndpoint}
+The NEXT chapter will cover: {NextChapterPreview}
+
+DO NOT rush to complete the full story arc. If outline shows {_TotalChapters} chapters, Chapter {_ChapterNum} must STOP before the climax/resolution. Let the next chapter handle its portion. DO NOT write beyond this chapter's boundary.
 
 {FormattedLastChapterSummary}
 
@@ -666,6 +687,12 @@ The scene outline should indicate the target - prioritize scene completeness ove
 - DO NOT re-introduce characters who were already introduced
 - START where the previous chapter ended, don't repeat it
 - If a meeting/interaction already happened, continue from AFTER that event
+
+**CHAPTER BOUNDARY - STOP AT THE RIGHT PLACE:**
+- DO NOT write beyond the current chapter's boundary
+- If this is not the last chapter, STOP before completing the full arc
+- Let the next chapter handle its portion of the story
+- Each scene should ONLY cover what's specified in the scene outline
 ###############
 
 # STYLE #
