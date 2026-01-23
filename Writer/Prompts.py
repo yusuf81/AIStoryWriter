@@ -658,6 +658,16 @@ WORD COUNT TARGET: Write approximately the estimated word count for this scene b
 The scene outline should indicate the target - prioritize scene completeness over exact word count.
 ###############
 
+**CONTINUITY PRIORITY RULE:**
+- PREVIOUS CHAPTER CONTEXT is the GROUND TRUTH for continuity
+- IF THERE IS A CONFLICT between previous chapter context and outline, PRIORITIZE the previous chapter context
+- Outline is only a general structural guide for the scene, previous chapter context is the actual events
+- DO NOT re-describe scenes already written in the previous chapter
+- DO NOT re-introduce characters who were already introduced
+- START where the previous chapter ended, don't repeat it
+- If a meeting/interaction already happened, continue from AFTER that event
+###############
+
 # STYLE #
 Make your style be creative and appropriate for the given scene. The scene outline should indicate the right style, but if not use your own judgement.
 ###############

@@ -689,6 +689,16 @@ TARGET JUMLAH KATA: Tulis kira-kira jumlah kata yang diperkirakan untuk adegan i
 Outline adegan harus menunjukkan target - prioritaskan kelengkapan adegan daripada jumlah kata yang tepat.
 ###############
 
+**ATURAN PRIORITAS KONTINUITAS:**
+- KONTEKS BAB SEBELUMNYA adalah SUMBER KEBENARAN untuk kontinuitas
+- JIKA ADA KONFLIK antara konteks bab sebelumnya dan outline, PRIORITASKAN KONTEKS BAB SEBELUMNYA
+- Outline hanyalah panduan umum untuk struktur adegan, konteks bab sebelumnya adalah kejadian aktual
+- JANGAN mendeskripsikan ulang scene yang sudah ditulis di bab sebelumnya
+- JANGAN memperkenalkan ulang karakter yang sudah diperkenalkan
+- MULAI dari titik di mana bab sebelumnya berakhir, jangan ulangi
+- Jika pertemuan/interaksi sudah terjadi, lanjutkan dari SETELAH kejadian tersebut
+###############
+
 # GAYA #
 Buat gaya Anda kreatif dan sesuai untuk adegan yang diberikan. Outline adegan harus menunjukkan gaya yang tepat, tetapi jika tidak, gunakan penilaian Anda sendiri.
 ###############
