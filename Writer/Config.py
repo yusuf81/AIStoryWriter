@@ -137,9 +137,9 @@ fformllm = "ollama://huihui_ai/gemma3-abliterated:12b"  # Free-form (creative wr
 # ollamasemua = "synthetic://hf:deepseek-ai/DeepSeek-V3.2"  # Requires SYNTHETIC_API_KEY in .env
 # ollamasemua = "google://gemini-flash-lite-latest"
 # ollamasemua = "huihui_ai/qwen2.5-abliterate:14b"
-ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
+# ollamasemua = "aisingapore/Qwen-SEA-LION-v4-32B-IT:latest"
 # ollamasemua = "aisingapore/Llama-SEA-LION-v3.5-8B-R:f16"
-# ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
+ollamasemua = "aisingapore/Gemma-SEA-LION-v4-27B-IT:latest"
 # ollamasemua = "google://gemini-2.5-flash"  # Requires GOOGLE_API_KEY in .env
 # ollamasemua = "vllm://meta-llama/Llama-3.1-8B-Instruct"  # Requires vLLM server running
 
