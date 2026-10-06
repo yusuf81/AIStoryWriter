@@ -100,7 +100,7 @@ Historical documentation, obsolete files, and archived content.
 
 - [Project README](../README.md) - Main project documentation
 - [Claude Code Instructions](../CLAUDE.md) - Development guidelines for Claude Code
-- [Tasks/TODO](../tasks/todo.md) - Active development tasks
+- [Archived Tasks/TODO](../docs/archive/todo.md) - Legacy task plans (before superpowers; new specs/plans live in `docs/superpowers/`)
 - [Config](../Writer/Config.py) - Configuration file
 
 ---
